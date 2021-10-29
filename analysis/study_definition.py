@@ -46,4 +46,268 @@ study=StudyDefinition(
             return_expectations={"incidence": 0.01},
         ),
     ),
+
+    ####################
+    ### DEMOGRAPHICS ###
+    ####################
+
+    # ETHNICITY IN 6 CATEGORIES
+    # ethnicity
+    ethnicity_6=patients.with_these_clinical_events(
+        eth2001,
+        returning="category",
+        find_last_match_in_period=True,
+        on_or_before="elig_date + 42 days",
+        return_expectations={
+            "category": {"ratios": {"1": 0.2, "2": 0.2, "3": 0.2, "4": 0.2, "5": 0.2}},
+            "incidence": 0.75,
+        },
+    ),
+
+    ethnicity_6_sus = patients.with_ethnicity_from_sus(
+        returning = "group_6",  
+        use_most_frequent_code = True,
+        return_expectations = {
+            "category": {"ratios": {"1": 0.2, "2": 0.2, "3": 0.2, "4": 0.2, "5": 0.2}},
+            "incidence": 0.8,
+        },
+    ),
+
+    # IMD - quintile
+    imd=patients.address_as_of(
+        "elig_date + 42 days",
+        returning="index_of_multiple_deprivation",
+        round_to_nearest=100,
+        return_expectations={
+            "rate": "universal",
+            "category": {"ratios": {c: 1/320 for c in range(100, 32100, 100)}},
+            "incidence": 1,
+            }    
+    ),
+
+    # region - NHS England 9 regions
+    region=patients.registered_practice_as_of(
+        "elig_date + 42 days",
+        returning = "nuts1_region_name",
+        return_expectations = {
+            "rate": "universal",
+            "category": {
+                "ratios": {
+                    "North East": 0.1,
+                    "North West": 0.1,
+                    "Yorkshire and The Humber": 0.1,
+                    "East Midlands": 0.1,
+                    "West Midlands": 0.1,
+                    "East": 0.1,
+                    "London": 0.2,
+                    "South West": 0.1,
+                    "South East": 0.1
+                },
+            },
+        },
+    ),
+
+    # Patients in long-stay nursing and residential care
+    # to capture patients entering/leaving long-stay nursing and residential care, maybe not necessary
+    # most recent date before elig_date + 6 weeks
+    longres_date_before=patients.with_these_clinical_events(
+        longres,
+        returning="date",
+        on_or_before="elig_date + 42 days",
+        find_last_match_in_period=True,
+        return_expectations={"incidence": 0.01},
+    ),
+    # earliest date after elig_date + 6 weeks
+    longres_date_after=patients.with_these_clinical_events(
+        longres,
+        returning="date",
+        on_or_after="elig_date + 42 days",
+        find_first_match_in_period=True,
+        return_expectations={"incidence": 0.01},
+    ),
+
+    ######################
+    ### COVID VACCINES ###
+    ######################
+    
+    ## any covid vaccination, identified by target disease
+    covid_vax_disease_1_date = patients.with_tpp_vaccination_record(
+        target_disease_matches="SARS-2 CORONAVIRUS",
+        on_or_after=start_date,
+        find_first_match_in_period=True,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "date": {
+                "earliest": start_date,  
+                "latest": end_date,
+            },
+            "incidence": 0.5
+        },
+    ),
+    covid_vax_disease_2_date=patients.with_tpp_vaccination_record(
+        target_disease_matches="SARS-2 CORONAVIRUS",
+        on_or_after="covid_vax_disease_1_date + 1 day",
+        find_first_match_in_period=True,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "date": {
+                "earliest": start_date,  
+                "latest": end_date,
+            },
+            "incidence": 0.5
+        },
+    ),
+    covid_vax_disease_3_date=patients.with_tpp_vaccination_record(
+        target_disease_matches="SARS-2 CORONAVIRUS",
+        on_or_after="covid_vax_disease_2_date + 1 day",
+        find_first_match_in_period=True,
+        returning="date",
+        date_format="YYYY-MM-DD",
+         return_expectations={
+            "date": {
+                "earliest": start_date,  
+                "latest": end_date,
+            },
+            "incidence": 0.5
+        },
+    ),
+
+    # Pfizer BioNTech - first record of a pfizer vaccine 
+    # NB *** may be patient's first COVID vaccine dose or their second if mixed types are given ***
+       
+    covid_vax_pfizer_1_date=patients.with_tpp_vaccination_record(
+        product_name_matches="COVID-19 mRNA Vaccine Comirnaty 30micrograms/0.3ml dose conc for susp for inj MDV (Pfizer)",
+        on_or_after=start_date,  
+        find_first_match_in_period=True,
+        returning="date",
+        date_format="YYYY-MM-DD",
+         return_expectations={
+            "date": {
+                "earliest": start_date,  
+                "latest": end_date,
+            },
+            "incidence": 0.5
+        },
+    ), 
+    covid_vax_pfizer_2_date=patients.with_tpp_vaccination_record(
+        product_name_matches="COVID-19 mRNA Vaccine Comirnaty 30micrograms/0.3ml dose conc for susp for inj MDV (Pfizer)",
+        on_or_after="covid_vax_pfizer_1_date + 1 day",  
+        find_first_match_in_period=True,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "date": {
+                "earliest": start_date,  
+                "latest": end_date,
+            },
+            "incidence": 0.5
+        },
+    ),
+    covid_vax_pfizer_3_date=patients.with_tpp_vaccination_record(
+        product_name_matches="COVID-19 mRNA Vaccine Comirnaty 30micrograms/0.3ml dose conc for susp for inj MDV (Pfizer)",
+         on_or_after="covid_vax_pfizer_2_date + 1 day",  
+        find_first_match_in_period=True,
+        returning="date",
+        date_format="YYYY-MM-DD",
+         return_expectations={
+            "date": {
+                "earliest": start_date,  
+                "latest": end_date,
+            },
+            "incidence": 0.5
+        },
+    ),
+    
+    ## Oxford AZ - first record of an Oxford AZ vaccine 
+    # NB *** may be patient's first COVID vaccine dose or their second if mixed types are given ***
+    covid_vax_az_1_date=patients.with_tpp_vaccination_record(
+        product_name_matches="COVID-19 Vac AstraZeneca (ChAdOx1 S recomb) 5x10000000000 viral particles/0.5ml dose sol for inj MDV",
+        on_or_after=start_date,
+        find_first_match_in_period=True,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "date": {
+                "earliest": start_date,  
+                "latest": end_date,
+            },
+            "incidence": 0.5
+        },
+    ),
+    covid_vax_az_2_date=patients.with_tpp_vaccination_record(
+        product_name_matches="COVID-19 Vac AstraZeneca (ChAdOx1 S recomb) 5x10000000000 viral particles/0.5ml dose sol for inj MDV",
+        on_or_after="covid_vax_az_1_date + 1 day",  
+        find_first_match_in_period=True,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "date": {
+                "earliest": start_date,  
+                "latest": end_date,
+            },
+            "incidence": 0.5
+        },
+    ),
+    covid_vax_az_3_date=patients.with_tpp_vaccination_record(
+        product_name_matches="COVID-19 Vac AstraZeneca (ChAdOx1 S recomb) 5x10000000000 viral particles/0.5ml dose sol for inj MDV",
+        on_or_after="covid_vax_az_2_date + 1 day",  
+        find_first_match_in_period=True,
+        returning="date",
+        date_format="YYYY-MM-DD",
+         return_expectations={
+            "date": {
+                "earliest": start_date,  
+                "latest": end_date,
+            },
+            "incidence": 0.5
+        },
+    ),
+    
+    ## Moderna - first record of moderna vaccine
+    ## NB *** may be patient's first COVID vaccine dose or their second if mixed types are given ***
+    covid_vax_moderna_1_date=patients.with_tpp_vaccination_record(
+        product_name_matches="COVID-19 mRNA (nucleoside modified) Vaccine Moderna 0.1mg/0.5mL dose dispersion for inj MDV",
+        on_or_after=start_date,
+        find_first_match_in_period=True,
+        returning="date",
+        date_format="YYYY-MM-DD",
+         return_expectations={
+            "date": {
+                "earliest": start_date,  
+                "latest": end_date,
+            },
+            "incidence": 0.5
+        },
+    ),            
+    covid_vax_moderna_2_date=patients.with_tpp_vaccination_record(
+        product_name_matches="COVID-19 mRNA (nucleoside modified) Vaccine Moderna 0.1mg/0.5mL dose dispersion for inj MDV",
+        on_or_after="covid_vax_moderna_1_date + 1 day",  
+        find_first_match_in_period=True,
+        returning="date",
+        date_format="YYYY-MM-DD",
+         return_expectations={
+            "date": {
+                "earliest": start_date,  
+                "latest": end_date,
+            },
+            "incidence": 0.5
+        },
+    ),
+    covid_vax_moderna_3_date=patients.with_tpp_vaccination_record(
+        product_name_matches="COVID-19 mRNA (nucleoside modified) Vaccine Moderna 0.1mg/0.5mL dose dispersion for inj MDV",
+        on_or_after="covid_vax_moderna_2_date + 1 day",  
+        find_first_match_in_period=True,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "date": {
+                "earliest": start_date,  
+                "latest": end_date,
+            },
+            "incidence": 0.5
+        },
+    ),
+
 )
