@@ -5,25 +5,43 @@ from cohortextractor import (
     patients, 
 )
 
-# Import codelists.py script
+# import codelists.py script
 from codelists import *
 
 # import json module
 import json
 
-## import study dates
-# change this in design.R if necessary
-with open("./analysis/lib/dates.json") as f:
-  studydates = json.load(f)
+import pandas as pd
+
+### import groups and dates
+# jcvi_groups
+jcvi_groups = pd.read_csv(
+    filepath_or_buffer='./analysis/lib/jcvi_groups.csv',
+    dtype=str
+)
+dict_jcvi = { jcvi_groups['group'][i] : jcvi_groups['definition'][i] for i in jcvi_groups.index }
+ratio_jcvi = { jcvi_groups['group'][i] : 1/len(jcvi_groups.index) for i in jcvi_groups.index }
+
+# elig_dates
+elig_dates = pd.read_csv(
+    filepath_or_buffer='./analysis/lib/elig_dates.csv',
+    dtype=str
+)
+dict_elig = { elig_dates['date'][i] : elig_dates['description'][i] for i in elig_dates.index }
+ratio_elig = { elig_dates['date'][i] : 1/len(elig_dates.index) for i in elig_dates.index }
+
+#study_dates
+with open("./analysis/lib/study_dates.json") as f:
+  study_dates = json.load(f)
 
 # define variables explicitly
-ref_age_1=studydates["ref_age_1"] # reference date for calculating age for phase 1 groups
-ref_age_2=studydates["ref_age_1"] # reference date for calculating age for phase 2 groups
-ref_cev=studydates["ref_cev"] # reference date for calculating clinically extremely vulnerable group
-ref_ar=studydates["ref_ar"] #reference date for caluclating at risk group
-start_date=studydates["start_date"] # start of phase 1
-end_date=studydates["end_date"] # end of followup
-pandemic_start="2020-01-01"
+ref_age_1=study_dates["ref_age_1"] # reference date for calculating age for phase 1 groups
+ref_age_2=study_dates["ref_age_1"] # reference date for calculating age for phase 2 groups
+ref_cev=study_dates["ref_cev"] # reference date for calculating clinically extremely vulnerable group
+ref_ar=study_dates["ref_ar"] #reference date for caluclating at risk group
+start_date=study_dates["start_date"] # start of phase 1
+end_date=study_dates["end_date"] # end of followup
+pandemic_start=study_dates["pandemic_start"]
 
 ## function to add days to a string date
 from datetime import datetime, timedelta
@@ -69,27 +87,13 @@ jcvi_variables = dict(
     ),
 
     jcvi_group=patients.categorised_as(
-        {
-            "00": "DEFAULT",
-            "01": "longres_group",
-            "02": "age_1 >=80",
-            "03": "age_1 >=75",
-            "04": "age_1 >=70 OR (cev_group AND age_1 >=16 AND NOT preg_group)",
-            "05": "age_1 >=65",
-            "06": "atrisk_group AND age_1 >=16",
-            "07": "age_1 >=60",
-            "08": "age_1 >=55",
-            "09": "age_1 >=50",
-            "10": "age_2 >=40",
-            "11": "age_2 >=30",
-            "12": "age_2 >=18",
-        },
+        dict_jcvi,
         return_expectations={
             "rate": "universal",
             "incidence": 1,
-            "category":{
-                "ratios": {
-                    "00": 1/13, "01": 1/13, "02": 1/13, "03": 1/13, "04": 1/13, "05": 1/13, "06": 1/13, "07": 1/13, "08":1/13, "09":1/13, "10":1/13, "11":1/13, "12":1/13}}
+            "category": { 
+                "ratios": ratio_jcvi 
+                }
         },
 
     #### Pregnancy or Delivery codes recorded (for deriving JCVI group)
@@ -442,64 +446,11 @@ jcvi_variables = dict(
 
     # vaccine eligibility dates
     elig_date=patients.categorised_as(
-        {   ###
-            "2020-12-08": "jcvi_group='01' OR jcvi_group='02' OR jcvi_group='03'",
-            ###
-            "2021-01-18": "jcvi_group='04'",
-            ###
-            "2021-02-15": "jcvi_group='05' OR jcvi_group='06'",
-            ###
-            "2021-02-22": "age_1 >= 64 AND age_1 < 65",
-            "2021-03-01": "age_1 >= 60 AND age_1 < 64",
-            ###
-            "2021-03-08": "age_1 >= 56 AND age_1 < 60",
-            "2021-03-09": "age_1 >= 55 AND age_1 < 56",
-            ###
-            "2021-03-19": "age_1 >= 50 AND age_1 < 55",
-            ###
-            "2021-04-13": "age_2 >= 45 AND age_1 < 50",
-            "2021-04-26": "age_2 >= 44 AND age_1 < 45",
-            "2021-04-27": "age_2 >= 42 AND age_1 < 44",
-            "2021-04-30": "age_2 >= 40 AND age_1 < 42",
-            ###
-            "2021-05-13": "age_2 >= 38 AND age_2 < 40",
-            "2021-05-19": "age_2 >= 36 AND age_2 < 38",
-            "2021-05-21": "age_2 >= 34 AND age_2 < 36",
-            "2021-05-25": "age_2 >= 32 AND age_2 < 34",
-            "2021-05-26": "age_2 >= 30 AND age_2 < 32",
-            ###
-            "2021-06-08": "age_2 >= 25 AND age_2 < 30",
-            "2021-06-15": "age_2 >= 23 AND age_2 < 25",
-            "2021-06-16": "age_2 >= 21 AND age_2 < 23",
-            "2021-06-18": "age_2 >= 18 AND age_2 < 21",
-            "2100-12-31": "DEFAULT",
-        },
+       dict_elig,
         return_expectations={
             "category": {"ratios": 
-            {
-            "2020-12-08": 1/22,
-            "2021-01-18": 1/22,
-            "2021-02-15": 1/22,
-            "2021-02-22": 1/22,
-            "2021-03-01": 1/22,
-            "2021-03-08": 1/22,
-            "2021-03-09": 1/22,
-            "2021-03-19": 1/22,
-            "2021-04-13": 1/22,
-            "2021-04-26": 1/22,
-            "2021-04-27": 1/22,
-            "2021-04-30": 1/22,
-            "2021-05-13": 1/22,
-            "2021-05-19": 1/22,
-            "2021-05-21": 1/22,
-            "2021-05-25": 1/22,
-            "2021-05-26": 1/22,
-            "2021-06-08": 1/22,
-            "2021-06-15": 1/22,
-            "2021-06-16": 1/22,
-            "2021-06-18": 1/22,
-            "2100-12-31": 1/22,
-            }},
+            ratio_elig
+            },
             "incidence": 1,
         },
     ),
