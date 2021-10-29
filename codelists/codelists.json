@@ -281,6 +281,42 @@
       "url": "https://codelists.opensafely.org/codelist/nhsd-primary-care-domain-refsets/palcare_cod/5fce98cf/",
       "downloaded_at": "2021-10-28 08:04:31.410219Z",
       "sha": "777b61f976301db98e5da0c5b9ceebe48222558f"
+    },
+    "opensafely-covid-identification-in-primary-care-suspected-covid-advice.csv": {
+      "id": "opensafely/covid-identification-in-primary-care-suspected-covid-advice/2020-07-16",
+      "url": "https://codelists.opensafely.org/codelist/opensafely/covid-identification-in-primary-care-suspected-covid-advice/2020-07-16/",
+      "downloaded_at": "2021-10-29 14:41:42.389003Z",
+      "sha": "b898d52ea318da16cbeea0ba2d2a1635b3673f90"
+    },
+    "opensafely-covid-identification-in-primary-care-suspected-covid-had-test.csv": {
+      "id": "opensafely/covid-identification-in-primary-care-suspected-covid-had-test/2020-07-16",
+      "url": "https://codelists.opensafely.org/codelist/opensafely/covid-identification-in-primary-care-suspected-covid-had-test/2020-07-16/",
+      "downloaded_at": "2021-10-29 14:41:42.707963Z",
+      "sha": "c540d48e1d3ecce3d56f090f56bbe6d87e6fb459"
+    },
+    "opensafely-covid-identification-in-primary-care-suspected-covid-isolation-code.csv": {
+      "id": "opensafely/covid-identification-in-primary-care-suspected-covid-isolation-code/2020-07-16",
+      "url": "https://codelists.opensafely.org/codelist/opensafely/covid-identification-in-primary-care-suspected-covid-isolation-code/2020-07-16/",
+      "downloaded_at": "2021-10-29 14:41:43.008787Z",
+      "sha": "36bba5f68368ff788ac243b5912df5db96c2b99c"
+    },
+    "opensafely-covid-identification-in-primary-care-suspected-covid-nonspecific-clinical-assessment.csv": {
+      "id": "opensafely/covid-identification-in-primary-care-suspected-covid-nonspecific-clinical-assessment/2020-07-16",
+      "url": "https://codelists.opensafely.org/codelist/opensafely/covid-identification-in-primary-care-suspected-covid-nonspecific-clinical-assessment/2020-07-16/",
+      "downloaded_at": "2021-10-29 14:41:43.322154Z",
+      "sha": "99d10fc347d107a8a7c490180ed91d39bd2e1275"
+    },
+    "opensafely-covid-identification-in-primary-care-exposure-to-disease.csv": {
+      "id": "opensafely/covid-identification-in-primary-care-exposure-to-disease/2020-06-23",
+      "url": "https://codelists.opensafely.org/codelist/opensafely/covid-identification-in-primary-care-exposure-to-disease/2020-06-23/",
+      "downloaded_at": "2021-10-29 14:41:43.644843Z",
+      "sha": "b7cd77be113fa93776d072da047dc22b4a021091"
+    },
+    "opensafely-icd-10-chapter-i.csv": {
+      "id": "opensafely/icd-10-chapter-i/10e46159",
+      "url": "https://codelists.opensafely.org/codelist/opensafely/icd-10-chapter-i/10e46159/",
+      "downloaded_at": "2021-10-29 15:08:07.726305Z",
+      "sha": "7aca1aa8a92cace55d48ddd5a62a5d13a41888e9"
     }
   }
 }

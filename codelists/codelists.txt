@@ -45,3 +45,9 @@ opensafely/covid-identification-in-primary-care-probable-covid-clinical-code/202
 opensafely/covid-identification-in-primary-care-probable-covid-sequelae/2020-07-16
 opensafely/midazolam-end-of-life/4c1b3c89
 nhsd-primary-care-domain-refsets/palcare_cod/5fce98cf
+opensafely/covid-identification-in-primary-care-suspected-covid-advice/2020-07-16
+opensafely/covid-identification-in-primary-care-suspected-covid-had-test/2020-07-16
+opensafely/covid-identification-in-primary-care-suspected-covid-isolation-code/2020-07-16
+opensafely/covid-identification-in-primary-care-suspected-covid-nonspecific-clinical-assessment/2020-07-16
+opensafely/covid-identification-in-primary-care-exposure-to-disease/2020-06-23
+opensafely/icd-10-chapter-i/10e46159

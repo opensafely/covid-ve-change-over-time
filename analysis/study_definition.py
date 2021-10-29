@@ -1,7 +1,6 @@
 from cohortextractor import (
     StudyDefinition, 
     patients, 
-    combine_codelists,
     filter_codes_by_category
 )
 
@@ -321,7 +320,7 @@ study=StudyDefinition(
     # covid test
     **covid_test_date_X(
         name="covid_test",
-        index_date="elig_date + 42 days",
+        index_date="elig_date + 43 days",
         n=6,
         test_result="any",
         return_expectations = {
@@ -329,300 +328,261 @@ study=StudyDefinition(
             "rate": "exponential_increase",
         },
     ),
+    
+    # positive covid test
+    positive_test_0_date=patients.with_test_result_in_sgss(
+        pathogen="SARS-CoV-2",
+        test_result="positive",
+        returning="date",
+        date_format="YYYY-MM-DD",
+        on_or_before="elig_date + 42 days",
+        find_last_match_in_period=True,
+        restrict_to_earliest_specimen_date=False,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01
+        },
+    ),
+    **covid_test_date_X(
+        name="positive_test",
+        index_date="elig_date + 43 days",
+        n=6,
+        test_result="positive",
+        return_expectations={
+            "date": {"earliest": start_date,  "latest" : end_date},
+            "rate": "exponential_increase",
+        },
+    ),
 
+    # probable covid case identified in primary care
+    # Will also had 'covid in primary care', but as far as I can see it was the same as this probable definition.
+    primary_care_covid_case_0_date=patients.with_these_clinical_events(
+        covid_primary_care_probable_combined,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        on_or_before="elig_date + 42 days",
+        find_last_match_in_period=True,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01
+        },
+    ),
     
-    # # positive covid test
-    # positive_test_0_date=patients.with_test_result_in_sgss(
-    #     pathogen="SARS-CoV-2",
-    #     test_result="positive",
-    #     returning="date",
-    #     date_format="YYYY-MM-DD",
-    #     on_or_before="index_date - 1 day",
-    #     find_last_match_in_period=True,
-    #     restrict_to_earliest_specimen_date=False,
-    #     return_expectations={
-    #         "date": {"earliest": "2020-02-01"},
-    #         "rate": "exponential_increase",
-    #         "incidence": 0.01
-    #     },
-    # ),
-    # **covid_test_date_X(
-    #     name = "positive_test",
-    #     index_date = "index_date",
-    #     n = 6,
-    #     test_result="positive",
-    #     return_expectations = {
-    #         "date": {"earliest": "2020-12-15",  "latest" : "2021-03-31"},
-    #         "rate": "exponential_increase",
-    #     },
-    # ),
-
-
-    # # covid case identified in primary care
-    # primary_care_covid_case_0_date=patients.with_these_clinical_events(
-    #     combine_codelists(
-    #         covid_primary_care_code,
-    #         covid_primary_care_positive_test,
-    #         covid_primary_care_sequalae,
-    #     ),
-    #     returning="date",
-    #     date_format="YYYY-MM-DD",
-    #     on_or_before="index_date - 1 day",
-    #     find_last_match_in_period=True,
-    #     return_expectations={
-    #         "date": {"earliest": "2020-02-01"},
-    #         "rate": "exponential_increase",
-    #         "incidence": 0.01
-    #     },
-    # ),
+    **with_these_clinical_events_date_X(
+        name="primary_care_covid_case",
+        n=6,
+        index_date="elig_date + 43 days",
+        codelist=covid_primary_care_probable_combined,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.05,
+        },
+    ),
     
-    # **with_these_clinical_events_date_X(
-    #     name = "primary_care_covid_case",
-    #     n = 6,
-    #     index_date = "index_date",
-    #     codelist = combine_codelists(
-    #         covid_primary_care_code,
-    #         covid_primary_care_positive_test,
-    #         covid_primary_care_sequalae,
-    #     ),
-        
-    #     return_expectations={
-    #         "date": {"earliest": "2021-04-01", "latest" : "2021-05-01"},
-    #         "rate": "uniform",
-    #         "incidence": 0.05,
-    #     },
-    # ),
+    # suspected covid case identified in primary care
+    primary_care_suspected_covid_0_date=patients.with_these_clinical_events(
+        primary_care_suspected_covid_combined,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        on_or_before="elig_date + 42 days",
+        find_last_match_in_period=True,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01
+        },
+    ),
+    **with_these_clinical_events_date_X(
+        name = "primary_care_suspected_covid",
+        n = 6,
+        index_date = "elig_date + 43 days",
+        codelist = primary_care_suspected_covid_combined,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.05,
+        },
+    ),
     
+    # emergency attendance
+    **emergency_attendance_date_X(
+        name = "emergency",
+        n = 2,
+        index_date = "elig_date + 43 days",
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.05,
+        },
+    ),
     
-    # # suspected covid case identified in primary care
-    # primary_care_suspected_covid_0_date=patients.with_these_clinical_events(
-    #     primary_care_suspected_covid_combined,
-    #     returning="date",
-    #     date_format="YYYY-MM-DD",
-    #     on_or_before="index_date - 1 day",
-    #     find_last_match_in_period=True,
-    #     return_expectations={
-    #         "date": {"earliest": "2020-02-01"},
-    #         "rate": "exponential_increase",
-    #         "incidence": 0.01
-    #     },
-    # ),
-    # **with_these_clinical_events_date_X(
-    #     name = "primary_care_suspected_covid",
-    #     n = 6,
-    #     index_date = "index_date",
-    #     codelist = primary_care_suspected_covid_combined,
-    #     return_expectations={
-    #         "date": {"earliest": "2021-04-01", "latest" : "2021-05-01"},
-    #         "rate": "uniform",
-    #         "incidence": 0.05,
-    #     },
-    # ),
+    # unplanned hospital admission
+    admitted_unplanned_0_date=patients.admitted_to_hospital(
+        returning="date_admitted",
+        on_or_before="elig_date + 42 days",
+        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+        with_patient_classification = ["1"],
+        date_format="YYYY-MM-DD",
+        find_first_match_in_period=True,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.05,
+        },
+    ),
+    **admitted_date_X(
+        name = "admitted_unplanned",
+        n = 6,
+        index_name = "admitted_unplanned",
+        index_date = "elig_date + 43 days",
+        returning="date_admitted",
+        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+        with_patient_classification = ["1"],
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.05,
+        },
+    ),
+    discharged_unplanned_0_date=patients.admitted_to_hospital(
+        returning="date_discharged",
+        on_or_before="elig_date + 42 days",
+        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+        with_patient_classification = ["1"],
+        date_format="YYYY-MM-DD",
+        find_first_match_in_period=True,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.05,
+        },
+    ), 
+    **admitted_date_X(
+        name = "discharged_unplanned",
+        n = 6,
+        index_name = "admitted_unplanned",
+        index_date = "elig_date + 43 days",
+        returning="date_discharged",
+        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+        with_patient_classification = ["1"],
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.05,
+        },
+    ),
     
+    # unplanned infectious hospital admission
+    admitted_unplanned_infectious_0_date=patients.admitted_to_hospital(
+        returning="date_admitted",
+        on_or_before="elig_date + 42 days",
+        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+        with_patient_classification = ["1"],
+        with_these_diagnoses = ICD10_I_codes,
+        date_format="YYYY-MM-DD",
+        find_first_match_in_period=True,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.05,
+        },
+    ),
+    **admitted_date_X(
+        name = "admitted_unplanned_infectious",
+        n = 6,
+        index_name = "admitted_unplanned_infectious",
+        index_date = "elig_date + 43 days",
+        returning="date_admitted",
+        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+        with_patient_classification = ["1"],
+        with_these_diagnoses = ICD10_I_codes,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.05,
+        },
+    ),
+    discharged_unplanned_infectious_0_date=patients.admitted_to_hospital(
+        returning="date_discharged",
+        on_or_before="elig_date + 42 days",
+        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+        with_patient_classification = ["1"],
+        with_these_diagnoses = ICD10_I_codes,
+        date_format="YYYY-MM-DD",
+        find_first_match_in_period=True,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.05,
+        },
+    ), 
+    **admitted_date_X(
+        name = "discharged_unplanned_infectious",
+        n = 6,
+        index_name = "admitted_unplanned_infectious",
+        index_date = "elig_date + 43 days",
+        returning="date_discharged",
+        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+        with_patient_classification = ["1"],
+        with_these_diagnoses = ICD10_I_codes,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.05,
+        },
+    ),
     
-    # # probable covid case identified in primary care
-    # primary_care_probable_covid_0_date=patients.with_these_clinical_events(
-    #     covid_primary_care_probable_combined,
-    #     returning="date",
-    #     date_format="YYYY-MM-DD",
-    #     on_or_before="index_date - 1 day",
-    #     find_last_match_in_period=True,
-    #     return_expectations={
-    #         "date": {"earliest": "2020-02-01"},
-    #         "rate": "exponential_increase",
-    #         "incidence": 0.01
-    #     },
-    # ),
-    # **with_these_clinical_events_date_X(
-    #     name = "primary_care_probable_covid",
-    #     n = 6,
-    #     index_date = "index_date",
-    #     codelist = covid_primary_care_probable_combined,
-    #     return_expectations={
-    #         "date": {"earliest": "2021-04-01", "latest" : "2021-05-01"},
-    #         "rate": "uniform",
-    #         "incidence": 0.05,
-    #     },
-    # ),
+    # covid hospital adamission
+    covidadmitted_0_date=patients.admitted_to_hospital(
+        returning="date_admitted",
+        with_these_diagnoses=covid_codes,
+        on_or_before="elig_date + 42 days",
+        date_format="YYYY-MM-DD",
+        find_first_match_in_period=True,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01,
+        },
+    ),
+    **admitted_date_X(
+        name = "covidadmitted",
+        n = 6,
+        index_name = "covidadmitted",
+        index_date = "elig_date + 42 days",
+        returning="date_admitted",
+        with_these_diagnoses=covid_codes,
+        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.05,
+        },
+    ),
     
-    
-    # # emergency attendance
-    # **emergency_attendance_date_X(
-    #     name = "emergency",
-    #     n = 2,
-    #     index_date = "index_date",
-    #     return_expectations={
-    #         "date": {"earliest": "2021-05-01", "latest" : "2021-06-01"},
-    #         "rate": "uniform",
-    #         "incidence": 0.05,
-    #     },
-    # ),
-    
-    # # unplanned hospital admission
-    # admitted_unplanned_0_date=patients.admitted_to_hospital(
-    #     returning="date_admitted",
-    #     on_or_before="index_date - 1 day",
-    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-    #     with_patient_classification = ["1"],
-    #     date_format="YYYY-MM-DD",
-    #     find_first_match_in_period=True,
-    #     return_expectations={
-    #         "date": {"earliest": "2020-05-01", "latest" : "2021-06-01"},
-    #         "rate": "uniform",
-    #         "incidence": 0.05,
-    #     },
-    # ),
-    # **admitted_date_X(
-    #     name = "admitted_unplanned",
-    #     n = 6,
-    #     index_name = "admitted_unplanned",
-    #     index_date = "index_date",
-    #     returning="date_admitted",
-    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-    #     with_patient_classification = ["1"],
-    #     return_expectations={
-    #         "date": {"earliest": "2021-05-01", "latest" : "2021-06-01"},
-    #         "rate": "uniform",
-    #         "incidence": 0.05,
-    #     },
-    # ),
-    # discharged_unplanned_0_date=patients.admitted_to_hospital(
-    #     returning="date_discharged",
-    #     on_or_before="index_date - 1 day",
-    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-    #     with_patient_classification = ["1"],
-    #     date_format="YYYY-MM-DD",
-    #     find_first_match_in_period=True,
-    #     return_expectations={
-    #         "date": {"earliest": "2020-05-01", "latest" : "2021-06-01"},
-    #         "rate": "uniform",
-    #         "incidence": 0.05,
-    #     },
-    # ), 
-    # **admitted_date_X(
-    #     name = "discharged_unplanned",
-    #     n = 6,
-    #     index_name = "admitted_unplanned",
-    #     index_date = "index_date",
-    #     returning="date_discharged",
-    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-    #     with_patient_classification = ["1"],
-    #     return_expectations={
-    #         "date": {"earliest": "2021-05-01", "latest" : "2021-06-01"},
-    #         "rate": "uniform",
-    #         "incidence": 0.05,
-    #     },
-    # ),
-    
-    
-    # # unplanned infectious hospital admission
-    # admitted_unplanned_infectious_0_date=patients.admitted_to_hospital(
-    #     returning="date_admitted",
-    #     on_or_before="index_date - 1 day",
-    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-    #     with_patient_classification = ["1"],
-    #     with_these_diagnoses = ICD10_I_codes,
-    #     date_format="YYYY-MM-DD",
-    #     find_first_match_in_period=True,
-    #     return_expectations={
-    #         "date": {"earliest": "2020-05-01", "latest" : "2021-06-01"},
-    #         "rate": "uniform",
-    #         "incidence": 0.05,
-    #     },
-    # ),
-    # **admitted_date_X(
-    #     name = "admitted_unplanned_infectious",
-    #     n = 6,
-    #     index_name = "admitted_unplanned_infectious",
-    #     index_date = "index_date",
-    #     returning="date_admitted",
-    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-    #     with_patient_classification = ["1"],
-    #     with_these_diagnoses = ICD10_I_codes,
-    #     return_expectations={
-    #         "date": {"earliest": "2021-05-01", "latest" : "2021-06-01"},
-    #         "rate": "uniform",
-    #         "incidence": 0.05,
-    #     },
-    # ),
-    # discharged_unplanned_infectious_0_date=patients.admitted_to_hospital(
-    #     returning="date_discharged",
-    #     on_or_before="index_date - 1 day",
-    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-    #     with_patient_classification = ["1"],
-    #     with_these_diagnoses = ICD10_I_codes,
-    #     date_format="YYYY-MM-DD",
-    #     find_first_match_in_period=True,
-    #     return_expectations={
-    #         "date": {"earliest": "2020-05-01", "latest" : "2021-06-01"},
-    #         "rate": "uniform",
-    #         "incidence": 0.05,
-    #     },
-    # ), 
-    # **admitted_date_X(
-    #     name = "discharged_unplanned_infectious",
-    #     n = 6,
-    #     index_name = "admitted_unplanned_infectious",
-    #     index_date = "index_date",
-    #     returning="date_discharged",
-    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-    #     with_patient_classification = ["1"],
-    #     with_these_diagnoses = ICD10_I_codes,
-    #     return_expectations={
-    #         "date": {"earliest": "2021-05-01", "latest" : "2021-06-01"},
-    #         "rate": "uniform",
-    #         "incidence": 0.05,
-    #     },
-    # ),
-    
-    # # covid hospital adamission
-    # covidadmitted_0_date=patients.admitted_to_hospital(
-    #     returning="date_admitted",
-    #     with_these_diagnoses=covid_codes,
-    #     on_or_before="index_date - 1 day",
-    #     date_format="YYYY-MM-DD",
-    #     find_first_match_in_period=True,
-    #     return_expectations={
-    #         "date": {"earliest": "2020-02-01"},
-    #         "rate": "exponential_increase",
-    #         "incidence": 0.01,
-    #     },
-    # ),
-    # **admitted_date_X(
-    #     name = "covidadmitted",
-    #     n = 6,
-    #     index_name = "covidadmitted",
-    #     index_date = "index_date",
-    #     returning="date_admitted",
-    #     with_these_diagnoses=covid_codes,
-    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-    #     return_expectations={
-    #         "date": {"earliest": "2021-05-01", "latest" : "2021-06-01"},
-    #         "rate": "uniform",
-    #         "incidence": 0.05,
-    #     },
-    # ),
-    
-    # # covid death
-    # coviddeath_date=patients.with_these_codes_on_death_certificate(
-    #     covid_codes,
-    #     returning="date_of_death",
-    #     date_format="YYYY-MM-DD",
-    #     return_expectations={
-    #         "date": {"earliest": "2021-06-01", "latest" : "2021-08-01"},
-    #         "rate": "uniform",
-    #         "incidence": 0.02
-    #     },
-    # ),
-    # # any death
-    # death_date=patients.died_from_any_cause(
-    #     returning="date_of_death",
-    #     date_format="YYYY-MM-DD",
-    #     return_expectations={
-    #         "date": {"earliest": "2021-06-01", "latest" : "2021-08-01"},
-    #         "rate": "uniform",
-    #         "incidence": 0.02
-    #     },
-    # ),
+    # covid death
+    coviddeath_date=patients.with_these_codes_on_death_certificate(
+        covid_codes,
+        returning="date_of_death",
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.02
+        },
+    ),
+    # any death
+    death_date=patients.died_from_any_cause(
+        returning="date_of_death",
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.02
+        },
+    ),
 
 )
