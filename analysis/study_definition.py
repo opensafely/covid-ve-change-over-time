@@ -129,12 +129,16 @@ study=StudyDefinition(
         return_expectations={"incidence": 0.01},
     ),
 
+    ##########################
+    ### CLINICAL VARIABLES ###
+    ##########################
+
     ######################
     ### COVID VACCINES ###
     ######################
 
     ## any covid vaccination, identified by target disease
-    covid_vax_disease_1_date = patients.with_tpp_vaccination_record(
+    covid_vax_disease_1_date=patients.with_tpp_vaccination_record(
         target_disease_matches="SARS-2 CORONAVIRUS",
         on_or_after=start_date,
         find_first_match_in_period=True,
@@ -583,6 +587,16 @@ study=StudyDefinition(
             "rate": "uniform",
             "incidence": 0.02
         },
+    ),
+
+    # De-registration
+    dereg_date=patients.date_deregistered_from_all_supported_practices(
+        on_or_after="elig_date",
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date,},
+            "incidence": 0.001
+        }
     ),
 
 )
