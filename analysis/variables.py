@@ -104,7 +104,7 @@ jcvi_variables = dict(
         (pregdel_pre_date <= preg_36wks_date OR NOT pregdel_pre_date)
         """,
         preg_36wks_date=patients.with_these_clinical_events(
-            preg,
+            preg_primis,
             returning="date",
             find_last_match_in_period=True,
             between=[days(ref_cev, -252), days(ref_cev, -1)],
@@ -112,7 +112,7 @@ jcvi_variables = dict(
         ),
         # date of last delivery code recorded in 36 weeks before elig_date
         pregdel_pre_date=patients.with_these_clinical_events(
-            pregdel,
+            pregdel_primis,
             returning="date",
             find_last_match_in_period=True,
             between=[days(ref_cev, -252), days(ref_cev, -1)],
@@ -126,7 +126,7 @@ jcvi_variables = dict(
 
         # SHIELDED GROUP - first flag all patients with "high risk" codes
         severely_clinically_vulnerable=patients.with_these_clinical_events(
-            shield,
+            shield_primis,
             returning="binary_flag",
             on_or_before=days(ref_cev, -1),
             find_last_match_in_period=True,
@@ -140,7 +140,7 @@ jcvi_variables = dict(
 
         # NOT SHIELDED GROUP (medium and low risk) - only flag if later than 'shielded'
         less_vulnerable=patients.with_these_clinical_events(
-            nonshield,
+            nonshield_primis,
             between=["severely_clinically_vulnerable_date + 1 day", days(ref_cev, -1)],
         ),
         return_expectations={"incidence": 0.01},
@@ -149,7 +149,7 @@ jcvi_variables = dict(
     #### at-risk group variables
     # Asthma Diagnosis code
     astdx=patients.with_these_clinical_events(
-        ast,
+        ast_primis,
         returning="binary_flag",
         on_or_before=days(ref_ar, -1),
         return_expectations={"incidence": 0.05},
@@ -164,25 +164,25 @@ jcvi_variables = dict(
         # day before date at which at risk group became eligible
         # Asthma Admission codes
         astadm=patients.with_these_clinical_events(
-            astadm,
+            astadm_primis,
             returning="binary_flag",
             on_or_before=days(ref_ar, -1),
         ),
         # Asthma systemic steroid prescription code in month 1
         astrxm1=patients.with_these_medications(
-            astrx,
+            astrx_primis,
             returning="binary_flag",
             between=[days(ref_ar, -31), days(ref_ar, -1)],
         ),
         # Asthma systemic steroid prescription code in month 2
         astrxm2=patients.with_these_medications(
-            astrx,
+            astrx_primis,
             returning="binary_flag",
             between=[days(ref_ar, -61), days(ref_ar, -32)],
         ),
         # Asthma systemic steroid prescription code in month 3
         astrxm3=patients.with_these_medications(
-            astrx,
+            astrx_primis,
             returning="binary_flag",
             between=[days(ref_ar, -91), days(ref_ar, -62)],
         ),
@@ -191,7 +191,7 @@ jcvi_variables = dict(
 
     # Chronic Respiratory Disease other than asthma
     resp_group=patients.with_these_clinical_events(
-        resp_cov,
+        resp_primis,
         returning="binary_flag",
         on_or_before=days(ref_ar, -1),
         return_expectations={"incidence": 0.02},
@@ -199,7 +199,7 @@ jcvi_variables = dict(
 
     # Chronic Neurological Disease including Significant Learning Disorder
     cns_group=patients.with_these_clinical_events(
-        cns_cov,
+        cns_primis,
         returning="binary_flag",
         on_or_before=days(ref_ar, -1),
         return_expectations={"incidence": 0.01},
@@ -212,14 +212,14 @@ jcvi_variables = dict(
         (dmres_date < diab_date)
         """,
         diab_date=patients.with_these_clinical_events(
-            diab,
+            diab_primis,
             returning="date",
             find_last_match_in_period=True,
             on_or_before=days(ref_ar, -1),
             date_format="YYYY-MM-DD",
         ),
         dmres_date=patients.with_these_clinical_events(
-            dmres,
+            dmres_primis,
             returning="date",
             find_last_match_in_period=True,
             on_or_before=days(ref_ar, -1),
@@ -236,7 +236,7 @@ jcvi_variables = dict(
         """,
         # Severe Mental Illness codes
         sev_mental_date=patients.with_these_clinical_events(
-            sev_mental,
+            sev_mental_primis,
             returning="date",
             find_last_match_in_period=True,
             on_or_before=days(ref_ar, -1),
@@ -244,7 +244,7 @@ jcvi_variables = dict(
         ),
         # Remission codes relating to Severe Mental Illness
         smhres_date=patients.with_these_clinical_events(
-            smhres,
+            smhres_primis,
             returning="date",
             find_last_match_in_period=True,
             on_or_before=days(ref_ar, -1),
@@ -255,7 +255,7 @@ jcvi_variables = dict(
 
     # Chronic heart disease codes
     chd_group=patients.with_these_clinical_events(
-        chd_cov,
+        chd_primis,
         returning="binary_flag",
         on_or_before=days(ref_ar, -1),
         return_expectations={"incidence": 0.01},
@@ -270,7 +270,7 @@ jcvi_variables = dict(
         """,
         # Chronic kidney disease codes - all stages
         ckd15_date=patients.with_these_clinical_events(
-            ckd15,
+            ckd15_primis,
             returning="date",
             find_last_match_in_period=True,
             on_or_before=days(ref_ar, -1),
@@ -278,7 +278,7 @@ jcvi_variables = dict(
         ),
         # Chronic kidney disease codes-stages 3 - 5
         ckd35_date=patients.with_these_clinical_events(
-            ckd35,
+            ckd35_primis,
             returning="date",
             find_last_match_in_period=True,
             on_or_before=days(ref_ar, -1),
@@ -286,7 +286,7 @@ jcvi_variables = dict(
         ),
         # Chronic kidney disease diagnostic codes
         ckd=patients.with_these_clinical_events(
-            ckd_cov,
+            ckd_primis,
             returning="binary_flag",
             on_or_before=days(ref_ar, -1),
         ),
@@ -295,7 +295,7 @@ jcvi_variables = dict(
 
     # Chronic Liver disease codes
     cld_group=patients.with_these_clinical_events(
-        cld,
+        cld_primis,
         returning="binary_flag",
         on_or_before=days(ref_ar, -1),
         return_expectations={"incidence": 0.01},
@@ -306,13 +306,13 @@ jcvi_variables = dict(
         "immrx OR immdx", 
         # immunosuppression diagnosis codes
         immdx=patients.with_these_clinical_events(
-            immdx_cov,
+            immdx_primis,
             returning="binary_flag",
             on_or_before=days(ref_ar, -1),
         ),
         # Immunosuppression medication codes
         immrx=patients.with_these_medications(
-            immrx,
+            immrx_primis,
             returning="binary_flag",
             between=[days(ref_ar, -6*30), days(ref_ar, -1)],
         ),
@@ -321,7 +321,7 @@ jcvi_variables = dict(
 
     # Asplenia or Dysfunction of the Spleen codes
     spln_group=patients.with_these_clinical_events(
-        spln_cov,
+        spln_primis,
         returning="binary_flag",
         on_or_before=days(ref_ar, -1),
         return_expectations={"incidence": 0.01},
@@ -329,7 +329,7 @@ jcvi_variables = dict(
 
     # Wider Learning Disability
     learndis_group=patients.with_these_clinical_events(
-        learndis,
+        learndis_primis,
         returning="binary_flag",
         on_or_before=days(ref_ar, -1),
         return_expectations={"incidence": 0.01},
@@ -343,14 +343,14 @@ jcvi_variables = dict(
         bmi_value_temp >= 40
         """,
         bmi_stage_date=patients.with_these_clinical_events(
-            bmi_stage,
+            bmi_stage_primis,
             returning="date",
             find_last_match_in_period=True,
             on_or_before=days(ref_ar, -1),
             date_format="YYYY-MM-DD",
         ),
         sev_obesity_date=patients.with_these_clinical_events(
-            sev_obesity,
+            sev_obesity_primis,
             returning="date",
             find_last_match_in_period=True,
             ignore_missing_values=True,
@@ -358,7 +358,7 @@ jcvi_variables = dict(
             date_format="YYYY-MM-DD",
         ),
         bmi_date=patients.with_these_clinical_events(
-            bmi,
+            bmi_primis,
             returning="date",
             ignore_missing_values=True,
             find_last_match_in_period=True,
@@ -366,7 +366,7 @@ jcvi_variables = dict(
             date_format="YYYY-MM-DD",
         ),
         bmi_value_temp=patients.with_these_clinical_events(
-            bmi,
+            bmi_primis,
             returning="numeric_value",
             ignore_missing_values=True,
             find_last_match_in_period=True,
@@ -400,7 +400,7 @@ jcvi_variables = dict(
 
     # Patients in long-stay nursing and residential care
     longres_group=patients.with_these_clinical_events(
-        longres,
+        longres_primis,
         returning="binary_flag",
         on_or_before=days(start_date, -1),
         return_expectations={"incidence": 0.01},
