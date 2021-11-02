@@ -50,9 +50,9 @@ study=StudyDefinition(
         ),
     ),
 
-    ####################
-    ### DEMOGRAPHICS ###
-    ####################
+    #############################
+    ### DEMOGRAPHIC VARIABLES ###
+    #############################
 
     # ETHNICITY IN 6 CATEGORIES
     # ethnicity
@@ -111,23 +111,29 @@ study=StudyDefinition(
     ),
 
     # Patients in long-stay nursing and residential care
-    # to capture patients entering/leaving long-stay nursing and residential care, maybe not necessary
-    # most recent date before elig_date + 6 weeks
-    # longres_date_before=patients.with_these_clinical_events(
-    #     longres,
-    #     returning="date",
-    #     on_or_before="elig_date + 42 days",
-    #     find_last_match_in_period=True,
-    #     return_expectations={"incidence": 0.01},
-    # ),
-    # # earliest date after elig_date + 6 weeks
-    # longres_date_after=patients.with_these_clinical_events(
-    #     longres,
-    #     returning="date",
-    #     on_or_after="elig_date + 42 days",
-    #     find_first_match_in_period=True,
-    #     return_expectations={"incidence": 0.01},
-    # ),
+    longres_0_date=patients.with_these_clinical_events(
+        longres_primis,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        on_or_before="elig_date + 42 days",
+        find_last_match_in_period=True,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01
+        },
+    ),
+    **with_these_clinical_events_date_X(
+        name="longres",
+        n=6,
+        index_date="elig_date + 43 days",
+        codelist=longres_primis,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.01,
+        },
+    ),
 
     ##########################
     ### CLINICAL VARIABLES ###
@@ -838,7 +844,7 @@ study=StudyDefinition(
     # electronic frailty index
     # date currently hard-coded because there are no other dates available for efi
     # check that this still the case, otherwise change to recurrent variable like those above
-    efi = patients.with_these_decision_support_values(
+    efi=patients.with_these_decision_support_values(
         algorithm = "electronic_frailty_index",
         on_or_before = "2020-12-08", 
         find_last_match_in_period = True,
