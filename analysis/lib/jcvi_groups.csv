@@ -1,5 +1,4 @@
 group,definition
-00,DEFAULT
 01,longres_group
 02,age_1 >=80
 03,age_1 >=75
@@ -12,3 +11,4 @@ group,definition
 10,age_2 >=40
 11,age_2 >=30
 12,age_2 >=18
+99,DEFAULT

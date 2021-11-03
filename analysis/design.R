@@ -34,7 +34,6 @@ jsonlite::write_json(study_dates, path = here::here("analysis", "lib", "study_da
 jcvi_groups <- 
 tribble(
     ~group, ~definition,
-    "00", "DEFAULT",
     "01", "longres_group",
     "02", "age_1 >=80",
     "03", "age_1 >=75",
@@ -46,7 +45,8 @@ tribble(
     "09", "age_1 >=50",
     "10", "age_2 >=40",
     "11", "age_2 >=30",
-    "12", "age_2 >=18"
+    "12", "age_2 >=18",
+    "99", "DEFAULT",
 )
 
 readr::write_csv(jcvi_groups, here::here("analysis", "lib", "jcvi_groups.csv"))
