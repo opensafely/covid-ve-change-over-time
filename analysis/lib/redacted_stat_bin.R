@@ -1,3 +1,6 @@
+### Function under development. May abandon so ignore for now.
+
+
 # This is a function to create a frequency polygon that can be plotted by colour and/or faceted.
 # The user can choose whether to output a plot or the data to generate a plot.
 # A threshold can be set on the minimum number of samples in each bin.
