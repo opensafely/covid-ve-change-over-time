@@ -1,7 +1,7 @@
 ######################################
 
 # This script plots the distribution of second vaccination dates within
-# eligibility_date*regio strata
+# eligibility_date*region strata
 
 ######################################
 
@@ -82,13 +82,13 @@ data_extract <- data_extract0 %>%
   mutate(patient_id = row_number()) %>% # create new ID variable, as duplicates after binding
   arrange(patient_id)
 
-
-# check format of elig_date
+cat("#### check format of elig_date ####\n")
 elig_date_test <- data_extract %>%
   select(elig_date) %>%
   filter(!is.na(elig_date) &
            str_detect(as.character(elig_date), "\\d{4}-\\d{2}-\\d{2}"))
 
+# only for dummy data:
 if (nrow(elig_date_test) == 0) {
   
   cat("#### fix dummy data ####\n")
@@ -253,6 +253,7 @@ second_vax_dates_plot <-
     plot_data %>%
       ggplot(aes(x = value, y = n, colour = name)) +
       geom_line() +
+      # line at elig_date + 10 weeks, as this is potentially going to be time_zero for comparisons
       geom_vline(xintercept = as.Date(plot_date, format = "%Y-%m-%d") + weeks(10),
                  linetype = "dashed") +
       facet_wrap(~ region, scales = "free_y") +
@@ -273,6 +274,7 @@ second_vax_dates_plot <-
     
   }
 
+cat("#### generate plots ####\n")
 # plots of second vax dates for all eligibility dates, stratified by region
 for (d in as.character(sort(unique(data_vaccine_2$elig_date)))) {
   second_vax_dates_plot(d)
