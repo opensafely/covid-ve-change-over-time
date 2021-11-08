@@ -57,9 +57,9 @@ data_extract0 <- read_csv(
     age_2 = col_integer(),
     
     ## Variables for applying exclusion criteria
-    positive_test_0_date,
-    primary_care_covid_case_0_date,
-    primary_care_suspected_covid_0_date,
+    # positive_test_0_date,
+    # primary_care_covid_case_0_date,
+    # primary_care_suspected_covid_0_date,
     
     
     ## Vaccination variables
