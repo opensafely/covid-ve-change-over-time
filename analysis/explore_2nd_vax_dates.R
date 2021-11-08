@@ -45,16 +45,24 @@ data_extract0 <- read_csv(
     ## Identifier
     patient_id = col_integer(),
     
+    ## Eligibiloty dates
     elig_date = col_date(format="%Y-%m-%d"),
     jcvi_group = col_character(),
     
-    # UK region
+    ## UK region
     region = col_character(),
     
+    ## Age
     age_1 = col_integer(),
     age_2 = col_integer(),
     
-    ## vaccination variables
+    ## Variables for applying exclusion criteria
+    positive_test_0_date,
+    primary_care_covid_case_0_date,
+    primary_care_suspected_covid_0_date,
+    
+    
+    ## Vaccination variables
     # First COVID vaccination date
     covid_vax_az_1_date = col_date(format="%Y-%m-%d"),
     covid_vax_az_2_date = col_date(format="%Y-%m-%d"),
