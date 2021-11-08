@@ -57,10 +57,17 @@ data_extract0 <- read_csv(
     age_2 = col_integer(),
     
     ## Variables for applying exclusion criteria
-    # positive_test_0_date,
-    # primary_care_covid_case_0_date,
-    # primary_care_suspected_covid_0_date,
-    
+    positive_test_0_date = col_date(format="%Y-%m-%d"),
+    primary_care_covid_case_0_date = col_date(format="%Y-%m-%d"),
+    primary_care_suspected_covid_0_date = col_date(format="%Y-%m-%d"),
+    covidadmitted_0_date = col_date(format="%Y-%m-%d"),
+    longres_0_date = col_date(format="%Y-%m-%d"),
+    endoflife_0_date = col_date(format="%Y-%m-%d"),
+    midazolam_0_date = col_date(format="%Y-%m-%d"),
+    sex = col_character(),
+    ethnicity_6 = col_character(),
+    ethnicity_6_sus = col_character(),
+    imd = col_character(),
     
     ## Vaccination variables
     # First COVID vaccination date
@@ -142,8 +149,38 @@ if (nrow(elig_date_test) == 0) {
 
 }
 
-cat("#### initial clean ####\n")
-data_vaccines <- data_extract %>%
+data_processed <- data_extract %>%
+  # derive ethnicity variable
+  mutate(
+    # Ethnicity
+    ethnicity = if_else(is.na(ethnicity_6), ethnicity_6_sus, ethnicity_6),
+    ethnicity = fct_case_when(
+      ethnicity == "1" ~ "White",
+      ethnicity == "4" ~ "Black",
+      ethnicity == "3" ~ "South Asian",
+      ethnicity == "2" ~ "Mixed",
+      ethnicity == "5" ~ "Other",
+      TRUE ~ "Missing"
+    ),
+  ) %>%
+  # apply exclusion criteria
+  filter(
+    !(ethnicity %in% "Missing"),
+    !(sex %in% ""),
+    !(imd %in% ""),
+    !(region %in% ""),
+    is.na(longres_0_date),
+    is.na(endoflife_0_date),
+    is.na(midazolam_0_date),
+    is.na(positive_test_0_date),
+    is.na(primary_care_covid_case_0_date),
+    is.na(primary_care_suspected_covid_0_date),
+    is.na(covidadmitted_0_date)
+  )
+  
+
+cat("#### clean vaccine data ####\n")
+data_vaccines <- data_processed %>%
   filter(!(jcvi_group %in% "99"),
          !(elig_date %in% "2100-12-31")) %>%
   mutate(age = if_else(jcvi_group %in% c("10","11","12"), age_2, age_1)) %>%
@@ -170,7 +207,7 @@ data_keep <- data_vaccines %>%
   select(patient_id)
 
 cat("#### only plot if 2nd dose received [6,14) weeks after 1st dose ####\n")
-data_remove <- data_extract %>%
+data_remove <- data_processed %>%
   filter(
     !((covid_vax_pfizer_1_date + weeks(6) <= covid_vax_pfizer_2_date & 
        covid_vax_pfizer_2_date < covid_vax_pfizer_1_date + weeks(14)) |
