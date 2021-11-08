@@ -1185,9 +1185,21 @@ study=StudyDefinition(
     ),
     
     # emergency attendance
+     # emergency attendance
+    emergency_attendance_0_date=patients.attended_emergency_care(
+        returning="date_arrived",
+        on_or_before="elig_date + 42 days",
+        find_last_match_in_period=True,
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01
+        },
+    ),
     **emergency_attendance_date_X(
         name = "emergency",
-        n = 2,
+        n = 6,
         index_date = "elig_date + 43 days",
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
