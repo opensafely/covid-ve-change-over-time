@@ -54,6 +54,13 @@ study=StudyDefinition(
     ### DEMOGRAPHIC VARIABLES ###
     #############################
 
+    dob=patients.date_of_birth(
+        date_format="YYYY-MM",
+        return_expectations={
+            "incidence": 1
+        }
+    ),
+
     # ETHNICITY IN 6 CATEGORIES
     # ethnicity
     ethnicity_6=patients.with_these_clinical_events(
