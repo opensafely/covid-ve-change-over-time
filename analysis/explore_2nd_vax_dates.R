@@ -341,6 +341,6 @@ second_vax_dates_plot <-
 
 cat("#### generate plots ####\n")
 # plots of second vax dates for all eligibility dates, stratified by region
-for (d in as.character(sort(unique(data_vaccine_2$elig_date)))) {
+for (d in as.character(sort(unique(data_vaccine$elig_date)))) {
   second_vax_dates_plot(d)
 }
