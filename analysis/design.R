@@ -87,25 +87,3 @@ tribble(
 )
 
 readr::write_csv(elig_dates, here::here("analysis", "lib", "elig_dates.csv"))
-
-# variable labels ----
-
-
-## variable labels
-# variable_labels <-
-#   list(
-#     vax1_type ~ "Vaccine type",
-#     vax1_type_descr ~ "Vaccine type",
-#     age ~ "Age",
-#     ageband ~ "Age",
-#     sex ~ "Sex",
-#     ethnicity_combined ~ "Ethnicity",
-#     imd_Q5 ~ "IMD",
-#     region ~ "Region",
-#     stp ~ "STP",
-#     vax1_day ~ "Day of vaccination",
-#     jcvi_group ~ "JCVI priority group"
-#   ) %>%
-#   set_names(., map_chr(., all.vars))
-# 
-# write_rds(variable_labels, here("analysis", "lib", "variable_labels.rds"))
