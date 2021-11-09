@@ -5,8 +5,17 @@ expectations:
 
 actions:
 
+  design:
+    run: r:latest analysis/design.R
+    outputs:
+      highly_sensitive:
+        dates_json: analysis/lib/dates.json
+        dates_rds: analysis/lib/dates.rds
+
   generate_study_population:
     run: cohortextractor:latest generate_cohort --study-definition study_definition
+    needs: 
+    - design
     outputs:
       highly_sensitive:
         cohort: output/input.csv
