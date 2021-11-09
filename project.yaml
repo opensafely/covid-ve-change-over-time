@@ -9,8 +9,10 @@ actions:
     run: r:latest analysis/design.R
     outputs:
       highly_sensitive:
-        dates_json: analysis/lib/dates.json
-        dates_rds: analysis/lib/dates.rds
+        study_dates_json: analysis/lib/study_dates.json
+        study_dates_rds: analysis/lib/study_dates.rds
+        jcvi_groups: analysis/lib/jcvi_groups.csv
+        elig_dates: analysis/lib/elig_dates.csv
 
   generate_study_population:
     run: cohortextractor:latest generate_cohort --study-definition study_definition
