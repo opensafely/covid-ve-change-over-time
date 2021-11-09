@@ -1,7 +1,10 @@
 ######################################
 
-# This script plots the distribution of second vaccination dates within
-# eligibility_date*region strata
+# This script:
+# - reads the extracted data
+# - processes the extracted data
+# - cleans the vaccination data to identify second doses of pfizer and az
+# - plots the distribution of second vaccination dates within eligibility_date*region strata
 
 ######################################
 
