@@ -398,6 +398,8 @@ jcvi_variables = dict(
             },
     ),
 
+    ### NEED TO THINK ABOUT HOW CAREHOME / LONGSTAY RESIDENTIAL HOME DEFINED
+    ### WILL WE EXCLUDE ALL IN LONGSTAY RESIDETNIAL, OR ONLY THOSE IN CARE HOMES FOR OLDER ADULTS (I.E. JCVI GROUP 1)
     # Patients in long-stay nursing and residential care
     longres_group=patients.with_these_clinical_events(
         longres_primis,
