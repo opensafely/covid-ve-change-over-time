@@ -149,6 +149,8 @@ if (nrow(elig_date_test) == 0) {
 
 }
 
+
+cat("#### process extracted data ####\n")
 data_processed <- data_extract %>%
   # derive ethnicity variable
   mutate(
@@ -165,13 +167,17 @@ data_processed <- data_extract %>%
   ) %>%
   # apply exclusion criteria
   filter(
+    # remove if any missing data for key variables
     !(ethnicity %in% "Missing"),
     !(sex %in% ""),
     !(imd %in% ""),
     !(region %in% ""),
+    # remove if in carehome on or before elig_date + 42 days (may need to reconsider carehome definition)
     is.na(longres_0_date),
+    # remove if initialed end of life care on or before elig_date + 42 days
     is.na(endoflife_0_date),
     is.na(midazolam_0_date),
+    # remove if evidence of covid infection on or before elig_date + 42 days
     is.na(positive_test_0_date),
     is.na(primary_care_covid_case_0_date),
     is.na(primary_care_suspected_covid_0_date),
@@ -180,70 +186,79 @@ data_processed <- data_extract %>%
   
 
 cat("#### clean vaccine data ####\n")
-data_vaccines <- data_processed %>%
+data_vaccine <- data_processed %>%
+  # remove dummy groups and dates
   filter(!(jcvi_group %in% "99"),
          !(elig_date %in% "2100-12-31")) %>%
+  # calculate age based on JCVI group definition
   mutate(age = if_else(jcvi_group %in% c("10","11","12"), age_2, age_1)) %>%
   select(patient_id, jcvi_group, elig_date, age, region, starts_with("covid_vax")) %>%
-  rename_with(.fn = ~str_remove_all(., "covid_vax_|_date"), .cols = starts_with("covid_vax")) %>%
-  pivot_longer(
-    cols = contains(c("disease", "pfizer", "az", "moderna")),
-    names_to = c(".value", "n"),
-    names_pattern = "(.+)_(.)"
-  ) 
-
-cat("#### filter vaccines to either pfizer or az ####\n")
-data_keep <- data_vaccines %>%
+  # rearrange to long format
+  pivot_longer(cols = starts_with("covid")) %>%
+  # extract brand name
+  mutate(across(name, ~str_remove_all(., "covid_vax_|_date"))) %>%
+  # remove if vax date missing
+  filter(!is.na(value)) %>%
+  # extract sequence of brand
+  mutate(across(name, ~str_remove(.x, "_\\d"))) %>%
+  # remove duplicates
+  distinct() %>%
+  # create dummy variable vax
+  mutate(vax = TRUE) %>%
+  # order each patient by value (vax date)
+  arrange(patient_id, value) %>%
+  # rearrange to wide with indicator variable for each brand (each row is a vax date)
+  pivot_wider(names_from = name, values_from = vax) %>%
+  mutate(across(c(moderna, disease, pfizer, az),
+                ~if_else(is.na(.x), FALSE, .x))) %>%
+  # only assign brand if that was the only brand recorded on that date (OK if disease code used on same date)
+  mutate(brand = case_when(
+    moderna & !(pfizer | az) ~ "moderna",
+    pfizer & !(moderna | az) ~ "pfizer",
+    az & !(moderna | pfizer) ~ "az",
+    TRUE ~ "unknown"
+  )) %>%
+  # remove indicator variables
+  select(-moderna, -disease, -pfizer, -az) %>%
+  # rank the dates within each patient (shouldn't be any ties)
   group_by(patient_id) %>%
-  summarise(across(c("disease", "pfizer", "az", "moderna"), ~sum(!is.na(.)))) %>%
+  mutate(dose = rank(value, ties.method = "min")) %>%
   ungroup() %>%
-  # check with someone whether 'disease' should be used to check for errors
-  select(-disease) %>%
-  # remove all patients with a moderna vaccine
-  filter(moderna == 0) %>%
-  select(-moderna) %>%
-  # remove if pfizer and az recorded for a single patient
-  filter(!(pfizer > 0 & az > 0)) %>%
-  select(patient_id)
+  # only keep 1st and 2nd doses
+  filter(dose %in% 1:2) %>%
+  # count number of each brand per patient
+  group_by(patient_id, brand) %>%
+  mutate(n = n()) %>%
+  ungroup() %>%
+  # only keep if 2 doses, and 1st and 2nd dose either both pfizer or both az
+  filter(n==2, brand %in% c("pfizer", "az")) %>%
+  select(-n) %>%
+  # rearrange to wide with a variable for each of 1st and 2nd dose
+  pivot_wider(names_from = dose, values_from = value, names_prefix = "dose_") %>%
+  # only keep if 2nd dose received [6,14) weeks after 1st dose
+  filter(dose_1 + weeks(6) <= dose_2 & dose_2 < dose_1 + weeks(14))
 
-cat("#### only plot if 2nd dose received [6,14) weeks after 1st dose ####\n")
-data_remove <- data_processed %>%
-  filter(
-    !((covid_vax_pfizer_1_date + weeks(6) <= covid_vax_pfizer_2_date & 
-       covid_vax_pfizer_2_date < covid_vax_pfizer_1_date + weeks(14)) |
-      (covid_vax_az_1_date + weeks(6) <= covid_vax_az_2_date & 
-         covid_vax_az_2_date < covid_vax_az_1_date + weeks(14)))
-    ) %>%
-  select(patient_id)
-
-cat("#### identify 2nd dose dates ####\n")
-data_vaccine_2 <- data_keep %>%
-  left_join(data_vaccines, by = "patient_id") %>%
-  anti_join(data_remove, by = "patient_id") %>%
-  # only keep date of second vaccine
-  filter(n %in% "2") %>%
-  select(patient_id, elig_date, jcvi_group, age, region, pfizer, az) %>%
-  pivot_longer(cols = c("pfizer", "az")) %>%
-  filter(!is.na(value))
-
-
+# function for plotting distribution of 2nd vax dates
 second_vax_dates_plot <- 
   function(
     plot_date = "2020-12-08"
   ) {
     
-    jcvi_group_info <- data_vaccine_2 %>% 
+    # JCVI groups with the given plot_date
+    jcvi_group_info <- data_vaccine %>% 
       filter(elig_date %in% as.Date(plot_date)) %>%
       distinct(jcvi_group) %>%
       unlist() %>% unname() %>% sort() %>%
       str_c(., collapse = ", ")
     
-    age_group_info <- data_vaccine_2 %>% 
+    # age range for the given plot_date
+    age_group_info <- data_vaccine %>% 
       filter(elig_date %in% as.Date(plot_date)) %>%
       summarise(min = min(age), max = max(age)) %>%
       # transmute(range = str_c(min, " - ", max, " years")) %>%
       unlist() %>% unname()
     
+    # plot title
     title_string <- glue("Patients eligible on {plot_date}")
     if (age_group_info[1]==age_group_info[2]) {
       age_group_info <- glue("{age_group_info[1]} years")
@@ -256,47 +271,51 @@ second_vax_dates_plot <-
       subtitle_string <- glue("JCVI group(s): {jcvi_group_info}; Age range: {age_group_info}.")
     }
     
-    
+    # sequence of dates for plot
     dates_seq <- seq(as.Date(plot_date) + weeks(6), 
                      as.Date(plot_date) + weeks(14) - days(1), 
                      1)
     
+    # ensure full sequence of dates for each region:brand combo
     expanded_data <- tibble(
       region = character(),
-      name = character(),
-      value = Date()
+      brand = character(),
+      dose_2 = Date()
     )
-    for (r in unique(data_vaccine_2$region)) {
-      for (v in unique(data_vaccine_2$name)) {
+    for (r in unique(data_vaccine$region)) {
+      for (v in unique(data_vaccine$brand)) {
         expanded_data <- expanded_data %>%
           bind_rows(tibble(
             region = rep(r, each = length(dates_seq)),
-            name = rep(v, each = length(dates_seq)),
-            value = dates_seq
+            brand = rep(v, each = length(dates_seq)),
+            dose_2 = dates_seq
             )) 
       }
     }
     
-    count_data <- data_vaccine_2 %>%
-      group_by(region, name, value) %>%
+    # number of patients with 2nd dose on each date
+    count_data <- data_vaccine %>%
+      group_by(region, brand, dose_2) %>%
       count() %>%
       ungroup() 
     
+    # join and mask dates on which <10 patients received their 2nd dose
     plot_data <- expanded_data %>%
-      left_join(count_data, by = c("region", "name", "value")) %>%
+      left_join(count_data, by = c("region", "brand", "dose_2")) %>%
       mutate(across(n, 
                     ~case_when(
-                      .x < 100 ~ 100L,
+                      .x < 10 ~ 10L,
                       is.na(.x) ~ 0L, 
                       TRUE ~ .x))) 
     
+    # define breaks for x axis
     x_breaks <- seq(as.Date(plot_date) + weeks(6),
                     as.Date(plot_date) + weeks(14),
                     14)
     
-    
+    # plot the data
     plot_data %>%
-      ggplot(aes(x = value, y = n, colour = name)) +
+      ggplot(aes(x = dose_2, y = n, colour = brand)) +
       geom_line() +
       # line at elig_date + 10 weeks, as this is potentially going to be time_zero for comparisons
       geom_vline(xintercept = as.Date(plot_date, format = "%Y-%m-%d") + weeks(10),
@@ -314,6 +333,7 @@ second_vax_dates_plot <-
       # to avoid displaying low numbers of patients
       coord_cartesian(ylim = c(10, NA))
     
+    # save the plot
     ggsave(filename = here::here("output", "images", glue("second_vax_dates_{plot_date}.png")),
            width=18, height=14, units="cm")
     
