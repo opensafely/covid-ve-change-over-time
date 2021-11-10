@@ -279,7 +279,7 @@ second_vax_dates_plot <-
     
     # plot title
     title_string <- glue("Patients eligible on {plot_date}")
-    if (is_empty(age_group_info)) {
+    if (is.na(age_group_info)) {
       subtitle_string <- glue("JCVI group(s): {jcvi_group_info}; Age range: whole group(s)")
     } else {
       subtitle_string <- glue("JCVI group(s): {jcvi_group_info}; Age range: {age_group_info} years.")
