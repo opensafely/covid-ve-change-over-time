@@ -130,17 +130,17 @@ study=StudyDefinition(
             "incidence": 0.01
         },
     ),
-    **with_these_clinical_events_date_X(
-        name="longres",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=longres_primis,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
+    # **with_these_clinical_events_date_X(
+    #     name="longres",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=longres_primis,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
 
     ##########################
     ### CLINICAL VARIABLES ###
@@ -159,616 +159,616 @@ study=StudyDefinition(
             "incidence": 0.80,
         },
     ),
-    **most_recent_bmi_X(
-        name="bmi",
-        n=6,
-        index_date="elig_date + 43 days",
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "float": {"distribution": "normal", "mean": 28, "stddev": 8},
-            "incidence": 0.80,
-        },
-    ),
-
-    # chronic caridac disease
-    chronic_cardiac_disease_0_date=patients.with_these_clinical_events(
-        chronic_cardiac_disease_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="chronic_cardiac_disease",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=chronic_cardiac_disease_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # heart failure
-     heart_failure_0_date=patients.with_these_clinical_events(
-        heart_failure_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="heart_failure",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=heart_failure_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # other heart disease
-    other_heart_disease_0_date=patients.with_these_clinical_events(
-        other_heart_disease_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="other_heart_disease",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=other_heart_disease_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # diabetes
-    diabetes_0_date=patients.with_these_clinical_events(
-        diabetes_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="diabetes",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=diabetes_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # dialysis
-    dialysis_0_date=patients.with_these_clinical_events(
-        dialysis_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="dialysis",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=dialysis_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # chronic liver disease
-    chronic_liver_disease_0_date=patients.with_these_clinical_events(
-        chronic_liver_disease_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="chronic_liver_disease",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=chronic_liver_disease_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # current COPD
-    current_copd_0_date=patients.with_these_clinical_events(
-        current_copd_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="current_copd",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=current_copd_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # learning disability including downs synrdome and cerebal palsy
-    ld_inc_ds_and_cp_0_date=patients.with_these_clinical_events(
-        learning_disability_including_downs_syndrome_and_cerebral_palsy_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="ld_inc_ds_and_cp",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=learning_disability_including_downs_syndrome_and_cerebral_palsy_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # cystic fibrosis
-    cystic_fibrosis_0_date=patients.with_these_clinical_events(
-        cystic_fibrosis_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="cystic_fibrosis",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=cystic_fibrosis_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # other respiratory conditions
-    other_respiratory_0_date=patients.with_these_clinical_events(
-        other_respiratory_conditions_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="other_respiratory",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=other_respiratory_conditions_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # lung cancer
-    lung_cancer_0_date=patients.with_these_clinical_events(
-        lung_cancer_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="lung_cancer",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=lung_cancer_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # haematological cancer
-    haematological_cancer_0_date=patients.with_these_clinical_events(
-        haematological_cancer_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="haematological_cancer",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=haematological_cancer_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # cancers excluding excluding lunch and haematological
-    cancer_excl_lung_and_haem_0_date=patients.with_these_clinical_events(
-        cancer_excluding_lung_and_haematological_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="cancer_excl_lung_and_haem",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=cancer_excluding_lung_and_haematological_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # chemo or radiotherapy
-    chemo_or_radio_0_date=patients.with_these_clinical_events(
-        chemotherapy_or_radiotherapy_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="chemo_or_radio",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=chemotherapy_or_radiotherapy_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # solid organ transplant
-    solid_organ_transplantation_0_date=patients.with_these_clinical_events(
-        solid_organ_transplantation_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="solid_organ_transplantation",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=solid_organ_transplantation_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # bone marrow transplant
-    bone_marrow_transplant_0_date=patients.with_these_clinical_events(
-        bone_marrow_transplant_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="bone_marrow_transplant",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=bone_marrow_transplant_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # sickle cell disease
-    sickle_cell_disease_0_date=patients.with_these_clinical_events(
-        sickle_cell_disease_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="sickle_cell_disease",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=sickle_cell_disease_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # permanant immunosuppression
-    permanant_immunosuppression_0_date=patients.with_these_clinical_events(
-        permanent_immunosuppression_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="permanant_immunosuppression",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=permanent_immunosuppression_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # temporary immunosuppression
-    temporary_immunosuppression_0_date=patients.with_these_clinical_events(
-        temporary_immunosuppression_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="temporary_immunosuppression",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=temporary_immunosuppression_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # asplenia
-    asplenia_0_date=patients.with_these_clinical_events(
-        asplenia_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="asplenia",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=asplenia_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # dmards
-    dmards_0_date=patients.with_these_clinical_events(
-        dmards_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="dmards",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=dmards_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # dementia
-    dementia_0_date=patients.with_these_clinical_events(
-        dementia_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="dementia",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=dementia_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # other neuro conditions
-    other_neuro_conditions_0_date=patients.with_these_clinical_events(
-        other_neuro_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="other_neuro_conditions",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=other_neuro_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # psychosis, schizophrenia, bipolar
-    psychosis_schiz_bipolar_0_date=patients.with_these_clinical_events(
-        psychosis_schizophrenia_bipolar_affective_disease_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="psychosis_schiz_bipolar",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=psychosis_schizophrenia_bipolar_affective_disease_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
+    # **most_recent_bmi_X(
+    #     name="bmi",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "float": {"distribution": "normal", "mean": 28, "stddev": 8},
+    #         "incidence": 0.80,
+    #     },
+    # ),
+    # 
+    # # chronic caridac disease
+    # chronic_cardiac_disease_0_date=patients.with_these_clinical_events(
+    #     chronic_cardiac_disease_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="chronic_cardiac_disease",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=chronic_cardiac_disease_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # heart failure
+    #  heart_failure_0_date=patients.with_these_clinical_events(
+    #     heart_failure_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="heart_failure",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=heart_failure_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # other heart disease
+    # other_heart_disease_0_date=patients.with_these_clinical_events(
+    #     other_heart_disease_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="other_heart_disease",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=other_heart_disease_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # diabetes
+    # diabetes_0_date=patients.with_these_clinical_events(
+    #     diabetes_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="diabetes",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=diabetes_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # dialysis
+    # dialysis_0_date=patients.with_these_clinical_events(
+    #     dialysis_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="dialysis",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=dialysis_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # chronic liver disease
+    # chronic_liver_disease_0_date=patients.with_these_clinical_events(
+    #     chronic_liver_disease_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="chronic_liver_disease",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=chronic_liver_disease_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # current COPD
+    # current_copd_0_date=patients.with_these_clinical_events(
+    #     current_copd_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="current_copd",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=current_copd_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # learning disability including downs synrdome and cerebal palsy
+    # ld_inc_ds_and_cp_0_date=patients.with_these_clinical_events(
+    #     learning_disability_including_downs_syndrome_and_cerebral_palsy_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="ld_inc_ds_and_cp",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=learning_disability_including_downs_syndrome_and_cerebral_palsy_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # cystic fibrosis
+    # cystic_fibrosis_0_date=patients.with_these_clinical_events(
+    #     cystic_fibrosis_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="cystic_fibrosis",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=cystic_fibrosis_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # other respiratory conditions
+    # other_respiratory_0_date=patients.with_these_clinical_events(
+    #     other_respiratory_conditions_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="other_respiratory",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=other_respiratory_conditions_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # lung cancer
+    # lung_cancer_0_date=patients.with_these_clinical_events(
+    #     lung_cancer_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="lung_cancer",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=lung_cancer_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # haematological cancer
+    # haematological_cancer_0_date=patients.with_these_clinical_events(
+    #     haematological_cancer_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="haematological_cancer",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=haematological_cancer_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # cancers excluding excluding lunch and haematological
+    # cancer_excl_lung_and_haem_0_date=patients.with_these_clinical_events(
+    #     cancer_excluding_lung_and_haematological_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="cancer_excl_lung_and_haem",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=cancer_excluding_lung_and_haematological_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # chemo or radiotherapy
+    # chemo_or_radio_0_date=patients.with_these_clinical_events(
+    #     chemotherapy_or_radiotherapy_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="chemo_or_radio",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=chemotherapy_or_radiotherapy_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # solid organ transplant
+    # solid_organ_transplantation_0_date=patients.with_these_clinical_events(
+    #     solid_organ_transplantation_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="solid_organ_transplantation",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=solid_organ_transplantation_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # bone marrow transplant
+    # bone_marrow_transplant_0_date=patients.with_these_clinical_events(
+    #     bone_marrow_transplant_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="bone_marrow_transplant",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=bone_marrow_transplant_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # sickle cell disease
+    # sickle_cell_disease_0_date=patients.with_these_clinical_events(
+    #     sickle_cell_disease_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="sickle_cell_disease",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=sickle_cell_disease_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # permanant immunosuppression
+    # permanant_immunosuppression_0_date=patients.with_these_clinical_events(
+    #     permanent_immunosuppression_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="permanant_immunosuppression",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=permanent_immunosuppression_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # temporary immunosuppression
+    # temporary_immunosuppression_0_date=patients.with_these_clinical_events(
+    #     temporary_immunosuppression_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="temporary_immunosuppression",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=temporary_immunosuppression_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # asplenia
+    # asplenia_0_date=patients.with_these_clinical_events(
+    #     asplenia_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="asplenia",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=asplenia_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # dmards
+    # dmards_0_date=patients.with_these_clinical_events(
+    #     dmards_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="dmards",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=dmards_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # dementia
+    # dementia_0_date=patients.with_these_clinical_events(
+    #     dementia_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="dementia",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=dementia_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # other neuro conditions
+    # other_neuro_conditions_0_date=patients.with_these_clinical_events(
+    #     other_neuro_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="other_neuro_conditions",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=other_neuro_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # psychosis, schizophrenia, bipolar
+    # psychosis_schiz_bipolar_0_date=patients.with_these_clinical_events(
+    #     psychosis_schizophrenia_bipolar_affective_disease_codes,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="psychosis_schiz_bipolar",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=psychosis_schizophrenia_bipolar_affective_disease_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
 
     # end of life
     endoflife_0_date=patients.with_these_clinical_events(
@@ -783,17 +783,17 @@ study=StudyDefinition(
             "incidence": 0.01
         },
     ),
-    **with_these_clinical_events_date_X(
-        name="endoflife",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=eol_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
+    # **with_these_clinical_events_date_X(
+    #     name="endoflife",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=eol_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
 
     # midazolam
     midazolam_0_date=patients.with_these_medications(
@@ -808,110 +808,110 @@ study=StudyDefinition(
             "incidence": 0.01
         },
     ),
-    **with_these_medications_date_X(
-        name="midazolam",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=midazolam_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
+    # **with_these_medications_date_X(
+    #     name="midazolam",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=midazolam_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
 
-    # flu vaccine in the last 5 years
-    flu_vaccine=patients.satisfying(
-        """
-        flu_vaccine_tpp_table>0 OR
-        flu_vaccine_med>0 OR
-        flu_vaccine_clinical>0
-        """,
-        
-        flu_vaccine_tpp_table=patients.with_tpp_vaccination_record(
-            target_disease_matches="INFLUENZA",
-            between=["elig_date - 5 years", "elig_date"], 
-            returning="binary_flag",
-        ),
-        
-        flu_vaccine_med=patients.with_these_medications(
-            flu_med_codes,
-            between=["elig_date - 5 years", "elig_date"], 
-            returning="binary_flag",
-        ),
-        flu_vaccine_clinical=patients.with_these_clinical_events(
-            flu_clinical_given_codes,
-            ignore_days_where_these_codes_occur=flu_clinical_not_given_codes,
-            between=["elig_date - 5 years", "elig_date"], 
-            returning="binary_flag",
-        ),
-        return_expectations={"incidence": 0.5, },
-    ),
-
-    # electronic frailty index
-    # date currently hard-coded because there are no other dates available for efi
-    # check that this still the case, otherwise change to recurrent variable like those above
-    efi=patients.with_these_decision_support_values(
-        algorithm = "electronic_frailty_index",
-        on_or_before = "2020-12-08", 
-        find_last_match_in_period = True,
-        returning="numeric_value",
-        return_expectations={
-            #"category": {"ratios": {0.1: 0.25, 0.15: 0.25, 0.30: 0.25, 0.5: 0.25}},
-            "float": {"distribution": "normal", "mean": 0.20, "stddev": 0.09},
-            "incidence": 0.99
-        },
-    ),
-
-    # dates of shielding codes
-    shielded_0_date=patients.with_these_clinical_events(
-        shield_primis,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="shielded",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=shield_primis,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
-
-    # dates of non shielding codes
-    nonshielded_0_date=patients.with_these_clinical_events(
-        nonshield_primis,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **with_these_clinical_events_date_X(
-        name="nonshielded",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=nonshield_primis,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.01,
-        },
-    ),
+    # # flu vaccine in the last 5 years
+    # flu_vaccine=patients.satisfying(
+    #     """
+    #     flu_vaccine_tpp_table>0 OR
+    #     flu_vaccine_med>0 OR
+    #     flu_vaccine_clinical>0
+    #     """,
+    #     
+    #     flu_vaccine_tpp_table=patients.with_tpp_vaccination_record(
+    #         target_disease_matches="INFLUENZA",
+    #         between=["elig_date - 5 years", "elig_date"], 
+    #         returning="binary_flag",
+    #     ),
+    #     
+    #     flu_vaccine_med=patients.with_these_medications(
+    #         flu_med_codes,
+    #         between=["elig_date - 5 years", "elig_date"], 
+    #         returning="binary_flag",
+    #     ),
+    #     flu_vaccine_clinical=patients.with_these_clinical_events(
+    #         flu_clinical_given_codes,
+    #         ignore_days_where_these_codes_occur=flu_clinical_not_given_codes,
+    #         between=["elig_date - 5 years", "elig_date"], 
+    #         returning="binary_flag",
+    #     ),
+    #     return_expectations={"incidence": 0.5, },
+    # ),
+    # 
+    # # electronic frailty index
+    # # date currently hard-coded because there are no other dates available for efi
+    # # check that this still the case, otherwise change to recurrent variable like those above
+    # efi=patients.with_these_decision_support_values(
+    #     algorithm = "electronic_frailty_index",
+    #     on_or_before = "2020-12-08", 
+    #     find_last_match_in_period = True,
+    #     returning="numeric_value",
+    #     return_expectations={
+    #         #"category": {"ratios": {0.1: 0.25, 0.15: 0.25, 0.30: 0.25, 0.5: 0.25}},
+    #         "float": {"distribution": "normal", "mean": 0.20, "stddev": 0.09},
+    #         "incidence": 0.99
+    #     },
+    # ),
+    # 
+    # # dates of shielding codes
+    # shielded_0_date=patients.with_these_clinical_events(
+    #     shield_primis,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="shielded",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=shield_primis,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # 
+    # # dates of non shielding codes
+    # nonshielded_0_date=patients.with_these_clinical_events(
+    #     nonshield_primis,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **with_these_clinical_events_date_X(
+    #     name="nonshielded",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=nonshield_primis,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.01,
+    #     },
+    # ),
 
     ######################
     ### COVID VACCINES ###
@@ -1102,16 +1102,16 @@ study=StudyDefinition(
     ##############
 
     # covid test
-    **covid_test_date_X(
-        name="covid_test",
-        index_date="elig_date + 43 days",
-        n=6,
-        test_result="any",
-        return_expectations = {
-            "date": {"earliest": start_date,  "latest" : end_date},
-            "rate": "exponential_increase",
-        },
-    ),
+    # **covid_test_date_X(
+    #     name="covid_test",
+    #     index_date="elig_date + 43 days",
+    #     n=6,
+    #     test_result="any",
+    #     return_expectations = {
+    #         "date": {"earliest": start_date,  "latest" : end_date},
+    #         "rate": "exponential_increase",
+    #     },
+    # ),
     
     # positive covid test
     positive_test_0_date=patients.with_test_result_in_sgss(
@@ -1128,16 +1128,16 @@ study=StudyDefinition(
             "incidence": 0.01
         },
     ),
-    **covid_test_date_X(
-        name="positive_test",
-        index_date="elig_date + 43 days",
-        n=6,
-        test_result="positive",
-        return_expectations={
-            "date": {"earliest": start_date,  "latest" : end_date},
-            "rate": "exponential_increase",
-        },
-    ),
+    # **covid_test_date_X(
+    #     name="positive_test",
+    #     index_date="elig_date + 43 days",
+    #     n=6,
+    #     test_result="positive",
+    #     return_expectations={
+    #         "date": {"earliest": start_date,  "latest" : end_date},
+    #         "rate": "exponential_increase",
+    #     },
+    # ),
 
     # probable covid case identified in primary care
     # Will also had 'covid in primary care', but as far as I can see it was the same as this probable definition.
@@ -1154,18 +1154,18 @@ study=StudyDefinition(
         },
     ),
     
-    **with_these_clinical_events_date_X(
-        name="primary_care_covid_case",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=covid_primary_care_probable_combined,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.05,
-        },
-    ),
-    
+    # **with_these_clinical_events_date_X(
+    #     name="primary_care_covid_case",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=covid_primary_care_probable_combined,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.05,
+    #     },
+    # ),
+    # 
     # suspected covid case identified in primary care
     primary_care_suspected_covid_0_date=patients.with_these_clinical_events(
         primary_care_suspected_covid_combined,
@@ -1179,157 +1179,156 @@ study=StudyDefinition(
             "incidence": 0.01
         },
     ),
-    **with_these_clinical_events_date_X(
-        name="primary_care_suspected_covid",
-        n=6,
-        index_date="elig_date + 43 days",
-        codelist=primary_care_suspected_covid_combined,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.05,
-        },
-    ),
+    # **with_these_clinical_events_date_X(
+    #     name="primary_care_suspected_covid",
+    #     n=6,
+    #     index_date="elig_date + 43 days",
+    #     codelist=primary_care_suspected_covid_combined,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.05,
+    #     },
+    # ),
     
     # emergency attendance
-     # emergency attendance
-    emergency_attendance_0_date=patients.attended_emergency_care(
-        returning="date_arrived",
-        on_or_before="elig_date + 42 days",
-        find_last_match_in_period=True,
-        date_format="YYYY-MM-DD",
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    **emergency_attendance_date_X(
-        name = "emergency",
-        n = 6,
-        index_date = "elig_date + 43 days",
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.05,
-        },
-    ),
+    # emergency_attendance_0_date=patients.attended_emergency_care(
+    #     returning="date_arrived",
+    #     on_or_before="elig_date + 42 days",
+    #     find_last_match_in_period=True,
+    #     date_format="YYYY-MM-DD",
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
+    # **emergency_attendance_date_X(
+    #     name = "emergency",
+    #     n = 6,
+    #     index_date = "elig_date + 43 days",
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.05,
+    #     },
+    # ),
     
     # unplanned hospital admission
-    admitted_unplanned_0_date=patients.admitted_to_hospital(
-        returning="date_admitted",
-        on_or_before="elig_date + 42 days",
-        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-        with_patient_classification = ["1"],
-        date_format="YYYY-MM-DD",
-        find_first_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.05,
-        },
-    ),
-    **admitted_date_X(
-        name = "admitted_unplanned",
-        n = 6,
-        index_name = "admitted_unplanned",
-        index_date = "elig_date + 43 days",
-        returning="date_admitted",
-        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-        with_patient_classification = ["1"],
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.05,
-        },
-    ),
-    discharged_unplanned_0_date=patients.admitted_to_hospital(
-        returning="date_discharged",
-        on_or_before="elig_date + 42 days",
-        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-        with_patient_classification = ["1"],
-        date_format="YYYY-MM-DD",
-        find_first_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.05,
-        },
-    ), 
-    **admitted_date_X(
-        name = "discharged_unplanned",
-        n = 6,
-        index_name = "admitted_unplanned",
-        index_date = "elig_date + 43 days",
-        returning="date_discharged",
-        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-        with_patient_classification = ["1"],
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.05,
-        },
-    ),
-    
-    # unplanned infectious hospital admission
-    admitted_unplanned_infectious_0_date=patients.admitted_to_hospital(
-        returning="date_admitted",
-        on_or_before="elig_date + 42 days",
-        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-        with_patient_classification = ["1"],
-        with_these_diagnoses = ICD10_I_codes,
-        date_format="YYYY-MM-DD",
-        find_first_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.05,
-        },
-    ),
-    **admitted_date_X(
-        name = "admitted_unplanned_infectious",
-        n = 6,
-        index_name = "admitted_unplanned_infectious",
-        index_date = "elig_date + 43 days",
-        returning="date_admitted",
-        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-        with_patient_classification = ["1"],
-        with_these_diagnoses = ICD10_I_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.05,
-        },
-    ),
-    discharged_unplanned_infectious_0_date=patients.admitted_to_hospital(
-        returning="date_discharged",
-        on_or_before="elig_date + 42 days",
-        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-        with_patient_classification = ["1"],
-        with_these_diagnoses = ICD10_I_codes,
-        date_format="YYYY-MM-DD",
-        find_first_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.05,
-        },
-    ), 
-    **admitted_date_X(
-        name = "discharged_unplanned_infectious",
-        n = 6,
-        index_name = "admitted_unplanned_infectious",
-        index_date = "elig_date + 43 days",
-        returning="date_discharged",
-        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-        with_patient_classification = ["1"],
-        with_these_diagnoses = ICD10_I_codes,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.05,
-        },
-    ),
+    # admitted_unplanned_0_date=patients.admitted_to_hospital(
+    #     returning="date_admitted",
+    #     on_or_before="elig_date + 42 days",
+    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+    #     with_patient_classification = ["1"],
+    #     date_format="YYYY-MM-DD",
+    #     find_first_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.05,
+    #     },
+    # ),
+    # **admitted_date_X(
+    #     name = "admitted_unplanned",
+    #     n = 6,
+    #     index_name = "admitted_unplanned",
+    #     index_date = "elig_date + 43 days",
+    #     returning="date_admitted",
+    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+    #     with_patient_classification = ["1"],
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.05,
+    #     },
+    # ),
+    # discharged_unplanned_0_date=patients.admitted_to_hospital(
+    #     returning="date_discharged",
+    #     on_or_before="elig_date + 42 days",
+    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+    #     with_patient_classification = ["1"],
+    #     date_format="YYYY-MM-DD",
+    #     find_first_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.05,
+    #     },
+    # ), 
+    # **admitted_date_X(
+    #     name = "discharged_unplanned",
+    #     n = 6,
+    #     index_name = "admitted_unplanned",
+    #     index_date = "elig_date + 43 days",
+    #     returning="date_discharged",
+    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+    #     with_patient_classification = ["1"],
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.05,
+    #     },
+    # ),
+    # 
+    # # unplanned infectious hospital admission
+    # admitted_unplanned_infectious_0_date=patients.admitted_to_hospital(
+    #     returning="date_admitted",
+    #     on_or_before="elig_date + 42 days",
+    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+    #     with_patient_classification = ["1"],
+    #     with_these_diagnoses = ICD10_I_codes,
+    #     date_format="YYYY-MM-DD",
+    #     find_first_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.05,
+    #     },
+    # ),
+    # **admitted_date_X(
+    #     name = "admitted_unplanned_infectious",
+    #     n = 6,
+    #     index_name = "admitted_unplanned_infectious",
+    #     index_date = "elig_date + 43 days",
+    #     returning="date_admitted",
+    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+    #     with_patient_classification = ["1"],
+    #     with_these_diagnoses = ICD10_I_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.05,
+    #     },
+    # ),
+    # discharged_unplanned_infectious_0_date=patients.admitted_to_hospital(
+    #     returning="date_discharged",
+    #     on_or_before="elig_date + 42 days",
+    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+    #     with_patient_classification = ["1"],
+    #     with_these_diagnoses = ICD10_I_codes,
+    #     date_format="YYYY-MM-DD",
+    #     find_first_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.05,
+    #     },
+    # ), 
+    # **admitted_date_X(
+    #     name = "discharged_unplanned_infectious",
+    #     n = 6,
+    #     index_name = "admitted_unplanned_infectious",
+    #     index_date = "elig_date + 43 days",
+    #     returning="date_discharged",
+    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+    #     with_patient_classification = ["1"],
+    #     with_these_diagnoses = ICD10_I_codes,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.05,
+    #     },
+    # ),
     
     # covid hospital adamission
     covidadmitted_0_date=patients.admitted_to_hospital(
@@ -1344,51 +1343,51 @@ study=StudyDefinition(
             "incidence": 0.01,
         },
     ),
-    **admitted_date_X(
-        name = "covidadmitted",
-        n = 6,
-        index_name = "covidadmitted",
-        index_date = "elig_date + 42 days",
-        returning="date_admitted",
-        with_these_diagnoses=covid_codes,
-        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.05,
-        },
-    ),
+    # **admitted_date_X(
+    #     name = "covidadmitted",
+    #     n = 6,
+    #     index_name = "covidadmitted",
+    #     index_date = "elig_date + 42 days",
+    #     returning="date_admitted",
+    #     with_these_diagnoses=covid_codes,
+    #     with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.05,
+    #     },
+    # ),
     
-    # covid death
-    coviddeath_date=patients.with_these_codes_on_death_certificate(
-        covid_codes,
-        returning="date_of_death",
-        date_format="YYYY-MM-DD",
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.02
-        },
-    ),
-    # any death
-    death_date=patients.died_from_any_cause(
-        returning="date_of_death",
-        date_format="YYYY-MM-DD",
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.02
-        },
-    ),
-
-    # De-registration
-    dereg_date=patients.date_deregistered_from_all_supported_practices(
-        on_or_after="elig_date",
-        date_format="YYYY-MM-DD",
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date,},
-            "incidence": 0.001
-        }
-    ),
+    # # covid death
+    # coviddeath_date=patients.with_these_codes_on_death_certificate(
+    #     covid_codes,
+    #     returning="date_of_death",
+    #     date_format="YYYY-MM-DD",
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.02
+    #     },
+    # ),
+    # # any death
+    # death_date=patients.died_from_any_cause(
+    #     returning="date_of_death",
+    #     date_format="YYYY-MM-DD",
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "uniform",
+    #         "incidence": 0.02
+    #     },
+    # ),
+    # 
+    # # De-registration
+    # dereg_date=patients.date_deregistered_from_all_supported_practices(
+    #     on_or_after="elig_date",
+    #     date_format="YYYY-MM-DD",
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date,},
+    #         "incidence": 0.001
+    #     }
+    # ),
 
 )

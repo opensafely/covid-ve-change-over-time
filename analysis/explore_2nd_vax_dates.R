@@ -60,13 +60,16 @@ data_extract0 <- read_csv(
     age_2 = col_integer(),
     
     ## Variables for applying exclusion criteria
+    ## COVID
     positive_test_0_date = col_date(format="%Y-%m-%d"),
     primary_care_covid_case_0_date = col_date(format="%Y-%m-%d"),
     primary_care_suspected_covid_0_date = col_date(format="%Y-%m-%d"),
     covidadmitted_0_date = col_date(format="%Y-%m-%d"),
+    ## clinical
     longres_0_date = col_date(format="%Y-%m-%d"),
     endoflife_0_date = col_date(format="%Y-%m-%d"),
     midazolam_0_date = col_date(format="%Y-%m-%d"),
+    ## missing
     sex = col_character(),
     ethnicity_6 = col_character(),
     ethnicity_6_sus = col_character(),
@@ -276,7 +279,7 @@ second_vax_dates_plot <-
     
     # plot title
     title_string <- glue("Patients eligible on {plot_date}")
-    if (is_empty(age_group_info)) {
+    if (is.na(age_group_info)) {
       subtitle_string <- glue("JCVI group(s): {jcvi_group_info}; Age range: whole group(s)")
     } else {
       subtitle_string <- glue("JCVI group(s): {jcvi_group_info}; Age range: {age_group_info} years.")
