@@ -241,6 +241,20 @@ data_vaccine <- data_processed %>%
   # only keep if 2nd dose received [6,14) weeks after 1st dose
   filter(dose_1 + weeks(6) <= dose_2 & dose_2 < dose_1 + weeks(14))
 
+cat("#### read elig_dates ####\n")
+elig_dates <- readr::read_csv(here::here("analysis", "lib", "elig_dates.csv"))
+
+# extract age range for each elig_date
+elig_dates_age_range <- elig_dates %>%
+  mutate(lower = str_extract(description, "age_. >= \\d{2}"),
+         upper = str_extract(description, "age_. < \\d{2}")) %>%
+  mutate(age_range = str_c(
+    str_extract(lower, "\\d{2}"),
+    " - ",
+    str_extract(upper, "\\d{2}")
+  )) %>%
+  select(date, age_range)
+
 # function for plotting distribution of 2nd vax dates
 second_vax_dates_plot <- 
   function(
@@ -255,23 +269,17 @@ second_vax_dates_plot <-
       str_c(., collapse = ", ")
     
     # age range for the given plot_date
-    age_group_info <- data_vaccine %>% 
-      filter(elig_date %in% as.Date(plot_date)) %>%
-      summarise(min = min(age), max = max(age)) %>%
-      # transmute(range = str_c(min, " - ", max, " years")) %>%
+    age_group_info <- elig_dates_age_range %>% 
+      filter(date %in% as.Date(plot_date)) %>%
+      select(age_range) %>%
       unlist() %>% unname()
     
     # plot title
     title_string <- glue("Patients eligible on {plot_date}")
-    if (age_group_info[1]==age_group_info[2]) {
-      age_group_info <- glue("{age_group_info[1]} years")
-      subtitle_string <- glue("JCVI group(s): {jcvi_group_info}; Age: {age_group_info}.")
-    } else if (age_group_info[2] > 90) {
-      age_group_info <- str_c(age_group_info[1], "+ years")
-      subtitle_string <- glue("JCVI group(s): {jcvi_group_info}; Age range: {age_group_info}.")
+    if (is_empty(age_group_info)) {
+      subtitle_string <- glue("JCVI group(s): {jcvi_group_info}; Age range: whole group(s)")
     } else {
-      age_group_info <- str_c(age_group_info[1], " - ", age_group_info[2], " years")
-      subtitle_string <- glue("JCVI group(s): {jcvi_group_info}; Age range: {age_group_info}.")
+      subtitle_string <- glue("JCVI group(s): {jcvi_group_info}; Age range: {age_group_info} years.")
     }
     
     # sequence of dates for plot
