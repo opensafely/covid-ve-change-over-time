@@ -14,10 +14,14 @@ library(lubridate)
 library(readr)
 library(glue)
 
+## source functions
+source(here::here("analysis", "lib", "data_properties.R"))
+
 ## create folders for outputs
-dir.create(here::here("output", "data"), showWarnings = FALSE, recursive=TRUE)
-dir.create(here::here("output", "tables"), showWarnings = FALSE, recursive=TRUE)
-dir.create(here::here("output", "images"), showWarnings = FALSE, recursive=TRUE)
+dir.create(here::here("output",  "explore_2nd_vax_dates", "data_properties"), 
+           showWarnings = FALSE, recursive=TRUE)
+dir.create(here::here("output", "explore_2nd_vax_dates", "images"), 
+           showWarnings = FALSE, recursive=TRUE)
 
 ## import dates
 dates <- readr::read_rds(here::here("analysis", "lib", "study_dates.rds"))
@@ -141,7 +145,7 @@ if (nrow(elig_date_test) == 0) {
   # JCVI groups based on age
   data_extract <- eval(parse(text = glue("data_extract %>% mutate(jcvi_group = case_when({jcvi_group_cases}))")))
   # eligibility dates based on JCVI groups
-  data_extract <- eval(parse(text = glue("data_extract %>% mutate(elig_date = as.Date(case_when({elig_date_cases})), format=\'%Y-%m-%d\')")))
+  data_extract <- eval(parse(text = glue("data_extract %>% mutate(elig_date = as.Date(case_when({elig_date_cases}), format=\'%Y-%m-%d\'))")))
   
   data_extract <- data_extract %>%
     mutate(r1 = round(rnorm(nrow(.), mean = 7, sd = 7)),
@@ -151,10 +155,10 @@ if (nrow(elig_date_test) == 0) {
     mutate(across(covid_vax_pfizer_1_date, ~if_else(!is.na(.x), elig_date + days(r1),.x))) %>%
     mutate(across(covid_vax_az_1_date, ~if_else(!is.na(.x), elig_date + days(r2),.x))) %>%
     mutate(covid_vax_pfizer_2_date = covid_vax_pfizer_1_date + days(r3),
-           covid_vax_az_2_date = covid_vax_az_1_date + days(r4))
+           covid_vax_az_2_date = covid_vax_az_1_date + days(r4)) %>%
+    select(-matches("r\\d{1}"))
 
 }
-
 
 cat("#### process extracted data ####\n")
 data_processed <- data_extract %>%
@@ -170,7 +174,27 @@ data_processed <- data_extract %>%
       ethnicity == "5" ~ "Other",
       TRUE ~ "Missing"
     ),
-  ) %>%
+    # imd quintile
+    imd = na_if(imd, "0"),
+    imd = fct_case_when(
+      imd == 1 ~ "1 most deprived",
+      imd == 2 ~ "2",
+      imd == 3 ~ "3",
+      imd == 4 ~ "4",
+      imd == 5 ~ "5 least deprived",
+      TRUE ~ NA_character_
+    )
+    
+  ) 
+
+cat("#### properties of data_processed ####\n")
+data_properties(
+  data = data_processed,
+  path = here::here("output", "explore_2nd_vax_dates", "data_properties")
+)  
+
+cat("#### apply exclusion criteria to processed data ####\n")
+data_eligible <- data_processed %>%
   # apply exclusion criteria
   filter(
     # remove if any missing data for key variables
@@ -188,8 +212,7 @@ data_processed <- data_extract %>%
     is.na(primary_care_covid_case_0_date),
     is.na(primary_care_suspected_covid_0_date),
     is.na(covidadmitted_0_date)
-  )
-  
+  ) 
 
 cat("#### clean vaccine data ####\n")
 data_vaccine <- data_processed %>%
@@ -243,6 +266,12 @@ data_vaccine <- data_processed %>%
   pivot_wider(names_from = dose, values_from = value, names_prefix = "dose_") %>%
   # only keep if 2nd dose received [6,14) weeks after 1st dose
   filter(dose_1 + weeks(6) <= dose_2 & dose_2 < dose_1 + weeks(14))
+
+cat("#### properties of data_vaccine ####\n")
+data_properties(
+  data = data_processed,
+  path = here::here("output", "explore_2nd_vax_dates", "data_properties")
+)  
 
 cat("#### read elig_dates ####\n")
 elig_dates <- readr::read_csv(here::here("analysis", "lib", "elig_dates.csv"))
