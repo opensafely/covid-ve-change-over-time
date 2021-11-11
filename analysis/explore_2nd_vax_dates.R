@@ -18,10 +18,10 @@ library(glue)
 source(here::here("analysis", "lib", "data_properties.R"))
 
 ## create folders for outputs
-dir.create(here::here("output",  "explore_2nd_vax_dates", "data_properties"), 
-           showWarnings = FALSE, recursive=TRUE)
-dir.create(here::here("output", "explore_2nd_vax_dates", "images"), 
-           showWarnings = FALSE, recursive=TRUE)
+images_dir <- here::here("output", "explore_2nd_vax_dates", "images")
+data_properties_dir <- here::here("output",  "explore_2nd_vax_dates", "data_properties")
+dir.create(data_properties_dir, showWarnings = FALSE, recursive=TRUE)
+dir.create(images_dir, showWarnings = FALSE, recursive=TRUE)
 
 ## import dates
 dates <- readr::read_rds(here::here("analysis", "lib", "study_dates.rds"))
@@ -172,7 +172,7 @@ data_processed <- data_extract %>%
       ethnicity == "3" ~ "South Asian",
       ethnicity == "2" ~ "Mixed",
       ethnicity == "5" ~ "Other",
-      TRUE ~ "Missing"
+      TRUE ~ NA_character_
     ),
     # imd quintile
     imd = na_if(imd, "0"),
@@ -185,12 +185,13 @@ data_processed <- data_extract %>%
       TRUE ~ NA_character_
     )
     
-  ) 
+  ) %>%
+  select(-ethnicity_6, -ethnicity_6_sus)
 
 cat("#### properties of data_processed ####\n")
 data_properties(
   data = data_processed,
-  path = here::here("output", "explore_2nd_vax_dates", "data_properties")
+  path = data_properties_dir
 )  
 
 cat("#### apply exclusion criteria to processed data ####\n")
@@ -198,10 +199,10 @@ data_eligible <- data_processed %>%
   # apply exclusion criteria
   filter(
     # remove if any missing data for key variables
-    !(ethnicity %in% "Missing"),
-    !(sex %in% ""),
-    !(imd %in% ""),
-    !(region %in% ""),
+    !is.na(ethnicity),
+    !is.na(sex),
+    !is.na(imd),
+    !is.na(region),
     # remove if in carehome on or before elig_date + 42 days (may need to reconsider carehome definition)
     is.na(longres_0_date),
     # remove if initialed end of life care on or before elig_date + 42 days
@@ -211,14 +212,14 @@ data_eligible <- data_processed %>%
     is.na(positive_test_0_date),
     is.na(primary_care_covid_case_0_date),
     is.na(primary_care_suspected_covid_0_date),
-    is.na(covidadmitted_0_date)
+    is.na(covidadmitted_0_date),
+    # remove dummy groups and dates
+    !(jcvi_group %in% "99"),
+    !(elig_date %in% as.Date("2100-12-31"))
   ) 
 
 cat("#### clean vaccine data ####\n")
 data_vaccine <- data_processed %>%
-  # remove dummy groups and dates
-  filter(!(jcvi_group %in% "99"),
-         !(elig_date %in% "2100-12-31")) %>%
   # calculate age based on JCVI group definition
   mutate(age = if_else(jcvi_group %in% c("10","11","12"), age_2, age_1)) %>%
   select(patient_id, jcvi_group, elig_date, age, region, starts_with("covid_vax")) %>%
@@ -266,12 +267,6 @@ data_vaccine <- data_processed %>%
   pivot_wider(names_from = dose, values_from = value, names_prefix = "dose_") %>%
   # only keep if 2nd dose received [6,14) weeks after 1st dose
   filter(dose_1 + weeks(6) <= dose_2 & dose_2 < dose_1 + weeks(14))
-
-cat("#### properties of data_vaccine ####\n")
-data_properties(
-  data = data_processed,
-  path = here::here("output", "explore_2nd_vax_dates", "data_properties")
-)  
 
 cat("#### read elig_dates ####\n")
 elig_dates <- readr::read_csv(here::here("analysis", "lib", "elig_dates.csv"))
@@ -342,14 +337,9 @@ second_vax_dates_plot <-
       count() %>%
       ungroup() 
     
-    # join and mask dates on which <10 patients received their 2nd dose
+    # join expanded and count data
     plot_data <- expanded_data %>%
-      left_join(count_data, by = c("region", "brand", "dose_2")) %>%
-      mutate(across(n, 
-                    ~case_when(
-                      .x < 10 ~ 10L,
-                      is.na(.x) ~ 0L, 
-                      TRUE ~ .x))) 
+      left_join(count_data, by = c("region", "brand", "dose_2")) 
     
     # define breaks for x axis
     x_breaks <- seq(as.Date(plot_date) + weeks(6),
@@ -358,6 +348,14 @@ second_vax_dates_plot <-
     
     # plot the data
     plot_data %>%
+      group_by(region) %>%
+      mutate(n_region = scales::comma(sum(n), accuracy = 1)) %>%
+      ungroup() %>%
+      mutate(across(region, 
+                    ~str_replace(.x, 
+                                 "Yorkshire and The Humber",
+                                 "Yorkshire & Humber"))) %>%
+      mutate(across(region, ~glue("{region} (n={n_region})"))) %>%
       ggplot(aes(x = dose_2, y = n, colour = brand)) +
       geom_line() +
       # line at elig_date + 10 weeks, as this is potentially going to be time_zero for comparisons
@@ -377,8 +375,8 @@ second_vax_dates_plot <-
       coord_cartesian(ylim = c(10, NA))
     
     # save the plot
-    ggsave(filename = here::here("output", "images", glue("second_vax_dates_{plot_date}.png")),
-           width=18, height=14, units="cm")
+    ggsave(filename = file.path(images_dir, glue("second_vax_dates_{plot_date}.png")),
+           width=20, height=14, units="cm")
     
   }
 
