@@ -5,19 +5,15 @@
 #   * class(),
 #   * and ,
 # and saves the output to a .txt file
-# The script should only be run via an action in the project.yaml only
-# The script must be accompanied by two arguments
-# The first is the dataset, saved as an .rds file, that is to be summarised
-# The second in the directory where the txt output will be saved
 
 #################
 
 data_properties <- function(
   data, # input data
   path, # path for output file
-  coltypes = FALSE,
-  skim = FALSE,
-  tabulate = TRUE
+  coltypes = FALSE, # save file that summarises coltypes?
+  skim = FALSE, # save a file with summary stats from skim?
+  tabulate = TRUE # save a file of redacted summary stats?
   ) {
   
   # preliminaries
