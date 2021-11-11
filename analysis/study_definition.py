@@ -115,8 +115,8 @@ study=StudyDefinition(
     # region - NHS England 9 regions
     region=patients.registered_practice_as_of(
         "elig_date + 42 days",
-        returning = "nuts1_region_name",
-        return_expectations = {
+        returning="nuts1_region_name",
+        return_expectations={
             "rate": "universal",
             "category": {
                 "ratios": {
@@ -131,6 +131,7 @@ study=StudyDefinition(
                     "South East": 0.1
                 },
             },
+            "incidence": 0.99
         },
     ),
 
