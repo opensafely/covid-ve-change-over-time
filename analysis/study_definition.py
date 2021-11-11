@@ -1055,7 +1055,7 @@ study=StudyDefinition(
     ## Moderna - first record of moderna vaccine
     ## NB *** may be patient's first COVID vaccine dose or their second if mixed types are given ***
     covid_vax_moderna_1_date=patients.with_tpp_vaccination_record(
-        product_name_matches="COVID-19 mRNA (nucleoside modified) Vaccine Moderna 0.1mg/0.5mL dose dispersion for inj MDV",
+        product_name_matches="COVID-19 mRNA Vaccine Spikevax (nucleoside modified) 0.1mg/0.5mL dose disp for inj MDV (Moderna)",
         on_or_after=start_date,
         find_first_match_in_period=True,
         returning="date",
@@ -1069,7 +1069,7 @@ study=StudyDefinition(
         },
     ),            
     covid_vax_moderna_2_date=patients.with_tpp_vaccination_record(
-        product_name_matches="COVID-19 mRNA (nucleoside modified) Vaccine Moderna 0.1mg/0.5mL dose dispersion for inj MDV",
+        product_name_matches="COVID-19 mRNA Vaccine Spikevax (nucleoside modified) 0.1mg/0.5mL dose disp for inj MDV (Moderna)",
         on_or_after="covid_vax_moderna_1_date + 1 day",  
         find_first_match_in_period=True,
         returning="date",
@@ -1083,7 +1083,7 @@ study=StudyDefinition(
         },
     ),
     covid_vax_moderna_3_date=patients.with_tpp_vaccination_record(
-        product_name_matches="COVID-19 mRNA (nucleoside modified) Vaccine Moderna 0.1mg/0.5mL dose dispersion for inj MDV",
+        product_name_matches="COVID-19 mRNA Vaccine Spikevax (nucleoside modified) 0.1mg/0.5mL dose disp for inj MDV (Moderna)",
         on_or_after="covid_vax_moderna_2_date + 1 day",  
         find_first_match_in_period=True,
         returning="date",
