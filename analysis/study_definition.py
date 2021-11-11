@@ -8,7 +8,7 @@ from cohortextractor import (
 from codelists import *
 
 # import the vairables for deriving JCVI groups
-from variables import (
+from grouping_variables import (
     jcvi_variables, 
     start_date,
     end_date,
