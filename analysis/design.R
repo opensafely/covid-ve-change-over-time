@@ -9,7 +9,7 @@ library('tidyverse')
 library('here')
 
 # create output directories ----
-fs::dir_create(here("analysis", "lib"))
+fs::dir_create(here("output", "lib"))
 
 # create study_dates ----
 
@@ -27,8 +27,8 @@ study_dates <-
     end_date = "2021-09-15" # last date of available vaccination data. NEED TO ALSO CHECK END DATES FOR OTHER DATA SOURCES
   )
 
-readr::write_rds(study_dates, here::here("analysis", "lib", "study_dates.rds"))
-jsonlite::write_json(study_dates, path = here::here("analysis", "lib", "study_dates.json"), auto_unbox = TRUE, pretty=TRUE)
+readr::write_rds(study_dates, here::here("output", "lib", "study_dates.rds"))
+jsonlite::write_json(study_dates, path = here::here("output", "lib", "study_dates.json"), auto_unbox = TRUE, pretty=TRUE)
 
 # create jcvi_groups ----
 jcvi_groups <- 
@@ -49,7 +49,7 @@ tribble(
     "99", "DEFAULT",
 )
 
-readr::write_csv(jcvi_groups, here::here("analysis", "lib", "jcvi_groups.csv"))
+readr::write_csv(jcvi_groups, here::here("output", "lib", "jcvi_groups.csv"))
 
 # create elig_dates ----
 elig_dates <-
@@ -86,4 +86,4 @@ tribble(
     "2100-12-31", "DEFAULT"
 )
 
-readr::write_csv(elig_dates, here::here("analysis", "lib", "elig_dates.csv"))
+readr::write_csv(elig_dates, here::here("output", "lib", "elig_dates.csv"))
