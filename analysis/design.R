@@ -34,7 +34,7 @@ jsonlite::write_json(study_dates, path = here::here("analysis", "lib", "study_da
 jcvi_groups <- 
 tribble(
     ~group, ~definition,
-    "01", "longres_group",
+    "01", "longres_group AND age_1 > 65",
     "02", "age_1 >=80",
     "03", "age_1 >=75",
     "04", "age_1 >=70 OR (cev_group AND age_1 >=16 AND NOT preg_group)",
