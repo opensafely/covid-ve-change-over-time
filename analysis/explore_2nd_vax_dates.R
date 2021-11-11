@@ -117,9 +117,9 @@ elig_date_test <- data_extract %>%
 if (nrow(elig_date_test) == 0) {
   
   cat("#### fix dummy data ####\n")
-  jcvi_groups <- readr::read_csv(here::here("analysis", "lib", "jcvi_groups.csv"))
+  jcvi_groups <- readr::read_csv(here::here("output", "lib", "jcvi_groups.csv"))
   
-  elig_dates <- readr::read_csv(here::here("analysis", "lib", "elig_dates.csv"))
+  elig_dates <- readr::read_csv(here::here("output", "lib", "elig_dates.csv"))
   
   jcvi_group_cases <- jcvi_groups %>%
     mutate(across(definition, ~str_extract(.x, "age_. >=\\d{2}"))) %>%
@@ -269,7 +269,7 @@ data_vaccine <- data_eligible %>%
   filter(dose_1 + weeks(6) <= dose_2 & dose_2 < dose_1 + weeks(14))
 
 cat("#### read elig_dates ####\n")
-elig_dates <- readr::read_csv(here::here("analysis", "lib", "elig_dates.csv"))
+elig_dates <- readr::read_csv(here::here("output", "lib", "elig_dates.csv"))
 
 # extract age range for each elig_date
 elig_dates_age_range <- elig_dates %>%
