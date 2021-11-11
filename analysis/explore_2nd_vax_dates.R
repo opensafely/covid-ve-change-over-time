@@ -219,7 +219,7 @@ data_eligible <- data_processed %>%
   ) 
 
 cat("#### clean vaccine data ####\n")
-data_vaccine <- data_processed %>%
+data_vaccine <- data_eligible %>%
   # calculate age based on JCVI group definition
   mutate(age = if_else(jcvi_group %in% c("10","11","12"), age_2, age_1)) %>%
   select(patient_id, jcvi_group, elig_date, age, region, starts_with("covid_vax")) %>%
