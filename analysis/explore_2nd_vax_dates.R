@@ -48,7 +48,7 @@ data_extract0 <- read_csv(
     ## Identifier
     patient_id = col_integer(),
     
-    ## Eligibiloty dates
+    ## Eligibility dates
     elig_date = col_date(format="%Y-%m-%d"),
     jcvi_group = col_character(),
     
