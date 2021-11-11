@@ -22,8 +22,7 @@ data_properties <- function(
   
   # preliminaries
   library('tidyverse')
-  library('here')
-  source(here("analysis", "lib", "redaction_functions.R"))
+  source(here::here("analysis", "lib", "redaction_functions.R"))
   
   # reset options when exit the function
   op <- options()
@@ -39,7 +38,7 @@ data_properties <- function(
     ## High-level variable overview ----
     capture.output(
       skimr::skim_without_charts(data),
-      file = here(output_dir, paste0(filenamebase, "_skim", ".txt")),
+      file = file.path(path, paste0(filenamebase, "_skim", ".txt")),
       split=FALSE
     )
   }
@@ -48,15 +47,15 @@ data_properties <- function(
     ## list of column types ----
     capture.output(
       lapply(data, class),
-      file = here(output_dir, paste0(filenamebase, "_coltypes", ".txt"))
+      file = file.path(path, paste0(filenamebase, "_coltypes", ".txt"))
     )
   }
   
   ## tabulated data ----
   if (tabulate) {
     # delete file if it exists
-    if(file.exists(here(output_dir, paste0(filenamebase, "_tabulate", ".txt")))){
-      file.remove(here(output_dir, paste0(filenamebase, "_tabulate", ".txt")))
+    if(file.exists(file.path(path, paste0(filenamebase, "_tabulate", ".txt")))){
+      file.remove(file.path(path, paste0(filenamebase, "_tabulate", ".txt")))
     }
     
     ### categorical and logical ----
@@ -69,7 +68,7 @@ data_properties <- function(
     
     capture.output(
       walk2(sumtabs_cat$value, sumtabs_cat$name, print_cat),
-      file = here(output_dir, paste0(filenamebase, "_tabulate", ".txt")),
+      file = file.path(path, paste0(filenamebase, "_tabulate", ".txt")),
       append=FALSE
     )
     
@@ -83,7 +82,7 @@ data_properties <- function(
     
     capture.output(
       walk2(sumtabs_num$value, sumtabs_num$name, print_num),
-      file = here(output_dir, paste0(filenamebase, "_tabulate", ".txt")),
+      file = file.path(path, paste0(filenamebase, "_tabulate", ".txt")),
       append=TRUE
     )
     
@@ -98,7 +97,7 @@ data_properties <- function(
     
     capture.output(
       walk2(sumtabs_date$value, sumtabs_date$name, print_num),
-      file = here(output_dir, paste0(filenamebase, "_tabulate", ".txt")),
+      file = file.path(path, paste0(filenamebase, "_tabulate", ".txt")),
       append=TRUE
     )
   }
