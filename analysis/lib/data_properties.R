@@ -1,0 +1,106 @@
+#################
+
+# This function takes a dataset, summarises the variables using:
+#   * skimr::skim(),
+#   * class(),
+#   * and ,
+# and saves the output to a .txt file
+# The script should only be run via an action in the project.yaml only
+# The script must be accompanied by two arguments
+# The first is the dataset, saved as an .rds file, that is to be summarised
+# The second in the directory where the txt output will be saved
+
+#################
+
+data_properties <- function(
+  data, # input data
+  path, # path for output file
+  coltypes = FALSE,
+  skim = FALSE,
+  tabulate = TRUE
+  ) {
+  
+  # preliminaries
+  library('tidyverse')
+  library('here')
+  source(here("analysis", "lib", "redaction_functions.R"))
+  
+  # reset options when exit the function
+  op <- options()
+  on.exit(options(op))
+  
+  # Output summary .txt
+  options(width=200) # set output width for capture.output
+  
+  # prefix for output files
+  filenamebase <- deparse(substitute(data))
+  
+  if (skim) {
+    ## High-level variable overview ----
+    capture.output(
+      skimr::skim_without_charts(data),
+      file = here(output_dir, paste0(filenamebase, "_skim", ".txt")),
+      split=FALSE
+    )
+  }
+  
+  if (coltypes) {
+    ## list of column types ----
+    capture.output(
+      lapply(data, class),
+      file = here(output_dir, paste0(filenamebase, "_coltypes", ".txt"))
+    )
+  }
+  
+  ## tabulated data ----
+  if (tabulate) {
+    # delete file if it exists
+    if(file.exists(here(output_dir, paste0(filenamebase, "_tabulate", ".txt")))){
+      file.remove(here(output_dir, paste0(filenamebase, "_tabulate", ".txt")))
+    }
+    
+    ### categorical and logical ----
+    sumtabs_cat <-
+      data %>%
+      select(-ends_with("_id")) %>%
+      select(where(is.character), where(is.logical), where(is.factor)) %>%
+      map(redacted_summary_cat) %>%
+      enframe()
+    
+    capture.output(
+      walk2(sumtabs_cat$value, sumtabs_cat$name, print_cat),
+      file = here(output_dir, paste0(filenamebase, "_tabulate", ".txt")),
+      append=FALSE
+    )
+    
+    ### numeric ----
+    sumtabs_num <-
+      data %>%
+      select(-ends_with("_id")) %>%
+      select(where(~ {!is.logical(.x) & is.numeric(.x) & !is.Date(.x)})) %>%
+      map(redacted_summary_num) %>%
+      enframe()
+    
+    capture.output(
+      walk2(sumtabs_num$value, sumtabs_num$name, print_num),
+      file = here(output_dir, paste0(filenamebase, "_tabulate", ".txt")),
+      append=TRUE
+    )
+    
+    ### dates ----
+    
+    sumtabs_date <-
+      data %>%
+      select(-ends_with("_id")) %>%
+      select(where(is.Date)) %>%
+      map(redacted_summary_date) %>%
+      enframe()
+    
+    capture.output(
+      walk2(sumtabs_date$value, sumtabs_date$name, print_num),
+      file = here(output_dir, paste0(filenamebase, "_tabulate", ".txt")),
+      append=TRUE
+    )
+  }
+}
+
