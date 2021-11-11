@@ -82,7 +82,7 @@ jcvi_variables = dict(
         return_expectations={
         "rate": "universal",
         "category": {"ratios": {"M": 0.49, "F": 0.51}},
-        "incidence": 1,
+        "incidence": 0.99,
         }
     ),
 
@@ -400,8 +400,6 @@ jcvi_variables = dict(
             },
     ),
 
-    ### NEED TO THINK ABOUT HOW CAREHOME / LONGSTAY RESIDENTIAL HOME DEFINED
-    ### WILL WE EXCLUDE ALL IN LONGSTAY RESIDETNIAL, OR ONLY THOSE IN CARE HOMES FOR OLDER ADULTS (I.E. JCVI GROUP 1)
     # Patients in long-stay nursing and residential care
     longres_group=patients.with_these_clinical_events(
         longres_primis,
@@ -409,43 +407,6 @@ jcvi_variables = dict(
         on_or_before=days(start_date, -1),
         return_expectations={"incidence": 0.01},
     ),
-
-    ### Will used the definition below, looks like it may be more thorough.
-    # # CAREHOME STATUS
-    # care_home_type=patients.care_home_status_as_of(
-    #     "index_date - 1 day",
-    #     categorised_as={
-    #         "Carehome": """
-    #           IsPotentialCareHome
-    #           AND LocationDoesNotRequireNursing='Y'
-    #           AND LocationRequiresNursing='N'
-    #         """,
-    #         "Nursinghome": """
-    #           IsPotentialCareHome
-    #           AND LocationDoesNotRequireNursing='N'
-    #           AND LocationRequiresNursing='Y'
-    #         """,
-    #         "Mixed": "IsPotentialCareHome",
-    #         "": "DEFAULT",  # use empty string
-    #     },
-    #     return_expectations={
-    #         "category": {"ratios": {"Carehome": 0.05, "Nursinghome": 0.05, "Mixed": 0.05, "": 0.85, }, },
-    #         "incidence": 1,
-    #     },
-    # ),
-
-    # # simple care home flag
-    # care_home_tpp=patients.satisfying(
-    #     """care_home_type""",
-    #     return_expectations={"incidence": 0.01},
-    # ),
-    
-    # care_home_code=patients.with_these_clinical_events(
-    #     carehome_primis_codes,
-    #     on_or_before="index_date - 1 day",
-    #     returning="binary_flag",
-    #     return_expectations={"incidence": 0.01},
-    # ),
     ),
 
     # vaccine eligibility dates
