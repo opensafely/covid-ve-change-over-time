@@ -32,8 +32,6 @@ study=StudyDefinition(
         has_follow_up = 1
         AND
         NOT died_before
-        AND 
-        NOT hscworker
         """,
         has_follow_up=patients.registered_with_one_practice_between(
             start_date="elig_date - 1 year",
@@ -43,10 +41,6 @@ study=StudyDefinition(
         died_before=patients.died_from_any_cause(
             on_or_before="elig_date - 1 day",
             returning="binary_flag",
-        ),
-        hscworker=patients.with_healthcare_worker_flag_on_covid_vaccine_record(
-            returning="binary_flag",
-            return_expectations={"incidence": 0.01},
         ),
     ),
 
@@ -60,6 +54,11 @@ study=StudyDefinition(
     #         "incidence": 1
     #     }
     # ),
+    
+     # hscworker=patients.with_healthcare_worker_flag_on_covid_vaccine_record(
+     #     returning="binary_flag",
+     #     return_expectations={"incidence": 0.01},
+     #     ),
 
     # ETHNICITY IN 6 CATEGORIES
     # ethnicity
