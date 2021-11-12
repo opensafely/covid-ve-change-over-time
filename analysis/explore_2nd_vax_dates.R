@@ -18,10 +18,8 @@ library(glue)
 source(here::here("analysis", "lib", "data_properties.R"))
 
 ## create folders for outputs
-images_dir <- here::here("output", "explore_2nd_vax_dates", "images")
-data_properties_dir <- here::here("output",  "explore_2nd_vax_dates", "data_properties")
-dir.create(data_properties_dir, showWarnings = FALSE, recursive=TRUE)
-dir.create(images_dir, showWarnings = FALSE, recursive=TRUE)
+data_dir <- here::here("output", "explore_2nd_vax_dates", "data")
+dir.create(data_dir, showWarnings = FALSE, recursive=TRUE)
 
 ## import dates
 dates <- readr::read_rds(here::here("output", "lib", "study_dates.rds"))
@@ -150,14 +148,18 @@ if (nrow(elig_date_test) == 0) {
   data_extract <- data_extract %>%
     mutate(r1 = round(rnorm(nrow(.), mean = 7, sd = 7)),
            r2 = round(rnorm(nrow(.), mean = 7, sd = 7)),
-           r3 = round(rnorm(nrow(.), mean = 8*7, sd = 7)),
-           r4 = round(rnorm(nrow(.), mean = 8*7, sd = 7))) %>%
+           r3 = round(rnorm(nrow(.), mean = 10*7, sd = 7)),
+           r4 = round(rnorm(nrow(.), mean = 10*7, sd = 7)),
+           r5 = rbernoulli(nrow(.), p=0.01),
+           r6 = rbernoulli(nrow(.), p=0.01)) %>%
     mutate(across(covid_vax_pfizer_1_date, ~if_else(!is.na(.x), elig_date + days(r1),.x))) %>%
     mutate(across(covid_vax_az_1_date, ~if_else(!is.na(.x), elig_date + days(r2),.x))) %>%
     mutate(covid_vax_pfizer_2_date = covid_vax_pfizer_1_date + days(r3),
            covid_vax_az_2_date = covid_vax_az_1_date + days(r4)) %>%
+    mutate(across(contains("vax_moderna"), ~if_else(r5, .x, NA_Date_))) %>%
+    mutate(across(contains("vax_disease"), ~if_else(r6, .x, NA_Date_))) %>%
     select(-matches("r\\d{1}"))
-
+  
 }
 
 cat("#### process extracted data ####\n")
@@ -191,7 +193,7 @@ data_processed <- data_extract %>%
 cat("#### properties of data_processed ####\n")
 data_properties(
   data = data_processed,
-  path = data_properties_dir
+  path = data_dir
 )  
 
 cat("#### apply exclusion criteria to processed data ####\n")
@@ -282,8 +284,11 @@ elig_dates_age_range <- elig_dates %>%
   )) %>%
   select(date, age_range)
 
+
+source(here::here("analysis", "lib", "redaction_functions.R"))
+
 # function for plotting distribution of 2nd vax dates
-second_vax_dates_plot <- 
+second_vax_dates_plot_data <- 
   function(
     plot_date = "2020-12-08"
   ) {
@@ -341,47 +346,38 @@ second_vax_dates_plot <-
     plot_data <- expanded_data %>%
       left_join(count_data, by = c("region", "brand", "dose_2")) 
     
-    # define breaks for x axis
-    x_breaks <- seq(as.Date(plot_date) + weeks(6),
-                    as.Date(plot_date) + weeks(14),
-                    14)
+    plot_data_split <- plot_data %>%
+      group_split(region, brand)
     
-    # plot the data
-    plot_data %>%
-      group_by(region) %>%
-      mutate(n_region = scales::comma(sum(n), accuracy = 1)) %>%
-      ungroup() %>%
-      mutate(across(region, 
-                    ~str_replace(.x, 
-                                 "Yorkshire and The Humber",
-                                 "Yorkshire & Humber"))) %>%
-      mutate(across(region, ~glue("{region} (n={n_region})"))) %>%
-      ggplot(aes(x = dose_2, y = n, colour = brand)) +
-      geom_line() +
-      # line at elig_date + 10 weeks, as this is potentially going to be time_zero for comparisons
-      geom_vline(xintercept = as.Date(plot_date, format = "%Y-%m-%d") + weeks(10),
-                 linetype = "dashed") +
-      facet_wrap(~ region, scales = "free_y") +
-      labs(x = "date of second vaccination", y = "number of patients",
-           title = title_string, subtitle = subtitle_string) +
-      scale_color_discrete(name = "vaccine") +
-      scale_x_continuous(breaks = x_breaks,
-                         labels = sapply(x_breaks, function(x) str_c(day(x), " ", month(x, label=TRUE)))) +
-      theme_bw(base_size = 10) +
-      theme(legend.position = "bottom",
-            axis.text.x = element_text(size = 6),
-            plot.margin = margin(t=0.2, r=0.5, b=0.2, l=0.2, "cm")) +
-      # to avoid displaying low numbers of patients
-      coord_cartesian(ylim = c(10, NA))
-    
-    # save the plot
-    ggsave(filename = file.path(images_dir, glue("second_vax_dates_{plot_date}.png")),
-           width=20, height=14, units="cm")
-    
+    # redact data within region:brand groups for plot
+    plot_data_redacted <- bind_rows(
+      lapply(
+        plot_data_split, 
+        function(x)
+          x %>%
+          # replace NAs with 0s
+          mutate(across(n, ~if_else(is.na(.x), 0L, .x))) %>%
+          # redact values < 5 (and next smallest if sum of redacted values <5)
+          mutate(across(n, ~redactor2(.x))) %>%
+          # replace redacted values with 5
+          mutate(across(n, ~if_else(is.na(.x), 5L, .x)))
+        )
+    )
   }
 
-cat("#### generate plots ####\n")
-# plots of second vax dates for all eligibility dates, stratified by region
+cat("#### generate plot data ####\n")
+# data to generate plots of second vax dates for all eligibility dates, stratified by region
+out <- list()
+i <- 1
 for (d in as.character(sort(unique(data_vaccine$elig_date)))) {
-  second_vax_dates_plot(d)
+  out[[i]] <- second_vax_dates_plot_data(d)
+  i <- i+1
 }
+
+plot_data_redacted <- bind_rows(out)
+
+# save data for plotting
+readr::write_csv(
+  plot_data_redacted,
+  file.path(data_dir,"plot_data_redacted.csv")
+)
