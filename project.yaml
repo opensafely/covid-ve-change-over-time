@@ -29,5 +29,5 @@ actions:
     - generate_study_population
     outputs:
       moderately_sensitive:
-        data_properties: output/explore_2nd_vax_dates/data_properties/data_processed_tabulate.txt
-        plots_eda_2nd_vax_dates: output/explore_2nd_vax_dates/images/second_vax_dates_*.png
+        data_properties: output/explore_2nd_vax_dates/data/data_processed_tabulate.txt
+        plot_data: output/explore_2nd_vax_dates/data/plot_data_redacted.csv
