@@ -284,93 +284,86 @@ elig_dates_age_range <- elig_dates %>%
   )) %>%
   select(date, age_range)
 
-
 source(here::here("analysis", "lib", "redaction_functions.R"))
-
-# function for plotting distribution of 2nd vax dates
-second_vax_dates_plot_data <- 
-  function(
-    plot_date = "2020-12-08"
-  ) {
-    
-    # JCVI groups with the given plot_date
-    jcvi_group_info <- data_vaccine %>% 
-      filter(elig_date %in% as.Date(plot_date)) %>%
-      distinct(jcvi_group) %>%
-      unlist() %>% unname() %>% sort() %>%
-      str_c(., collapse = ", ")
-    
-    # age range for the given plot_date
-    age_group_info <- elig_dates_age_range %>% 
-      filter(date %in% as.Date(plot_date)) %>%
-      select(age_range) %>%
-      unlist() %>% unname()
-    
-    # plot title
-    title_string <- glue("Patients eligible on {plot_date}")
-    if (is.na(age_group_info)) {
-      subtitle_string <- glue("JCVI group(s): {jcvi_group_info}; Age range: whole group(s)")
-    } else {
-      subtitle_string <- glue("JCVI group(s): {jcvi_group_info}; Age range: {age_group_info} years.")
-    }
-    
-    # sequence of dates for plot
-    dates_seq <- seq(as.Date(plot_date) + weeks(6), 
-                     as.Date(plot_date) + weeks(14) - days(1), 
-                     1)
-    
-    # ensure full sequence of dates for each region:brand combo
-    expanded_data <- tibble(
-      region = character(),
-      brand = character(),
-      dose_2 = Date()
-    )
-    for (r in unique(data_vaccine$region)) {
-      for (v in unique(data_vaccine$brand)) {
-        expanded_data <- expanded_data %>%
-          bind_rows(tibble(
-            region = rep(r, each = length(dates_seq)),
-            brand = rep(v, each = length(dates_seq)),
-            dose_2 = dates_seq
-            )) 
-      }
-    }
-    
-    # number of patients with 2nd dose on each date
-    count_data <- data_vaccine %>%
-      group_by(region, brand, dose_2) %>%
-      count() %>%
-      ungroup() 
-    
-    # join expanded and count data
-    plot_data <- expanded_data %>%
-      left_join(count_data, by = c("region", "brand", "dose_2")) 
-    
-    plot_data_split <- plot_data %>%
-      group_split(region, brand)
-    
-    # redact data within region:brand groups for plot
-    plot_data_redacted <- bind_rows(
-      lapply(
-        plot_data_split, 
-        function(x)
-          x %>%
-          # replace NAs with 0s
-          mutate(across(n, ~if_else(is.na(.x), 0L, .x))) %>%
-          # redact values < 5 (and next smallest if sum of redacted values <5)
-          mutate(across(n, ~redactor2(.x))) %>%
-          # replace redacted values with 5
-          mutate(across(n, ~if_else(is.na(.x), 5L, .x)))
-        )
-    )
-  }
 
 cat("#### generate plot data ####\n")
 # data to generate plots of second vax dates for all eligibility dates, stratified by region
 out <- list()
 i <- 1
-for (d in as.character(sort(unique(data_vaccine$elig_date)))) {
-  out[[i]] <- second_vax_dates_plot_data(d)
+for (plot_date in as.character(sort(unique(data_vaccine$elig_date)))) {
+  
+  ####
+  
+  data <- data_vaccine %>%
+    filter(elig_date %in% as.Date(plot_date))
+  
+  # JCVI groups with the given plot_date
+  jcvi_group_info <- data %>% 
+    distinct(jcvi_group) %>%
+    unlist() %>% unname() %>% sort() %>%
+    str_c(., collapse = ", ")
+  
+  # age range for the given plot_date
+  age_group_info <- elig_dates_age_range %>% 
+    filter(date %in% as.Date(plot_date)) %>%
+    select(age_range) %>%
+    unlist() %>% unname()
+  
+  # sequence of dates for plot
+  dates_seq <- seq(as.Date(plot_date) + weeks(6), 
+                   as.Date(plot_date) + weeks(14) - days(1), 
+                   1)
+  
+  # ensure full sequence of dates for each region:brand combo
+  expanded_data <- tibble(
+    region = character(),
+    brand = character(),
+    dose_2 = Date()
+  )
+  for (r in unique(data$region)) {
+    for (v in unique(data$brand)) {
+      expanded_data <- expanded_data %>%
+        bind_rows(tibble(
+          region = rep(r, each = length(dates_seq)),
+          brand = rep(v, each = length(dates_seq)),
+          dose_2 = dates_seq
+        )) 
+    }
+  }
+  
+  # number of patients with 2nd dose on each date
+  count_data <- data %>%
+    group_by(region, brand, dose_2) %>%
+    count() %>%
+    ungroup() 
+  
+  # join expanded and count data
+  plot_data <- expanded_data %>%
+    left_join(count_data, by = c("region", "brand", "dose_2")) 
+  
+  plot_data_split <- plot_data %>%
+    group_split(region, brand)
+  
+  # redact data within region:brand groups for plot
+  out[[i]] <- bind_rows(
+    lapply(
+      plot_data_split, 
+      function(x)
+        x %>%
+        # replace NAs with 0s
+        mutate(across(n, ~if_else(is.na(.x), 0L, .x))) %>%
+        # redact values < 5 (and next smallest if sum of redacted values <5)
+        mutate(across(n, ~redactor2(.x))) %>%
+        # replace redacted values with 5
+        mutate(across(n, ~if_else(is.na(.x), 5L, .x)))
+    )
+  ) %>%
+    mutate(jcvi_group = jcvi_group_info,
+           age_group = age_group_info,
+           elig_date = as.Date(plot_date, format = "%Y-%m-%d"))
+  
+  ####
+  
   i <- i+1
 }
 
