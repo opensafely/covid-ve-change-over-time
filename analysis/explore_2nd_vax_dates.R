@@ -4,7 +4,8 @@
 # - reads the extracted data
 # - processes the extracted data
 # - cleans the vaccination data to identify second doses of pfizer and az
-# - creates a (redacted) dataset for plotting the distribution of second vaccination dates within eligibility_date*region strata
+# - creates a dataset with the (redacted) number of individuals receiving their second vaccination on each date in a sequence
+# - (the date sequence depends on their vaccine eligibility date and counts are stratified by region and vaccine brand)
 
 ######################################
 
@@ -367,6 +368,7 @@ for (plot_date in as.character(sort(unique(data_vaccine$elig_date)))) {
   i <- i+1
 }
 
+# bind rows
 plot_data_redacted <- bind_rows(out)
 
 # save data for plotting
