@@ -8,7 +8,7 @@ from cohortextractor import (
 from codelists import *
 
 # import the vairables for deriving JCVI groups
-from variables import (
+from grouping_variables import (
     jcvi_variables, 
     start_date,
     end_date,
@@ -83,22 +83,40 @@ study=StudyDefinition(
     ),
 
     # IMD - quintile
-    imd=patients.address_as_of(
-        "elig_date + 42 days",
-        returning="index_of_multiple_deprivation",
-        round_to_nearest=100,
+    imd=patients.categorised_as(
+        {
+            "0": "DEFAULT",
+            "1": """index_of_multiple_deprivation >=1 AND index_of_multiple_deprivation < 32844*1/5""",
+            "2": """index_of_multiple_deprivation >= 32844*1/5 AND index_of_multiple_deprivation < 32844*2/5""",
+            "3": """index_of_multiple_deprivation >= 32844*2/5 AND index_of_multiple_deprivation < 32844*3/5""",
+            "4": """index_of_multiple_deprivation >= 32844*3/5 AND index_of_multiple_deprivation < 32844*4/5""",
+            "5": """index_of_multiple_deprivation >= 32844*4/5 """,
+        },
+        index_of_multiple_deprivation=patients.address_as_of(
+            "elig_date + 42 days",
+            returning="index_of_multiple_deprivation",
+            round_to_nearest=100,
+        ),
         return_expectations={
             "rate": "universal",
-            "category": {"ratios": {c: 1/320 for c in range(100, 32100, 100)}},
-            "incidence": 1,
-            }    
+            "category": {
+                "ratios": {
+                    "0": 0.01,
+                    "1": 0.20,
+                    "2": 0.20,
+                    "3": 0.20,
+                    "4": 0.20,
+                    "5": 0.19,
+                }
+            },
+        },
     ),
 
     # region - NHS England 9 regions
     region=patients.registered_practice_as_of(
         "elig_date + 42 days",
-        returning = "nuts1_region_name",
-        return_expectations = {
+        returning="nuts1_region_name",
+        return_expectations={
             "rate": "universal",
             "category": {
                 "ratios": {
@@ -113,6 +131,7 @@ study=StudyDefinition(
                     "South East": 0.1
                 },
             },
+            "incidence": 0.99
         },
     ),
 
