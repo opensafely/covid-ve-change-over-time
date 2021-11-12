@@ -36,8 +36,8 @@ redactor2 <- function(n, threshold=5, x=NULL){
   # next largest frequency is also redacted
   
   
-  stopifnot("n must be non-missing" = any(!is.na(n)))
-  stopifnot("n must non-negative" = any(n>=0))
+  stopifnot("n must be non-missing" = all(!is.na(n)))
+  stopifnot("n must non-negative" = all(n>=0))
   
   if(is.null(x)){
     x <- n
