@@ -21,7 +21,7 @@ plot_data_redacted <- readr::read_csv(here::here("output", "explore_2nd_vax_date
 
 cat("#### generate plots ####\n")
 # plots of second vax dates for all eligibility dates, stratified by region
-for (plot_date in as.character(sort(unique(plot_data_redacted$elig_date)))[1]) {
+for (plot_date in as.character(sort(unique(plot_data_redacted$elig_date)))) {
   
   data <- plot_data_redacted %>%
     filter(elig_date %in% as.Date(plot_date))
@@ -42,6 +42,8 @@ for (plot_date in as.character(sort(unique(plot_data_redacted$elig_date)))[1]) {
                   as.Date(plot_date) + weeks(14),
                   14)
   
+  dashed_line <- as.Date(plot_date, format = "%Y-%m-%d") + weeks(10)
+  
   # plot the data
   data %>%
     # calculate approx. total within region:brand group (approx as post-redaction)
@@ -53,21 +55,25 @@ for (plot_date in as.character(sort(unique(plot_data_redacted$elig_date)))[1]) {
                                "Yorkshire and The Humber",
                                "Yorkshire & Humber"))) %>%
     mutate(across(region, ~glue("{region} (n={n_region})"))) %>%
-    ggplot(aes(x = dose_2, y = n, colour = brand)) +
-    geom_line() +
+    ggplot(aes(x = dose_2, y = n, fill = brand)) +
+    geom_bar(stat = "identity", position = "stack", width=1) +
+    # geom_line() +
     # line at elig_date + 10 weeks, as this is potentially going to be time_zero for comparisons
-    geom_vline(xintercept = as.Date(plot_date, format = "%Y-%m-%d") + weeks(10),
+    geom_vline(xintercept = dashed_line,
                linetype = "dashed") +
-    facet_wrap(~ region, scales = "free_y") +
+    facet_wrap(~ region) +
     labs(x = "date of second vaccination", y = "number of patients",
-         title = title_string, subtitle = subtitle_string) +
-    scale_color_discrete(name = "vaccine") +
+         title = title_string, subtitle = subtitle_string,
+         caption = glue("Dashed line at eligibility date + 10 weeks.")) +
+    scale_fill_discrete(name = "vaccine") +
+    # scale_color_discrete(name = "vaccine") +
     scale_x_continuous(breaks = x_breaks,
                        labels = sapply(x_breaks, function(x) str_c(day(x), " ", month(x, label=TRUE)))) +
+    scale_y_continuous(expand = expansion(mult = c(0,.05))) +
     theme_bw(base_size = 10) +
     theme(legend.position = "bottom",
           axis.text.x = element_text(size = 6),
-          plot.margin = margin(t=0.2, r=0.5, b=0.2, l=0.2, "cm"))
+          plot.margin = margin(t=0.2, r=0.5, b=0.2, l=0.2, "cm")) 
   
   # save the plot
   ggsave(filename = file.path(images_dir, glue("second_vax_dates_{plot_date}.png")),
