@@ -22,4 +22,12 @@ actions:
       highly_sensitive:
         cohort: output/input.csv
         
-
+  eda_2nd_vax_dates:
+    run: r:latest analysis/explore_2nd_vax_dates.R
+    needs:
+    - design
+    - generate_study_population
+    outputs:
+      moderately_sensitive:
+        data_properties: output/explore_2nd_vax_dates/data/data_processed_tabulate.txt
+        plot_data: output/explore_2nd_vax_dates/data/plot_data_redacted.csv
