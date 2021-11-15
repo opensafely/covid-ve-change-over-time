@@ -31,3 +31,13 @@ actions:
       moderately_sensitive:
         data_properties: output/explore_2nd_vax_dates/data/data_processed_tabulate.txt
         plot_data: output/explore_2nd_vax_dates/data/plot_data_redacted.csv
+
+  plot_2nd_vax_dates:
+    run: r:latest analysis/plot_2nd_vax_dates.R
+    needs:
+    - design
+    - generate_study_population
+    - eda_2nd_vax_dates
+    outputs:
+      moderately_sensitive:
+        plots: output/explore_2nd_vax_dates/images/second_vax_dates_*.png
