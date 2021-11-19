@@ -14,19 +14,19 @@ actions:
         jcvi_groups: output/lib/jcvi_groups.csv
         elig_dates: output/lib/elig_dates.csv
 
-  generate_study_population:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition
+  generate_study_population_vaccines:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_vaccines --output-format feather
     needs: 
     - design
     outputs:
       highly_sensitive:
-        cohort: output/input.csv
+        cohort: output/input_vaccines.feather
         
   eda_2nd_vax_dates:
     run: r:latest analysis/explore_2nd_vax_dates.R
     needs:
     - design
-    - generate_study_population
+    - generate_study_population_vaccines
     outputs:
       moderately_sensitive:
         data_properties: output/explore_2nd_vax_dates/data/data_processed_tabulate.txt
