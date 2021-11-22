@@ -54,36 +54,36 @@ readr::write_csv(jcvi_groups, here::here("output", "lib", "jcvi_groups.csv"))
 # create elig_dates ----
 elig_dates <-
 tribble(
-    ~date, ~description,
-    "2020-12-08", "jcvi_group='01' OR jcvi_group='02' OR jcvi_group='03'",
-    "2021-01-18", "jcvi_group='04'",
+    ~date, ~description, ~jcvi_groups,
+    "2020-12-08", "jcvi_group='01' OR jcvi_group='02' OR jcvi_group='03'", "01, 02, 03",
+    "2021-01-18", "jcvi_group='04'", "04",
     ###
-    "2021-02-15", "jcvi_group='05' OR jcvi_group='06'",
+    "2021-02-15", "jcvi_group='05' OR jcvi_group='06'", "05, 06",
     ###
-    "2021-02-22", "age_1 >= 64 AND age_1 < 65",
-    "2021-03-01", "age_1 >= 60 AND age_1 < 64",
+    "2021-02-22", "age_1 >= 64 AND age_1 < 65", "07", 
+    "2021-03-01", "age_1 >= 60 AND age_1 < 64", "07",
     ###
-    "2021-03-08", "age_1 >= 56 AND age_1 < 60",
-    "2021-03-09", "age_1 >= 55 AND age_1 < 56",
+    "2021-03-08", "age_1 >= 56 AND age_1 < 60", "08",
+    "2021-03-09", "age_1 >= 55 AND age_1 < 56", "08",
     ###
-    "2021-03-19", "age_1 >= 50 AND age_1 < 55",
+    "2021-03-19", "age_1 >= 50 AND age_1 < 55", "09",
     ###
-    "2021-04-13", "age_2 >= 45 AND age_1 < 50",
-    "2021-04-26", "age_2 >= 44 AND age_1 < 45",
-    "2021-04-27", "age_2 >= 42 AND age_1 < 44",
-    "2021-04-30", "age_2 >= 40 AND age_1 < 42",
+    "2021-04-13", "age_2 >= 45 AND age_1 < 50", "10",
+    "2021-04-26", "age_2 >= 44 AND age_1 < 45", "10",
+    "2021-04-27", "age_2 >= 42 AND age_1 < 44", "10",
+    "2021-04-30", "age_2 >= 40 AND age_1 < 42", "10",
     ###
-    "2021-05-13", "age_2 >= 38 AND age_2 < 40",
-    "2021-05-19", "age_2 >= 36 AND age_2 < 38",
-    "2021-05-21", "age_2 >= 34 AND age_2 < 36",
-    "2021-05-25", "age_2 >= 32 AND age_2 < 34",
-    "2021-05-26", "age_2 >= 30 AND age_2 < 32",
+    "2021-05-13", "age_2 >= 38 AND age_2 < 40", "11",
+    "2021-05-19", "age_2 >= 36 AND age_2 < 38", "11",
+    "2021-05-21", "age_2 >= 34 AND age_2 < 36", "11",
+    "2021-05-25", "age_2 >= 32 AND age_2 < 34", "11",
+    "2021-05-26", "age_2 >= 30 AND age_2 < 32", "11",
     ###
-    "2021-06-08", "age_2 >= 25 AND age_2 < 30",
-    "2021-06-15", "age_2 >= 23 AND age_2 < 25",
-    "2021-06-16", "age_2 >= 21 AND age_2 < 23",
-    "2021-06-18", "age_2 >= 18 AND age_2 < 21",
-    "2100-12-31", "DEFAULT"
+    "2021-06-08", "age_2 >= 25 AND age_2 < 30", "12",
+    "2021-06-15", "age_2 >= 23 AND age_2 < 25", "12",
+    "2021-06-16", "age_2 >= 21 AND age_2 < 23", "12",
+    "2021-06-18", "age_2 >= 18 AND age_2 < 21", "12",
+    "2100-12-31", "DEFAULT", "NA",
 )
 
 readr::write_csv(elig_dates, here::here("output", "lib", "elig_dates.csv"))
