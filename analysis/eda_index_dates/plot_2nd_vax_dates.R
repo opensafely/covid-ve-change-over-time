@@ -113,11 +113,11 @@ for (plot_date in as.character(sort(unique(data_plot$elig_date)))) {
     summarise(n_brand = sum(n), .groups = "keep") %>%
     ungroup() %>%
     ###
-    mutate(n_brand= c(rpois(5, lambda = 4)*3,
-                      floor(dpois(sort(rpois(60,lambda=lam)), lambda=lam)*2000 + rnorm(60, sd=20)),
-                      rpois(10, lambda = 4)*3,
-                      floor(dpois(sort(rpois(60,lambda=lam)), lambda=lam)*1000  + rnorm(60, sd=10)),
-                      rpois(5, lambda = 4)*3)) %>%
+    # mutate(n_brand= c(rpois(5, lambda = 4)*3,
+    #                   floor(dpois(sort(rpois(60,lambda=lam)), lambda=lam)*2000 + rnorm(60, sd=20)),
+    #                   rpois(10, lambda = 4)*3,
+    #                   floor(dpois(sort(rpois(60,lambda=lam)), lambda=lam)*1000  + rnorm(60, sd=10)),
+    #                   rpois(5, lambda = 4)*3)) %>%
     ###
     group_by(brand) %>%
     mutate(moving_average = stats::filter(
@@ -182,6 +182,6 @@ for (plot_date in as.character(sort(unique(data_plot$elig_date)))) {
 }
 
 # save the start and end dates of the second vax period 
-second_vax_period_dates <- bind_rows(vaccine_period_dates)
-readr::write_csv(vaccine_period_dates,
+second_vax_period_dates <- bind_rows(second_vax_period_dates)
+readr::write_csv(second_vax_period_dates,
                  here::here("output", "lib", "second_vax_period_dates.csv"))
