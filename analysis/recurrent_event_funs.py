@@ -4,6 +4,46 @@ from cohortextractor import (
 
 # define recurrent event variables
 
+# imd
+def imd_k(K):
+    
+    def var_signature(name, date):
+        return {
+            name: patients.categorised_as(
+                {
+                "0": "DEFAULT",
+                "1": """index_of_multiple_deprivation >=1 AND index_of_multiple_deprivation < 32844*1/5""",
+                "2": """index_of_multiple_deprivation >= 32844*1/5 AND index_of_multiple_deprivation < 32844*2/5""",
+                "3": """index_of_multiple_deprivation >= 32844*2/5 AND index_of_multiple_deprivation < 32844*3/5""",
+                "4": """index_of_multiple_deprivation >= 32844*3/5 AND index_of_multiple_deprivation < 32844*4/5""",
+                "5": """index_of_multiple_deprivation >= 32844*4/5 """,
+                },
+                index_of_multiple_deprivation=patients.address_as_of(
+                date=date,
+                returning="index_of_multiple_deprivation",
+                round_to_nearest=100,
+                ),
+                return_expectations={
+                    "rate": "universal",
+                    "category": {
+                        "ratios": {
+                            "0": 0.01,
+                            "1": 0.20,
+                            "2": 0.20,
+                            "3": 0.20,
+                            "4": 0.20,
+                            "5": 0.19,
+                        }
+                    },
+                },
+            )
+        }
+    variables = {}
+    for k in range(1, K):
+        variables.update(var_signature(f"imd_{k}_date", f"start_{k}_date"))
+    return variables
+
+
 # clinical events with codelist
 def with_these_clinical_events_date_X(name, codelist, index_date, n, return_expectations):
     
