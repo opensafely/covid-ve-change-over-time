@@ -112,13 +112,6 @@ for (plot_date in as.character(sort(unique(data_plot$elig_date)))) {
     group_by(brand, dose_2) %>%
     summarise(n_brand = sum(n), .groups = "keep") %>%
     ungroup() %>%
-    ###
-    # mutate(n_brand= c(rpois(5, lambda = 4)*3,
-    #                   floor(dpois(sort(rpois(60,lambda=lam)), lambda=lam)*2000 + rnorm(60, sd=20)),
-    #                   rpois(10, lambda = 4)*3,
-    #                   floor(dpois(sort(rpois(60,lambda=lam)), lambda=lam)*1000  + rnorm(60, sd=10)),
-    #                   rpois(5, lambda = 4)*3)) %>%
-    ###
     group_by(brand) %>%
     mutate(moving_average = stats::filter(
       x = n_brand,
