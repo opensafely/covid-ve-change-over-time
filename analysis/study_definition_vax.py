@@ -41,6 +41,12 @@ study=StudyDefinition(
         ),
     ),
 
+    # Healthcare worker flag on vaccine record
+    hscworker=patients.with_healthcare_worker_flag_on_covid_vaccine_record(
+        returning="binary_flag",
+        return_expectations={"incidence": 0.01},
+        ),
+
     # ETHNICITY IN 6 CATEGORIES
     # ethnicity
     ethnicity_6=patients.with_these_clinical_events(

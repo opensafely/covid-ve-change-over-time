@@ -162,7 +162,7 @@ data_eligible <- data_vax_processed %>%
     !is.na(sex),
     !is.na(imd_0),
     !is.na(region_0),
-    # remove if initialed end of life care on or before elig_date + 42 days
+    # remove if initiated end of life care on or before elig_date + 42 days
     is.na(endoflife_0_date),
     is.na(midazolam_0_date),
     # remove if evidence of covid infection on or before elig_date + 42 days
@@ -263,14 +263,17 @@ data_2nd_dose <- data_vax %>%
   pivot_wider(names_from = vax_index,
               values_from = date, 
               names_prefix = "dose_") %>%
-  # only keep if 2nd dose received [6,14) weeks after 1st dose
-  filter(dose_1 + weeks(6) <= dose_2 & dose_2 < dose_1 + weeks(14)) %>%
   left_join(
     data_eligible %>%
-      select(patient_id, jcvi_group, elig_date, region_0),
+      select(patient_id, jcvi_group, elig_date, region_0, hscworker),
     by = "patient_id") %>%
   # first dose must have occurred on or after elig_date
-  filter(dose_1 >= elig_date)
+  filter(dose_1 >= elig_date) %>%
+  # only keep if 2nd dose received [6,14) weeks after 1st dose
+  filter(dose_1 + weeks(6) <= dose_2 & dose_2 < dose_1 + weeks(14)) %>%
+  filter(!hscworker) %>%
+  select(-hscworker)
+  
   
 readr::write_rds(data_2nd_dose,
                  here::here("output", "eda_index_dates", "data", "data_2nd_dose.rds"), 
