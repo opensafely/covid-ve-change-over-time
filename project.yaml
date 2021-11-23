@@ -14,30 +14,41 @@ actions:
         jcvi_groups: output/lib/jcvi_groups.csv
         elig_dates: output/lib/elig_dates.csv
 
-  generate_study_population:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition
+  generate_study_population_vax:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_vax --output-format feather
     needs: 
     - design
     outputs:
       highly_sensitive:
-        cohort: output/input.csv
+        cohort: output/input_vax.feather
         
-  eda_2nd_vax_dates:
-    run: r:latest analysis/explore_2nd_vax_dates.R
+  data_vax_process:
+    run: r:latest analysis/eda_index_dates/data_vax_process.R
     needs:
     - design
-    - generate_study_population
+    - generate_study_population_vax
     outputs:
+      highly_sensitive:
+        data_2nd_dose: output/eda_index_dates/data/data_2nd_dose.rds
+        vax_data: output/data/data_*_vax_dates.rds
       moderately_sensitive:
-        data_properties: output/explore_2nd_vax_dates/data/data_processed_tabulate.txt
-        plot_data: output/explore_2nd_vax_dates/data/plot_data_redacted.csv
+        data_properties: output/data/data_vax_processed_tabulate.txt
+
+  data_vax_plot:
+    run: r:latest analysis/eda_index_dates/data_vax_plot.R
+    needs:
+    - data_vax_process
+    outputs:
+      highly_sensitive:
+        plot_data: output/eda_index_dates/data/data_vax_plot.rds
 
   plot_2nd_vax_dates:
-    run: r:latest analysis/plot_2nd_vax_dates.R
+    run: r:latest analysis/eda_index_dates/plot_2nd_vax_dates.R
     needs:
     - design
-    - generate_study_population
-    - eda_2nd_vax_dates
+    - data_vax_plot
     outputs:
       moderately_sensitive:
-        plots: output/explore_2nd_vax_dates/images/second_vax_dates_*.png
+        plots_by_region: output/eda_index_dates/images/plot_by_region_*.png
+        plots_all: output/eda_index_dates/images/plot_all_*.png
+        second_vax_period_dates: output/lib/second_vax_period_dates.csv
