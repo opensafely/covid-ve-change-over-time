@@ -5,16 +5,18 @@
 # # # # # # # # # # # # # # # # # # # # #
 
 # Import libraries ----
-library('tidyverse')
-library('here')
+library(tidyverse)
+library(lubridate)
+library(glue)
 
 # create output directories ----
-fs::dir_create(here("output", "lib"))
+fs::dir_create(here::here("output", "lib"))
 
-# create study_dates ----
+# create study_parameters ----
 
-study_dates <-
+study_parameters <-
   list(
+    n_comparisons = 3,
     ref_age_1 = "2021-03-31", # reference date for calculating age for phase 1 groups
     ref_age_2 = "2021-07-01", # reference date for calculating age for phase 2 groups
     ref_cev = "2021-01-18", # reference date for calculating eligibility for phase 1 group 4 (CEV)
@@ -27,8 +29,8 @@ study_dates <-
     end_date = "2021-09-15" # last date of available vaccination data. NEED TO ALSO CHECK END DATES FOR OTHER DATA SOURCES
   )
 
-readr::write_rds(study_dates, here::here("output", "lib", "study_dates.rds"))
-jsonlite::write_json(study_dates, path = here::here("output", "lib", "study_dates.json"), auto_unbox = TRUE, pretty=TRUE)
+readr::write_rds(study_parameters, here::here("output", "lib", "study_parameters.rds"))
+jsonlite::write_json(study_parameters, path = here::here("output", "lib", "study_parameters.json"), auto_unbox = TRUE, pretty=TRUE)
 
 # create jcvi_groups ----
 jcvi_groups <- 
@@ -87,3 +89,71 @@ tribble(
 )
 
 readr::write_csv(elig_dates, here::here("output", "lib", "elig_dates.csv"))
+
+# create start and end dates for comparison_1 ----
+comparison_1_dates <-
+  tribble(
+    ~elig_date, 
+    "2020-12-08", 
+    "2021-01-18", 
+    ###
+    "2021-02-15", 
+    ###
+    "2021-02-22", 
+    "2021-03-01", 
+    ###
+    "2021-03-08", 
+    "2021-03-09", 
+    ###
+    "2021-03-19", 
+    ###
+    "2021-04-13", 
+    "2021-04-26", 
+    "2021-04-27", 
+    "2021-04-30", 
+    ###
+    "2021-05-13", 
+    "2021-05-19", 
+    "2021-05-21", 
+    "2021-05-25", 
+    "2021-05-26", 
+    ###
+    "2021-06-08", 
+    "2021-06-15", 
+    "2021-06-16", 
+    "2021-06-18", 
+    "2100-12-31"
+  ) %>%
+  mutate(
+    start_1_date = as.Date(elig_date, format = "%Y-%m-%d") + weeks(6),
+    end_1_date = start_1_date + weeks(6),
+  ) %>%
+  # mutate(across(elig_date,
+  #               ~if_else(.x == "2100-12-31",
+  #                        "DEFAULT",
+  #                        as.character(glue("elig_date.dt.year = '{year(elig_date)}'"))
+  #                        ))) %>%
+  mutate(across(elig_date,
+                ~if_else(.x == "2100-12-31",
+                         "DEFAULT",
+                         as.character(glue("elig_date = {year(elig_date)}"))
+                ))) %>%
+  # mutate(across(elig_date,
+  #               ~if_else(.x == "2100-12-31",
+  #                        "DEFAULT",
+  #                        as.character(glue("elig_date = '{elig_date}'"))
+  #               ))) %>%
+  distinct(elig_date, .keep_all = TRUE) 
+
+update_comparison_dates <- function(.data, n) {
+  .data %>%
+    mutate("start_{n}_date" := start_1_date + days((n-1)*28),
+           "end_{n}_date" := end_1_date + days((n-1)*28))
+}
+
+comparison_dates <- comparison_1_dates
+for (k in 2:study_parameters$n_comparisons) {
+  comparison_dates <- comparison_dates %>% update_comparison_dates(n=k)
+}
+
+readr::write_csv(comparison_dates, here::here("output", "lib", "comparison_dates.csv"))
