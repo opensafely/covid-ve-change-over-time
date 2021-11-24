@@ -4,44 +4,79 @@ from cohortextractor import (
 
 # define recurrent event variables
 
-# imd
+# imd defined at each start_k_date 
+# (was not working with categorised_as, so do the categorising in R script)
 def imd_k(K):
     
     def var_signature(name, date):
         return {
-            name: patients.categorised_as(
-                {
-                "0": "DEFAULT",
-                "1": """index_of_multiple_deprivation >=1 AND index_of_multiple_deprivation < 32844*1/5""",
-                "2": """index_of_multiple_deprivation >= 32844*1/5 AND index_of_multiple_deprivation < 32844*2/5""",
-                "3": """index_of_multiple_deprivation >= 32844*2/5 AND index_of_multiple_deprivation < 32844*3/5""",
-                "4": """index_of_multiple_deprivation >= 32844*3/5 AND index_of_multiple_deprivation < 32844*4/5""",
-                "5": """index_of_multiple_deprivation >= 32844*4/5 """,
-                },
-                index_of_multiple_deprivation=patients.address_as_of(
+            name: patients.address_as_of(
+                    date,
+                    returning="index_of_multiple_deprivation",
+                    round_to_nearest=100,
+                    return_expectations={
+                        "category": {"ratios": {c: 1/320 for c in range(100,32100,100)}}
+                        }
+                    ),
+        }
+    variables = {}
+    for k in range(1, K):
+        variables.update(var_signature(f"imd_{k}", f"start_{k}_date"))
+    return variables
+
+# region defined at each start_k_date
+def region_k(K):
+    
+    def var_signature(name, date):
+        return {
+            name: patients.registered_practice_as_of(
                 date=date,
-                returning="index_of_multiple_deprivation",
-                round_to_nearest=100,
-                ),
+                returning="nuts1_region_name",
                 return_expectations={
                     "rate": "universal",
                     "category": {
                         "ratios": {
-                            "0": 0.01,
-                            "1": 0.20,
-                            "2": 0.20,
-                            "3": 0.20,
-                            "4": 0.20,
-                            "5": 0.19,
-                        }
-                    },
+                            "North East": 0.1,
+                            "North West": 0.1,
+                            "Yorkshire and The Humber": 0.1,
+                            "East Midlands": 0.1,
+                            "West Midlands": 0.1,
+                            "East": 0.1,
+                            "London": 0.2,
+                            "South West": 0.1,
+                            "South East": 0.1
+                            },
+                        },
+                    "incidence": 0.99
                 },
-            )
+            ),
         }
     variables = {}
     for k in range(1, K):
-        variables.update(var_signature(f"imd_{k}_date", f"start_{k}_date"))
+        variables.update(var_signature(f"region_{k}", f"start_{k}_date"))
     return variables
+
+# # BMI
+# def bmi_k(K):
+    
+#     def var_signature(name, date):
+#         return {
+#             name: patients.most_recent_bmi(
+#                 on_or_before=date,
+#                 minimum_age_at_measurement=16,
+#                 # on_most_recent_day_of_measurement=False, # returning an error for some reason
+#                 include_measurement_date=True,
+#                 date_format="YYYY-MM-DD",
+#                 return_expectations={
+#                     "float": {"distribution": "normal", "mean": 28, "stddev": 8},
+#                     "incidence": 0.80,
+#                     },
+#             ),
+#         }
+#     variables = {}
+#     for k in range(1, K):
+#         variables.update(var_signature(f"bmi_{k}", f"start_{k}_date"))
+#     return variables
 
 
 # clinical events with codelist
@@ -85,12 +120,11 @@ def with_these_medications_date_X(name, codelist, index_date, n, return_expectat
 # bmi
 def most_recent_bmi_X(name, index_date, n, return_expectations):
 
-    def var_signature(name, on_or_after, return_expectations):
+    def var_signature(name, on_or_before, return_expectations):
         return {
             name: patients.most_recent_bmi(
-                on_or_after=on_or_after,
+                on_or_before=on_or_before,
                 minimum_age_at_measurement=16,
-                # on_most_recent_day_of_measurement=False, # returning an error for some reason
                 include_measurement_date=True,
                 date_format="YYYY-MM-DD",
                 return_expectations=return_expectations
@@ -98,7 +132,7 @@ def most_recent_bmi_X(name, index_date, n, return_expectations):
         }
     variables=var_signature(f"{name}_1", index_date, return_expectations)
     for i in range(2, n+1):
-        variables.update(var_signature(f"{name}_{i}", f"{name}_{i-1}_date_measured + 1 day", return_expectations))
+        variables.update(var_signature(f"{name}_{i}", f"{name}_{i-1}_date_measured - 1 day", return_expectations))
     return variables
 
 # covid test date
