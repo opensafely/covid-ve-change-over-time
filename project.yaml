@@ -13,6 +13,7 @@ actions:
         study_dates_rds: output/lib/study_parameters.rds
         jcvi_groups: output/lib/jcvi_groups.csv
         elig_dates: output/lib/elig_dates.csv
+        comparison_dates: output/lib/comparison_dates.csv
 
   # generate_study_population_vax:
   #   run: cohortextractor:latest generate_cohort --study-definition study_definition_vax --output-format feather
