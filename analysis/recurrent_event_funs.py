@@ -20,7 +20,7 @@ def imd_k(K):
                     ),
         }
     variables = {}
-    for k in range(1, K):
+    for k in range(1, K+1):
         variables.update(var_signature(f"imd_{k}", f"start_{k}_date"))
     return variables
 
@@ -52,7 +52,7 @@ def region_k(K):
             ),
         }
     variables = {}
-    for k in range(1, K):
+    for k in range(1, K+1):
         variables.update(var_signature(f"region_{k}", f"start_{k}_date"))
     return variables
 
