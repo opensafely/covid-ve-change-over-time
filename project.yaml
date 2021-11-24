@@ -14,14 +14,6 @@ actions:
         jcvi_groups: output/lib/jcvi_groups.csv
         elig_dates: output/lib/elig_dates.csv
 
-  generate_study_population_covs:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_covs 
-    needs: 
-    - design
-    outputs:
-      highly_sensitive:
-        cohort: output/input_covs.csv
-
   # generate_study_population_vax:
   #   run: cohortextractor:latest generate_cohort --study-definition study_definition_vax --output-format feather
   #   needs: 
@@ -60,3 +52,11 @@ actions:
   #       plots_by_region: output/eda_index_dates/images/plot_by_region_*.png
   #       plots_all: output/eda_index_dates/images/plot_all_*.png
   #       second_vax_period_dates: output/lib/second_vax_period_dates.csv
+
+  generate_study_population_covs:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_covs 
+    needs: 
+    - design
+    outputs:
+      highly_sensitive:
+        cohort: output/input_covs.csv
