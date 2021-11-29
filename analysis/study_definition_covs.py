@@ -522,70 +522,69 @@ study=StudyDefinition(
     
     # Not sure how best to define efi and shielding variables below in sequential framework. Leave for now and come back to it later.
 
-    # # electronic frailty index
-    # # date currently hard-coded because there are no other dates available for efi
-    # # check that this still the case, otherwise change to recurrent variables like region, imd, bmi
-    # efi=patients.with_these_decision_support_values(
-    #     algorithm = "electronic_frailty_index",
-    #     on_or_before = "2020-12-08", 
-    #     find_last_match_in_period = True,
-    #     returning="numeric_value",
-    #     return_expectations={
-    #         #"category": {"ratios": {0.1: 0.25, 0.15: 0.25, 0.30: 0.25, 0.5: 0.25}},
-    #         "float": {"distribution": "normal", "mean": 0.20, "stddev": 0.09},
-    #         "incidence": 0.99
-    #     },
-    # ),
+    # electronic frailty index
+    # date currently hard-coded because there are no other dates available for efi
+    # check that this still the case, otherwise change to recurrent variables like region, imd, bmi
+    efi=patients.with_these_decision_support_values(
+        algorithm="electronic_frailty_index",
+        on_or_before="2020-12-08", 
+        find_last_match_in_period=True,
+        returning="numeric_value",
+        return_expectations={
+            "float": {"distribution": "normal", "mean": 0.20, "stddev": 0.09},
+            "incidence": 0.99
+        },
+    ),
     
-    # # # # dates of shielding codes
-    # # # shielded_0_date=patients.with_these_clinical_events(
-    # # #     shield_primis,
-    # # #     returning="date",
-    # # #     date_format="YYYY-MM-DD",
-    # # #     on_or_before="elig_date + 42 days",
-    # # #     find_last_match_in_period=True,
-    # # #     return_expectations={
-    # # #         "date": {"earliest": start_date, "latest": end_date},
-    # # #         "rate": "exponential_increase",
-    # # #         "incidence": 0.01
-    # # #     },
-    # # # ),
-    # # # **with_these_clinical_events_date_X(
-    # # #     name="shielded",
-    # # #     n=6,
-    # # #     index_date="elig_date + 43 days",
-    # # #     codelist=shield_primis,
-    # # #     return_expectations={
-    # # #         "date": {"earliest": start_date, "latest": end_date},
-    # # #         "rate": "uniform",
-    # # #         "incidence": 0.01,
-    # # #     },
-    # # # ),
-    # # # 
-    # # # # dates of non shielding codes
-    # # # nonshielded_0_date=patients.with_these_clinical_events(
-    # # #     nonshield_primis,
-    # # #     returning="date",
-    # # #     date_format="YYYY-MM-DD",
-    # # #     on_or_before="elig_date + 42 days",
-    # # #     find_last_match_in_period=True,
-    # # #     return_expectations={
-    # # #         "date": {"earliest": start_date, "latest": end_date},
-    # # #         "rate": "exponential_increase",
-    # # #         "incidence": 0.01
-    # # #     },
-    # # # ),
-    # # # **with_these_clinical_events_date_X(
-    # # #     name="nonshielded",
-    # # #     n=6,
-    # # #     index_date="elig_date + 43 days",
-    # # #     codelist=nonshield_primis,
-    # # #     return_expectations={
-    # # #         "date": {"earliest": start_date, "latest": end_date},
-    # # #         "rate": "uniform",
-    # # #         "incidence": 0.01,
-    # # #     },
-    # # # ),
+    # dates of shielding codes
+    shielded_0_date=patients.with_these_clinical_events(
+        shield_primis,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        on_or_before="elig_date + 42 days",
+        find_last_match_in_period=True,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01
+        },
+    ),
+    **with_these_clinical_events_date_X(
+        name="shielded",
+        n=6,
+        index_date="elig_date + 43 days",
+        codelist=shield_primis,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.01,
+        },
+    ),
+    
+    # dates of non shielding codes
+    nonshielded_0_date=patients.with_these_clinical_events(
+        nonshield_primis,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        on_or_before="elig_date + 42 days",
+        find_last_match_in_period=True,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01
+        },
+    ),
+    **with_these_clinical_events_date_X(
+        name="nonshielded",
+        n=6,
+        index_date="elig_date + 43 days",
+        codelist=nonshield_primis,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.01,
+        },
+    ),
 
     # # ##############
     # # ### EVENTS ###
