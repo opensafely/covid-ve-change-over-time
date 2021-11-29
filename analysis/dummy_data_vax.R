@@ -8,10 +8,7 @@ n <- 10000
 
 start_date <- "2020-12-08"
 
-input_old <- 
-  arrow::read_feather(file = here::here("output", "input_vax.feather")) %>%
-  # because date types are not returned consistently by cohort extractor
-  mutate(across(contains("_date"), ~ as.Date(., format="%Y-%m-%d"))) 
+input_old <- arrow::read_feather(file = here::here("output", "input_vax.feather")) 
 
 regions <- readr::read_csv(here::here("output", "lib", "regions.csv"))
 
@@ -171,19 +168,27 @@ dummy_data <- dummy_data %>%
     covid_vax_az_3_date = covid_vax_az_2_date + days(round(rnorm(nrow(.), mean = 6*4*7, sd = 7))),
     covid_vax_moderna_3_date = covid_vax_moderna_2_date + days(round(rnorm(nrow(.), mean = 6*4*7, sd = 7))),
   ) %>%
-  select(-starts_with("missing"))
+  select(-starts_with("missing")) %>%
+  mutate(across(ends_with("date"), as.POSIXct))
 
 # readr::write_csv(dummy_data, here::here("analysis", "lib", "dummy_data.csv"))
-arrow::write_feather(dummy_data, here::here("analysis", "lib", "dummy_data.feather"))
+arrow::write_feather(dummy_data, here::here("analysis", "lib", "dummy_data_vax.feather"))
 
 #  checks
 # all names there and the same?
 all(sort(names(dummy_data)) == sort(names(input_old)))
 # any different types
-sort(names(dummy_data))[sapply(
+classes_input_old <- sapply(
   sort(names(input_old)),
   function(x) 
-    class(input_old[[x]])) != sapply(
-      sort(names(dummy_data)), 
-      function(x) 
-        class(dummy_data[[x]]))]
+    class(input_old[[x]]))
+classes_dummy_data <- sapply(
+  sort(names(dummy_data)), 
+  function(x) 
+    class(dummy_data[[x]]))
+classes_match <- sapply(
+  seq_along(classes_input_old),
+  function(x)
+    all(classes_input_old[[x]] == classes_dummy_data[[x]]))
+
+sort(names(dummy_data))[!classes_match]
