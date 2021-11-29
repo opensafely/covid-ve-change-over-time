@@ -16,7 +16,7 @@ fs::dir_create(here::here("output", "lib"))
 
 study_parameters <-
   list(
-    n_comparisons = 3,
+    n_comparisons = 3, # the number of comparisons for each sequence
     ref_age_1 = "2021-03-31", # reference date for calculating age for phase 1 groups
     ref_age_2 = "2021-07-01", # reference date for calculating age for phase 2 groups
     ref_cev = "2021-01-18", # reference date for calculating eligibility for phase 1 group 4 (CEV)
@@ -91,6 +91,10 @@ tribble(
 readr::write_csv(elig_dates, here::here("output", "lib", "elig_dates.csv"))
 
 # create start and end dates for comparison_1 ----
+# this is just temporary, as these dates will be saved in the file
+# output/lib/second_vax_period_dates.csv
+# which is output from
+# analysis/eda_index_dates/plot_2nd_vax_dates.R
 comparison_1_dates <-
   tribble(
     ~elig_date, 
@@ -128,21 +132,11 @@ comparison_1_dates <-
     start_1_date = as.Date(elig_date, format = "%Y-%m-%d") + weeks(6),
     end_1_date = start_1_date + weeks(6),
   ) %>%
-  # mutate(across(elig_date,
-  #               ~if_else(.x == "2100-12-31",
-  #                        "DEFAULT",
-  #                        as.character(glue("elig_date.dt.year = '{year(elig_date)}'"))
-  #                        ))) %>%
   mutate(across(elig_date,
                 ~if_else(.x == "2100-12-31",
                          "DEFAULT",
-                         as.character(glue("elig_date = {year(elig_date)}"))
+                         as.character(glue("elig_date = {elig_date}"))
                 ))) %>%
-  # mutate(across(elig_date,
-  #               ~if_else(.x == "2100-12-31",
-  #                        "DEFAULT",
-  #                        as.character(glue("elig_date = '{elig_date}'"))
-  #               ))) %>%
   distinct(elig_date, .keep_all = TRUE) 
 
 update_comparison_dates <- function(.data, n) {
