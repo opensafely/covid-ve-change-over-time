@@ -48,62 +48,6 @@ data_extract <-
   # because date types are not returned consistently by cohort extractor
   mutate(across(contains("_date"), ~ as.Date(., format="%Y-%m-%d"))) 
 
-cat("#### check format of elig_date ####\n")
-elig_date_test <- data_extract %>%
-  distinct(elig_date)
-
-# only for dummy data:
-if (nrow(elig_date_test) <= 2) {
-  
-  cat("#### fix dummy data ####\n")
-  jcvi_groups <- readr::read_csv(here::here("output", "lib", "jcvi_groups.csv"))
-  
-  elig_dates <- readr::read_csv(here::here("output", "lib", "elig_dates.csv"))
-  
-  jcvi_group_cases <- jcvi_groups %>%
-    mutate(across(definition, ~str_extract(.x, "age_. >=\\d{2}"))) %>%
-    mutate(across(definition, ~case_when(group=="01" ~ "age_1 >=90",
-                                         group=="06" ~ "age_1 >=62",
-                                         !is.na(.x) ~ .x,
-                                         TRUE ~ "TRUE"))) %>%
-    transmute(cases = str_c(definition, " ~ \'", group, "\'")) %>%
-    unlist() %>% 
-    unname() %>%
-    str_c(., collapse = ", ")
-  
-  elig_date_cases <- elig_dates %>%
-    mutate(across(description, ~str_replace_all(.x, "p=", "p=="))) %>%
-    mutate(across(description, ~str_replace_all(.x, "OR", "|"))) %>%
-    mutate(across(description, ~str_replace_all(.x, "AND", "&"))) %>%
-    mutate(across(description, ~str_replace_all(.x, "DEFAULT", "TRUE"))) %>%
-    transmute(cases = str_c(description, " ~ \'", date, "\'")) %>%
-    unlist() %>% 
-    unname() %>%
-    str_c(., collapse = ", ")
-  
-  # JCVI groups based on age
-  data_extract <- eval(parse(text = glue("data_extract %>% mutate(jcvi_group = case_when({jcvi_group_cases}))")))
-  # eligibility dates based on JCVI groups
-  data_extract <- eval(parse(text = glue("data_extract %>% mutate(elig_date = as.Date(case_when({elig_date_cases}), format=\'%Y-%m-%d\'))")))
-  
-  # fix vaccine dates so that they have roughly correct distribution
-  data_extract <- data_extract %>%
-    mutate(r1 = round(rnorm(nrow(.), mean = 7, sd = 7)),
-           r2 = round(rnorm(nrow(.), mean = 7, sd = 7)),
-           r3 = round(rnorm(nrow(.), mean = 10*7, sd = 7)),
-           r4 = round(rnorm(nrow(.), mean = 10*7, sd = 7)),
-           r5 = rbernoulli(nrow(.), p=0.01),
-           r6 = rbernoulli(nrow(.), p=0.01)) %>%
-    mutate(across(covid_vax_pfizer_1_date, ~if_else(!is.na(.x), elig_date + days(r1),.x))) %>%
-    mutate(across(covid_vax_az_1_date, ~if_else(!is.na(.x), elig_date + days(r2),.x))) %>%
-    mutate(covid_vax_pfizer_2_date = covid_vax_pfizer_1_date + days(r3),
-           covid_vax_az_2_date = covid_vax_az_1_date + days(r4)) %>%
-    mutate(across(contains("vax_moderna"), ~if_else(r5, .x, NA_Date_))) %>%
-    mutate(across(contains("vax_disease"), ~if_else(r6, .x, NA_Date_))) %>%
-    select(-matches("r\\d{1}"))
-  
-}
-
 cat("#### process extracted data ####\n")
 data_vax_processed <- data_extract %>%
   # derive ethnicity variable
