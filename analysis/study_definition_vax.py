@@ -7,12 +7,21 @@ from cohortextractor import (
 # Import codelists.py script
 from codelists import *
 
+import pandas as pd
+
 # import the vairables for deriving JCVI groups
 from grouping_variables import (
     jcvi_variables, 
     start_date,
     end_date,
 )
+
+# regions
+regions = pd.read_csv(
+    filepath_or_buffer='./output/lib/regions.csv',
+    dtype=str
+)
+ratio_regions = { regions['region'][i] : float(regions['ratio'][i]) for i in regions.index }
 
 study=StudyDefinition(
 
@@ -70,34 +79,14 @@ study=StudyDefinition(
     ),
 
     # IMD - quintile
-    imd_0=patients.categorised_as(
-        {
-            "0": "DEFAULT",
-            "1": """index_of_multiple_deprivation >=1 AND index_of_multiple_deprivation < 32844*1/5""",
-            "2": """index_of_multiple_deprivation >= 32844*1/5 AND index_of_multiple_deprivation < 32844*2/5""",
-            "3": """index_of_multiple_deprivation >= 32844*2/5 AND index_of_multiple_deprivation < 32844*3/5""",
-            "4": """index_of_multiple_deprivation >= 32844*3/5 AND index_of_multiple_deprivation < 32844*4/5""",
-            "5": """index_of_multiple_deprivation >= 32844*4/5 """,
-        },
-        index_of_multiple_deprivation=patients.address_as_of(
+    imd_0=patients.address_as_of(
             "elig_date + 42 days",
             returning="index_of_multiple_deprivation",
             round_to_nearest=100,
+             return_expectations={
+                         "category": {"ratios": {c: 1/320 for c in range(100,32100,100)}}
+                         }
         ),
-        return_expectations={
-            "rate": "universal",
-            "category": {
-                "ratios": {
-                    "0": 0.01,
-                    "1": 0.20,
-                    "2": 0.20,
-                    "3": 0.20,
-                    "4": 0.20,
-                    "5": 0.19,
-                }
-            },
-        },
-    ),
 
     # region - NHS England 9 regions
     region_0=patients.registered_practice_as_of(
@@ -106,17 +95,7 @@ study=StudyDefinition(
         return_expectations={
             "rate": "universal",
             "category": {
-                "ratios": {
-                    "North East": 0.1,
-                    "North West": 0.1,
-                    "Yorkshire and The Humber": 0.1,
-                    "East Midlands": 0.1,
-                    "West Midlands": 0.1,
-                    "East": 0.1,
-                    "London": 0.2,
-                    "South West": 0.1,
-                    "South East": 0.1
-                },
+                "ratios": ratio_regions,
             },
             "incidence": 0.99
         },
@@ -169,49 +148,49 @@ study=StudyDefinition(
     ### COVID VACCINES ###
     ######################
 
-    ## any covid vaccination, identified by target disease
-    covid_vax_disease_1_date=patients.with_tpp_vaccination_record(
-        target_disease_matches="SARS-2 CORONAVIRUS",
-        on_or_after=start_date,
-        find_first_match_in_period=True,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        return_expectations={
-            "date": {
-                "earliest": start_date,  
-                "latest": end_date,
-            },
-            "incidence": 0.5
-        },
-    ),
-    covid_vax_disease_2_date=patients.with_tpp_vaccination_record(
-        target_disease_matches="SARS-2 CORONAVIRUS",
-        on_or_after="covid_vax_disease_1_date + 1 day",
-        find_first_match_in_period=True,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        return_expectations={
-            "date": {
-                "earliest": start_date,  
-                "latest": end_date,
-            },
-            "incidence": 0.5
-        },
-    ),
-    covid_vax_disease_3_date=patients.with_tpp_vaccination_record(
-        target_disease_matches="SARS-2 CORONAVIRUS",
-        on_or_after="covid_vax_disease_2_date + 1 day",
-        find_first_match_in_period=True,
-        returning="date",
-        date_format="YYYY-MM-DD",
-         return_expectations={
-            "date": {
-                "earliest": start_date,  
-                "latest": end_date,
-            },
-            "incidence": 0.5
-        },
-    ),
+    # ## any covid vaccination, identified by target disease
+    # covid_vax_disease_1_date=patients.with_tpp_vaccination_record(
+    #     target_disease_matches="SARS-2 CORONAVIRUS",
+    #     on_or_after=start_date,
+    #     find_first_match_in_period=True,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     return_expectations={
+    #         "date": {
+    #             "earliest": start_date,  
+    #             "latest": end_date,
+    #         },
+    #         "incidence": 0.5
+    #     },
+    # ),
+    # covid_vax_disease_2_date=patients.with_tpp_vaccination_record(
+    #     target_disease_matches="SARS-2 CORONAVIRUS",
+    #     on_or_after="covid_vax_disease_1_date + 1 day",
+    #     find_first_match_in_period=True,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     return_expectations={
+    #         "date": {
+    #             "earliest": start_date,  
+    #             "latest": end_date,
+    #         },
+    #         "incidence": 0.5
+    #     },
+    # ),
+    # covid_vax_disease_3_date=patients.with_tpp_vaccination_record(
+    #     target_disease_matches="SARS-2 CORONAVIRUS",
+    #     on_or_after="covid_vax_disease_2_date + 1 day",
+    #     find_first_match_in_period=True,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #      return_expectations={
+    #         "date": {
+    #             "earliest": start_date,  
+    #             "latest": end_date,
+    #         },
+    #         "incidence": 0.5
+    #     },
+    # ),
 
     # Pfizer BioNTech - first record of a pfizer vaccine 
     # NB *** may be patient's first COVID vaccine dose or their second if mixed types are given ***
