@@ -56,29 +56,6 @@ def region_k(K):
         variables.update(var_signature(f"region_{k}", f"start_{k}_date"))
     return variables
 
-# # BMI
-# def bmi_k(K):
-    
-#     def var_signature(name, date):
-#         return {
-#             name: patients.most_recent_bmi(
-#                 on_or_before=date,
-#                 minimum_age_at_measurement=16,
-#                 # on_most_recent_day_of_measurement=False, # returning an error for some reason
-#                 include_measurement_date=True,
-#                 date_format="YYYY-MM-DD",
-#                 return_expectations={
-#                     "float": {"distribution": "normal", "mean": 28, "stddev": 8},
-#                     "incidence": 0.80,
-#                     },
-#             ),
-#         }
-#     variables = {}
-#     for k in range(1, K):
-#         variables.update(var_signature(f"bmi_{k}", f"start_{k}_date"))
-#     return variables
-
-
 # clinical events with codelist
 def with_these_clinical_events_date_X(name, codelist, index_date, n, return_expectations):
     
