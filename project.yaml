@@ -16,7 +16,7 @@ actions:
 
   generate_study_population_vax:
     run: cohortextractor:latest generate_cohort --study-definition study_definition_vax --output-format feather
-    dummy_data_file: analysis/lib/dummy_data.feather
+    dummy_data_file: analysis/lib/dummy_data_vax.feather
     needs: 
     - design
     outputs:
