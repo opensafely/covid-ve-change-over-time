@@ -171,7 +171,7 @@ dummy_data <- dummy_data %>%
   select(-starts_with("missing")) %>%
   mutate(across(ends_with("date"), as.POSIXct))
 
-# readr::write_csv(dummy_data, here::here("analysis", "lib", "dummy_data.csv"))
+# readr::write_csv(dummy_data, here::here("analysis", "lib", "dummy_data_vax.csv"))
 arrow::write_feather(dummy_data, here::here("analysis", "lib", "dummy_data_vax.feather"))
 
 #  checks
