@@ -23,33 +23,33 @@ actions:
       highly_sensitive:
         cohort: output/input_vax.feather
         
-  data_vax_process:
-    run: r:latest analysis/eda_index_dates/data_vax_process.R
-    needs:
-    - design
-    - generate_study_population_vax
-    outputs:
-      highly_sensitive:
-        data_2nd_dose: output/eda_index_dates/data/data_2nd_dose.rds
-        vax_data: output/data/data_*_vax_dates.rds
-      moderately_sensitive:
-        data_properties: output/data/data_vax_processed_tabulate.txt
+  # data_vax_process:
+  #   run: r:latest analysis/eda_index_dates/data_vax_process.R
+  #   needs:
+  #   - design
+  #   - generate_study_population_vax
+  #   outputs:
+  #     highly_sensitive:
+  #       data_2nd_dose: output/eda_index_dates/data/data_2nd_dose.rds
+  #       vax_data: output/data/data_*_vax_dates.rds
+  #     moderately_sensitive:
+  #       data_properties: output/data/data_vax_processed_tabulate.txt
 
-  data_vax_plot:
-    run: r:latest analysis/eda_index_dates/data_vax_plot.R
-    needs:
-    - data_vax_process
-    outputs:
-      highly_sensitive:
-        plot_data: output/eda_index_dates/data/data_vax_plot.rds
+  # data_vax_plot:
+  #   run: r:latest analysis/eda_index_dates/data_vax_plot.R
+  #   needs:
+  #   - data_vax_process
+  #   outputs:
+  #     highly_sensitive:
+  #       plot_data: output/eda_index_dates/data/data_vax_plot.rds
 
-  plot_2nd_vax_dates:
-    run: r:latest analysis/eda_index_dates/plot_2nd_vax_dates.R
-    needs:
-    - design
-    - data_vax_plot
-    outputs:
-      moderately_sensitive:
-        plots_by_region: output/eda_index_dates/images/plot_by_region_*.png
-        plots_all: output/eda_index_dates/images/plot_all_*.png
-        second_vax_period_dates: output/lib/second_vax_period_dates.csv
+  # plot_2nd_vax_dates:
+  #   run: r:latest analysis/eda_index_dates/plot_2nd_vax_dates.R
+  #   needs:
+  #   - design
+  #   - data_vax_plot
+  #   outputs:
+  #     moderately_sensitive:
+  #       plots_by_region: output/eda_index_dates/images/plot_by_region_*.png
+  #       plots_all: output/eda_index_dates/images/plot_all_*.png
+  #       second_vax_period_dates: output/lib/second_vax_period_dates.csv
