@@ -187,7 +187,7 @@ classes_dummy_data <- sapply(
   function(x) 
     class(dummy_data[[x]]))
 classes_match <- sapply(
-  seq_along(classes_input_old),
+  names(classes_input_old),
   function(x)
     all(classes_input_old[[x]] == classes_dummy_data[[x]]))
 
