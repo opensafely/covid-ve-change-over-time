@@ -44,9 +44,11 @@ arrow::read_feather(here::here("output", "input_vax.feather")) %>%
 
 cat("#### extract data ####\n")
 data_extract <- 
-  arrow::read_feather(file = here::here("output", "input_vax.feather")) %>%
+  arrow::read_feather(file = here::here("analysis", "lib", "dummy_data_vax.feather")) %>%
+  # arrow::read_feather(file = here::here("output", "input_vax.feather")) %>%
   # because date types are not returned consistently by cohort extractor
-  mutate(across(contains("_date"), ~ as.Date(., format="%Y-%m-%d"))) 
+  mutate(across(contains("_date"), ~ as.Date(., format="%Y-%m-%d"))) %>%
+  mutate(across(imd_0, ~as.integer(as.character(.x))))
 
 cat("#### process extracted data ####\n")
 data_vax_processed <- data_extract %>%
@@ -64,12 +66,12 @@ data_vax_processed <- data_extract %>%
     ),
     # IMD quintile
     imd_0 = fct_case_when(
-      imd_0 == 1 ~ "1 most deprived",
-      imd_0 == 2 ~ "2",
-      imd_0 == 3 ~ "3",
-      imd_0 == 4 ~ "4",
-      imd_0 == 5 ~ "5 least deprived",
-      TRUE ~ NA_character_
+      imd_0 < 1 | is.na(imd_0) ~ NA_character_,
+      imd_0 < 32844*1/5 ~ "1 most deprived",
+      imd_0 < 32844*2/5 ~ "2",
+      imd_0 < 32844*3/5 ~ "3",
+      imd_0 < 32844*4/5 ~ "4",
+      TRUE ~ "5 least deprived"
     ),
     # Sex
     sex = fct_case_when(
@@ -91,11 +93,11 @@ data_vax_processed <- data_extract %>%
   select(-ethnicity_6, -ethnicity_6_sus) %>%
   droplevels()
 
-cat("#### properties of data_vax_processed ####\n")
-data_properties(
-  data = data_vax_processed,
-  path = data_dir
-)  
+# cat("#### properties of data_vax_processed ####\n")
+# data_properties(
+#   data = data_vax_processed,
+#   path = data_dir
+# )  
 
 cat("#### apply exclusion criteria to processed data ####\n")
 data_eligible <- data_vax_processed %>%
