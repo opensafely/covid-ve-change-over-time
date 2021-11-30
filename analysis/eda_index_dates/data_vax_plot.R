@@ -14,13 +14,16 @@ data_2nd_dose <- readr::read_rds(
   here::here("output", "eda_index_dates", "data", "data_2nd_dose.rds")
   )
 
-# data to generate plots of second vax dates for all eligibility dates, stratified by region
-out <- list()
-i <- 1
-for (plot_date in as.character(sort(unique(data_2nd_dose$elig_date)))) {
+generate_plot_data <- function(data = data_2nd_dose, plot_date) {
   
-  data <- data_2nd_dose %>%
+  # check date in correct format
+  d <- try(as.Date(plot_date, format="%Y-%m-%d"))
+  if("try-error" %in% class(d) || is.na(d)) stop("plot_date is not in %Y-%m-%d format.")
+  
+  data <- data %>%
     filter(elig_date %in% as.Date(plot_date))
+  
+  if (nrow(data)==0) stop("No samples for the given plot_date.")
   
   # sequence of dates for plot
   dates_seq <- seq(as.Date(plot_date) + weeks(6), 
@@ -28,6 +31,7 @@ for (plot_date in as.character(sort(unique(data_2nd_dose$elig_date)))) {
                    1)
   
   # ensure full sequence of dates for each region:brand combo
+  # so that the moving averages calculated in 'plot_2nd_vax_dates.R' include the zero counts
   expanded_data <- tibble(
     region_0 = character(),
     brand = character(),
@@ -40,7 +44,7 @@ for (plot_date in as.character(sort(unique(data_2nd_dose$elig_date)))) {
           region_0 = rep(r, each = length(dates_seq)),
           brand = rep(v, each = length(dates_seq)),
           dose_2 = dates_seq
-        )) 
+        ))
     }
   }
   
@@ -51,19 +55,26 @@ for (plot_date in as.character(sort(unique(data_2nd_dose$elig_date)))) {
     ungroup() 
   
   # join expanded and count data
-  out[[i]] <- expanded_data %>%
+  out <- expanded_data %>%
     left_join(count_data, by = c("region_0", "brand", "dose_2")) %>%
     mutate(across(n, ~if_else(is.na(.x), 0L, .x))) %>%
     mutate(elig_date = as.Date(plot_date, format = "%Y-%m-%d"))
   
-  i <- i+1
+  return(out)
+  
 }
 
-# bind rows
-data_plot <- bind_rows(out)
+# create list of plot_data for each elig_date
+data_vax_plot_list <- lapply(
+  as.character(sort(unique(data_2nd_dose$elig_date))),
+  function(x)
+    try(generate_plot_data(plot_date = x))
+)
+
+data_vax_plot <- bind_rows(data_vax_plot_list[sapply(data_vax_plot_list, is_tibble)])
 
 # save data for plotting
 readr::write_rds(
-  data_plot,
+  data_vax_plot,
   here::here("output", "eda_index_dates", "data", "data_vax_plot.rds")
 )
