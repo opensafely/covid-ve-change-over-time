@@ -9,6 +9,10 @@ from codelists import *
 
 import pandas as pd
 
+# set seed so that dummy data can be reproduced
+# np.random.seed(123456) 
+# do this after create-study-definition-covs merged and store seed in study_parameters 
+
 # import the vairables for deriving JCVI groups
 from grouping_variables import (
     jcvi_variables, 
