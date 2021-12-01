@@ -13,6 +13,7 @@ actions:
         study_dates_rds: output/lib/study_dates.rds
         jcvi_groups: output/lib/jcvi_groups.csv
         elig_dates: output/lib/elig_dates.csv
+        regions: output/lib/regions.csv
 
   dummy_data_vax:
     run: r:latest analysis/dummy_data_vax.R
