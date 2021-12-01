@@ -44,8 +44,7 @@ arrow::read_feather(here::here("output", "input_vax.feather")) %>%
 
 cat("#### extract data ####\n")
 data_extract <- 
-  arrow::read_feather(file = here::here("analysis", "lib", "dummy_data_vax.feather")) %>%
-  # arrow::read_feather(file = here::here("output", "input_vax.feather")) %>%
+  arrow::read_feather(file = here::here("output", "input_vax.feather")) %>%
   # because date types are not returned consistently by cohort extractor
   mutate(across(contains("_date"), ~ as.Date(., format="%Y-%m-%d"))) %>%
   mutate(across(imd_0, ~as.integer(as.character(.x))))
@@ -93,11 +92,11 @@ data_vax_processed <- data_extract %>%
   select(-ethnicity_6, -ethnicity_6_sus) %>%
   droplevels()
 
-# cat("#### properties of data_vax_processed ####\n")
-# data_properties(
-#   data = data_vax_processed,
-#   path = data_dir
-# )  
+cat("#### properties of data_vax_processed ####\n")
+data_properties(
+  data = data_vax_processed,
+  path = data_dir
+)
 
 cat("#### apply exclusion criteria to processed data ####\n")
 data_eligible <- data_vax_processed %>%
