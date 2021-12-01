@@ -4,11 +4,11 @@ library(glue)
 
 set.seed(4543)
 
-n <- 10000
+n <- 100000
 
 start_date <- "2020-12-08"
 
-input_old <- arrow::read_feather(file = here::here("output", "input_vax.feather")) 
+# input_old <- arrow::read_feather(file = here::here("output", "input_vax.feather")) 
 
 regions <- readr::read_csv(here::here("output", "lib", "regions.csv"))
 
@@ -114,39 +114,48 @@ dummy_data <- eval(parse(text = glue("dummy_data %>% mutate(elig_date = as.Date(
 
 # fix vaccine dates so that they have roughly correct distribution
 dummy_data <- dummy_data %>%
-  mutate(covid_vax_pfizer_1_date = elig_date + days(round(rnorm(nrow(.), mean = 10, sd = 7))),
-         covid_vax_az_1_date = elig_date + days(round(rnorm(nrow(.), mean = 10, sd = 7))),
-         covid_vax_moderna_1_date = elig_date + days(round(rnorm(nrow(.), mean = 10, sd = 7)))) %>%
+  mutate(covid_vax_pfizer_1_date = elig_date + days(round(rnorm(nrow(.), mean = 10, sd = 3))),
+         covid_vax_az_1_date = elig_date + days(round(rnorm(nrow(.), mean = 10, sd = 3))),
+         covid_vax_moderna_1_date = elig_date + days(round(rnorm(nrow(.), mean = 10, sd = 3)))) %>%
   mutate(
-    missing_pfizer_1 = rbernoulli(nrow(.), p=0.3),
-    missing_az_1 = rbernoulli(nrow(.), p=0.3),
-    missing_moderna_1 = rbernoulli(nrow(.), p=0.9),
-    missing_pfizer_2 = rbernoulli(nrow(.), p=0.3),
-    missing_az_2 = rbernoulli(nrow(.), p=0.3),
-    missing_moderna_2 = rbernoulli(nrow(.), p=0.9),
-    missing_pfizer_3 = rbernoulli(nrow(.), p=0.3),
-    missing_az_3 = rbernoulli(nrow(.), p=0.3),
-    missing_moderna_3 = rbernoulli(nrow(.), p=0.9),
+    vaccine_1_type = sample(
+      x = c("pfizer", "az", "moderna", "none"), 
+      size = nrow(.),
+      replace = TRUE,
+      prob = c(0.4, 0.4, 0.1, 0.1)
+      ),
+    missing_pfizer_2 = rbernoulli(nrow(.), p=0.05),
+    missing_az_2 = rbernoulli(nrow(.), p=0.05),
+    missing_moderna_2 = rbernoulli(nrow(.), p=0.05),
+    missing_pfizer_3 = rbernoulli(nrow(.), p=0.9),
+    missing_az_3 = rbernoulli(nrow(.), p=0.9),
+    missing_moderna_3 = rbernoulli(nrow(.), p=0.9)
   ) %>%
   mutate(across(covid_vax_pfizer_1_date, 
                 ~if_else(
-                  missing_pfizer_1, 
-                  NA_Date_,
-                  .x))) %>%
+                  vaccine_1_type %in% "pfizer",
+                  .x,
+                  NA_Date_))) %>%
   mutate(across(covid_vax_az_1_date, 
                 ~if_else(
-                  missing_az_1,
-                  NA_Date_,
-                  .x))) %>%
+                  vaccine_1_type %in% "az",
+                  .x,
+                  NA_Date_))) %>%
   mutate(across(covid_vax_moderna_1_date, 
                 ~if_else(
-                  missing_moderna_1,
+                  vaccine_1_type %in% "moderna",
+                  .x,
+                  NA_Date_))) %>%
+  mutate(across(matches("covid_vax_\\w+_1_date"),
+                ~ if_else(
+                  vaccine_1_type %in% "none",
                   NA_Date_,
-                  .x))) %>%
+                  .x
+                ))) %>%
   mutate(
-    covid_vax_pfizer_2_date = covid_vax_pfizer_1_date + days(round(rnorm(nrow(.), mean = 10*7, sd = 7))),
-    covid_vax_az_2_date = covid_vax_az_1_date + days(round(rnorm(nrow(.), mean = 10*7, sd = 7))),
-    covid_vax_moderna_2_date = covid_vax_moderna_1_date + days(round(rnorm(nrow(.), mean = 10*7, sd = 7))),
+    covid_vax_pfizer_2_date = covid_vax_pfizer_1_date + days(round(rnorm(nrow(.), mean = 10*7, sd = 3))),
+    covid_vax_az_2_date = covid_vax_az_1_date + days(round(rnorm(nrow(.), mean = 10*7, sd = 3))),
+    covid_vax_moderna_2_date = covid_vax_moderna_1_date + days(round(rnorm(nrow(.), mean = 10*7, sd = 3))),
     ) %>%
   mutate(across(covid_vax_pfizer_2_date, 
                 ~if_else(
@@ -168,27 +177,26 @@ dummy_data <- dummy_data %>%
     covid_vax_az_3_date = covid_vax_az_2_date + days(round(rnorm(nrow(.), mean = 6*4*7, sd = 7))),
     covid_vax_moderna_3_date = covid_vax_moderna_2_date + days(round(rnorm(nrow(.), mean = 6*4*7, sd = 7))),
   ) %>%
-  select(-starts_with("missing")) %>%
+  select(-starts_with("missing"), -vaccine_1_type) %>%
   mutate(across(ends_with("date"), as.POSIXct))
 
-# readr::write_csv(dummy_data, here::here("analysis", "lib", "dummy_data_vax.csv"))
 arrow::write_feather(dummy_data, here::here("analysis", "lib", "dummy_data_vax.feather"))
 
-#  checks
-# all names there and the same?
-all(sort(names(dummy_data)) == sort(names(input_old)))
-# any different types
-classes_input_old <- sapply(
-  sort(names(input_old)),
-  function(x) 
-    class(input_old[[x]]))
-classes_dummy_data <- sapply(
-  sort(names(dummy_data)), 
-  function(x) 
-    class(dummy_data[[x]]))
-classes_match <- sapply(
-  names(classes_input_old),
-  function(x)
-    all(classes_input_old[[x]] == classes_dummy_data[[x]]))
+# #  checks
+# # all names there and the same?
+# all(sort(names(dummy_data)) == sort(names(input_old)))
+# # any different types
+# classes_input_old <- sapply(
+#   sort(names(input_old)),
+#   function(x) 
+#     class(input_old[[x]]))
+# classes_dummy_data <- sapply(
+#   sort(names(dummy_data)), 
+#   function(x) 
+#     class(dummy_data[[x]]))
+# classes_match <- sapply(
+#   names(classes_input_old),
+#   function(x)
+#     all(classes_input_old[[x]] == classes_dummy_data[[x]]))
 
-sort(names(dummy_data))[!classes_match]
+# sort(names(dummy_data))[!classes_match]
