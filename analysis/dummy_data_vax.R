@@ -51,11 +51,11 @@ dummy_data <- tibble(
   
   hscworker = rbernoulli(n, p=0.01),
   
-  imd_0 = factor(sample(
-    x = as.character(seq(100,32100,100)),
+  imd_0 = sample(
+    x = seq(100L,32100L,100L),
     size = n,
     replace = TRUE
-  )),
+  ),
   
   region_0 = factor(sample(
     x = regions$region,
