@@ -17,11 +17,61 @@ images_dir <- here::here("output", "eda_index_dates", "images")
 dir.create(images_dir, showWarnings = FALSE, recursive=TRUE)
 
 # read data for plotting
-data_plot <- readr::read_rds(
+data_vax_plot <- readr::read_rds(
   here::here("output", "eda_index_dates", "data", "data_vax_plot.rds")
 )
 
-# read elig_dates
+# parameters for plots
+l <- 7 # number of days in moving average
+n_threshold <- 100 # threshold for starting and ending study period
+plot_threshold <- 5 # mask counts <= plot_threshold 
+
+# calculate moving averages for defining second vaccination periods and plotting
+data_ma <- data_vax_plot %>%
+  # change labels for plots    
+  mutate(across(brand, 
+                ~factor(brand, 
+                        levels = c("az", "pfizer"),
+                        labels = c("ChAdOx", "BNT162b2")))) %>%
+  # calculate moving average number of individuals vaccinated for each elig_date:region_0:brand
+  group_by(elig_date, region_0, brand) %>%
+  mutate(moving_average = stats::filter(
+    x = n,
+    filter = rep(1/l, l),
+    method = "convolution",
+    sides = 2)) %>% # centred at day 4
+  ungroup()
+
+# second vaccination periods
+second_vax_period_dates <- data_ma %>%
+  # dates on which number of individuals vaccinated above threshold
+  mutate(
+    dose_2_above_threshold = if_else(
+      moving_average > n_threshold,
+      dose_2,
+      NA_Date_
+    )) %>%
+  group_by(elig_date, region_0, brand) %>%
+  mutate(
+    # start the first date above threshold
+    start_of_period = min(dose_2_above_threshold, na.rm = TRUE),
+    # end the last date above threshold
+    end_of_period = max(dose_2_above_threshold, na.rm = TRUE)
+  ) %>%
+  # only keep dates in period
+  filter(dose_2 >= start_of_period, dose_2 <= end_of_period) %>%
+  # count number of individuals vaccinated during period
+  mutate(n_in_period = sum(n)) %>%
+  ungroup() %>%
+  # round to the closest 10 (so no need to redact, and reduce risk of secondary disclosure)
+  mutate(across(n_in_period, ~ round(.x, -1))) %>%
+  distinct(elig_date, region_0, brand, start_of_period, end_of_period, n_in_period)
+# save
+readr::write_csv(second_vax_period_dates,
+                 here::here("output", "lib", "second_vax_period_dates.csv"))
+
+
+# elig_dates info for plot titles
 elig_dates <- readr::read_csv(here::here("output", "lib", "elig_dates.csv")) %>%
   mutate(lower = str_extract(description, "age_. >= \\d{2}"),
          upper = str_extract(description, "age_. < \\d{2}")) %>%
@@ -32,149 +82,78 @@ elig_dates <- readr::read_csv(here::here("output", "lib", "elig_dates.csv")) %>%
   )) %>%
   select(date, jcvi_groups, age_range)
 
-# parameters for plots
-l <- 7 # number of days in moving average
-index_threshold <- 100 # threshold for starting and ending study period
-plot_threshold <- 5 # mask counts <= plot_threshold 
-
-second_vax_period_dates <- list()
-
-i <- 1
-
-cat("#### generate plots ####\n")
-# plots of second vax dates for all eligibility dates, stratified by region
-for (plot_date in as.character(sort(unique(data_plot$elig_date)))) {
+plot_2nd_vax_dates_fun <- function(data) {
   
-  data <- data_plot %>%
-    filter(elig_date %in% as.Date(plot_date)) %>%
-    # change labels for plots    
-    mutate(across(brand, 
-                  ~factor(brand, 
-                          levels = c("az", "pfizer"),
-                          labels = c("ChAdOx", "BNT162b2"))))
+  elig_date <- unique(data$elig_date)
   
+  if (length(elig_date) != 1) stop("data$elig_date must contain one unique value")
+  
+  # JCVI groups and age range for plot title
   jcvi_groups <- elig_dates %>%
-    filter(date %in% as.Date(plot_date)) %>%
+    filter(date %in% elig_date) %>%
     select(jcvi_groups) %>% unlist() %>% unname()
   age_range <- elig_dates %>%
-    filter(date %in% as.Date(plot_date)) %>%
+    filter(date %in% elig_date) %>%
     select(age_range) %>% unlist() %>% unname()
-
+  
   # plot title
-  title_string <- glue("Patients eligible on {plot_date}")
+  title_string <- glue("Patients eligible on {elig_date}")
   if (is.na(age_range)) {
     subtitle_string <- glue("JCVI group(s): {jcvi_groups}; Age range: whole group(s)")
   } else {
     subtitle_string <- glue("JCVI group(s): {jcvi_groups}; Age range: {age_range} years.")
   }
-
+  
   # define breaks for x axis
-  x_breaks <- seq(as.Date(plot_date) + weeks(6),
-                  as.Date(plot_date) + weeks(16),
+  x_breaks <- seq(elig_date + weeks(6),
+                  elig_date + weeks(16),
                   14) #14 days
   
-  caption <- "X-axes show 6 to 16 weeks after eligibility date. Bars are stacked by vaccine brand."
-
-  # plot the data
-  plot_by_region <- data %>%
-    # calculate approx. total within region:brand group (approx as post-redaction)
-    group_by(region_0) %>%
-    mutate(n_region = scales::comma(sum(n), accuracy = 1)) %>%
-    ungroup() %>%
-    mutate(across(region_0,
-                  ~str_replace(.x,
-                               "Yorkshire and The Humber",
-                               "Yorkshire & Humber"))) %>%
-    mutate(across(region_0, ~glue("{region_0} (n={n_region})"))) %>%
-    ggplot(aes(x = dose_2, y = n, fill = brand)) +
-    geom_bar(stat = "identity", position = "stack", width=1, alpha=0.9) +
+  # plot histograms by region
+  plot_by_region <- ggplot(NULL, aes(x = dose_2)) +
+    geom_bar(data = data %>% filter(brand == "ChAdOx"), 
+             aes(y = n, fill = "ChAdOx"),
+             stat = "identity",  alpha = 0.5, width = 1) +
+    geom_bar(data = data %>% filter(brand == "BNT162b2"), 
+             aes(y = n, fill = "BNT162b2"), 
+             stat = "identity", alpha = 0.5, width = 1) +
+    geom_line(data = data %>% filter(brand == "ChAdOx") %>% filter(!is.na(moving_average)), 
+              aes(y = moving_average, colour = "ChAdOx")) +
+    geom_line(data = data %>% filter(brand == "BNT162b2") %>% filter(!is.na(moving_average)),  
+              aes(y = moving_average, colour = "BNT162b2")) +
+    geom_hline(yintercept = n_threshold, 
+               linetype = "dashed", colour = "grey") +
     facet_wrap(~ region_0, scales = "free_y") +
-    labs(x = "date of second vaccination", y = "number of patients",
-         title = title_string, subtitle = subtitle_string,
-         caption = str_wrap(caption, 120)) +
-    scale_fill_discrete(name = "vaccine brand") +
     scale_x_continuous(breaks = x_breaks,
                        labels = sapply(x_breaks, function(x) str_c(day(x), " ", month(x, label=TRUE)))) +
     scale_y_continuous(expand = expansion(mult = c(0,.05))) +
+    scale_fill_discrete(guide = "none") +
+    scale_colour_discrete(name = "brand") +
+    labs(x = "date of second vaccination", y = "number of patients",
+         title = title_string, subtitle = subtitle_string) +
     theme_bw(base_size = 10) +
     theme(legend.position = "bottom",
+          axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0)),
+          axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
           axis.text.x = element_text(size = 6),
           plot.caption = element_text(size = 10),
           plot.margin = margin(t=0.2, r=0.5, b=0.2, l=0.2, "cm")) +
     coord_cartesian(ylim = c(plot_threshold, NA))
-
+  # caption:
+  # X-axes restricted to 6 to 16 weeks after eligibility date.
+  # Bars show the number of individuals who received a second dose of the given brand of vaccine on the given date.
+  # Lines show the 7-day moving average (centred on day 4) of the numbers represented by the bars.
+  
   # save the plot
   ggsave(plot_by_region,
-         filename = file.path(images_dir, glue("plot_by_region_{plot_date}.png")),
+         filename = file.path(images_dir, glue("plot_by_region_{elig_date}.png")),
          width=20, height=14, units="cm")
   
-  data_plot_all <- data %>%
-    group_by(brand, dose_2) %>%
-    summarise(n_brand = sum(n), .groups = "keep") %>%
-    ungroup() %>%
-    group_by(brand) %>%
-    mutate(moving_average = stats::filter(
-      x = n_brand,
-      filter = rep(1/l, l),
-      method = "convolution",
-      sides = 2)) 
   
-  second_vax_period_dates[[i]] <- data_plot_all %>%
-    # distinct(brand, dose_2, moving_average) %>%
-    filter(moving_average>index_threshold) %>%
-    group_by(brand) %>%
-    summarise(across(dose_2, list(min=min,max=max)), .groups = "keep") %>%
-    ungroup() %>%
-    mutate(elig_date = as.Date(plot_date, format = "%Y-%m-%d"))
-  
-  plot_all <- data_plot_all %>%
-    left_join(second_vax_period_dates[[i]], 
-              by = "brand") %>%
-    mutate(above_threshold = if_else(
-      moving_average > index_threshold,
-      dose_2,
-      NA_Date_)) %>%
-    group_by(brand) %>%
-    mutate(start = min(above_threshold, na.rm=TRUE),
-           end = max(above_threshold, na.rm=TRUE)) %>%
-    mutate(fill = if_else(dose_2 >= start & dose_2 <= end,
-                          TRUE, FALSE)) %>%
-    # mutate(keep_brand = any(fill)) %>%
-    ungroup() %>%
-    # filter(keep_brand) %>%
-    droplevels() %>%
-    ggplot() +
-    geom_bar(aes(x = dose_2, y = n_brand, fill = fill),
-             stat = "identity", position = "stack", width=1, alpha=0.9) +
-    geom_line(aes(x = dose_2, y = moving_average)) +
-    geom_hline(yintercept = index_threshold, linetype = "dashed") +
-    facet_wrap(~brand, scales = "free_y", nrow=2) +
-    labs(x = "date of second vaccination", y = "number of patients",
-         title = title_string, subtitle = subtitle_string,
-         caption = str_wrap(glue("Solid lines show {l}-day moving average of number of patients. The start of the \"second vaccination period\" is the date at which the solid line first crosses the dashed line (n = {index_threshold}), and the end of the study period is the last point at which the solid line crosses the dashed line. X-axes show 6 to 16 weeks after eligibility date."), 120)) +
-    scale_fill_manual(breaks = c(FALSE, TRUE), 
-                      values=c("#bdbdbd", "#31a354"),
-                      name = "Included in \"second vaccination period\":") +
-    scale_x_continuous(breaks = x_breaks,
-                       labels = sapply(x_breaks, function(x) str_c(day(x), " ", month(x, label=TRUE)))) +
-    scale_y_continuous(expand = expansion(mult = c(0,.05))) +
-    guides(fill = guide_legend(title.position = "top")) +
-    theme_bw(base_size = 10) +
-    theme(legend.position = "bottom",
-          axis.text.x = element_text(size = 6),
-          plot.caption = element_text(size = 10),
-          plot.margin = margin(t=0.2, r=0.5, b=0.2, l=0.2, "cm")) +
-    coord_cartesian(ylim = c(plot_threshold, NA))
-  
-  # save the plot
-  ggsave(plot_all,
-         filename = file.path(images_dir, glue("plot_all_{plot_date}.png")),
-         width=20, height=14, units="cm")
-    
-  i <- i+1
 }
 
-# save the start and end dates of the second vax period 
-second_vax_period_dates <- bind_rows(second_vax_period_dates)
-readr::write_csv(second_vax_period_dates,
-                 here::here("output", "lib", "second_vax_period_dates.csv"))
+# generate and save plots
+lapply(data_ma %>% group_split(elig_date),
+       function(x)
+         try(plot_2nd_vax_dates_fun(x)))
+
