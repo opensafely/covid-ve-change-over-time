@@ -16,6 +16,8 @@ library(glue)
 images_dir <- here::here("output", "eda_index_dates", "images")
 dir.create(images_dir, showWarnings = FALSE, recursive=TRUE)
 
+study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
+
 # read data for plotting
 data_vax_plot <- readr::read_rds(
   here::here("output", "eda_index_dates", "data", "data_vax_plot.rds")
@@ -23,8 +25,10 @@ data_vax_plot <- readr::read_rds(
 
 # parameters for plots
 l <- 7 # number of days in moving average
-n_threshold <- 100 # threshold for starting and ending study period
+n_threshold <- 10 # threshold for starting and ending study period (update to 100 for real data, but use 10 for testing)
+second_vax_period_threshold <- 100 # must have this number of individuals in second vax period to include the comparison for that elig_date/region/brand
 plot_threshold <- 5 # mask counts <= plot_threshold 
+
 
 # calculate moving averages for defining second vaccination periods and plotting
 data_ma <- data_vax_plot %>%
@@ -66,9 +70,37 @@ second_vax_period_dates <- data_ma %>%
   # round to the closest 10 (so no need to redact, and reduce risk of secondary disclosure)
   mutate(across(n_in_period, ~ round(.x, -1))) %>%
   distinct(elig_date, region_0, brand, start_of_period, end_of_period, n_in_period)
-# save
+# save a version to review and release
 readr::write_csv(second_vax_period_dates,
                  here::here("output", "lib", "second_vax_period_dates.csv"))
+
+# comparison dates for passing to study_definition_covs
+comparison_dates <- second_vax_period_dates %>%
+  filter(n_in_period > second_vax_period_threshold) %>%
+  # min start date / max end date for each elig_date/region, because cannot condition on vaccine brand in study_definition_covs
+  group_by(elig_date, region_0) %>%
+  summarise(start_1_date = min(start_of_period) + days(14), 
+            end_1_date = max(end_of_period) + days(14), 
+            .groups = "keep") %>%
+  ungroup() %>%
+  mutate(condition = as.character(glue("elig_date = {elig_date} AND region_0 = '{region_0}'"))) %>%
+  select(start_1_date, end_1_date, condition) %>%
+  add_row(start_1_date = as.Date("2100-01-01"), 
+          end_1_date = as.Date("2100-12-31"), 
+          condition = "DEFAULT")
+
+update_comparison_dates <- function(.data, n) {
+  .data %>%
+    mutate("start_{n}_date" := start_1_date + days((n-1)*28),
+           "end_{n}_date" := end_1_date + days((n-1)*28))
+}
+
+for (k in 2:study_parameters$n_comparisons) {
+  comparison_dates <- comparison_dates %>% update_comparison_dates(n=k)
+}
+
+readr::write_csv(comparison_dates,
+                 here::here("output", "lib", "comparison_dates.csv"))
 
 
 # elig_dates info for plot titles
