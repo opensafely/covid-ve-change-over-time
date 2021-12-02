@@ -11,11 +11,11 @@ library(lubridate)
 library(glue)
 
 data_eligible_b <- readr::read_rds(
-  here::here("output", "eda_index_dates", "data", "data_eligible_b.rds")
+  here::here("output", "vax", "data", "data_eligible_b.rds")
   )
 
 data_vax_wide <- readr::read_rds(
-  here::here("output", "data", "data_wide_vax_dates.rds")
+  here::here("output", "vax", "data", "data_wide_vax_dates.rds")
   )
 
 data_2nd_dose <- data_eligible_b %>%
@@ -86,6 +86,6 @@ data_vax_plot <- bind_rows(data_vax_plot_list[sapply(data_vax_plot_list, is_tibb
 # save data for plotting
 readr::write_rds(
   data_vax_plot,
-  here::here("output", "eda_index_dates", "data", "data_vax_plot.rds"),
+  here::here("output", "second_vax_period", "data", "data_vax_plot.rds"),
   compress = "gz"
 )

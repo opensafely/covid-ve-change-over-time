@@ -11,5 +11,5 @@ dummy_data_covs <- dummy_data %>%
     # fill in these vars one study_definition_covs reviewed
   )
 
-arrow::write_feather(dummy_data_covs, here::here("analysis", "lib", "dummy_data_covs.feather"))
+arrow::write_feather(dummy_data_covs, here::here("analysis", "covs", "dummy_data_covs.feather"))
   

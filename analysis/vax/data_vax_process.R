@@ -19,7 +19,7 @@ source(here::here("analysis", "lib", "data_properties.R"))
 
 ## create folders for outputs
 data_dir <- here::here("output", "data")
-eda_data_dir <- here::here("output", "eda_index_dates", "data")
+eda_data_dir <- here::here("output", "vax", "data")
 dir.create(data_dir, showWarnings = FALSE, recursive=TRUE)
 dir.create(eda_data_dir, showWarnings = FALSE, recursive=TRUE)
 
@@ -95,7 +95,7 @@ data_vax_processed <- data_extract %>%
 cat("#### properties of data_vax_processed ####\n")
 data_properties(
   data = data_vax_processed,
-  path = data_dir
+  path = file.path("output", "vax")
 )
 
 n_0 <- nrow(distinct(data_vax_processed, patient_id))
@@ -161,7 +161,8 @@ data_vax <- local({
   
   
   data_vax <- data_eligible_a %>% # to get the unvaccinated
-    filter(if_all(starts_with("covid_vax"), ~ is.na(.))) %>%
+    # filter(if_all(starts_with("covid_vax"), ~ is.na(.))) %>%
+    filter_at(vars(starts_with("covid_vax")), all_vars(is.na(.))) %>%
     select(patient_id) %>% 
     full_join(
       data_vax_pfizer %>%
@@ -198,10 +199,10 @@ data_vax_wide <- data_vax %>%
   )
 
 readr::write_rds(data_vax, 
-                 here::here("output", "data", "data_long_vax_dates.rds"), 
+                 here::here("output", "vax", "data", "data_long_vax_dates.rds"), 
                  compress="gz")
 readr::write_rds(data_vax_wide,
-          here::here("output", "data", "data_wide_vax_dates.rds"), 
+          here::here("output", "vax", "data", "data_wide_vax_dates.rds"), 
           compress="gz")
 
 data_eligible_b <- data_eligible_a %>%
@@ -233,19 +234,18 @@ data_eligible_b <- data_eligible_a %>%
 n_b <- nrow(distinct(data_eligible_b, patient_id))
 
 readr::write_rds(data_eligible_b,
-                 here::here("output", "eda_index_dates", "data", "data_eligible_b.rds"),
+                 here::here("output", "vax", "data", "data_eligible_b.rds"),
                  compress="gz")
 
 # number of people eligible at each stage
-n_eligibe <- tibble(
+n_eligible <- tibble(
   n_0 = n_0,
   n_a = n_a,
   n_b = n_b
 )
 
-readr::write_csv(n_eligibe,
-                 here::here("output", "eda_index_dates", "data", "data_eligible_b.rds"),
-                 compress="gz")
+readr::write_csv(n_eligible,
+                 here::here("output", "vax", "n_eligible.csv"))
 
 
 

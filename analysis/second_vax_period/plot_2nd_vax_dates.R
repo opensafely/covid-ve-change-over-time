@@ -13,14 +13,14 @@ library(lubridate)
 library(glue)
 
 # create folder for plots
-images_dir <- here::here("output", "eda_index_dates", "images")
+images_dir <- here::here("output", "second_vax_period", "images")
 dir.create(images_dir, showWarnings = FALSE, recursive=TRUE)
 
 study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
 
 # read data for plotting
 data_vax_plot <- readr::read_rds(
-  here::here("output", "eda_index_dates", "data", "data_vax_plot.rds")
+  here::here("output", "second_vax_period", "data", "data_vax_plot.rds")
 )
 
 # parameters for plots

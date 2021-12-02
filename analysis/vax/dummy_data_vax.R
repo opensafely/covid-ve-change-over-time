@@ -184,7 +184,7 @@ dummy_data <- dummy_data %>%
   select(-starts_with("missing"), -vaccine_1_type) %>%
   mutate(across(ends_with("date"), as.POSIXct))
 
-arrow::write_feather(dummy_data, here::here("analysis", "lib", "dummy_data_vax.feather"))
+arrow::write_feather(dummy_data, here::here("analysis", "vax", "dummy_data_vax.feather"))
 
 # #  checks
 # # all names there and the same?
