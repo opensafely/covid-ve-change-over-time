@@ -14,7 +14,7 @@ actions:
         study_dates_rds: output/lib/study_parameters.rds
         jcvi_groups: output/lib/jcvi_groups.csv
         elig_dates: output/lib/elig_dates.csv
-        comparison_dates: output/lib/comparison_dates.csv
+        # comparison_dates: output/lib/comparison_dates.csv
         regions: output/lib/regions.csv
 
   ##########################################################################
@@ -67,6 +67,7 @@ actions:
       moderately_sensitive:
         plots_by_region: output/eda_index_dates/images/plot_by_region_*.png
         second_vax_period_dates: output/lib/second_vax_period_dates.csv
+        comparison_dates: output/lib/comparison_dates.csv
 
   ##########################################################################
   #### data for covariates
@@ -74,8 +75,7 @@ actions:
   # study definition for covariates ----  
   generate_study_population_covs:
     run: cohortextractor:latest generate_cohort --study-definition study_definition_covs 
-    needs: 
-    - design
+    needs: [design, plot_2nd_vax_dates]
     outputs:
       highly_sensitive:
         cohort: output/input_covs.csv
