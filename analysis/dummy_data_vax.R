@@ -2,11 +2,13 @@ library(tidyverse)
 library(lubridate)
 library(glue)
 
-set.seed(4543)
+study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
 
-n <- 100000
+set.seed(study_parameters$seed)
 
-start_date <- "2020-12-08"
+n <- study_parameters$n
+
+start_date <- study_parameters$start_date
 
 # input_old <- arrow::read_feather(file = here::here("output", "input_vax.feather")) 
 
