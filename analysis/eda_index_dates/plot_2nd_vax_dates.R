@@ -63,6 +63,8 @@ second_vax_period_dates <- data_ma %>%
   # count number of individuals vaccinated during period
   mutate(n_in_period = sum(n)) %>%
   ungroup() %>%
+  # round to the closest 10 (so no need to redact, and reduce risk of secondary disclosure)
+  mutate(across(n_in_period, ~ round(.x, -1))) %>%
   distinct(elig_date, region_0, brand, start_of_period, end_of_period, n_in_period)
 # save
 readr::write_csv(second_vax_period_dates,
