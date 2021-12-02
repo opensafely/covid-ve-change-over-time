@@ -34,6 +34,10 @@ ratio_elig = { elig_dates['date'][i] : 1/len(elig_dates.index) for i in elig_dat
 with open("./output/lib/study_parameters.json") as f:
   study_parameters = json.load(f)
 
+# set seed so that dummy data can be reproduced
+seed=int(study_parameters["seed"])
+np.random.seed(seed)
+
 # define variables explicitly
 n_comparisons=study_parameters["n_comparisons"]
 ref_age_1=study_parameters["ref_age_1"] # reference date for calculating age for phase 1 groups

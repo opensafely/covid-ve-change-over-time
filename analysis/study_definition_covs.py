@@ -11,11 +11,15 @@ import pandas as pd
 
 # import the vairables for deriving JCVI groups
 from grouping_variables import (
+    seed,
     n_comparisons,
     jcvi_variables, 
     start_date,
     end_date,
 )
+
+# set seed so that dummy data can be reproduced
+np.random.seed(seed)
 
 # import recurring event functions
 from recurrent_event_funs import *
