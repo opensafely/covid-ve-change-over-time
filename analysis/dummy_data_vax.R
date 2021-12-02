@@ -18,7 +18,7 @@ dummy_data <- tibble(
   
   patient_id = 1:n,
   
-  age_1 = as.integer(runif(n, 0,100),0),
+  age_1 = as.integer(runif(n, 16, 90), 0),
   
   sex = factor(rbernoulli(n, p=0.49),
                levels = c(FALSE, TRUE),
@@ -29,20 +29,22 @@ dummy_data <- tibble(
   ethnicity_6 = factor(sample(
     x = c(as.character(1:5), NA_character_),
     size = n,
-    replace = TRUE
+    replace = TRUE,
+    prob = c(rep(0.99/5,5), 0.01)
   )),
   ethnicity_6_sus = factor(sample(
     x = c(as.character(1:5), NA_character_),
     size = n,
-    replace = TRUE
+    replace = TRUE,
+    prob = c(rep(0.99/5,5), 0.01)
   )),
   
   endoflife_0 = rbernoulli(n, p=0.005),
   midazolam_0 = rbernoulli(n, p=0.005),
-  positive_test_0 = rbernoulli(n, p=0.1),
-  primary_care_covid_case_0 = rbernoulli(n, p=0.1),
-  primary_care_suspected_covid_0 = rbernoulli(n, p=0.1),
-  covidadmitted_0 = rbernoulli(n, p=0.1),
+  positive_test_0 = rbernoulli(n, p=0.05),
+  primary_care_covid_case_0 = rbernoulli(n, p=0.05),
+  primary_care_suspected_covid_0 = rbernoulli(n, p=0.05),
+  covidadmitted_0 = rbernoulli(n, p=0.05),
   
   endoflife_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
   midazolam_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
