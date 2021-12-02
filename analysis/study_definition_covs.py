@@ -25,9 +25,7 @@ np.random.seed(seed)
 # import recurring event functions
 from recurrent_event_funs import *
 
-# number of comparisons (for some reason the loops only go up to K-1??)
-
-# start dates for comparions: start_k
+# start and end dates for comparions: start_k_date, end_k_date
 comparison_dates = pd.read_csv(
     filepath_or_buffer='./output/lib/comparison_dates.csv',
     dtype=str
@@ -39,7 +37,7 @@ def create_comparison_dates(type, K=n_comparisons):
     def var_signature(name, type, k):
         return{
             name: patients.categorised_as(
-                    { comparison_dates[f"{type}_{k}_date"][i] : comparison_dates['elig_date'][i] for i in comparison_dates.index },
+                    { comparison_dates[f"{type}_{k}_date"][i] : comparison_dates['condition'][i] for i in comparison_dates.index },
                     return_expectations={
                         "category":{
                             "ratios": { comparison_dates[f"{type}_{k}_date"][i] : 1/len(comparison_dates.index) for i in comparison_dates.index },
