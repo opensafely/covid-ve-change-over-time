@@ -22,6 +22,7 @@ from grouping_variables import (
 )
 
 # set seed so that dummy data can be reproduced
+import numpy as np
 np.random.seed(seed)
 
 # regions

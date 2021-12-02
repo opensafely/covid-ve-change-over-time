@@ -35,6 +35,7 @@ with open("./output/lib/study_parameters.json") as f:
   study_parameters = json.load(f)
 
 # set seed so that dummy data can be reproduced
+import numpy as np
 seed=int(study_parameters["seed"])
 np.random.seed(seed)
 
