@@ -25,13 +25,6 @@ from grouping_variables import (
 import numpy as np
 np.random.seed(seed)
 
-# regions
-regions = pd.read_csv(
-    filepath_or_buffer='./output/lib/regions.csv',
-    dtype=str
-)
-ratio_regions = { regions['region'][i] : float(regions['ratio'][i]) for i in regions.index }
-
 study=StudyDefinition(
 
     default_expectations={
@@ -96,19 +89,6 @@ study=StudyDefinition(
                          "category": {"ratios": {c: 1/320 for c in range(100,32100,100)}}
                          }
         ),
-
-    # region - NHS England 9 regions
-    region_0=patients.registered_practice_as_of(
-        "elig_date + 42 days",
-        returning="nuts1_region_name",
-        return_expectations={
-            "rate": "universal",
-            "category": {
-                "ratios": ratio_regions,
-            },
-            "incidence": 0.99
-        },
-    ),
 
     ##########################
     ### CLINICAL VARIABLES ###

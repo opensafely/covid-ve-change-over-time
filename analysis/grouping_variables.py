@@ -30,6 +30,13 @@ elig_dates = pd.read_csv(
 dict_elig = { elig_dates['date'][i] : elig_dates['description'][i] for i in elig_dates.index }
 ratio_elig = { elig_dates['date'][i] : 1/len(elig_dates.index) for i in elig_dates.index }
 
+# regions
+regions = pd.read_csv(
+    filepath_or_buffer='./output/lib/regions.csv',
+    dtype=str
+)
+ratio_regions = { regions['region'][i] : float(regions['ratio'][i]) for i in regions.index }
+
 #study_parameters
 with open("./output/lib/study_parameters.json") as f:
   study_parameters = json.load(f)
@@ -423,6 +430,19 @@ jcvi_variables = dict(
             ratio_elig
             },
             "incidence": 1,
+        },
+    ),
+
+    # region - NHS England 9 regions
+    region_0=patients.registered_practice_as_of(
+        "elig_date + 42 days",
+        returning="nuts1_region_name",
+        return_expectations={
+            "rate": "universal",
+            "category": {
+                "ratios": ratio_regions,
+            },
+            "incidence": 0.99
         },
     ),
 
