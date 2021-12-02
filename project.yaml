@@ -73,9 +73,9 @@ actions:
   #### data for covariates
   ##########################################################################
   # study definition for covariates ----  
-  generate_study_population_covs:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_covs 
-    needs: [design, plot_2nd_vax_dates]
-    outputs:
-      highly_sensitive:
-        cohort: output/input_covs.csv
+  # generate_study_population_covs:
+  #   run: cohortextractor:latest generate_cohort --study-definition study_definition_covs 
+  #   needs: [design, plot_2nd_vax_dates]
+  #   outputs:
+  #     highly_sensitive:
+  #       cohort: output/input_covs.csv
