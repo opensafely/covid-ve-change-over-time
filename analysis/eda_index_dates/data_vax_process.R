@@ -98,6 +98,8 @@ data_properties(
   path = data_dir
 )
 
+n_0 <- nrow(distinct(data_vax_processed, patient_id))
+
 cat("#### apply exclusion criteria to processed data ####\n")
 data_eligible_a <- data_vax_processed %>%
   # apply exclusion criteria
@@ -118,6 +120,8 @@ data_eligible_a <- data_vax_processed %>%
     is.na(primary_care_suspected_covid_0_date),
     is.na(covidadmitted_0_date)
   ) 
+
+n_a <- nrow(distinct(data_eligible_a, patient_id))
 
 # process vaccine data
 data_vax <- local({
@@ -203,8 +207,7 @@ readr::write_rds(data_vax_wide,
 data_eligible_b <- data_eligible_a %>%
   left_join(data_vax_wide, by = "patient_id") %>%
   mutate(
-    between_doses = as.numeric(covid_vax_2_date - covid_vax_1_date)/7,
-    eligible = TRUE
+    between_doses = as.numeric(covid_vax_2_date - covid_vax_1_date)/7
     ) %>%
   filter(
     ### inclusion
@@ -218,44 +221,31 @@ data_eligible_b <- data_eligible_a %>%
     
     ### exclusion
     # first dose received before eligibility date
-    covid_vax_1_date <= elig_date,
+    covid_vax_1_date > elig_date,
     # less than six or more than 14 weeks between 1st and 2nd dose
     between_doses >= 6,
     between_doses < 14,
     # flagged as hcw
     !hscworker
   ) %>%
-  select(patient_id, eligible)
+  select(patient_id, elig_date, region_0)
+
+n_b <- nrow(distinct(data_eligible_b, patient_id))
 
 readr::write_rds(data_eligible_b,
                  here::here("output", "eda_index_dates", "data", "data_eligible_b.rds"),
                  compress="gz")
 
-# cat("#### derive data_2nd_dose ####\n")
-# data_2nd_dose <- data_vax %>%
-#   # keep first dose if first dose of pfizer or az
-#   # keep second dose if second dose of pfizer or az
-#   filter(
-#     vax_index %in% c(1,2),
-#     vax_index == vax_pfizer_index | vax_index == vax_az_index
-#   ) %>%
-#   select(patient_id, vax_index, brand, date) %>%
-#   pivot_wider(names_from = vax_index,
-#               values_from = date, 
-#               names_prefix = "dose_") %>%
-#   left_join(
-#     data_eligible %>%
-#       select(patient_id, jcvi_group, elig_date, region_0, hscworker),
-#     by = "patient_id") %>%
-#   # first dose must have occurred on or after elig_date
-#   filter(dose_1 >= elig_date) %>%
-#   # only keep if 2nd dose received [6,14) weeks after 1st dose
-#   filter(dose_1 + weeks(6) <= dose_2 & dose_2 < dose_1 + weeks(14)) %>%
-#   filter(!hscworker) %>%
-#   select(-hscworker)
-#   
-#   
-# readr::write_rds(data_2nd_dose,
-#                  here::here("output", "eda_index_dates", "data", "data_2nd_dose.rds"), 
-#                  compress="gz")
+# number of people eligible at each stage
+n_eligibe <- tibble(
+  n_0 = n_0,
+  n_a = n_a,
+  n_b = n_b
+)
+
+readr::write_csv(n_eligibe,
+                 here::here("output", "eda_index_dates", "data", "data_eligible_b.rds"),
+                 compress="gz")
+
+
 
