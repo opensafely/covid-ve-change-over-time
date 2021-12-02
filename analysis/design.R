@@ -90,6 +90,7 @@ tribble(
 
 readr::write_csv(elig_dates, here::here("output", "lib", "elig_dates.csv"))
 
+
 # create start and end dates for comparison_1 ----
 # this is just temporary, as these dates will be saved in the file
 # output/lib/second_vax_period_dates.csv
@@ -151,3 +152,20 @@ for (k in 2:study_parameters$n_comparisons) {
 }
 
 readr::write_csv(comparison_dates, here::here("output", "lib", "comparison_dates.csv"))
+
+
+# create regions ----
+regions <- tribble(
+  ~region, ~ratio,
+  "North East", 0.1,
+  "North West", 0.1,
+  "Yorkshire and The Humber", 0.1,
+  "East Midlands", 0.1,
+  "West Midlands", 0.1,
+  "East", 0.1,
+  "London", 0.2,
+  "South West", 0.1,
+  "South East", 0.1
+)
+
+readr::write_csv(regions, here::here("output", "lib", "regions.csv"))
