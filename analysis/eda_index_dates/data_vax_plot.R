@@ -10,9 +10,19 @@ library(tidyverse)
 library(lubridate)
 library(glue)
 
-data_2nd_dose <- readr::read_rds(
-  here::here("output", "eda_index_dates", "data", "data_2nd_dose.rds")
+data_eligible_b <- readr::read_rds(
+  here::here("output", "eda_index_dates", "data", "data_eligible_b.rds")
   )
+
+data_vax_wide <- readr::read_rds(
+  here::here("output", "data", "data_wide_vax_dates.rds")
+  )
+
+data_2nd_dose <- data_eligible_b %>%
+  left_join(data_vax_wide, by = "patient_id") %>%
+  select(patient_id, elig_date, region_0, 
+         dose_2 = covid_vax_2_date, brand = covid_vax_2_brand)
+  
 
 generate_plot_data <- function(data = data_2nd_dose, plot_date) {
   
