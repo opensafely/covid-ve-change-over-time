@@ -24,7 +24,7 @@ dir.create(data_dir, showWarnings = FALSE, recursive=TRUE)
 dir.create(eda_data_dir, showWarnings = FALSE, recursive=TRUE)
 
 ## import dates
-dates <- readr::read_rds(here::here("output", "lib", "study_dates.rds"))
+dates <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
 
 # Custom functions
 fct_case_when <- function(...) {
