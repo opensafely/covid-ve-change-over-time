@@ -16,8 +16,9 @@ fs::dir_create(here::here("output", "lib"))
 
 study_parameters <-
   list(
-    seed = 123456,
-    n_comparisons = 3, # the number of comparisons for each sequence
+    seed = 123456L,
+    n = 100000L,
+    n_comparisons = 3L, # the number of comparisons for each sequence
     ref_age_1 = "2021-03-31", # reference date for calculating age for phase 1 groups
     ref_age_2 = "2021-07-01", # reference date for calculating age for phase 2 groups
     ref_cev = "2021-01-18", # reference date for calculating eligibility for phase 1 group 4 (CEV)
