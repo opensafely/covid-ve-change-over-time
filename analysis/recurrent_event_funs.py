@@ -51,9 +51,9 @@ def region_k(K):
                 },
             ),
         }
-    variables = {}
-    for k in range(1, K+1):
-        variables.update(var_signature(f"region_{k}", f"start_{k}_date"))
+    variables=var_signature(f"region_1", "start_1_date")
+    for k in range(2, K+1):
+        variables.update(var_signature(f"region_{k}", f"start_1_date + {(k-1)*28} days"))
     return variables
 
 # clinical events with codelist
