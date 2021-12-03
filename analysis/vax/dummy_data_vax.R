@@ -1,3 +1,10 @@
+######################################
+
+# This script:
+# - creates dummy data for study_definition_vax.py
+
+######################################
+
 library(tidyverse)
 library(lubridate)
 library(glue)
@@ -39,20 +46,6 @@ dummy_data <- tibble(
     prob = c(rep(0.99/5,5), 0.01)
   )),
   
-  endoflife_0 = rbernoulli(n, p=0.005),
-  midazolam_0 = rbernoulli(n, p=0.005),
-  positive_test_0 = rbernoulli(n, p=0.05),
-  primary_care_covid_case_0 = rbernoulli(n, p=0.05),
-  primary_care_suspected_covid_0 = rbernoulli(n, p=0.05),
-  covidadmitted_0 = rbernoulli(n, p=0.05),
-  
-  endoflife_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
-  midazolam_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
-  positive_test_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
-  primary_care_covid_case_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
-  primary_care_suspected_covid_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
-  covidadmitted_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
-  
   hscworker = rbernoulli(n, p=0.01),
   
   imd_0 = sample(
@@ -72,6 +65,23 @@ dummy_data <- tibble(
   mutate(
     age_2 = age_1,
     
+    # specify incidences
+    endoflife_0 = rbernoulli(n, p=0.005),
+    midazolam_0 = rbernoulli(n, p=0.005),
+    positive_test_0 = rbernoulli(n, p=0.05),
+    primary_care_covid_case_0 = rbernoulli(n, p=0.05),
+    primary_care_suspected_covid_0 = rbernoulli(n, p=0.05),
+    covidadmitted_0 = rbernoulli(n, p=0.05),
+    
+    # specify dates
+    endoflife_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
+    midazolam_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
+    positive_test_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
+    primary_care_covid_case_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
+    primary_care_suspected_covid_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
+    covidadmitted_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
+    
+    # combine incidences and dates
     endoflife_0_date = if_else(endoflife_0, endoflife_0_date, NA_Date_),
     midazolam_0_date = if_else(midazolam_0, midazolam_0_date, NA_Date_),
     positive_test_0_date = if_else(positive_test_0, positive_test_0_date, NA_Date_),
@@ -82,12 +92,8 @@ dummy_data <- tibble(
   ) %>%
   select(-endoflife_0, -midazolam_0, -positive_test_0, -primary_care_covid_case_0, -primary_care_suspected_covid_0, -covidadmitted_0)
 
-
-jcvi_groups <- readr::read_csv(here::here("output", "lib", "jcvi_groups.csv"))
-
-elig_dates <- readr::read_csv(here::here("output", "lib", "elig_dates.csv"))
-
-jcvi_group_cases <- jcvi_groups %>%
+# conditions for JCVI groups
+jcvi_group_cases <- readr::read_csv(here::here("output", "lib", "jcvi_groups.csv")) %>%
   mutate(across(definition, ~str_extract(.x, "age_. >=\\d{2}"))) %>%
   mutate(across(definition, ~case_when(group=="01" ~ "age_1 >=90",
                                        group=="06" ~ "age_1 >=62",
@@ -98,8 +104,11 @@ jcvi_group_cases <- jcvi_groups %>%
   unname() %>%
   str_c(., collapse = ", ")
 
+# JCVI groups based on age
+dummy_data <- eval(parse(text = glue("dummy_data %>% mutate(jcvi_group = factor(case_when({jcvi_group_cases})))")))
 
-elig_date_cases <- elig_dates %>%
+# conditions for eligibility dates
+elig_date_cases <- readr::read_csv(here::here("output", "lib", "elig_dates.csv")) %>%
   mutate(across(description, ~str_replace_all(.x, "p=", "p=="))) %>%
   mutate(across(description, ~str_replace_all(.x, "OR", "|"))) %>%
   mutate(across(description, ~str_replace_all(.x, "AND", "&"))) %>%
@@ -109,9 +118,6 @@ elig_date_cases <- elig_dates %>%
   unname() %>%
   str_c(., collapse = ", ")
 
-
-# JCVI groups based on age
-dummy_data <- eval(parse(text = glue("dummy_data %>% mutate(jcvi_group = factor(case_when({jcvi_group_cases})))")))
 # eligibility dates based on JCVI groups
 dummy_data <- eval(parse(text = glue("dummy_data %>% mutate(elig_date = as.Date(case_when({elig_date_cases}), format=\'%Y-%m-%d\'))")))
 

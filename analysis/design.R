@@ -17,7 +17,7 @@ fs::dir_create(here::here("output", "lib"))
 study_parameters <-
   list(
     seed = 123456L,
-    n = 100000L,
+    n = 100000L, # number of individuals in dummy data
     n_comparisons = 3L, # the number of comparisons for each sequence
     ref_age_1 = "2021-03-31", # reference date for calculating age for phase 1 groups
     ref_age_2 = "2021-07-01", # reference date for calculating age for phase 2 groups
@@ -56,6 +56,7 @@ tribble(
 readr::write_csv(jcvi_groups, here::here("output", "lib", "jcvi_groups.csv"))
 
 # create elig_dates ----
+# group elig_date if within 7 days of previous elig_date (within jcvi_group)
 elig_dates <-
 tribble(
     ~date, ~description, ~jcvi_groups,

@@ -1,9 +1,11 @@
 ######################################
 
 # This script:
-# - reads data_plot.rds
-# - plots the distribution of second vaccination dates within eligibility_date*region strata
-# - saves the plots
+# - reads data_vax_plot.rds
+# - identifies the second vaccination period
+# - saves second_vax_period_dates.csv (the elig_date:region_0:brand specific dates)
+# - saves start_dates.csv and end_dates.csv (the elig_date:region_0 specific dates to pass to study_definition_covs.py)
+# - plots and saves the distribution of second vaccination dates
 
 ######################################
 
@@ -125,7 +127,7 @@ end_dates <- comparison_dates %>%
   summarise(condition = str_c(condition, collapse  = " OR "), .groups = "keep") %>%
   ungroup()
 
-
+# save for passing to study_definition_covs.py
 readr::write_csv(start_dates,
                  here::here("output", "lib", "start_dates.csv"))
 

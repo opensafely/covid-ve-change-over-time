@@ -3,9 +3,8 @@
 # This script:
 # - reads the extracted data
 # - processes the extracted data
-# - cleans the vaccination data to identify second doses of pfizer and az
-# - creates a dataset with the (redacted) number of individuals receiving their second vaccination on each date in a sequence
-# - (the date sequence depends on their vaccine eligibility date and counts are stratified by region and vaccine brand)
+# - applies eligibility criteria from boxes a and b of Figure 3 in protocol
+# - saves processed data
 
 ######################################
 
