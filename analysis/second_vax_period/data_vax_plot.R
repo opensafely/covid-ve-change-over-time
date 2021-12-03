@@ -10,6 +10,11 @@ library(tidyverse)
 library(lubridate)
 library(glue)
 
+# create folder for data
+images_dir <- here::here("output", "second_vax_period", "data")
+dir.create(images_dir, showWarnings = FALSE, recursive=TRUE)
+
+
 data_eligible_b <- readr::read_rds(
   here::here("output", "vax", "data", "data_eligible_b.rds")
   )
