@@ -23,20 +23,28 @@ data_vax_plot <- readr::read_rds(
   here::here("output", "second_vax_period", "data", "data_vax_plot.rds")
 )
 
-# parameters for plots
-l <- 7 # number of days in moving average
-n_threshold <- 10 # threshold for starting and ending study period (update to 100 for real data, but use 10 for testing)
-second_vax_period_threshold <- 100 # must have this number of individuals in second vax period to include the comparison for that elig_date/region/brand
-plot_threshold <- 5 # mask counts <= plot_threshold 
-
-
-# calculate moving averages for defining second vaccination periods and plotting
-data_ma <- data_vax_plot %>%
+data_vax_plot <- data_vax_plot %>%
   # change labels for plots    
   mutate(across(brand, 
                 ~factor(brand, 
                         levels = c("az", "pfizer"),
-                        labels = c("ChAdOx", "BNT162b2")))) %>%
+                        labels = c("ChAdOx", "BNT162b2")))) 
+
+thresholds <- data_vax_plot %>%
+  group_by(elig_date, region_0, brand) %>%
+  summarise(n = sum(n), .groups = "keep") %>%
+  ungroup() %>%
+  # threshold is the total number of individuals vaccinated in [+6wks, +16wks) divided by the number of days in the period (10*7)
+  # i.e. start date is the first date that the 7-day average goes above 70-day average
+  mutate(threshold = n/(10*7)) %>%
+  select(-n)
+
+# parameters for plots
+l <- 7 # number of days in moving average
+n_threshold <- 100 # must have this number of individuals in second vax period to include the comparison for that elig_date/region/brand
+
+# calculate moving averages for defining second vaccination periods and plotting
+data_ma <- data_vax_plot %>%
   # calculate moving average number of individuals vaccinated for each elig_date:region_0:brand
   group_by(elig_date, region_0, brand) %>%
   mutate(moving_average = stats::filter(
@@ -44,14 +52,15 @@ data_ma <- data_vax_plot %>%
     filter = rep(1/l, l),
     method = "convolution",
     sides = 2)) %>% # centred at day 4
-  ungroup()
+  ungroup() %>%
+  left_join(thresholds, by = c("elig_date", "region_0", "brand")) 
 
 # second vaccination periods
 second_vax_period_dates <- data_ma %>%
   # dates on which number of individuals vaccinated above threshold
   mutate(
     dose_2_above_threshold = if_else(
-      moving_average > n_threshold,
+      moving_average > threshold,
       dose_2,
       NA_Date_
     )) %>%
@@ -76,7 +85,7 @@ readr::write_csv(second_vax_period_dates,
 
 # comparison dates for passing to study_definition_covs
 comparison_dates <- second_vax_period_dates %>%
-  filter(n_in_period > second_vax_period_threshold) %>%
+  filter(n_in_period > n_threshold) %>%
   # min start date / max end date for each elig_date/region, because cannot condition on vaccine brand in study_definition_covs
   group_by(elig_date, region_0) %>%
   summarise(start_1_date = min(start_of_period) + days(14), 
@@ -114,17 +123,20 @@ elig_dates <- readr::read_csv(here::here("output", "lib", "elig_dates.csv")) %>%
   )) %>%
   select(date, jcvi_groups, age_range)
 
-plot_2nd_vax_dates_fun <- function(data) {
+plot_2nd_vax_dates_fun <- function(
+  data, 
+  data_titles = elig_dates,
+  plot_threshold = 5) {
   
   elig_date <- unique(data$elig_date)
   
   if (length(elig_date) != 1) stop("data$elig_date must contain one unique value")
   
   # JCVI groups and age range for plot title
-  jcvi_groups <- elig_dates %>%
+  jcvi_groups <- data_titles %>%
     filter(date %in% elig_date) %>%
     select(jcvi_groups) %>% unlist() %>% unname()
-  age_range <- elig_dates %>%
+  age_range <- data_titles %>%
     filter(date %in% elig_date) %>%
     select(age_range) %>% unlist() %>% unname()
   
@@ -153,8 +165,12 @@ plot_2nd_vax_dates_fun <- function(data) {
               aes(y = moving_average, colour = "ChAdOx")) +
     geom_line(data = data %>% filter(brand == "BNT162b2") %>% filter(!is.na(moving_average)),  
               aes(y = moving_average, colour = "BNT162b2")) +
-    geom_hline(yintercept = n_threshold, 
-               linetype = "dashed", colour = "grey") +
+    geom_hline(data = data %>% filter(brand == "ChAdOx"), 
+               aes(yintercept = threshold, colour = "ChAdOx"), 
+               linetype = "dashed") +
+    geom_hline(data = data %>% filter(brand == "BNT162b2"), 
+               aes(yintercept = threshold, colour = "BNT162b2"), 
+               linetype = "dashed") +
     facet_wrap(~ region_0, scales = "free_y") +
     scale_x_continuous(breaks = x_breaks,
                        labels = sapply(x_breaks, function(x) str_c(day(x), " ", month(x, label=TRUE)))) +
