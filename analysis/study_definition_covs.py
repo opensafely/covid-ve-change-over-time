@@ -116,24 +116,17 @@ study=StudyDefinition(
     # # ### CLINICAL VARIABLES ###
     # # ##########################
 
-    # bmi_0 to assess bmi at start_1_date
-    bmi_0=patients.most_recent_bmi(
-        on_or_before="start_1_date",
-        minimum_age_at_measurement=16,
-        include_measurement_date=True,
-        date_format="YYYY-MM-DD",
-        return_expectations={
-            "float": {"distribution": "normal", "mean": 28, "stddev": 8},
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-            },
-    ),
-    # bmi_k: most recent bmi recorded between each start_k_date + 1 day and end_k_date
-    # used to assess bmi for comparison k+1
+    # 10 most recent bmi recordings before end_K
+    # bmi_1 is most recent, bmi_2 second most recent etc.
     **most_recent_bmi_X(
         name="bmi",
-        K=n_comparisons
+        n=10,
+        index_date=f"end_1_date + {n_comparisons*28} days",
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "float": {"distribution": "normal", "mean": 28, "stddev": 8},
+            "incidence": 0.80,
+        },
     ),
 
     # chronic caridac disease
@@ -545,7 +538,6 @@ study=StudyDefinition(
     # ),
     
     # dates of shielding codes
-    # shielded_0_date to assess whether shielding on or before start_1_date
     shielded_0_date=patients.with_these_clinical_events(
         shield_primis,
         returning="date",
@@ -558,38 +550,42 @@ study=StudyDefinition(
             "incidence": 0.01
         },
     ),
-    # shielded_k_date: most recent shielding code recorded between each start_k_date + 1 day and end_k_date
-    # used to assess shielding status for comparison k+1
     **with_these_clinical_events_date_X(
         name="shielded",
-        K=n_comparisons,
+        n=10,
+        index_date="start_1_date + 1 days",
         codelist=shield_primis,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.01,
+        },
     ),
     
-    # # dates of non shielding codes
-    # nonshielded_0_date=patients.with_these_clinical_events(
-    #     nonshield_primis,
-    #     returning="date",
-    #     date_format="YYYY-MM-DD",
-    #     on_or_before="elig_date + 42 days",
-    #     find_last_match_in_period=True,
-    #     return_expectations={
-    #         "date": {"earliest": start_date, "latest": end_date},
-    #         "rate": "exponential_increase",
-    #         "incidence": 0.01
-    #     },
-    # ),
-    # **with_these_clinical_events_date_X(
-    #     name="nonshielded",
-    #     n=6,
-    #     index_date="elig_date + 43 days",
-    #     codelist=nonshield_primis,
-    #     return_expectations={
-    #         "date": {"earliest": start_date, "latest": end_date},
-    #         "rate": "uniform",
-    #         "incidence": 0.01,
-    #     },
-    # ),
+    # dates of non shielding codes
+    nonshielded_0_date=patients.with_these_clinical_events(
+        nonshield_primis,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        on_or_before="start_1_date",
+        find_last_match_in_period=True,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01
+        },
+    ),
+    **with_these_clinical_events_date_X(
+        name="nonshielded",
+        n=6,
+        index_date="start_1_date + 1 days",
+        codelist=nonshield_primis,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "uniform",
+            "incidence": 0.01,
+        },
+    ),
 
     # # # ##############
     # # # ### EVENTS ###

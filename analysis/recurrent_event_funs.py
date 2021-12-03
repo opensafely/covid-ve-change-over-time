@@ -58,50 +58,41 @@ def region_k(K):
 
 
 # bmi
-def most_recent_bmi_X(name, K):
+def most_recent_bmi_X(name, index_date, n, return_expectations):
 
-    def var_signature(name, k):
+    def var_signature(name, on_or_before, return_expectations):
         return {
             name: patients.most_recent_bmi(
-                between=[f"start_1_date + {(k-1)*28 + 1} days", f"end_1_date + {k*28} days"],
+                on_or_before=on_or_before,
                 minimum_age_at_measurement=16,
                 include_measurement_date=True,
                 date_format="YYYY-MM-DD",
-                return_expectations={
-                        "float": {"distribution": "normal", "mean": 28, "stddev": 8},
-                        "date": {"earliest": "2020-01-01", "latest": "2021-01-01"},
-                        "rate": "exponential_increase",
-                        "incidence": 0.01
-                },
+                return_expectations=return_expectations
             )
         }
-    variables={}
-    for i in range(1, K): # don't need to look between start_K and end_K so up to K-1 fine
-        variables.update(var_signature(f"{name}_{i}", i))
+    variables=var_signature(f"{name}_1", index_date, return_expectations)
+    for i in range(2, n+1):
+        variables.update(var_signature(f"{name}_{i}", f"{name}_{i-1}_date_measured - 1 day", return_expectations))
     return variables
 
 
 # clinical events with codelist
-def with_these_clinical_events_date_X(name, K, codelist):
+def with_these_clinical_events_date_X(name, codelist, index_date, n, return_expectations):
     
-    def var_signature(name, k, codelist):
+    def var_signature(name, on_or_after, codelist, return_expectations):
         return {
             name: patients.with_these_clinical_events(
                     codelist,
                     returning="date",
-                    between=[f"start_1_date + {(k-1)*28 + 1} days", f"end_1_date + {k*28} days"],
+                    on_or_after=on_or_after,
                     date_format="YYYY-MM-DD",
-                    find_last_match_in_period=True,
-                    return_expectations={
-                        "date": {"earliest": "2020-01-01", "latest": "2021-01-01"},
-                        "rate": "exponential_increase",
-                        "incidence": 0.01
-                    },
+                    find_first_match_in_period=True,
+                    return_expectations=return_expectations
 	        ),
         }
-    variables={}
-    for i in range(1, K): # don't need to look between start_K and end_K so up to K-1 fine
-        variables.update(var_signature(f"{name}_{i}_date", i, codelist))
+    variables=var_signature(f"{name}_1_date", index_date, codelist, return_expectations)
+    for i in range(2, n+1):
+        variables.update(var_signature(f"{name}_{i}_date", f"{name}_{i-1}_date + 1 day", codelist, return_expectations))
     return variables
 
 # # medications with codelist
