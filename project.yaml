@@ -5,6 +5,9 @@ expectations:
 
 actions:
 
+  ##########################################################################
+  #### preliminaries
+  ##########################################################################
   # study parameters ----
   design:
     run: r:latest analysis/design.R
