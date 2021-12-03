@@ -100,6 +100,7 @@ readr::write_csv(second_vax_period_dates,
 
 # comparison dates for passing to study_definition_covs
 comparison_dates <- second_vax_period_dates %>%
+  # only keep if more than n_threshold individuals vaccinated with that brand in the second vaccination period
   filter(n_in_period > n_threshold) %>%
   # min start date / max end date for each elig_date/region, because cannot condition on vaccine brand in study_definition_covs
   group_by(elig_date, region_0, brand) %>%
@@ -180,22 +181,26 @@ if (update_plots) {
     
     # plot histograms by region
     plot_by_region <- ggplot(NULL, aes(x = dose_2)) +
+      # overlapping histogram for each brand, binwdith = 1 day
       geom_bar(data = data %>% filter(brand == "ChAdOx"), 
                aes(y = n, fill = "ChAdOx"),
                stat = "identity",  alpha = 0.5, width = 1) +
       geom_bar(data = data %>% filter(brand == "BNT162b2"), 
                aes(y = n, fill = "BNT162b2"), 
                stat = "identity", alpha = 0.5, width = 1) +
+      # line for 7-day moving average for each brand
       geom_line(data = data %>% filter(brand == "ChAdOx") %>% filter(!is.na(moving_average)), 
                 aes(y = moving_average, colour = "ChAdOx")) +
       geom_line(data = data %>% filter(brand == "BNT162b2") %>% filter(!is.na(moving_average)),  
                 aes(y = moving_average, colour = "BNT162b2")) +
+      # horizontal lines show the threshold above which the moving average must be fo the second vaccination period
       geom_hline(data = data %>% filter(brand == "ChAdOx"), 
                  aes(yintercept = threshold, colour = "ChAdOx"), 
                  linetype = "dashed") +
       geom_hline(data = data %>% filter(brand == "BNT162b2"), 
                  aes(yintercept = threshold, colour = "BNT162b2"), 
                  linetype = "dashed") +
+      # facet by region
       facet_wrap(~ region_0, scales = "free_y") +
       scale_x_continuous(breaks = x_breaks,
                          labels = sapply(x_breaks, function(x) str_c(day(x), " ", month(x, label=TRUE)))) +
