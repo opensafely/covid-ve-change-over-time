@@ -129,7 +129,7 @@ end_dates <- comparison_dates %>%
 readr::write_csv(start_dates,
                  here::here("output", "lib", "start_dates.csv"))
 
-readr::write_csv(start_dates,
+readr::write_csv(end_dates,
                  here::here("output", "lib", "end_dates.csv"))
 
 
