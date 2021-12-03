@@ -25,21 +25,14 @@ np.random.seed(seed)
 # import recurring event functions
 from recurrent_event_funs import *
 
-# start and end dates for comparions: start_k_date, end_k_date
-comparison_dates = pd.read_csv(
-    filepath_or_buffer='./output/lib/comparison_dates.csv',
-    dtype=str
-)
-
-
 # function for creating the comparison start dates for each elig_group
 def create_comparison_dates(type, k):
 
-    # when the number of comparison dates is not a nice round number, rounding means that the ratios don't sum to 1 which results in an error
-    # if there were a comparison for every combination of elig_date/region/brand then there would be 378 (unlikely), but to cover this I use 400 
-    dict_ratios={ comparison_dates[f"{type}_{k}_date"][i] : 1/400 for i in comparison_dates.index[:-1] }
-    final_ratio=1-len(comparison_dates.index[:-1])*(1/400)
-    dict_ratios.update({ comparison_dates[f"{type}_{k}_date"][len(comparison_dates.index)-1]: final_ratio })
+    # start and end dates for comparions: start_k_date, end_k_date
+    comparison_dates = pd.read_csv(
+    filepath_or_buffer='./output/lib/start_dates.csv',
+    dtype=str
+    )
 
     def var_signature(name, type, k):
         return{
@@ -47,7 +40,7 @@ def create_comparison_dates(type, k):
                     { comparison_dates[f"{type}_{k}_date"][i]: comparison_dates['condition'][i] for i in comparison_dates.index },
                     return_expectations={
                         "category":{
-                            "ratios": dict_ratios,
+                            "ratios": { comparison_dates[f"{type}_{k}_date"][i] : 1/len(comparison_dates.index) for i in comparison_dates.index }
                         },
                     },
             ),
