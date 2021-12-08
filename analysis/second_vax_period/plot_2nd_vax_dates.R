@@ -56,7 +56,7 @@ thresholds <- data_vax_plot %>%
 
 # parameters for plots
 l <- 7 # number of days in moving average
-n_threshold <- 100 # must have this number of individuals in second vax period to include the comparison for that elig_date/region/brand
+n_threshold <- 1000 # must have this number of individuals in second vax period to include the comparison for that elig_date/region/brand
 
 # calculate moving averages for defining second vaccination periods and plotting
 data_ma <- data_vax_plot %>%
