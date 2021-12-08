@@ -16,6 +16,7 @@ from grouping_variables import (
     jcvi_variables, 
     start_date,
     end_date,
+    study_parameters,
 )
 
 # set seed so that dummy data can be reproduced
@@ -120,7 +121,7 @@ study=StudyDefinition(
     # bmi_1 is most recent, bmi_2 second most recent etc.
     **most_recent_bmi_X(
         name="bmi",
-        n=10,
+        n=study_parameters["recur_bmi"],
         index_date=f"end_1_date + {n_comparisons*28} days",
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -480,7 +481,7 @@ study=StudyDefinition(
     ),
     
     # midazolam
-    midazolam_0_date=patients.with_these_medications(
+    midazolam_date=patients.with_these_medications(
         midazolam_codes,
         returning="date",
         date_format="YYYY-MM-DD",
@@ -552,7 +553,7 @@ study=StudyDefinition(
     ),
     **with_these_clinical_events_date_X(
         name="shielded",
-        n=10,
+        n=study_parameters["recur_shielded"],
         index_date="start_1_date + 1 days",
         codelist=shield_primis,
         return_expectations={
@@ -577,7 +578,7 @@ study=StudyDefinition(
     ),
     **with_these_clinical_events_date_X(
         name="nonshielded",
-        n=6,
+        n=study_parameters["recur_shielded"],
         index_date="start_1_date + 1 days",
         codelist=nonshield_primis,
         return_expectations={
