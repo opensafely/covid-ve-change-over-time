@@ -3,9 +3,8 @@
 # This script:
 # - reads the extracted data
 # - processes the extracted data
-# - cleans the vaccination data to identify second doses of pfizer and az
-# - creates a dataset with the (redacted) number of individuals receiving their second vaccination on each date in a sequence
-# - (the date sequence depends on their vaccine eligibility date and counts are stratified by region and vaccine brand)
+# - applies eligibility criteria from boxes a and b of Figure 3 in protocol
+# - saves processed data
 
 ######################################
 
@@ -19,12 +18,12 @@ source(here::here("analysis", "lib", "data_properties.R"))
 
 ## create folders for outputs
 data_dir <- here::here("output", "data")
-eda_data_dir <- here::here("output", "eda_index_dates", "data")
+eda_data_dir <- here::here("output", "vax", "data")
 dir.create(data_dir, showWarnings = FALSE, recursive=TRUE)
 dir.create(eda_data_dir, showWarnings = FALSE, recursive=TRUE)
 
 ## import dates
-dates <- readr::read_rds(here::here("output", "lib", "study_dates.rds"))
+dates <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
 
 # Custom functions
 fct_case_when <- function(...) {
@@ -35,12 +34,6 @@ fct_case_when <- function(...) {
   levels <- levels[!is.na(levels)]
   factor(dplyr::case_when(...), levels=levels)
 }
-
-cat("#### print variable names ####\n")
-arrow::read_feather(here::here("output", "input_vax.feather")) %>%
-  names() %>%
-  sort() %>%
-  print()
 
 cat("#### extract data ####\n")
 data_extract <- 
@@ -95,13 +88,17 @@ data_vax_processed <- data_extract %>%
 cat("#### properties of data_vax_processed ####\n")
 data_properties(
   data = data_vax_processed,
-  path = data_dir
+  path = file.path("output", "vax")
 )
 
+n_0 <- n_distinct(data_vax_processed$patient_id)
+
 cat("#### apply exclusion criteria to processed data ####\n")
-data_eligible <- data_vax_processed %>%
+data_eligible_a <- data_vax_processed %>%
   # apply exclusion criteria
   filter(
+    # remove dummy jcvi_group
+    !(jcvi_group %in% "99"),
     # remove if any missing data for key variables
     !is.na(ethnicity),
     !is.na(sex),
@@ -114,16 +111,15 @@ data_eligible <- data_vax_processed %>%
     is.na(positive_test_0_date),
     is.na(primary_care_covid_case_0_date),
     is.na(primary_care_suspected_covid_0_date),
-    is.na(covidadmitted_0_date),
-    # remove dummy groups and dates
-    !(jcvi_group %in% "99"),
-    !(elig_date %in% as.Date("2100-12-31"))
+    is.na(covidadmitted_0_date)
   ) 
+
+n_a <- n_distinct(data_eligible_a$patient_id)
 
 # process vaccine data
 data_vax <- local({
   
-  data_vax_pfizer <- data_eligible %>%
+  data_vax_pfizer <- data_eligible_a %>%
     select(patient_id, matches("covid\\_vax\\_pfizer\\_\\d+\\_date")) %>%
     pivot_longer(
       cols = -patient_id,
@@ -134,7 +130,7 @@ data_vax <- local({
     ) %>%
     arrange(patient_id, date)
   
-  data_vax_az <- data_eligible %>%
+  data_vax_az <- data_eligible_a %>%
     select(patient_id, matches("covid\\_vax\\_az\\_\\d+\\_date")) %>%
     pivot_longer(
       cols = -patient_id,
@@ -145,7 +141,7 @@ data_vax <- local({
     ) %>%
     arrange(patient_id, date)
   
-  data_vax_moderna <- data_eligible %>%
+  data_vax_moderna <- data_eligible_a %>%
     select(patient_id, matches("covid\\_vax\\_moderna\\_\\d+\\_date")) %>%
     pivot_longer(
       cols = -patient_id,
@@ -157,10 +153,16 @@ data_vax <- local({
     arrange(patient_id, date)
   
   
-  data_vax <-
-    data_vax_pfizer %>%
-    full_join(data_vax_az, by=c("patient_id", "date")) %>%
-    full_join(data_vax_moderna, by=c("patient_id", "date")) %>%
+  data_vax <- data_eligible_a %>% # to get the unvaccinated
+    # filter(if_all(starts_with("covid_vax"), ~ is.na(.))) %>%
+    filter_at(vars(starts_with("covid_vax")), all_vars(is.na(.))) %>%
+    select(patient_id) %>% 
+    full_join(
+      data_vax_pfizer %>%
+        full_join(data_vax_az, by=c("patient_id", "date")) %>%
+        full_join(data_vax_moderna, by=c("patient_id", "date")),
+      by = "patient_id"
+    ) %>%
     mutate(
       brand = fct_case_when(
         (!is.na(vax_az_index)) & is.na(vax_pfizer_index) & is.na(vax_moderna_index) ~ "az",
@@ -190,37 +192,53 @@ data_vax_wide <- data_vax %>%
   )
 
 readr::write_rds(data_vax, 
-                 here::here("output", "data", "data_long_vax_dates.rds"), 
+                 here::here("output", "vax", "data", "data_long_vax_dates.rds"), 
                  compress="gz")
 readr::write_rds(data_vax_wide,
-          here::here("output", "data", "data_wide_vax_dates.rds"), 
+          here::here("output", "vax", "data", "data_wide_vax_dates.rds"), 
           compress="gz")
 
-cat("#### derive data_2nd_dose ####\n")
-data_2nd_dose <- data_vax %>%
-  # keep first dose if first dose of pfizer or az
-  # keep second dose if second dose of pfizer or az
+data_eligible_b <- data_eligible_a %>%
+  left_join(data_vax_wide, by = "patient_id") %>%
+  mutate(
+    between_doses = as.numeric(covid_vax_2_date - covid_vax_1_date)/7
+    ) %>%
   filter(
-    vax_index %in% c(1,2),
-    vax_index == vax_pfizer_index | vax_index == vax_az_index
+    ### inclusion
+    # first and second dose same brand
+    covid_vax_1_brand == covid_vax_2_brand,
+    # second dose must be az or pfizer
+    covid_vax_1_brand %in% c("az", "pfizer"),
+    # second dose received in interval [elig_date + 6 weeks, elig_date + 16 weeks)
+    covid_vax_2_date >= elig_date + weeks(6),
+    covid_vax_2_date < elig_date + weeks(16),
+    
+    ### exclusion
+    # first dose received before eligibility date
+    covid_vax_1_date > elig_date,
+    # less than six or more than 14 weeks between 1st and 2nd dose
+    between_doses >= 6,
+    between_doses < 14,
+    # flagged as hcw
+    !hscworker
   ) %>%
-  select(patient_id, vax_index, brand, date) %>%
-  pivot_wider(names_from = vax_index,
-              values_from = date, 
-              names_prefix = "dose_") %>%
-  left_join(
-    data_eligible %>%
-      select(patient_id, jcvi_group, elig_date, region_0, hscworker),
-    by = "patient_id") %>%
-  # first dose must have occurred on or after elig_date
-  filter(dose_1 >= elig_date) %>%
-  # only keep if 2nd dose received [6,14) weeks after 1st dose
-  filter(dose_1 + weeks(6) <= dose_2 & dose_2 < dose_1 + weeks(14)) %>%
-  filter(!hscworker) %>%
-  select(-hscworker)
-  
-  
-readr::write_rds(data_2nd_dose,
-                 here::here("output", "eda_index_dates", "data", "data_2nd_dose.rds"), 
+  select(patient_id, elig_date, region_0)
+
+n_b <- n_distinct(data_eligible_b$patient_id)
+
+readr::write_rds(data_eligible_b,
+                 here::here("output", "vax", "data", "data_eligible_b.rds"),
                  compress="gz")
+
+# number of people eligible at each stage
+n_eligible <- tibble(
+  n_0 = n_0,
+  n_a = n_a,
+  n_b = n_b
+)
+
+readr::write_csv(n_eligible,
+                 here::here("output", "vax", "n_eligible.csv"))
+
+
 

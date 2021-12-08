@@ -5,16 +5,20 @@
 # # # # # # # # # # # # # # # # # # # # #
 
 # Import libraries ----
-library('tidyverse')
-library('here')
+library(tidyverse)
+library(lubridate)
+library(glue)
 
 # create output directories ----
-fs::dir_create(here("output", "lib"))
+fs::dir_create(here::here("output", "lib"))
 
-# create study_dates ----
+# create study_parameters ----
 
-study_dates <-
+study_parameters <-
   list(
+    seed = 123456L,
+    n = 100000L, # number of individuals in dummy data
+    n_comparisons = 3L, # the number of comparisons for each sequence
     ref_age_1 = "2021-03-31", # reference date for calculating age for phase 1 groups
     ref_age_2 = "2021-07-01", # reference date for calculating age for phase 2 groups
     ref_cev = "2021-01-18", # reference date for calculating eligibility for phase 1 group 4 (CEV)
@@ -27,8 +31,8 @@ study_dates <-
     end_date = "2021-09-15" # last date of available vaccination data. NEED TO ALSO CHECK END DATES FOR OTHER DATA SOURCES
   )
 
-readr::write_rds(study_dates, here::here("output", "lib", "study_dates.rds"))
-jsonlite::write_json(study_dates, path = here::here("output", "lib", "study_dates.json"), auto_unbox = TRUE, pretty=TRUE)
+readr::write_rds(study_parameters, here::here("output", "lib", "study_parameters.rds"))
+jsonlite::write_json(study_parameters, path = here::here("output", "lib", "study_parameters.json"), auto_unbox = TRUE, pretty=TRUE)
 
 # create jcvi_groups ----
 jcvi_groups <- 
@@ -52,6 +56,7 @@ tribble(
 readr::write_csv(jcvi_groups, here::here("output", "lib", "jcvi_groups.csv"))
 
 # create elig_dates ----
+# group elig_date if within 7 days of previous elig_date (within jcvi_group)
 elig_dates <-
 tribble(
     ~date, ~description, ~jcvi_groups,
@@ -63,30 +68,41 @@ tribble(
     "2021-02-22", "age_1 >= 64 AND age_1 < 65", "07", 
     "2021-03-01", "age_1 >= 60 AND age_1 < 64", "07",
     ###
-    "2021-03-08", "age_1 >= 56 AND age_1 < 60", "08",
-    "2021-03-09", "age_1 >= 55 AND age_1 < 56", "08",
+    # combine 2 rows as < 7 days between elig_dates
+    "2021-03-08", "age_1 >= 55 AND age_1 < 60", "08",
+    # "2021-03-08", "age_1 >= 56 AND age_1 < 60", "08",
+    # "2021-03-09", "age_1 >= 55 AND age_1 < 56", "08",
     ###
     "2021-03-19", "age_1 >= 50 AND age_1 < 55", "09",
     ###
     "2021-04-13", "age_2 >= 45 AND age_1 < 50", "10",
-    "2021-04-26", "age_2 >= 44 AND age_1 < 45", "10",
-    "2021-04-27", "age_2 >= 42 AND age_1 < 44", "10",
-    "2021-04-30", "age_2 >= 40 AND age_1 < 42", "10",
+    # combine 3 rows as < 7 days between elig_dates
+    "2021-04-26", "age_2 >= 40 AND age_1 < 45", "10",
+    # "2021-04-26", "age_2 >= 44 AND age_1 < 45", "10",
+    # "2021-04-27", "age_2 >= 42 AND age_1 < 44", "10",
+    # "2021-04-30", "age_2 >= 40 AND age_1 < 42", "10",
     ###
-    "2021-05-13", "age_2 >= 38 AND age_2 < 40", "11",
-    "2021-05-19", "age_2 >= 36 AND age_2 < 38", "11",
-    "2021-05-21", "age_2 >= 34 AND age_2 < 36", "11",
-    "2021-05-25", "age_2 >= 32 AND age_2 < 34", "11",
-    "2021-05-26", "age_2 >= 30 AND age_2 < 32", "11",
+    # combine 2 rows as < 7 days between elig_dates
+    "2021-05-13", "age_2 >= 36 AND age_2 < 40", "11",
+    # "2021-05-13", "age_2 >= 38 AND age_2 < 40", "11",
+    # "2021-05-19", "age_2 >= 36 AND age_2 < 38", "11",
+    # combine 3 rows as < 7 days between elig_dates
+    "2021-05-21", "age_2 >= 30 AND age_2 < 36", "11",
+    # "2021-05-21", "age_2 >= 34 AND age_2 < 36", "11",
+    # "2021-05-25", "age_2 >= 32 AND age_2 < 34", "11",
+    # "2021-05-26", "age_2 >= 30 AND age_2 < 32", "11",
     ###
     "2021-06-08", "age_2 >= 25 AND age_2 < 30", "12",
-    "2021-06-15", "age_2 >= 23 AND age_2 < 25", "12",
-    "2021-06-16", "age_2 >= 21 AND age_2 < 23", "12",
-    "2021-06-18", "age_2 >= 18 AND age_2 < 21", "12",
+    # combine 3 rows as < 7 days between elig_dates
+    "2021-06-15", "age_2 >= 18 AND age_2 < 25", "12",
+    # "2021-06-15", "age_2 >= 23 AND age_2 < 25", "12",
+    # "2021-06-16", "age_2 >= 21 AND age_2 < 23", "12",
+    # "2021-06-18", "age_2 >= 18 AND age_2 < 21", "12",
     "2100-12-31", "DEFAULT", "NA",
 )
 
 readr::write_csv(elig_dates, here::here("output", "lib", "elig_dates.csv"))
+
 
 # create regions ----
 regions <- tribble(

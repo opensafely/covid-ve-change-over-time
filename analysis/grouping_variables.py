@@ -30,18 +30,31 @@ elig_dates = pd.read_csv(
 dict_elig = { elig_dates['date'][i] : elig_dates['description'][i] for i in elig_dates.index }
 ratio_elig = { elig_dates['date'][i] : 1/len(elig_dates.index) for i in elig_dates.index }
 
-#study_dates
-with open("./output/lib/study_dates.json") as f:
-  study_dates = json.load(f)
+# regions
+regions = pd.read_csv(
+    filepath_or_buffer='./output/lib/regions.csv',
+    dtype=str
+)
+ratio_regions = { regions['region'][i] : float(regions['ratio'][i]) for i in regions.index }
+
+#study_parameters
+with open("./output/lib/study_parameters.json") as f:
+  study_parameters = json.load(f)
+
+# set seed so that dummy data can be reproduced
+import numpy as np
+seed=int(study_parameters["seed"])
+np.random.seed(seed)
 
 # define variables explicitly
-ref_age_1=study_dates["ref_age_1"] # reference date for calculating age for phase 1 groups
-ref_age_2=study_dates["ref_age_1"] # reference date for calculating age for phase 2 groups
-ref_cev=study_dates["ref_cev"] # reference date for calculating clinically extremely vulnerable group
-ref_ar=study_dates["ref_ar"] #reference date for caluclating at risk group
-start_date=study_dates["start_date"] # start of phase 1
-end_date=study_dates["end_date"] # end of followup
-pandemic_start=study_dates["pandemic_start"]
+n_comparisons=study_parameters["n_comparisons"]
+ref_age_1=study_parameters["ref_age_1"] # reference date for calculating age for phase 1 groups
+ref_age_2=study_parameters["ref_age_1"] # reference date for calculating age for phase 2 groups
+ref_cev=study_parameters["ref_cev"] # reference date for calculating clinically extremely vulnerable group
+ref_ar=study_parameters["ref_ar"] #reference date for caluclating at risk group
+start_date=study_parameters["start_date"] # start of phase 1
+end_date=study_parameters["end_date"] # end of followup
+pandemic_start=study_parameters["pandemic_start"]
 
 ## function to add days to a string date
 from datetime import datetime, timedelta
@@ -417,6 +430,19 @@ jcvi_variables = dict(
             ratio_elig
             },
             "incidence": 1,
+        },
+    ),
+
+    # region - NHS England 9 regions
+    region_0=patients.registered_practice_as_of(
+        "elig_date + 42 days",
+        returning="nuts1_region_name",
+        return_expectations={
+            "rate": "universal",
+            "category": {
+                "ratios": ratio_regions,
+            },
+            "incidence": 0.99
         },
     ),
 

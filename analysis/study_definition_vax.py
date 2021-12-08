@@ -15,17 +15,15 @@ import pandas as pd
 
 # import the vairables for deriving JCVI groups
 from grouping_variables import (
+    seed,
     jcvi_variables, 
     start_date,
     end_date,
 )
 
-# regions
-regions = pd.read_csv(
-    filepath_or_buffer='./output/lib/regions.csv',
-    dtype=str
-)
-ratio_regions = { regions['region'][i] : float(regions['ratio'][i]) for i in regions.index }
+# set seed so that dummy data can be reproduced
+import numpy as np
+np.random.seed(seed)
 
 study=StudyDefinition(
 
@@ -91,19 +89,6 @@ study=StudyDefinition(
                          "category": {"ratios": {c: 1/320 for c in range(100,32100,100)}}
                          }
         ),
-
-    # region - NHS England 9 regions
-    region_0=patients.registered_practice_as_of(
-        "elig_date + 42 days",
-        returning="nuts1_region_name",
-        return_expectations={
-            "rate": "universal",
-            "category": {
-                "ratios": ratio_regions,
-            },
-            "incidence": 0.99
-        },
-    ),
 
     ##########################
     ### CLINICAL VARIABLES ###

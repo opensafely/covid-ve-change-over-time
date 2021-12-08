@@ -1,8 +1,9 @@
 ######################################
 
 # This script:
-# - reads data_2nd_dose.rds
-# - generates and saves data_plot for plotting the distribution of 2nd vax dates
+# - reads data_eligible_b.rds and data_vax_wide.rds
+# - generates and saves data_vax_plot.rds for plotting the distribution of 2nd vax dates across dates
+
 ######################################
 
 ## setup
@@ -10,10 +11,26 @@ library(tidyverse)
 library(lubridate)
 library(glue)
 
-data_2nd_dose <- readr::read_rds(
-  here::here("output", "eda_index_dates", "data", "data_2nd_dose.rds")
+# create folder for data
+images_dir <- here::here("output", "second_vax_period", "data")
+dir.create(images_dir, showWarnings = FALSE, recursive=TRUE)
+
+# individuals who are eligible based on criteria in box b of Figure 3 on protocol
+data_eligible_b <- readr::read_rds(
+  here::here("output", "vax", "data", "data_eligible_b.rds")
   )
 
+data_vax_wide <- readr::read_rds(
+  here::here("output", "vax", "data", "data_wide_vax_dates.rds")
+  )
+
+# second dose and brand for eligible individuals
+data_2nd_dose <- data_eligible_b %>%
+  left_join(data_vax_wide, by = "patient_id") %>%
+  select(patient_id, elig_date, region_0, 
+         dose_2 = covid_vax_2_date, brand = covid_vax_2_brand)
+  
+# function for creating plot data
 generate_plot_data <- function(data = data_2nd_dose, plot_date) {
   
   # check date in correct format
@@ -64,18 +81,18 @@ generate_plot_data <- function(data = data_2nd_dose, plot_date) {
   
 }
 
-# create list of plot_data for each elig_date
+# create list of data for each elig_date
 data_vax_plot_list <- lapply(
   as.character(sort(unique(data_2nd_dose$elig_date))),
   function(x)
     try(generate_plot_data(plot_date = x))
 )
-
+# bind list into one tibble
 data_vax_plot <- bind_rows(data_vax_plot_list[sapply(data_vax_plot_list, is_tibble)])
 
 # save data for plotting
 readr::write_rds(
   data_vax_plot,
-  here::here("output", "eda_index_dates", "data", "data_vax_plot.rds"),
+  here::here("output", "second_vax_period", "data", "data_vax_plot.rds"),
   compress = "gz"
 )
