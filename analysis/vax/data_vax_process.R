@@ -35,12 +35,6 @@ fct_case_when <- function(...) {
   factor(dplyr::case_when(...), levels=levels)
 }
 
-cat("#### print variable names ####\n")
-arrow::read_feather(here::here("output", "input_vax.feather")) %>%
-  names() %>%
-  sort() %>%
-  print()
-
 cat("#### extract data ####\n")
 data_extract <- 
   arrow::read_feather(file = here::here("output", "input_vax.feather")) %>%
@@ -97,7 +91,7 @@ data_properties(
   path = file.path("output", "vax")
 )
 
-n_0 <- nrow(distinct(data_vax_processed, patient_id))
+n_0 <- n_distinct(data_vax_processed, patient_id)
 
 cat("#### apply exclusion criteria to processed data ####\n")
 data_eligible_a <- data_vax_processed %>%
@@ -120,7 +114,7 @@ data_eligible_a <- data_vax_processed %>%
     is.na(covidadmitted_0_date)
   ) 
 
-n_a <- nrow(distinct(data_eligible_a, patient_id))
+n_a <- n_distinct(data_eligible_a, patient_id)
 
 # process vaccine data
 data_vax <- local({
@@ -230,7 +224,7 @@ data_eligible_b <- data_eligible_a %>%
   ) %>%
   select(patient_id, elig_date, region_0)
 
-n_b <- nrow(distinct(data_eligible_b, patient_id))
+n_b <- n_distinct(data_eligible_b, patient_id)
 
 readr::write_rds(data_eligible_b,
                  here::here("output", "vax", "data", "data_eligible_b.rds"),
