@@ -9,124 +9,89 @@ library(tidyverse)
 library(lubridate)
 library(glue)
 
-study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
+source(here::here("analysis", "lib", "dummy_data_functions.R"))
 
-set.seed(study_parameters$seed)
+vars_date_0 <- c("endoflife_0_date",
+                 "midazolam_0_date", 
+                 "positive_test_0_date", 
+                 "primary_care_covid_case_0_date", 
+                 "primary_care_suspected_covid_0_date", 
+                 "covidadmitted_0_date")
 
-n <- study_parameters$n
 
-start_date <- study_parameters$start_date
-
-# input_old <- arrow::read_feather(file = here::here("output", "input_vax.feather")) 
-
-regions <- readr::read_csv(here::here("output", "lib", "regions.csv"))
-
-dummy_data <- tibble(
-  
-  patient_id = 1:n,
-  
-  age_1 = as.integer(runif(n, 16, 90), 0),
-  
-  sex = factor(rbernoulli(n, p=0.49),
-               levels = c(FALSE, TRUE),
-               labels = c("F", "M")),
-  
-  bmi_0 = rnorm(n, 25, 5),
-  
-  ethnicity_6 = factor(sample(
-    x = c(as.character(1:5), NA_character_),
-    size = n,
-    replace = TRUE,
-    prob = c(rep(0.99/5,5), 0.01)
-  )),
-  ethnicity_6_sus = factor(sample(
-    x = c(as.character(1:5), NA_character_),
-    size = n,
-    replace = TRUE,
-    prob = c(rep(0.99/5,5), 0.01)
-  )),
-  
-  hscworker = rbernoulli(n, p=0.01),
-  
-  imd_0 = sample(
-    x = seq(100L,32100L,100L),
-    size = n,
-    replace = TRUE
-  ),
-  
-  region_0 = factor(sample(
-    x = regions$region,
-    size = n,
-    replace = TRUE,
-    prob = regions$ratio
-  ))
-  
-) %>%
-  mutate(
-    age_2 = age_1,
-    
-    # specify incidences
-    endoflife_0 = rbernoulli(n, p=0.005),
-    midazolam_0 = rbernoulli(n, p=0.005),
-    positive_test_0 = rbernoulli(n, p=0.05),
-    primary_care_covid_case_0 = rbernoulli(n, p=0.05),
-    primary_care_suspected_covid_0 = rbernoulli(n, p=0.05),
-    covidadmitted_0 = rbernoulli(n, p=0.05),
-    
-    # specify dates
-    endoflife_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
-    midazolam_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
-    positive_test_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
-    primary_care_covid_case_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
-    primary_care_suspected_covid_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
-    covidadmitted_0_date = as_date(start_date) + days(sample(x = 1:600, size = n, replace = TRUE)),
-    
-    # combine incidences and dates
-    endoflife_0_date = if_else(endoflife_0, endoflife_0_date, NA_Date_),
-    midazolam_0_date = if_else(midazolam_0, midazolam_0_date, NA_Date_),
-    positive_test_0_date = if_else(positive_test_0, positive_test_0_date, NA_Date_),
-    primary_care_covid_case_0_date = if_else(primary_care_covid_case_0, primary_care_covid_case_0_date, NA_Date_),
-    primary_care_suspected_covid_0_date = if_else(primary_care_suspected_covid_0, primary_care_suspected_covid_0_date, NA_Date_),
-    covidadmitted_0_date = if_else(covidadmitted_0, covidadmitted_0_date, NA_Date_)
-    
-  ) %>%
-  select(-endoflife_0, -midazolam_0, -positive_test_0, -primary_care_covid_case_0, -primary_care_suspected_covid_0, -covidadmitted_0)
-
-# conditions for JCVI groups
-jcvi_group_cases <- readr::read_csv(here::here("output", "lib", "jcvi_groups.csv")) %>%
+jcvi_group_patterns <- readr::read_csv(here::here("output", "lib", "jcvi_groups.csv")) %>%
   mutate(across(definition, ~str_extract(.x, "age_. >=\\d{2}"))) %>%
   mutate(across(definition, ~case_when(group=="01" ~ "age_1 >=90",
                                        group=="06" ~ "age_1 >=62",
                                        !is.na(.x) ~ .x,
-                                       TRUE ~ "TRUE"))) %>%
-  transmute(cases = str_c(definition, " ~ \'", group, "\'")) %>%
-  unlist() %>% 
-  unname() %>%
-  str_c(., collapse = ", ")
-
-# JCVI groups based on age
-dummy_data <- eval(parse(text = glue("dummy_data %>% mutate(jcvi_group = factor(case_when({jcvi_group_cases})))")))
+                                       TRUE ~ "TRUE")))
 
 # conditions for eligibility dates
-elig_date_cases <- readr::read_csv(here::here("output", "lib", "elig_dates.csv")) %>%
+elig_date_patterns <- readr::read_csv(here::here("output", "lib", "elig_dates.csv")) %>%
   mutate(across(description, ~str_replace_all(.x, "p=", "p=="))) %>%
   mutate(across(description, ~str_replace_all(.x, "OR", "|"))) %>%
   mutate(across(description, ~str_replace_all(.x, "AND", "&"))) %>%
-  mutate(across(description, ~str_replace_all(.x, "DEFAULT", "TRUE"))) %>%
-  transmute(cases = str_c(description, " ~ \'", date, "\'")) %>%
-  unlist() %>% 
-  unname() %>%
-  str_c(., collapse = ", ")
+  mutate(across(description, ~str_replace_all(.x, "DEFAULT", "TRUE")))
 
-# eligibility dates based on JCVI groups
-dummy_data <- eval(parse(text = glue("dummy_data %>% mutate(elig_date = as.Date(case_when({elig_date_cases}), format=\'%Y-%m-%d\'))")))
-
+dummy_data <- tibble(patient_id = 1:n) %>%
+  mutate(age_1 = as.integer(runif(nrow(.), 16, 90), 0),
+         age_2 = age_1,
+         bmi_0 = rnorm(n, 25, 5),
+         imd_0 = sample(
+           x = seq(100L,32100L,100L),
+           size = n,
+           replace = TRUE)) %>%
+  var_category(sex, categories = c("F", "M")) %>%
+  var_category(ethnicity_6, 
+               categories = c(as.character(1:5), NA_character_),
+               ratios = c(rep(0.99/5,5), 0.01)) %>%
+  var_category(ethnicity_6_sus, 
+               categories = c(as.character(1:5), NA_character_),
+               ratios = c(rep(0.99/5,5), 0.01)) %>%
+  var_category(region_0, categories = regions$region, ratios = regions$ratio) %>%
+  # binary vars for exclusion criteria
+  bind_cols(
+    pmap(
+      list(a = c("hscworker"), 
+           b = c(0.01)),
+      function(a,b) 
+        var_binary(
+          .data = ., 
+          name = !! a,
+          incidence = b,
+          keep_vars = FALSE
+        ))) %>%
+  # date vars for exclusion criteria
+  bind_cols(
+    pmap(
+      list(a = vars_date_0, 
+           b = rep(0.01, length(vars_date_0))),
+      function(a,b) 
+        var_date(
+        .data = ., 
+        name = !! a,
+        incidence = b,
+        keep_vars = FALSE
+      ))) %>%
+  # jcvi_group
+  var_category(
+    name = jcvi_group, 
+    categories = jcvi_group_patterns$group, 
+    conditions = jcvi_group_patterns$definition
+    ) %>%
+  # elig_date
+  var_category(
+    name = elig_date,
+    categories = elig_date_patterns$date,
+    conditions = elig_date_patterns$description)
+  
 
 # fix vaccine dates so that they have roughly correct distribution
 dummy_data <- dummy_data %>%
-  mutate(covid_vax_pfizer_1_date = elig_date + days(round(rnorm(nrow(.), mean = 10, sd = 3))),
-         covid_vax_az_1_date = elig_date + days(round(rnorm(nrow(.), mean = 10, sd = 3))),
-         covid_vax_moderna_1_date = elig_date + days(round(rnorm(nrow(.), mean = 10, sd = 3)))) %>%
+  mutate(
+    covid_vax_pfizer_1_date = as.Date(elig_date) + days(round(rnorm(nrow(.), mean = 10, sd = 3))),
+    covid_vax_az_1_date = as.Date(elig_date) + days(round(rnorm(nrow(.), mean = 10, sd = 3))),
+    covid_vax_moderna_1_date = as.Date(elig_date) + days(round(rnorm(nrow(.), mean = 10, sd = 3)))) %>%
   mutate(
     vaccine_1_type = sample(
       x = c("pfizer", "az", "moderna", "none"), 
