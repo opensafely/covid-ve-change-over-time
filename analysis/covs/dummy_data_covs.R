@@ -4,10 +4,12 @@ library(glue)
 
 source(here::here("analysis", "lib", "dummy_data_functions.R"))
 
-
+set.seed(5476)
 
 # the variables generated in grouping_variables.py are same as in dummy_data_vax
 dummy_data_vax <- arrow::read_feather(here::here("analysis", "vax", "dummy_data_vax.feather"))
+
+# dummy_data_test <- arrow::read_feather(here::here("analysis", "covs", "dummy_data_covs.feather"))
 
 # start and end dates
 start_dates <- readr::read_csv(here::here("output", "lib", "start_dates.csv"))
@@ -110,8 +112,16 @@ dummy_data_covs <- dummy_data_vax %>%
   bind_cols(vars_bmi_recurrent(.data = .)) %>%
   bind_cols(vars_region_and_imd_recurrent(.data = ., K=K)) %>%
   bind_cols(var_date_recurrent(.data = ., name_string = "shielded", incidence = 0.2)) %>%
-  bind_cols(var_date_recurrent(.data = ., name_string = "nonshielded", incidence = 0.1))
+  bind_cols(var_date_recurrent(.data = ., name_string = "nonshielded", incidence = 0.1)) %>%
+  # convert dob to YYYY-MM
+  mutate(across(dob, ~ as.POSIXct(str_replace(as.character(.x), "-\\d{2}$", "-01"), tz = "UTC"))) %>%
+  # add an hour to BST times, as somewhere in
+  mutate(across(dob, 
+                ~ {
+                  tz <- ifelse(hour(force_tz(as.POSIXct(as.Date(.x)), tz = 'Europe/London')) == 1, 'BST', 'GMT')
+                  if_else(tz == "BST", .x + hours(1), .x)
+                })) %>%
+  mutate(across(contains("_date"), as.POSIXct))
   
 
 arrow::write_feather(dummy_data_covs, here::here("analysis", "covs", "dummy_data_covs.feather"))
-  
