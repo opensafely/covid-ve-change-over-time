@@ -45,6 +45,7 @@ actions:
     needs: [design, dummy_data_vax, generate_study_population_vax]
     outputs:
       highly_sensitive:
+        data_eligible_a: output/vax/data/data_eligible_a.rds
         data_eligible_b: output/vax/data/data_eligible_b.rds
         vax_data: output/vax/data/data_*_vax_dates.rds
       moderately_sensitive:
@@ -57,21 +58,22 @@ actions:
   # create dataset for identifying second vaccination time periods ----  
   data_vax_plot:
     run: r:latest analysis/second_vax_period/data_vax_plot.R
-    needs: [data_vax_process]
+    needs: [design, data_vax_process]
     outputs:
       highly_sensitive:
-        plot_data: output/second_vax_period/data/data_vax_plot.rds
+        data_moving_average: output/second_vax_period/data/data_ma.rds
+      moderately_sensitive:
+        second_vax_period_dates: output/lib/second_vax_period_dates.csv
+        start_dates: output/lib/start_dates.csv
+        end_dates: output/lib/end_dates.csv
 
   # identify and plot second vaccination time periods ----  
   plot_2nd_vax_dates:
-    run: r:latest analysis/second_vax_period/plot_2nd_vax_dates.R TRUE
+    run: r:latest analysis/second_vax_period/plot_2nd_vax_dates.R
     needs: [design, data_vax_plot]
     outputs:
       moderately_sensitive:
         plots_by_region: output/second_vax_period/images/plot_by_region_*.png
-        second_vax_period_dates: output/lib/second_vax_period_dates.csv
-        start_dates: output/lib/start_dates.csv
-        end_dates: output/lib/end_dates.csv
 
   ##########################################################################
   #### data for covariates
@@ -79,7 +81,7 @@ actions:
     # generate dummy data for study_definition_vax ----      
   dummy_data_covs:
     run: r:latest analysis/covs/dummy_data_covs.R
-    needs: [design, dummy_data_vax, plot_2nd_vax_dates]
+    needs: [design, dummy_data_vax, data_vax_plot]
     outputs:
       highly_sensitive:
         dummy_data_vax: analysis/covs/dummy_data_covs.feather
@@ -88,7 +90,7 @@ actions:
   generate_study_population_covs:
     run: cohortextractor:latest generate_cohort --study-definition study_definition_covs --output-format feather
     dummy_data_file: analysis/covs/dummy_data_covs.feather
-    needs: [design, plot_2nd_vax_dates, dummy_data_covs]
+    needs: [design, data_vax_plot, dummy_data_covs]
     outputs:
       highly_sensitive:
         cohort: output/input_covs.feather
