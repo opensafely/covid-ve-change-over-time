@@ -116,6 +116,11 @@ data_eligible_a <- data_vax_processed %>%
 
 n_a <- n_distinct(data_eligible_a$patient_id)
 
+readr::write_rds(data_eligible_a %>%
+                   select(patient_id, jcvi_group, elig_date, region_0),
+                 here::here("output", "vax", "data", "data_eligible_a.rds"),
+                 compress="gz")
+
 # process vaccine data
 data_vax <- local({
   
@@ -222,7 +227,7 @@ data_eligible_b <- data_eligible_a %>%
     # flagged as hcw
     !hscworker
   ) %>%
-  select(patient_id, elig_date, region_0)
+  select(patient_id, jcvi_group, elig_date, region_0)
 
 n_b <- n_distinct(data_eligible_b$patient_id)
 
