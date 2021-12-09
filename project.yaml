@@ -81,7 +81,7 @@ actions:
     # generate dummy data for study_definition_vax ----      
   dummy_data_covs:
     run: r:latest analysis/covs/dummy_data_covs.R
-    needs: [design, dummy_data_vax, plot_2nd_vax_dates]
+    needs: [design, dummy_data_vax, data_vax_plot]
     outputs:
       highly_sensitive:
         dummy_data_vax: analysis/covs/dummy_data_covs.feather
@@ -90,7 +90,7 @@ actions:
   generate_study_population_covs:
     run: cohortextractor:latest generate_cohort --study-definition study_definition_covs --output-format feather
     dummy_data_file: analysis/covs/dummy_data_covs.feather
-    needs: [design, plot_2nd_vax_dates, dummy_data_covs]
+    needs: [design, data_vax_plot, dummy_data_covs]
     outputs:
       highly_sensitive:
         cohort: output/input_covs.feather
