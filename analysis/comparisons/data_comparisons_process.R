@@ -67,8 +67,6 @@ input_covs <- arrow::read_feather(
   here::here("output", "input_covs.feather"))
 
 comparison_arms <- function(
-  j, # jcvi_group
-  b, # vaccine brand
   k # comparison number, k=1...K
 ) {
   
@@ -91,10 +89,6 @@ comparison_arms <- function(
   )
     
     data_vax <- data_eligible_c %>%
-      filter(
-        brand %in% b,
-        jcvi_group %in% j
-        ) %>%
       # start date for vax arm depends on second vax date
       mutate(time_zero = covid_vax_2_date + days(d)) %>%
       # no third dose before time_zero
@@ -102,10 +96,6 @@ comparison_arms <- function(
       mutate(arm = "vax")
     
     data_unvax <- data_eligible_d %>%
-      filter(
-        brand %in% b,
-        jcvi_group %in% j
-      ) %>%
       # time_zero for unvax arm depends on elig_date, region and brand
       mutate(time_zero = start_of_period + days(d)) %>%
       # no first dose before time_zero
@@ -116,28 +106,58 @@ comparison_arms <- function(
   make_exclusions <- function(.data) {
     .data %>%
       left_join(input_covs %>%
-                  select(patient_id, all_of(exclude_if_evidence_of)),
+                  select(patient_id, 
+                         all_of(exclude_if_evidence_of), 
+                         region = glue("region_{k}")),
                 by = "patient_id") %>%
       # exclude if evidence of xxx before time_zero
       filter_at(all_of(exclude_if_evidence_of),
                 all_vars(no_evidence_of(., time_zero))) %>%
-      select(patient_id, arm, time_zero) 
+      select(patient_id, jcvi_group, elig_date, region, brand, arm, time_zero) 
   }
   
   out <- bind_rows(make_exclusions(data_vax), make_exclusions(data_unvax)) 
   
-  end_fu_date <- max(out[out$arm == "vax", ]$time_zero)
-  
+  end_fu_dates <- out %>%
+    group_by(elig_date, brand, region) %>%
+    summarise(end_fu_date = max(time_zero), .groups = "keep") %>%
+    ungroup() %>%
+    mutate(arm = "unvax")
+ 
   out <- out %>%
-    mutate(end_fu_date = if_else(arm %in% "vax",
-                              # each individual in vax arm followed up for 28 days
-                              time_zero + days(28),
-                              # each individual in unvax arm followed up until last end date in vax arm
-                              end_fu_date + days(28)))
+    left_join(end_fu_dates, by = c("elig_date", "region", "brand", "arm")) %>%
+    mutate(across(end_fu_date,
+                  ~ if_else(arm %in% "vax", 
+                            # each individual in vax arm followed up for 28 days
+                            time_zero + days(28), 
+                            .x)))
   
   return(out)
     
 }
 
-comparison_arms(j = "02", b = "BNT162b2", k=1)
+comparison_arms_data <- comparison_arms(k=1)
 
+data_tte <- comparison_arms_data %>%
+  left_join(input_covs %>%
+              select(patient_id, positive_test_date),
+            by = "patient_id") %>%
+  mutate(across(positive_test_date,
+                ~ if_else(.x <=time_zero | .x > end_fu_date,
+                          NA_Date_,
+                          as.Date(.x)))) %>%
+  group_by(jcvi_group, brand) %>%
+  mutate(origin = min(time_zero)) %>%
+  ungroup() %>%
+  mutate(start = as.integer(time_zero - origin),
+         end = if_else(
+           is.na(positive_test_date),
+           as.integer(end_fu_date - origin),
+           as.integer(positive_test_date - origin)),
+         status = as.integer(!is.na(positive_test_date)))
+
+test <- data_tte %>%
+  filter(jcvi_group == "02")
+
+library(survival)
+mod_test <- coxph(Surv(start, end, status) ~ arm + strata(elig_date), data = data_tte)
