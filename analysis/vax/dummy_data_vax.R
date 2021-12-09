@@ -11,6 +11,8 @@ library(glue)
 
 source(here::here("analysis", "lib", "dummy_data_functions.R"))
 
+set.seed(5476)
+
 vars_date_0 <- c("endoflife_0_date",
                  "midazolam_0_date", 
                  "positive_test_0_date", 
