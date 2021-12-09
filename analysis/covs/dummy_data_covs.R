@@ -84,7 +84,6 @@ dummy_data_covs <- dummy_data_vax %>%
     categories = end_dates$end_1_date,
     conditions = end_dates$condition
   ) %>%
-  var_date(name = dob, incidence = 1, earliest = "1930-01-01", latest = "2006-01-01") %>%
   var_binary(name = flu_vaccine, incidence = 0.3) %>%
   # date vars 
   bind_cols(
@@ -113,14 +112,12 @@ dummy_data_covs <- dummy_data_vax %>%
   bind_cols(vars_region_and_imd_recurrent(.data = ., K=K)) %>%
   bind_cols(var_date_recurrent(.data = ., name_string = "shielded", incidence = 0.2)) %>%
   bind_cols(var_date_recurrent(.data = ., name_string = "nonshielded", incidence = 0.1)) %>%
-  # convert dob to YYYY-MM
-  mutate(across(dob, ~ as.POSIXct(str_replace(as.character(.x), "-\\d{2}$", "-01"), tz = "UTC"))) %>%
-  # add an hour to BST times, as somewhere in
-  mutate(across(dob, 
-                ~ {
-                  tz <- ifelse(hour(force_tz(as.POSIXct(as.Date(.x)), tz = 'Europe/London')) == 1, 'BST', 'GMT')
-                  if_else(tz == "BST", .x + hours(1), .x)
-                })) %>%
+  # all 1st of the month as dob YYYY-MM in OpenSAFELY
+  mutate(
+    dob = as.POSIXct(sample(
+      x = seq(as.Date("1930-01-01"), as.Date("2006-01-01"), by = "1 month"), 
+      size = nrow(.),
+      replace = TRUE))) %>%
   mutate(across(contains("_date"), as.POSIXct))
   
 
