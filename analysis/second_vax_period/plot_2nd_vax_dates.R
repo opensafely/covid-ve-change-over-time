@@ -1,10 +1,6 @@
 ######################################
 
 # This script:
-# - reads data_vax_plot.rds
-# - identifies the second vaccination period
-# - saves second_vax_period_dates.csv (the elig_date:region_0:brand specific dates)
-# - saves start_dates.csv and end_dates.csv (the elig_date:region_0 specific dates to pass to study_definition_covs.py)
 # - plots and saves the distribution of second vaccination dates
 
 ######################################
