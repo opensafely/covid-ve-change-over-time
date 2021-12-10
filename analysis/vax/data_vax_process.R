@@ -235,7 +235,7 @@ readr::write_rds(data_eligible_b,
                  here::here("output", "vax", "data", "data_eligible_b.rds"),
                  compress="gz")
 
-# number of people eligible at each stage
+# number of people eligible at each stage ----
 n_eligible <- tibble(
   n_0 = n_0,
   n_a = n_a,
@@ -245,5 +245,48 @@ n_eligible <- tibble(
 readr::write_csv(n_eligible,
                  here::here("output", "vax", "n_eligible.csv"))
 
+# jcvi_group, elig_date combos ----
+fix_age <- data_extract %>%
+  mutate(age = if_else(
+    jcvi_group %in% c("10", "11", "12"),
+    age_2,
+    age_1)) %>%
+  select(patient_id, age)
+
+group_age_ranges <- data_eligible_b %>%
+  left_join(fix_age, 
+            by = "patient_id") %>%
+  group_by(jcvi_group, elig_date) %>%
+  summarise(min = min(age), max = max(age), .groups = "keep") %>%
+  ungroup() 
+
+# check none of the min / max correspond to < 5 individuals
+check <- function(x) {
+  fix_age %>%
+    filter(age %in% x) %>%
+    distinct(patient_id) %>%
+    nrow(.)
+}
+
+group_age_ranges <- group_age_ranges %>%
+  mutate(
+    check_min = sapply(
+    group_age_ranges$min,
+    check),
+    check_max = sapply(
+      group_age_ranges$max,
+      check)
+    ) %>%
+  mutate(age_range = case_when(
+    max > 80 ~ glue("{min} +"),
+    check_min < 5 | check_max < 5 ~ "[REDACTED]",
+    TRUE ~ glue("{min} - {max}")
+  )) %>%
+  mutate(across(age_range, as.character)) %>%
+  select(-ends_with(c("min", "max")))
+
+
+readr::write_rds(group_age_ranges,
+                 here::here("output", "lib", "group_age_ranges.rds"))
 
 

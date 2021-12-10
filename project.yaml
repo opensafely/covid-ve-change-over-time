@@ -48,6 +48,7 @@ actions:
         data_eligible_a: output/vax/data/data_eligible_a.rds
         data_eligible_b: output/vax/data/data_eligible_b.rds
         vax_data: output/vax/data/data_*_vax_dates.rds
+        group_age_ranges: output/lib/group_age_ranges.rds
       moderately_sensitive:
         data_properties: output/vax/data_vax_processed_tabulate.txt
         n_eligible: output/vax/n_eligible.csv
@@ -70,7 +71,7 @@ actions:
   # identify and plot second vaccination time periods ----  
   plot_2nd_vax_dates:
     run: r:latest analysis/second_vax_period/plot_2nd_vax_dates.R
-    needs: [design, data_vax_plot]
+    needs: [design, data_vax_process, data_vax_plot]
     outputs:
       moderately_sensitive:
         plots_by_region: output/second_vax_period/images/plot_by_region_*.png
