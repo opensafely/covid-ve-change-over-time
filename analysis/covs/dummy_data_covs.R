@@ -29,9 +29,9 @@ end_dates <- end_dates %>% translate_to_R()
 
 # date vars 
 # incidence 0.1
-date_vars_common <- c("positive_test_date", 
-                      "primary_care_covid_case_date", 
-                      "primary_care_suspected_covid_date")
+date_vars_common <- c("positive_test_0_date", 
+                      "primary_care_covid_case_0_date", 
+                      "primary_care_suspected_covid_0_date")
 # incidence 0.05
 date_vars_rare <- c("chronic_cardiac_disease_date",
                     "heart_failure_date",
@@ -57,10 +57,10 @@ date_vars_rare <- c("chronic_cardiac_disease_date",
                     "dementia_date", 
                     "other_neuro_conditions_date", 
                     "psychosis_schiz_bipolar_date",
-                    "emergency_attendance_date", 
-                    "admitted_unplanned_date", 
-                    "admitted_unplanned_infectious_date",
-                    "covidadmitted_date")
+                    "emergency_attendance_0_date", 
+                    "admitted_unplanned_0_date", 
+                    "admitted_unplanned_infectious_0_date",
+                    "covidadmitted_0_date")
 # incidence 0.01
 date_vars_veryrare <- c("longres_date", 
                         "endoflife_date", 
@@ -105,8 +105,8 @@ dummy_data_covs <- dummy_data_vax %>%
                   coviddeath_date,
                   NA_Date_))) %>%
   mutate(
-    discharged_unplanned_date = admitted_unplanned_date + sample(x=1:50, size = nrow(.), replace = TRUE),
-    discharged_unplanned_infectious_date = admitted_unplanned_infectious_date + sample(x=1:50, size = nrow(.), replace = TRUE)
+    discharged_unplanned_0_date = admitted_unplanned_0_date + sample(x=1:50, size = nrow(.), replace = TRUE),
+    discharged_unplanned_infectious_0_date = admitted_unplanned_infectious_0_date + sample(x=1:50, size = nrow(.), replace = TRUE)
   ) %>%
   bind_cols(vars_bmi_recurrent(.data = .)) %>%
   bind_cols(vars_region_and_imd_recurrent(.data = ., K=K)) %>%
@@ -118,6 +118,11 @@ dummy_data_covs <- dummy_data_vax %>%
       x = seq(as.Date("1930-01-01"), as.Date("2006-01-01"), by = "1 month"), 
       size = nrow(.),
       replace = TRUE))) %>%
+  mutate(
+    efi = if_else(
+      rbernoulli(n = nrow(.), p = 0.99),
+      rnorm(n = nrow(.), mean = 0.2, sd = 0.09),
+      NA_real_)) %>%
   mutate(across(contains("_date"), as.POSIXct))
   
 
