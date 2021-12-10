@@ -128,29 +128,43 @@ data_postest <- data_outcomes %>%
   ) %>%
   arrange(patient_id, date)
 
-
+data_covidadmitted <- data_outcomes %>%
+  select(patient_id, 
+         matches("^covidadmitted\\_\\d+\\_date")) %>%
+  pivot_longer(
+    cols = -patient_id,
+    names_to = c(NA, "covidadmitted_index"),
+    names_pattern = "^(.*)_(\\d+)_date",
+    values_to = "date",
+    values_drop_na = TRUE
+  ) %>%
+  arrange(patient_id, date)
 
 readr::write_rds(
   data_admissions, 
-  here::here("output", group,  "data", "data_long_admission_dates.rds"), 
+  here::here("output", glue("jcvi_group_{group}"),  "data", "data_long_admission_dates.rds"), 
   compress="gz")
 readr::write_rds(
   data_admissions_infectious, 
-  here::here("output", group, "data", "data_long_admission_infectious_dates.rds"), 
+  here::here("output", glue("jcvi_group_{group}"), "data", "data_long_admission_infectious_dates.rds"), 
   compress="gz")
 readr::write_rds(
   data_admissions_noninfectious, 
-  here::here("output", group, "data", "data_long_admission_noninfectious_dates.rds"), 
+  here::here("output", glue("jcvi_group_{group}"), "data", "data_long_admission_noninfectious_dates.rds"), 
   compress="gz")
 readr::write_rds(
   data_pr_probable_covid, 
-  here::here("output", group, "data", "data_long_pr_probable_covid_dates.rds"),
+  here::here("output", glue("jcvi_group_{group}"), "data", "data_long_pr_probable_covid_dates.rds"),
   compress="gz")
 readr::write_rds(
   data_pr_suspected_covid, 
-  here::here("output", group, "data", "data_long_pr_suspected_covid_dates.rds"), 
+  here::here("output", glue("jcvi_group_{group}"), "data", "data_long_pr_suspected_covid_dates.rds"), 
   compress="gz")
 readr::write_rds(
   data_postest, 
-  here::here("output", group,  "data", "data_long_postest_dates.rds"), 
+  here::here("output", glue("jcvi_group_{group}"),  "data", "data_long_postest_dates.rds"), 
+  compress="gz")
+readr::write_rds(
+  data_covidadmitted, 
+  here::here("output", glue("jcvi_group_{group}"),  "data", "data_long_covidadmitted_dates.rds"), 
   compress="gz")
