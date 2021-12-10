@@ -34,7 +34,10 @@ plot_2nd_vax_dates_fun <- function(
   # age range for plot title
   subtitle_string <- str_c(
     "Age range: ",
-    subtitle_string$age_range[subtitle_string$elig_date == elig_date],
+    subtitle_string$age_range[
+      subtitle_string$elig_date == elig_date &
+        subtitle_string$jcvi_group == jcvi_group
+    ],
     " years"
   )
   
