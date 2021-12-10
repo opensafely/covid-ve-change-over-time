@@ -16,45 +16,32 @@ dir.create(images_dir, showWarnings = FALSE, recursive=TRUE)
 data_ma <- readr::read_rds(here::here("output", "second_vax_period", "data", "data_ma.rds"))
 
 # elig_dates info for plot titles
-elig_dates <- readr::read_csv(here::here("output", "lib", "elig_dates.csv")) %>%
-  mutate(lower = str_extract(description, "age_. >= \\d{2}"),
-         upper = str_extract(description, "age_. < \\d{2}")) %>%
-  mutate(age_range = str_c(
-    str_extract(lower, "\\d{2}"),
-    " - ",
-    str_extract(upper, "\\d{2}")
-  )) %>%
-  select(date, jcvi_groups, age_range)
+group_age_ranges <- readr::read_rds(
+  here::here("output", "lib", "group_age_ranges.rds"))
+
 
 plot_2nd_vax_dates_fun <- function(
   data, 
-  data_titles = elig_dates,
+  subtitle_string = group_age_ranges,
   plot_threshold = 5) {
   
+  jcvi_group <- unique(data$jcvi_group)
   elig_date <- unique(data$elig_date)
   
-  if (length(elig_date) != 1) stop("data$elig_date must contain one unique value")
-  
-  # JCVI groups and age range for plot title
-  jcvi_groups <- data_titles %>%
-    filter(date %in% elig_date) %>%
-    select(jcvi_groups) %>% unlist() %>% unname()
-  age_range <- data_titles %>%
-    filter(date %in% elig_date) %>%
-    select(age_range) %>% unlist() %>% unname()
-  
   # plot title
-  title_string <- glue("Patients eligible on {elig_date}")
-  if (rlang::is_empty(age_range)) {
-    subtitle_string <- glue("JCVI group(s): {jcvi_groups}; Age range: whole group(s)")
-  } else {
-    subtitle_string <- glue("JCVI group(s): {jcvi_groups}; Age range: {age_range} years.")
-  }
+  title_string <- glue("JCVI group {jcvi_group}; eligible from {elig_date}")
+  
+  # age range for plot title
+  subtitle_string <- str_c(
+    "Age range: ",
+    subtitle_string$age_range[subtitle_string$elig_date == elig_date],
+    " years"
+  )
   
   # define breaks for x axis
   x_breaks <- seq(elig_date + weeks(6),
-                  elig_date + weeks(16),
-                  14) #14 days
+                  elig_date + weeks(20),
+                  28) #28 days
   
   # plot histograms by region
   plot_by_region <- ggplot(NULL, aes(x = dose_2)) +
@@ -101,14 +88,13 @@ plot_2nd_vax_dates_fun <- function(
   
   # save the plot
   ggsave(plot_by_region,
-         filename = file.path(images_dir, glue("plot_by_region_{elig_date}.png")),
+         filename = file.path(images_dir, glue("plot_by_region_{jcvi_group}_{elig_date}.png")),
          width=20, height=14, units="cm")
-  
   
 }
 
 # generate and save plots
-lapply(data_ma %>% group_split(elig_date),
+lapply(data_ma %>% group_split(jcvi_group, elig_date),
        function(x)
-         try(plot_2nd_vax_dates_fun(x)))
+         try(plot_2nd_vax_dates_fun(data = x)))
 

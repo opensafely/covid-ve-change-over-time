@@ -32,24 +32,22 @@ data_vax_wide <- readr::read_rds(
 # second dose and brand for eligible individuals
 data_2nd_dose <- data_eligible_b %>%
   left_join(data_vax_wide, by = "patient_id") %>%
-  select(patient_id, elig_date, region_0, 
-         dose_2 = covid_vax_2_date, brand = covid_vax_2_brand)
+  select(patient_id, jcvi_group, elig_date, region_0, 
+         dose_2 = covid_vax_2_date, brand = covid_vax_2_brand) %>%
+  group_split(jcvi_group, elig_date)
+
   
 # function for creating plot data
-generate_plot_data <- function(data = data_2nd_dose, plot_date) {
+generate_plot_data <- function(.data) {
   
-  # check date in correct format
-  d <- try(as.Date(plot_date, format="%Y-%m-%d"))
-  if("try-error" %in% class(d) || is.na(d)) stop("plot_date is not in %Y-%m-%d format.")
+  group <- unique(.data$jcvi_group)
+  plot_date <- unique(.data$elig_date)
   
-  data <- data %>%
-    filter(elig_date %in% as.Date(plot_date))
-  
-  if (nrow(data)==0) stop("No samples for the given plot_date.")
+  if (nrow(.data)==0) stop(".data is an empty tibble.")
   
   # sequence of dates for plot
   dates_seq <- seq(as.Date(plot_date) + weeks(6), 
-                   as.Date(plot_date) + weeks(16) - days(1), 
+                   as.Date(plot_date) + weeks(20) - days(1), 
                    1)
   
   # ensure full sequence of dates for each region:brand combo
@@ -59,8 +57,8 @@ generate_plot_data <- function(data = data_2nd_dose, plot_date) {
     brand = character(),
     dose_2 = Date()
   )
-  for (r in unique(data$region_0)) {
-    for (v in unique(data$brand)) {
+  for (r in unique(.data$region_0)) {
+    for (v in unique(.data$brand)) {
       expanded_data <- expanded_data %>%
         bind_rows(tibble(
           region_0 = rep(r, each = length(dates_seq)),
@@ -71,7 +69,7 @@ generate_plot_data <- function(data = data_2nd_dose, plot_date) {
   }
   
   # number of patients with 2nd dose on each date
-  count_data <- data %>%
+  count_data <- .data %>%
     group_by(region_0, brand, dose_2) %>%
     count() %>%
     ungroup() 
@@ -80,7 +78,9 @@ generate_plot_data <- function(data = data_2nd_dose, plot_date) {
   out <- expanded_data %>%
     left_join(count_data, by = c("region_0", "brand", "dose_2")) %>%
     mutate(across(n, ~if_else(is.na(.x), 0L, .x))) %>%
-    mutate(elig_date = as.Date(plot_date, format = "%Y-%m-%d"))
+    mutate(
+      jcvi_group = group,
+      elig_date = as.Date(plot_date, format = "%Y-%m-%d"))
   
   return(out)
   
@@ -88,9 +88,9 @@ generate_plot_data <- function(data = data_2nd_dose, plot_date) {
 
 # create list of data for each elig_date
 data_vax_plot_list <- lapply(
-  as.character(sort(unique(data_2nd_dose$elig_date))),
+  data_2nd_dose,
   function(x)
-    try(generate_plot_data(plot_date = x))
+    try(generate_plot_data(x))
 )
 
 # bind list into one tibble
@@ -104,12 +104,12 @@ data_vax_plot <- bind_rows(
                         labels = c("ChAdOx", "BNT162b2")))) 
 
 thresholds <- data_vax_plot %>%
-  group_by(elig_date, region_0, brand) %>%
+  group_by(jcvi_group, elig_date, region_0, brand) %>%
   summarise(n = sum(n), .groups = "keep") %>%
   ungroup() %>%
-  # threshold is the total number of individuals vaccinated in [+6wks, +16wks) divided by the number of days in the period (10*7)
-  # i.e. start date is the first date that the 7-day average goes above 70-day average
-  mutate(threshold = n/(10*7)) %>%
+  # threshold is 1% of the total number of individuals vaccinated in [+6wks, +20wks) 
+  # start date is the first date that the 7-day average goes above this 1% threshold
+  mutate(threshold = n/100) %>%
   select(-n)
 
 # number of days in moving average
@@ -118,14 +118,14 @@ l <- 7
 # calculate moving averages for defining second vaccination periods and plotting
 data_ma <- data_vax_plot %>%
   # calculate moving average number of individuals vaccinated for each elig_date:region_0:brand
-  group_by(elig_date, region_0, brand) %>%
+  group_by(jcvi_group, elig_date, region_0, brand) %>%
   mutate(moving_average = stats::filter(
     x = n,
     filter = rep(1/l, l),
     method = "convolution",
     sides = 2)) %>% # centred at day 4
   ungroup() %>%
-  left_join(thresholds, by = c("elig_date", "region_0", "brand")) 
+  left_join(thresholds, by = c("jcvi_group", "elig_date", "region_0", "brand")) 
 
 readr::write_rds(data_ma,
                  here::here("output", "second_vax_period", "data", "data_ma.rds"),
@@ -140,7 +140,7 @@ second_vax_period_dates <- data_ma %>%
       dose_2,
       NA_Date_
     )) %>%
-  group_by(elig_date, region_0, brand) %>%
+  group_by(jcvi_group, elig_date, region_0, brand) %>%
   mutate(
     # start the first date above threshold
     start_of_period = min(dose_2_above_threshold, na.rm = TRUE),
@@ -154,7 +154,7 @@ second_vax_period_dates <- data_ma %>%
   ungroup() %>%
   # round to the closest 10 (so no need to redact, and reduce risk of secondary disclosure)
   mutate(across(n_in_period, ~ round(.x, -1))) %>%
-  distinct(elig_date, region_0, brand, start_of_period, end_of_period, n_in_period)
+  distinct(jcvi_group, elig_date, region_0, brand, start_of_period, end_of_period, n_in_period)
 # save a version to review and release
 readr::write_csv(second_vax_period_dates,
                  here::here("output", "lib", "second_vax_period_dates.csv"))
