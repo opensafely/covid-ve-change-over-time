@@ -71,7 +71,7 @@ actions:
   # identify and plot second vaccination time periods ----  
   plot_2nd_vax_dates:
     run: r:latest analysis/second_vax_period/plot_2nd_vax_dates.R
-    needs: [design, data_vax_plot]
+    needs: [design, data_vax_process, data_vax_plot]
     outputs:
       moderately_sensitive:
         plots_by_region: output/second_vax_period/images/plot_by_region_*.png
