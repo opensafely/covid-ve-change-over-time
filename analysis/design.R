@@ -19,7 +19,7 @@ study_parameters <-
     seed = 123456L,
     n = 100000L, # number of individuals in dummy data
     n_comparisons = 3L, # the number of comparisons for each sequence
-    n_threshold = 100L, # the number of individuals with a second dose in the second vaccination period for a given jcvi_group and brand to include comparison
+    n_threshold = 1000L, # the number of individuals with a second dose in the second vaccination period for a given jcvi_group and brand to include comparison
     recur_bmi = 10L, # number of times the bmi variable recurs
     recur_shielded = 10L, # number of times the shielded and nonshieded variables recur
     ref_age_1 = "2021-03-31", # reference date for calculating age for phase 1 groups
