@@ -22,10 +22,24 @@ outcomes <- c("postest", "covidadmitted", "coviddeath", "noncoviddeath", "death"
 data_covariates <- readr::read_rds(
   here::here("output", glue("jcvi_group_{group}"), "data", "data_covariates.rds"))
 
-tte <- function(.data, var) {
+tte <- function(.data, var_string) {
+  
+  name <- str_remove(var_string, "_date")
+  
   .data %>% 
-    mutate()
-}
+    rename(temp = var_string) %>%
+    mutate(
+      !! glue("{name}_ind") := case_when(
+        is.na(temp) ~ 0L,
+        time_zero < temp & temp <= end_fu_date ~ 1L,
+        TRUE ~ 0L),
+      !! glue("{name}_tte") := case_when(
+        is.na(temp) ~ as.integer(end_fu_date - origin),
+        time_zero < temp & temp <= end_fu_date ~ as.integer(temp - origin),
+        TRUE ~ as.integer(end_fu_date - origin))) %>%
+    select(-temp)
+
+  }
 
 data_tte <- data_covariates %>%
   select(patient_id, 
@@ -48,7 +62,7 @@ data_tte <- data_covariates %>%
   group_by(brand, k) %>%
   mutate(origin = min(time_zero)) %>%
   ungroup() %>%
-  
+  tte("postest_date")
 
 
   
