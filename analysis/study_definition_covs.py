@@ -521,22 +521,19 @@ study=StudyDefinition(
         ),
         return_expectations={"incidence": 0.5, },
     ),
-    
-    # # Not sure how best to define efi and shielding variables below in sequential framework. Leave for now and come back to it later.
 
-    # # electronic frailty index
-    # # date currently hard-coded because there are no other dates available for efi
-    # # check that this still the case, otherwise change to recurrent variables like region, imd, bmi
-    # efi=patients.with_these_decision_support_values(
-    #     algorithm="electronic_frailty_index",
-    #     on_or_before="2020-12-08", 
-    #     find_last_match_in_period=True,
-    #     returning="numeric_value",
-    #     return_expectations={
-    #         "float": {"distribution": "normal", "mean": 0.20, "stddev": 0.09},
-    #         "incidence": 0.99
-    #     },
-    # ),
+    # electronic frailty index
+    # date hard-coded because there are few dates available for efi
+    efi=patients.with_these_decision_support_values(
+        algorithm="electronic_frailty_index",
+        on_or_before="start_1_date", 
+        find_last_match_in_period=True,
+        returning="numeric_value",
+        return_expectations={
+            "float": {"distribution": "normal", "mean": 0.20, "stddev": 0.09},
+            "incidence": 0.99
+        },
+    ),
     
     # dates of shielding codes
     shielded_0_date=patients.with_these_clinical_events(
@@ -593,7 +590,7 @@ study=StudyDefinition(
     # # # ##############
     
     # positive covid test
-    positive_test_date=patients.with_test_result_in_sgss(
+    positive_test_0_date=patients.with_test_result_in_sgss(
         pathogen="SARS-CoV-2",
         test_result="positive",
         returning="date",
@@ -610,7 +607,9 @@ study=StudyDefinition(
 
     # probable covid case identified in primary care
     # Will also had 'covid in primary care', but as far as I can see it was the same as this probable definition.
-    primary_care_covid_case_date=patients.with_these_clinical_events(
+    # I have used _0_ in these in case the study design changes to no longer exclude anyone with
+    # previous COVID, in which case the outcome variables must become recurrent
+    primary_care_covid_case_0_date=patients.with_these_clinical_events(
         covid_primary_care_probable_combined,
         returning="date",
         date_format="YYYY-MM-DD",
@@ -624,7 +623,7 @@ study=StudyDefinition(
     ),
     
     # suspected covid case identified in primary care
-    primary_care_suspected_covid_date=patients.with_these_clinical_events(
+    primary_care_suspected_covid_0_date=patients.with_these_clinical_events(
         primary_care_suspected_covid_combined,
         returning="date",
         date_format="YYYY-MM-DD",
@@ -638,7 +637,7 @@ study=StudyDefinition(
     ),
     
     # emergency attendance
-    emergency_attendance_date=patients.attended_emergency_care(
+    emergency_attendance_0_date=patients.attended_emergency_care(
         returning="date_arrived",
         on_or_before=f"end_1_date + {n_comparisons*28} days",
         find_first_match_in_period=True,
@@ -651,7 +650,7 @@ study=StudyDefinition(
     ),
 
     # unplanned hospital admission
-    admitted_unplanned_date=patients.admitted_to_hospital(
+    admitted_unplanned_0_date=patients.admitted_to_hospital(
         returning="date_admitted",
         on_or_before=f"end_1_date + {n_comparisons*28} days",
         find_first_match_in_period=True,
@@ -665,7 +664,7 @@ study=StudyDefinition(
         },
     ),
     
-    discharged_unplanned_date=patients.admitted_to_hospital(
+    discharged_unplanned_0_date=patients.admitted_to_hospital(
         returning="date_discharged",
         on_or_before=f"end_1_date + {n_comparisons*28} days",
         find_first_match_in_period=True,
@@ -680,7 +679,7 @@ study=StudyDefinition(
     ), 
    
     # unplanned infectious hospital admission
-    admitted_unplanned_infectious_date=patients.admitted_to_hospital(
+    admitted_unplanned_infectious_0_date=patients.admitted_to_hospital(
         returning="date_admitted",
         on_or_before=f"end_1_date + {n_comparisons*28} days",
         find_first_match_in_period=True,
@@ -695,7 +694,7 @@ study=StudyDefinition(
         },
     ),
    
-    discharged_unplanned_infectious_date=patients.admitted_to_hospital(
+    discharged_unplanned_infectious_0_date=patients.admitted_to_hospital(
         returning="date_discharged",
         on_or_before=f"end_1_date + {n_comparisons*28} days",
         find_first_match_in_period=True,
@@ -711,7 +710,7 @@ study=StudyDefinition(
     ), 
     
     # covid hospital adamission
-    covidadmitted_date=patients.admitted_to_hospital(
+    covidadmitted_0_date=patients.admitted_to_hospital(
         returning="date_admitted",
         with_these_diagnoses=covid_codes,
         on_or_before=f"end_1_date + {n_comparisons*28} days",
