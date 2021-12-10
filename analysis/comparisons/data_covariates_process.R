@@ -60,7 +60,7 @@ data_eligible_c <- data_eligible_b %>%
                            TRUE ~ NA_character_)) %>%
   select(-ends_with("_brand")) %>%
   left_join(second_vax_period_dates, 
-            by = c("elig_date", "region_0", "brand")) %>%
+            by = c("jcvi_group", "elig_date", "region_0", "brand")) %>%
   filter(
     # second dose during second vax period
     start_of_period <= covid_vax_2_date,
@@ -197,6 +197,11 @@ clinical_vars <- c(
   "efi",
   "bmi"
 )
+end_vars <- c(
+  "coviddeath_date",
+  "death_date",
+  "dereg_date"
+)
 
 # derive long datasets from recurring variables ----
 # imd IS NOT brand specific
@@ -260,7 +265,8 @@ data_covariates <- data_comparison_arms %>%
              dob, 
              all_of(demographic_vars[demographic_vars %in% names(.)]),
              all_of(ever_vars),
-             all_of(clinical_vars[clinical_vars %in% names(.)])
+             all_of(clinical_vars[clinical_vars %in% names(.)]),
+             all_of(end_vars)
       ), 
     by = "patient_id") %>%
   left_join(
@@ -271,7 +277,7 @@ data_covariates <- data_comparison_arms %>%
     by = c("patient_id", "brand", "k")) %>%
   mutate(across(
     shielded, 
-    ~ if_else(is.na(.x), TRUE, .x))) %>%
+    ~ if_else(is.na(.x), FALSE, .x))) %>%
   left_join(
     bmi_data, 
     by = c("patient_id", "brand", "k")) %>%
@@ -283,7 +289,10 @@ data_covariates <- data_comparison_arms %>%
                     TRUE ~ "Obese III (40+)"))) %>%
   mutate(across(
     all_of(ever_vars), 
-    ~ .x <= time_zero)) %>%
+     ~ case_when(
+       is.na(.x) ~ FALSE,
+       .x <= time_zero ~ TRUE,
+       TRUE ~ FALSE))) %>%
   rename_with(
     .fn = ~ str_remove(.x, "_date"),
     .cols = all_of(ever_vars)
