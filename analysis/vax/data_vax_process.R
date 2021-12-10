@@ -14,6 +14,7 @@ library(lubridate)
 library(glue)
 
 ## source functions
+source(here::here("analysis", "lib", "data_process_functions.R"))
 source(here::here("analysis", "lib", "data_properties.R"))
 
 ## create folders for outputs
@@ -24,16 +25,6 @@ dir.create(eda_data_dir, showWarnings = FALSE, recursive=TRUE)
 
 ## import dates
 dates <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
-
-# Custom functions
-fct_case_when <- function(...) {
-  # uses dplyr::case_when but converts the output to a factor,
-  # with factors ordered as they appear in the case_when's  ... argument
-  args <- as.list(match.call())
-  levels <- sapply(args[-1], function(f) f[[3]])  # extract RHS of formula
-  levels <- levels[!is.na(levels)]
-  factor(dplyr::case_when(...), levels=levels)
-}
 
 cat("#### extract data ####\n")
 data_extract <- 
@@ -175,7 +166,7 @@ eligibility_count <- eligibility_count %>%
   )
 
 readr::write_rds(data_eligible_a %>%
-                   select(patient_id, jcvi_group, elig_date, region_0),
+                   select(patient_id, jcvi_group, elig_date, region_0, ethnicity),
                  here::here("output", "vax", "data", "data_eligible_a.rds"),
                  compress="gz")
 
@@ -285,7 +276,7 @@ data_eligible_b <- data_eligible_a %>%
     # flagged as hcw
     !hscworker
   ) %>%
-  select(patient_id, jcvi_group, elig_date, region_0)
+  select(patient_id, jcvi_group, elig_date, region_0, ethnicity)
 
 eligibility_count <- eligibility_count %>%
   add_row(
