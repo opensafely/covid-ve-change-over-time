@@ -48,6 +48,7 @@ actions:
         data_eligible_a: output/vax/data/data_eligible_a.rds
         data_eligible_b: output/vax/data/data_eligible_b.rds
         vax_data: output/vax/data/data_*_vax_dates.rds
+        group_age_ranges: output/lib/group_age_ranges.rds
       moderately_sensitive:
         data_properties: output/vax/data_vax_processed_tabulate.txt
         n_eligible: output/vax/n_eligible.csv
