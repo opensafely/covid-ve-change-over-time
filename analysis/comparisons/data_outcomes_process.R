@@ -1,9 +1,7 @@
 ######################################
 
 # What this script does:
-# imports data created by the `data_comparisons_process.R` script
-# converts hospitalisation and infection episodes into long format
-# saves as a one-row-per-event dataset
+
 
 ######################################
 
@@ -31,7 +29,7 @@ if(length(args)==0){
 
 ## Import data_comparisons ----
 data_outcomes <- readr::read_rds(
-  here::here("output", glue("jcvi_group_{group}"), "data", "data_covariates.rds")) %>%
+  here::here("output", glue("jcvi_group_{group}"), "data", "data_covs.rds")) %>%
   distinct(patient_id) %>%
   left_join(
     arrow::read_feather(here::here("output", "input_covs.feather")) %>%
