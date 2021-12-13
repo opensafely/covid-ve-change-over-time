@@ -17,10 +17,11 @@ if(length(args)==0){
 
 vax_brand <- "BNT162b2"
 
-outcomes <- c("postest", "covidadmitted", "coviddeath", "noncoviddeath", "death")
+outcomes <- c("postest", "covidadmitted", "coviddeath", "death")
+censor <- c("noncoviddeath", "dereg")
 
-data_covariates <- readr::read_rds(
-  here::here("output", glue("jcvi_group_{group}"), "data", "data_covariates.rds"))
+data_covs <- readr::read_rds(
+  here::here("output", glue("jcvi_group_{group}"), "data", "data_covs.rds"))
 
 tte <- function(.data, var_string) {
   
@@ -29,22 +30,22 @@ tte <- function(.data, var_string) {
   .data %>% 
     rename(temp = var_string) %>%
     mutate(
-      !! glue("{name}_ind") := case_when(
+      !! glue("{name}_status") := case_when(
         is.na(temp) ~ 0L,
-        time_zero < temp & temp <= end_fu_date ~ 1L,
+        time_zero_date < temp & temp <= end_fu_date ~ 1L,
         TRUE ~ 0L),
       !! glue("{name}_tte") := case_when(
         is.na(temp) ~ as.integer(end_fu_date - origin),
-        time_zero < temp & temp <= end_fu_date ~ as.integer(temp - origin),
+        time_zero_date < temp & temp <= end_fu_date ~ as.integer(temp - origin),
         TRUE ~ as.integer(end_fu_date - origin))) %>%
     select(-temp)
 
   }
 
-data_tte <- data_covariates %>%
+data_tte <- data_covs %>%
   select(patient_id, 
-         elig_date, region, brand, arm, time_zero, end_fu_date, k,
-         coviddeath_date, death_date) %>%
+         elig_date, region, brand, arm, time_zero_date, end_fu_date, comparison,
+         coviddeath_date, noncoviddeath_date, death_date, dereg_date) %>%
   left_join(
     readr::read_rds(
       here::here("output", glue("jcvi_group_{group}"),  "data", "data_long_postest_dates.rds")
@@ -59,28 +60,24 @@ data_tte <- data_covariates %>%
       select(patient_id, covidadmitted_date = date),
     by = "patient_id"
   ) %>%
-  group_by(brand, k) %>%
-  mutate(origin = min(time_zero)) %>%
+  # derive origin for each brand and k
+  group_by(brand, comparison) %>%
+  mutate(origin = min(time_zero_date)) %>%
   ungroup() %>%
-  tte("postest_date")
+  # time to event for all outcomes and censoring events
+  tte("postest_date") %>%
+  tte("covidadmitted_date") %>%
+  tte("coviddeath_date") %>%
+  tte("death_date") %>%
+  tte("noncoviddeath_date") %>%
+  tte("dereg_date") %>%
+  # convert time_zero and end_fu to days since origin
+  mutate(
+    time_zero = as.integer(time_zero_date - origin),
+    end_fu = as.integer(end_fu_date - origin),
+    ) 
 
-
-  
-  
-  filter(brand %in% vax_brand) %>%
-  left_join(input_covs %>%
-              select(patient_id, positive_test_date),
-            by = "patient_id") %>%
-  mutate(across(positive_test_date,
-                ~ if_else(.x <= time_zero | .x > end_fu_date,
-                          NA_Date_,
-                          .x))) %>%
-  group_by(brand, k) %>%
-  mutate(origin = min(time_zero)) %>%
-  ungroup() %>%
-  mutate(start = as.integer(time_zero - origin),
-         end = if_else(
-           is.na(positive_test_date),
-           as.integer(end_fu_date - origin),
-           as.integer(positive_test_date - origin)),
-         status = as.integer(!is.na(positive_test_date)))
+readr::write_rds(
+  data_tte, 
+  here::here("output", glue("jcvi_group_{group}"),  "data", "data_tte.rds"), 
+  compress="gz")
