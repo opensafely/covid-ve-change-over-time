@@ -636,19 +636,6 @@ study=StudyDefinition(
         },
     ),
     
-    # emergency attendance
-    emergency_attendance_0_date=patients.attended_emergency_care(
-        returning="date_arrived",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
-        find_first_match_in_period=True,
-        date_format="YYYY-MM-DD",
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-
     # unplanned hospital admission
     admitted_unplanned_0_date=patients.admitted_to_hospital(
         returning="date_admitted",
