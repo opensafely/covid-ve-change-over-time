@@ -54,6 +54,7 @@ actions:
         eligibility_count: output/vax/eligibility_count.csv
         group_age_ranges_csv: output/lib/group_age_ranges.csv
 
+
   ##########################################################################
   #### identify second vaccination time periods
   ##########################################################################
@@ -80,7 +81,7 @@ actions:
   ##########################################################################
   #### data for covariates
   ##########################################################################
-    # generate dummy data for study_definition_vax ----      
+  # generate dummy data for study_definition_covs ----      
   dummy_data_covs:
     run: r:latest analysis/covs/dummy_data_covs.R
     needs: [design, dummy_data_vax, data_vax_plot]
@@ -98,20 +99,29 @@ actions:
         cohort: output/input_covs.feather
 
   ##########################################################################
-  #### process data for modelling
+  #### process data for each JCVI group
   ##########################################################################
-  # process covariate data ----  
-  plot_2nd_vax_dates:
-    run: r:latest analysis/comparisons/data_comparisons_process.R
-    needs: [design, generate_study_population_covs]
+  
+  # process covariates data ----      
+  data_covs_process:
+    run: r:latest analysis/comparisons/data_covs_process.R 02
+    needs: [design, data_vax_process, data_vax_plot, generate_study_population_covs]
     outputs:
-      moderately_sensitive:
-        data_comparisons: output/jcvi_group_02/data/data_comparisons.rds
+      highly_sensitive:
+        dummy_data_vax: output/jcvi_group_*/data/data_covs.rds
 
-  # process outcomes data ----  
-  plot_2nd_vax_dates:
-    run: r:latest analysis/comparisons/data_outcomes_process.R
-    needs: [design, generate_study_population_covs]
+  # process outcomes data ----      
+  data_outcomes_process:
+    run: r:latest analysis/comparisons/data_outcomes_process.R 02
+    needs: [design, data_vax_process, data_vax_plot, generate_study_population_covs, data_covs_process]
     outputs:
-      moderately_sensitive:
-        data_comparisons: output/jcvi_group_02/data/data_comparisons.rds
+      highly_sensitive:
+        dummy_data_vax: output/jcvi_group_*/data/data_long_*_dates.rds
+
+  # process outcomes data ----      
+  # data_tte_process:
+  #   run: r:latest analysis/comparisons/data_tte_process.R 02
+  #   needs: [design, data_covs_process]
+  #   outputs:
+  #     highly_sensitive:
+  #       dummy_data_vax: output/jcvi_group_*/data/data_long_*_dates.rds
