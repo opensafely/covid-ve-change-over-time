@@ -157,7 +157,8 @@ eligibility_count <- eligibility_count %>%
 
 # suspected COVID 
 data_eligible_a <- data_eligible_a %>%
-  filter(is.na(primary_care_suspected_covid_0_date))
+  filter(is.na(primary_care_suspected_covid_0_date)) %>%
+  droplevels()
 
 eligibility_count <- eligibility_count %>%
   add_row(
@@ -231,7 +232,8 @@ data_vax <- local({
     mutate(
       vax_index=row_number()
     ) %>%
-    ungroup()
+    ungroup() %>%
+    droplevels()
   
   data_vax
   
@@ -276,7 +278,8 @@ data_eligible_b <- data_eligible_a %>%
     # flagged as hcw
     !hscworker
   ) %>%
-  select(patient_id, jcvi_group, elig_date, region_0, ethnicity)
+  select(patient_id, jcvi_group, elig_date, region_0, ethnicity) %>%
+  droplevels()
 
 eligibility_count <- eligibility_count %>%
   add_row(

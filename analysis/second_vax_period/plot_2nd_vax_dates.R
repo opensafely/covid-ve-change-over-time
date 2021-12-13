@@ -31,15 +31,14 @@ plot_2nd_vax_dates_fun <- function(
   # plot title
   title_string <- glue("JCVI group {jcvi_group}; eligible from {elig_date}")
   
+  age_range <- data %>%
+    distinct(jcvi_group, elig_date) %>%
+    left_join(group_age_ranges,
+              by = c("jcvi_group", "elig_date")) %>%
+    select(age_range) %>% unlist() %>% unname()
+  
   # age range for plot title
-  subtitle_string <- str_c(
-    "Age range: ",
-    subtitle_string$age_range[
-      subtitle_string$elig_date == elig_date &
-        subtitle_string$jcvi_group == jcvi_group
-    ],
-    " years"
-  )
+  subtitle_string <- glue("Age range: {age_range} years")
   
   # define breaks for x axis
   x_breaks <- seq(elig_date + weeks(6),

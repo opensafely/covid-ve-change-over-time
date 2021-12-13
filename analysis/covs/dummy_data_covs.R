@@ -57,7 +57,6 @@ date_vars_rare <- c("chronic_cardiac_disease_date",
                     "dementia_date", 
                     "other_neuro_conditions_date", 
                     "psychosis_schiz_bipolar_date",
-                    "emergency_attendance_0_date", 
                     "admitted_unplanned_0_date", 
                     "admitted_unplanned_infectious_0_date",
                     "covidadmitted_0_date")
@@ -123,7 +122,8 @@ dummy_data_covs <- dummy_data_vax %>%
       rbernoulli(n = nrow(.), p = 0.99),
       rnorm(n = nrow(.), mean = 0.2, sd = 0.09),
       NA_real_)) %>%
-  mutate(across(contains("_date"), as.POSIXct))
+  mutate(across(contains("_date"), as.POSIXct)) %>%
+  droplevels()
   
 
 arrow::write_feather(dummy_data_covs, here::here("analysis", "covs", "dummy_data_covs.feather"))

@@ -46,7 +46,45 @@ data_outcomes <- readr::read_rds(
              by = "patient_id") %>%
   mutate(across(ends_with("date"), as.Date))
 
+# check for covid admissions and deaths that are not accompanied by a positive test
+covidadmission_check <- data_outcomes %>%
+  filter(!is.na(covidadmitted_0_date)) %>%
+  # check for positive test 28 days either side of hospital admission
+  mutate(
+    postest = case_when(
+      is.na(positive_test_0_date) ~ FALSE,
+      abs(as.integer(covidadmitted_0_date - positive_test_0_date)) > 28 ~ FALSE,
+      TRUE ~ TRUE
+    )
+  ) %>% 
+  group_by(postest) %>%
+  count() %>%
+  ungroup() %>%
+  rename(n_covidasmission = n)
 
+coviddeath_check <- data_outcomes %>%
+  filter(!is.na(coviddeath_date)) %>%
+  # check for positive test 28 days either side of hospital admission
+  mutate(
+    postest = case_when(
+      is.na(coviddeath_date) ~ FALSE,
+      as.integer(coviddeath_date - positive_test_0_date) > 28 ~ FALSE,
+      TRUE ~ TRUE
+    )
+  ) %>% 
+  group_by(postest) %>%
+  count() %>%
+  rename(n_coviddeath = n)
+
+combine_outcomes_check <- full_join(
+  covidadmission_check, coviddeath_check, 
+  by = "postest") %>%
+  mutate(across(starts_with("n_"),
+                ~round(.x, -1)))
+
+readr::write_csv()
+
+  
 ## create one-row-per-event datasets ----
 # for positive test, hospitalisation/discharge, covid in primary care, death
 

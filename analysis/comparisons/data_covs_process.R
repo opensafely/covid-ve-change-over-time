@@ -51,6 +51,8 @@ input_covs <- arrow::read_feather(
   here::here("output", "input_covs.feather")) %>%
   mutate(across(where(is.POSIXct), as.Date))
 
+################################################################################
+
 # apply eligibility criteria in box c ----
 data_eligible_c <- data_eligible_b %>%
   left_join(data_vax_wide, 
@@ -67,7 +69,10 @@ data_eligible_c <- data_eligible_b %>%
     covid_vax_2_date <= end_of_period,
     # enough individuals in second vax period for a given elig_date and brand to include comparison (i.e. summed over regions)
     n_in_period >= 100) %>%
-  select(patient_id, jcvi_group, elig_date, region_0, ethnicity, covid_vax_2_date, covid_vax_3_date, brand, start_of_period, end_of_period)
+  select(patient_id, jcvi_group, elig_date, region_0, ethnicity, 
+         covid_vax_2_date, covid_vax_3_date, brand, 
+         start_of_period, end_of_period) %>%
+  droplevels()
 
 # apply eligibility criteria in box d ----
 data_eligible_d <- data_eligible_a %>%
@@ -80,10 +85,13 @@ data_eligible_d <- data_eligible_a %>%
   # remove individuals who had received any vaccination before the start of the second vax period
   filter(
     is.na(covid_vax_1_date) | covid_vax_1_date >= start_of_period
-  )
+  ) %>%
+  droplevels()
+
+################################################################################
 
 # derive comparison arms for k comparisons ----
-# define time_zero_date & end_fu_date for each comparion
+# define time_zero_date & end_fu_date for each comparison
 comparison_arms <- function(
   k # comparison number, k=1...K
 ) {
@@ -111,14 +119,16 @@ comparison_arms <- function(
       mutate(time_zero_date = covid_vax_2_date + days(d)) %>%
       # no third dose before time_zero_date
       filter(no_evidence_of(covid_vax_3_date, time_zero_date)) %>%
-      mutate(arm = "vax")
+      mutate(arm = "vax") %>%
+      droplevels()
     
     data_unvax <- data_eligible_d %>%
       # time_zero_date for unvax arm depends on elig_date, region and brand
       mutate(time_zero_date = start_of_period + days(d)) %>%
       # no first dose before time_zero_date
       filter(no_evidence_of(covid_vax_1_date, time_zero_date)) %>%
-      mutate(arm = "unvax")
+      mutate(arm = "unvax") %>%
+      droplevels()
     
   
   make_exclusions <- function(.data) {
@@ -162,6 +172,7 @@ data_comparison_arms <- bind_rows(lapply(
 )) %>%
   mutate(across(arm, factor, levels = c("unvax", "vax")))
 
+################################################################################
 
 # add clinical and demographic covariates ----
 strata_vars <- c("region", "elig_date", "comparison")
@@ -353,7 +364,8 @@ data_covariates <- data_comparison_arms %>%
       death_date, 
       as.Date(NA_character_)),
     
-  ) 
+  ) %>%
+  droplevels()
 
 readr::write_rds(
   data_covariates,
