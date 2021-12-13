@@ -7,9 +7,11 @@ source(here::here("analysis", "lib", "dummy_data_functions.R"))
 set.seed(5476)
 
 # the variables generated in grouping_variables.py are same as in dummy_data_vax
-dummy_data_vax <- arrow::read_feather(here::here("analysis", "vax", "dummy_data_vax.feather"))
+dummy_data_vax <- arrow::read_feather(
+  here::here("analysis", "vax", "dummy_data_vax.feather"))
 
-# dummy_data_test <- arrow::read_feather(here::here("analysis", "covs", "dummy_data_covs.feather"))
+study_parameters <- readr::read_rds(
+  here::here("output", "lib", "study_parameters.rds"))
 
 # start and end dates
 start_dates <- readr::read_csv(here::here("output", "lib", "start_dates.csv"))
@@ -57,8 +59,6 @@ date_vars_rare <- c("chronic_cardiac_disease_date",
                     "dementia_date", 
                     "other_neuro_conditions_date", 
                     "psychosis_schiz_bipolar_date",
-                    "admitted_unplanned_0_date", 
-                    "admitted_unplanned_infectious_0_date",
                     "covidadmitted_0_date")
 # incidence 0.01
 date_vars_veryrare <- c("longres_date", 
@@ -103,14 +103,32 @@ dummy_data_covs <- dummy_data_vax %>%
                   !is.na(coviddeath_date), 
                   coviddeath_date,
                   NA_Date_))) %>%
-  mutate(
-    discharged_unplanned_0_date = admitted_unplanned_0_date + sample(x=1:50, size = nrow(.), replace = TRUE),
-    discharged_unplanned_infectious_0_date = admitted_unplanned_infectious_0_date + sample(x=1:50, size = nrow(.), replace = TRUE)
-  ) %>%
   bind_cols(vars_bmi_recurrent(.data = .)) %>%
   bind_cols(vars_region_and_imd_recurrent(.data = ., K=K)) %>%
-  bind_cols(var_date_recurrent(.data = ., name_string = "shielded", incidence = 0.2)) %>%
-  bind_cols(var_date_recurrent(.data = ., name_string = "nonshielded", incidence = 0.1)) %>%
+  bind_cols(
+    var_date_recurrent(
+      .data = ., 
+      name_string = "shielded", 
+      incidence = 0.2,
+      r = study_parameters$recur_shielded)) %>%
+  bind_cols(
+    var_date_recurrent(
+      .data = .,
+      name_string = "nonshielded", 
+      incidence = 0.1,
+      r = study_parameters$recur_shielded)) %>%
+  bind_cols(
+    var_date_recurrent(
+      .data = ., 
+      name_string = "admitted_unplanned", 
+      incidence = 0.1,
+      r = study_parameters$recur_admissions)) %>%
+  bind_cols(
+    var_date_recurrent(
+      .data = ., 
+      name_string = "admitted_unplanned_infectious", 
+      incidence = 0.1,
+      r = study_parameters$recur_admissions)) %>%
   # all 1st of the month as dob YYYY-MM in OpenSAFELY
   mutate(
     dob = as.POSIXct(sample(
@@ -122,8 +140,23 @@ dummy_data_covs <- dummy_data_vax %>%
       rbernoulli(n = nrow(.), p = 0.99),
       rnorm(n = nrow(.), mean = 0.2, sd = 0.09),
       NA_real_)) %>%
-  mutate(across(contains("_date"), as.POSIXct)) %>%
+  mutate(across(contains("_date"), as.POSIXct)) 
+
+dummy_data_covs <- dummy_data_covs %>%
+  bind_cols(
+    lapply(
+      0:study_parameters$recur_admissions,
+      function(x)
+        dummy_data_covs %>%
+        transmute(
+          !! glue("discharged_unplanned_{x}_date") := 
+            !! sym(glue("admitted_unplanned_{x}_date")) +
+            sample(x=1:50, size = nrow(.), replace = TRUE),
+          !! glue("discharged_unplanned_infectious_{x}_date") := 
+            !! sym(glue("admitted_unplanned_infectious_{x}_date")) + 
+            sample(x=1:50, size = nrow(.), replace = TRUE))
+    )) %>%
   droplevels()
-  
+
 
 arrow::write_feather(dummy_data_covs, here::here("analysis", "covs", "dummy_data_covs.feather"))

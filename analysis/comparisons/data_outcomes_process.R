@@ -1,9 +1,9 @@
-######################################
+###############################################################################
 
 # What this script does:
 
 
-######################################
+###############################################################################
 
 # Preliminaries ----
 
@@ -88,46 +88,6 @@ readr::write_csv()
 ## create one-row-per-event datasets ----
 # for positive test, hospitalisation/discharge, covid in primary care, death
 
-data_admissions <- data_outcomes %>%
-  select(patient_id, 
-         matches("^admitted\\_unplanned\\_\\d+\\_date"),
-         matches("^discharged\\_unplanned\\_\\d+\\_date")) %>%
-  pivot_longer(
-    cols = -patient_id,
-    names_to = c(".value", "index"),
-    names_pattern = "^(.*)_(\\d+)_date",
-    values_drop_na = TRUE
-  ) %>%
-  select(patient_id, 
-         index, 
-         admitted_date=admitted_unplanned, 
-         discharged_date = discharged_unplanned) %>%
-  arrange(patient_id, admitted_date)
-
-data_admissions_infectious <- data_outcomes %>%
-  select(patient_id, 
-         matches("^admitted\\_unplanned\\_infectious\\_\\d+\\_date"), 
-         matches("^discharged\\_unplanned\\_infectious\\_\\d+\\_date")) %>%
-  pivot_longer(
-    cols = -patient_id,
-    names_to = c(".value", "index"),
-    names_pattern = "^(.*)_(\\d+)_date",
-    values_drop_na = TRUE
-  ) %>%
-  select(patient_id,
-         index,
-         admitted_date=admitted_unplanned_infectious, 
-         discharged_date = discharged_unplanned_infectious) %>%
-  arrange(patient_id, admitted_date)
-
-#remove infectious admissions from all admissions data
-data_admissions_noninfectious <- anti_join(
-  data_admissions,
-  data_admissions_infectious,
-  by = c("patient_id", "admitted_date", "discharged_date")
-)
-
-
 data_pr_suspected_covid <- data_outcomes %>%
   select(patient_id,
          matches("^primary\\_care\\_suspected\\_covid\\_\\d+\\_date")) %>%
@@ -176,14 +136,14 @@ data_covidadmitted <- data_outcomes %>%
   ) %>%
   arrange(patient_id, date)
 
-readr::write_rds(
-  data_admissions, 
-  here::here("output", glue("jcvi_group_{group}"),  "data", "data_long_admission_dates.rds"), 
-  compress="gz")
-readr::write_rds(
-  data_admissions_infectious, 
-  here::here("output", glue("jcvi_group_{group}"), "data", "data_long_admission_infectious_dates.rds"), 
-  compress="gz")
+# readr::write_rds(
+#   data_admissions, 
+#   here::here("output", glue("jcvi_group_{group}"),  "data", "data_long_admission_dates.rds"), 
+#   compress="gz")
+# readr::write_rds(
+#   data_admissions_infectious, 
+#   here::here("output", glue("jcvi_group_{group}"), "data", "data_long_admission_infectious_dates.rds"), 
+#   compress="gz")
 readr::write_rds(
   data_admissions_noninfectious, 
   here::here("output", glue("jcvi_group_{group}"), "data", "data_long_admission_noninfectious_dates.rds"), 

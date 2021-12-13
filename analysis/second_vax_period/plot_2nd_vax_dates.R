@@ -16,8 +16,8 @@ dir.create(images_dir, showWarnings = FALSE, recursive=TRUE)
 data_ma <- readr::read_rds(here::here("output", "second_vax_period", "data", "data_ma.rds"))
 
 # elig_dates info for plot titles
-group_age_ranges <- readr::read_rds(
-  here::here("output", "lib", "group_age_ranges.rds"))
+group_age_ranges <- readr::read_csv(
+  here::here("output", "lib", "group_age_ranges.csv"))
 
 
 plot_2nd_vax_dates_fun <- function(

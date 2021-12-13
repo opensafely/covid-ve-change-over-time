@@ -639,16 +639,20 @@ study=StudyDefinition(
     # unplanned hospital admission
     admitted_unplanned_0_date=patients.admitted_to_hospital(
         returning="date_admitted",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before="elig_date + 42 days",
         find_first_match_in_period=True,
         with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
         with_patient_classification = ["1"],
         date_format="YYYY-MM-DD",
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.05,
-        },
+    ),
+     **admitted_date_X(
+        name = "admitted_unplanned",
+        n = study_parameters["recur_admissions"],
+        index_name = "admitted_unplanned",
+        index_date = "elig_date + 43 days",
+        returning="date_admitted",
+        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+        with_patient_classification = ["1"],
     ),
     
     discharged_unplanned_0_date=patients.admitted_to_hospital(
@@ -658,12 +662,16 @@ study=StudyDefinition(
         with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
         with_patient_classification = ["1"],
         date_format="YYYY-MM-DD",
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.05,
-        },
     ), 
+    **admitted_date_X(
+        name = "discharged_unplanned",
+        n = study_parameters["recur_admissions"],
+        index_name = "admitted_unplanned",
+        index_date = "elig_date + 43 days",
+        returning="date_admitted",
+        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+        with_patient_classification = ["1"],
+    ),
    
     # unplanned infectious hospital admission
     admitted_unplanned_infectious_0_date=patients.admitted_to_hospital(
@@ -680,6 +688,16 @@ study=StudyDefinition(
             "incidence": 0.05,
         },
     ),
+    **admitted_date_X(
+        name = "admitted_unplanned_infectious",
+        n = study_parameters["recur_admissions"],
+        index_name = "admitted_unplanned_infectious",
+        index_date = "elig_date + 43 days",
+        returning="date_admitted",
+        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+        with_patient_classification = ["1"],
+        with_these_diagnoses = ICD10_I_codes,
+    ),
    
     discharged_unplanned_infectious_0_date=patients.admitted_to_hospital(
         returning="date_discharged",
@@ -689,12 +707,17 @@ study=StudyDefinition(
         with_patient_classification = ["1"],
         with_these_diagnoses = ICD10_I_codes,
         date_format="YYYY-MM-DD",
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "uniform",
-            "incidence": 0.05,
-        },
     ), 
+    **admitted_date_X(
+        name = "discharged_unplanned_infectious",
+        n = study_parameters["recur_admissions"],
+        index_name = "admitted_unplanned_infectious",
+        index_date = "elig_date + 43 days",
+        returning="date_discharged",
+        with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
+        with_patient_classification = ["1"],
+        with_these_diagnoses = ICD10_I_codes,
+    ),
     
     # covid hospital adamission
     covidadmitted_0_date=patients.admitted_to_hospital(

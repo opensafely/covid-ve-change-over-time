@@ -31,62 +31,15 @@ source(here::here("analysis", "lib", "data_process_functions.R"))
 study_parameters <- readr::read_rds(
   here::here("output", "lib", "study_parameters.rds"))
 
-# individuals who are eligible based on criteria in box b of Figure 3 on protocol
-data_eligible_a <- readr::read_rds(
-  here::here("output", "vax", "data", "data_eligible_a.rds")) %>%
-  filter(jcvi_group %in% group)
+data_eligible_c <- readr::read_rds(
+  here::here("output", "data", "data_eligible_c.rds"))
 
-# individuals who are eligible based on criteria in box b of Figure 3 on protocol
-data_eligible_b <- readr::read_rds(
-  here::here("output", "vax", "data", "data_eligible_b.rds")) %>%
-  filter(jcvi_group %in% group)
-
-data_vax_wide <- readr::read_rds(
-  here::here("output", "vax", "data", "data_wide_vax_dates.rds"))
-
-second_vax_period_dates <- readr::read_csv(
-  here::here("output", "lib", "second_vax_period_dates.csv"))
+data_eligible_d <- readr::read_rds(
+  here::here("output", "data", "data_eligible_d.rds"))
 
 input_covs <- arrow::read_feather(
   here::here("output", "input_covs.feather")) %>%
   mutate(across(where(is.POSIXct), as.Date))
-
-################################################################################
-
-# apply eligibility criteria in box c ----
-data_eligible_c <- data_eligible_b %>%
-  left_join(data_vax_wide, 
-            by = "patient_id") %>%
-  mutate(brand = case_when(covid_vax_2_brand %in% "pfizer" ~ "BNT162b2",
-                           covid_vax_2_brand %in% "az" ~ "BNT162b2",
-                           TRUE ~ NA_character_)) %>%
-  select(-ends_with("_brand")) %>%
-  left_join(second_vax_period_dates, 
-            by = c("jcvi_group", "elig_date", "region_0", "brand")) %>%
-  filter(
-    # second dose during second vax period
-    start_of_period <= covid_vax_2_date,
-    covid_vax_2_date <= end_of_period,
-    # enough individuals in second vax period for a given elig_date and brand to include comparison (i.e. summed over regions)
-    n_in_period >= 100) %>%
-  select(patient_id, jcvi_group, elig_date, region_0, ethnicity, 
-         covid_vax_2_date, covid_vax_3_date, brand, 
-         start_of_period, end_of_period) %>%
-  droplevels()
-
-# apply eligibility criteria in box d ----
-data_eligible_d <- data_eligible_a %>%
-  left_join(data_vax_wide %>%
-              select(-ends_with("_brand")),
-            by = "patient_id") %>%
-  # creates 2 rows per individual, 1 for each brand
-  left_join(second_vax_period_dates, 
-            by = c("elig_date", "region_0")) %>%
-  # remove individuals who had received any vaccination before the start of the second vax period
-  filter(
-    is.na(covid_vax_1_date) | covid_vax_1_date >= start_of_period
-  ) %>%
-  droplevels()
 
 ################################################################################
 
@@ -171,6 +124,51 @@ data_comparison_arms <- bind_rows(lapply(
     comparison_arms(k=x) 
 )) %>%
   mutate(across(arm, factor, levels = c("unvax", "vax")))
+
+################################################################################
+# process long data for recurring events
+
+data_admissions <- input_covs %>%
+  select(patient_id, 
+         matches("^admitted\\_unplanned\\_\\d+\\_date"),
+         matches("^discharged\\_unplanned\\_\\d+\\_date")) %>%
+  pivot_longer(
+    cols = -patient_id,
+    names_to = c(".value", "index"),
+    names_pattern = "^(.*)_(\\d+)_date",
+    values_drop_na = TRUE
+  ) %>%
+  select(patient_id, 
+         index, 
+         admitted_date=admitted_unplanned, 
+         discharged_date = discharged_unplanned) %>%
+  arrange(patient_id, admitted_date)
+
+data_admissions_infectious <- input_covs %>%
+  select(patient_id, 
+         matches("^admitted\\_unplanned\\_infectious\\_\\d+\\_date"), 
+         matches("^discharged\\_unplanned\\_infectious\\_\\d+\\_date")) %>%
+  pivot_longer(
+    cols = -patient_id,
+    names_to = c(".value", "index"),
+    names_pattern = "^(.*)_(\\d+)_date",
+    values_drop_na = TRUE
+  ) %>%
+  select(patient_id,
+         index,
+         admitted_date=admitted_unplanned_infectious, 
+         discharged_date = discharged_unplanned_infectious) %>%
+  arrange(patient_id, admitted_date)
+
+# remove infectious admissions from all admissions data
+data_admissions_noninfectious <- anti_join(
+  data_admissions,
+  data_admissions_infectious,
+  by = c("patient_id", "admitted_date", "discharged_date")
+)
+
+
+
 
 ################################################################################
 
