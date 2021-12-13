@@ -83,7 +83,7 @@ data_eligible_d <- data_eligible_a %>%
   )
 
 # derive comparison arms for k comparisons ----
-# define time_zero & end_fu_date for each comparion
+# define time_zero_date & end_fu_date for each comparion
 comparison_arms <- function(
   k # comparison number, k=1...K
 ) {
@@ -108,16 +108,16 @@ comparison_arms <- function(
     
     data_vax <- data_eligible_c %>%
       # start date for vax arm depends on second vax date
-      mutate(time_zero = covid_vax_2_date + days(d)) %>%
-      # no third dose before time_zero
-      filter(no_evidence_of(covid_vax_3_date, time_zero)) %>%
+      mutate(time_zero_date = covid_vax_2_date + days(d)) %>%
+      # no third dose before time_zero_date
+      filter(no_evidence_of(covid_vax_3_date, time_zero_date)) %>%
       mutate(arm = "vax")
     
     data_unvax <- data_eligible_d %>%
-      # time_zero for unvax arm depends on elig_date, region and brand
-      mutate(time_zero = start_of_period + days(d)) %>%
-      # no first dose before time_zero
-      filter(no_evidence_of(covid_vax_1_date, time_zero)) %>%
+      # time_zero_date for unvax arm depends on elig_date, region and brand
+      mutate(time_zero_date = start_of_period + days(d)) %>%
+      # no first dose before time_zero_date
+      filter(no_evidence_of(covid_vax_1_date, time_zero_date)) %>%
       mutate(arm = "unvax")
     
   
@@ -128,17 +128,17 @@ comparison_arms <- function(
                          all_of(exclude_if_evidence_of), 
                          region = glue("region_{k}")),
                 by = "patient_id") %>%
-      # exclude if evidence of xxx before time_zero
+      # exclude if evidence of xxx before time_zero_date
       filter_at(all_of(exclude_if_evidence_of),
-                all_vars(no_evidence_of(., time_zero))) %>%
-      select(patient_id, elig_date, region, ethnicity, brand, arm, time_zero) 
+                all_vars(no_evidence_of(., time_zero_date))) %>%
+      select(patient_id, elig_date, region, ethnicity, brand, arm, time_zero_date) 
   }
   
   out <- bind_rows(make_exclusions(data_vax), make_exclusions(data_unvax)) 
   
   end_fu_dates <- out %>%
     group_by(elig_date, brand, region) %>%
-    summarise(end_fu_date = max(time_zero) + days(28), .groups = "keep") %>%
+    summarise(end_fu_date = max(time_zero_date) + days(28), .groups = "keep") %>%
     ungroup() %>%
     mutate(arm = "unvax")
  
@@ -147,8 +147,9 @@ comparison_arms <- function(
     mutate(across(end_fu_date,
                   ~ if_else(arm %in% "vax", 
                             # each individual in vax arm followed up for 28 days
-                            time_zero + days(28), 
-                            .x)))
+                            time_zero_date + days(28), 
+                            .x))) %>% 
+    mutate(comparison = k)
   
   return(out)
     
@@ -157,13 +158,13 @@ comparison_arms <- function(
 data_comparison_arms <- bind_rows(lapply(
   1:study_parameters$n_comparisons,
   function(x)
-    comparison_arms(k=1) %>% mutate(k = x)
+    comparison_arms(k=x) 
 )) %>%
   mutate(across(arm, factor, levels = c("unvax", "vax")))
 
 
 # add clinical and demographic covariates ----
-strata_vars <- c("region", "elig_date", "k")
+strata_vars <- c("region", "elig_date", "comparison")
 demographic_vars <- c("age", "sex", "ethnicity", "imd")
 ever_vars <- c(
   "longres_date",
@@ -211,20 +212,20 @@ imd_data <- data_comparison_arms %>%
               select(patient_id, starts_with("imd")),
             by = "patient_id") %>%
   pivot_longer(cols = -patient_id) %>%
-  mutate(k = as.integer(str_extract(name, "\\d+"))) %>%
-  select(patient_id, k, imd = value)
+  mutate(comparison = as.integer(str_extract(name, "\\d+"))) %>%
+  select(patient_id, comparison, imd = value)
 
 # shielded IS brand specific
 shielded_data <- data_comparison_arms %>%
-  distinct(patient_id, k, brand, time_zero) %>%
+  distinct(patient_id, comparison, brand, time_zero_date) %>%
   left_join(input_covs %>%
               select(patient_id, contains("shield")) %>%
               pivot_longer(cols = contains("shield")) %>%
               filter(!is.na(value)) %>%
               mutate(across(name, ~str_remove(.x, "_\\d+_date"))),
             by = "patient_id") %>%
-  filter(!is.na(value) & value <= time_zero) %>%
-  group_by(patient_id, brand, k, name) %>%
+  filter(!is.na(value) & value <= time_zero_date) %>%
+  group_by(patient_id, brand, comparison, name) %>%
   summarise(date = max(value), .groups = "keep") %>%
   ungroup() %>%
   pivot_wider(names_from = name, values_from = date) %>%
@@ -233,11 +234,11 @@ shielded_data <- data_comparison_arms %>%
       ((!is.na(nonshielded) & (shielded > nonshielded)) |
          is.na(nonshielded)) ~ TRUE,
     TRUE ~ FALSE)) %>%
-  select(patient_id, brand, k, shielded)
+  select(patient_id, brand, comparison, shielded)
 
 # bmi IS brand specific
 bmi_data <- data_comparison_arms %>%
-  distinct(patient_id, brand, k, time_zero) %>%
+  distinct(patient_id, brand, comparison, time_zero_date) %>%
   left_join(input_covs %>%
               select(patient_id, contains("bmi")) %>%
               rename_if(is.Date,
@@ -247,13 +248,13 @@ bmi_data <- data_comparison_arms %>%
                            names_to = c(".value", "i")) %>%
               filter(!is.na(bmi)),
             by = "patient_id") %>%
-  filter(!is.na(bmi) & date <= time_zero ) %>%
-  group_by(patient_id, brand, k) %>%
+  filter(!is.na(bmi) & date <= time_zero_date ) %>%
+  group_by(patient_id, brand, comparison) %>%
   arrange(desc(date), .by_group = TRUE) %>%
-  # keeps just the most recent before time_zero
-  distinct(patient_id, k, .keep_all = TRUE) %>%
+  # keeps just the most recent before time_zero_date
+  distinct(patient_id, comparison, .keep_all = TRUE) %>%
   ungroup() %>%
-  select(patient_id, brand, k, bmi)
+  select(patient_id, brand, comparison, bmi)
   
   
 # add covariates to data_comparison_arms ----
@@ -271,16 +272,16 @@ data_covariates <- data_comparison_arms %>%
     by = "patient_id") %>%
   left_join(
     imd_data, 
-    by = c("patient_id", "k")) %>%
+    by = c("patient_id", "comparison")) %>%
   left_join(
     shielded_data, 
-    by = c("patient_id", "brand", "k")) %>%
+    by = c("patient_id", "brand", "comparison")) %>%
   mutate(across(
     shielded, 
     ~ if_else(is.na(.x), FALSE, .x))) %>%
   left_join(
     bmi_data, 
-    by = c("patient_id", "brand", "k")) %>%
+    by = c("patient_id", "brand", "comparison")) %>%
   mutate(across(
     bmi,
     ~ fct_case_when(is.na(.x) | .x < 30 | .x >= 100 ~ "Not Obese",
@@ -291,7 +292,7 @@ data_covariates <- data_comparison_arms %>%
     all_of(ever_vars), 
      ~ case_when(
        is.na(.x) ~ FALSE,
-       .x <= time_zero ~ TRUE,
+       .x <= time_zero_date ~ TRUE,
        TRUE ~ FALSE))) %>%
   rename_with(
     .fn = ~ str_remove(.x, "_date"),
@@ -299,7 +300,7 @@ data_covariates <- data_comparison_arms %>%
     ) %>%
   mutate(
     
-    age = as.numeric(time_zero - dob),
+    age = as.numeric(time_zero_date - dob),
     
     any_immunosuppression = (permanant_immunosuppression | 
                                asplenia | 
@@ -333,13 +334,30 @@ data_covariates <- data_comparison_arms %>%
       efi <= 0.24 ~ "Mild",
       efi <= 0.36 ~ "Moderate",
       TRUE ~ "Severe"
-    )
+    ),
+    
+    # in case coviddeath_date and death_date different dates
+    coviddeath_date = if_else(
+      !is.na(coviddeath_date) & !is.na(death_date),
+      min(coviddeath_date, death_date),
+      coviddeath_date
+    ),
+    death_date = if_else(
+      !is.na(coviddeath_date) & !is.na(death_date),
+      min(coviddeath_date, death_date),
+      death_date
+    ),
+    
+    noncoviddeath_date = if_else(
+      !is.na(death_date) & is.na(coviddeath_date),
+      death_date, 
+      as.Date(NA_character_)),
     
   ) 
 
 readr::write_rds(
   data_covariates,
-  here::here("output", glue("jcvi_group_{group}"), "data", "data_covariates.rds"),
+  here::here("output", glue("jcvi_group_{group}"), "data", "data_covs.rds"),
   compress = "gz")
 
 
