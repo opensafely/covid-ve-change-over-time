@@ -51,7 +51,7 @@ actions:
         group_age_ranges: output/lib/group_age_ranges.rds
       moderately_sensitive:
         data_properties: output/vax/data_vax_processed_tabulate.txt
-        n_eligible: output/vax/n_eligible.csv
+        eligibility_count: output/vax/eligibility_count.csv
         group_age_ranges_csv: output/lib/group_age_ranges.csv
 
   ##########################################################################

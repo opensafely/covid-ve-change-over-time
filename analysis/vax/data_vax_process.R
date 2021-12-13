@@ -91,30 +91,88 @@ data_properties(
   path = file.path("output", "vax")
 )
 
-n_0 <- n_distinct(data_vax_processed$patient_id)
+eligibility_count <- tribble(
+  ~description, ~n,
+  "Extracted using study_definition_vax", n_distinct(data_vax_processed$patient_id)
+)
 
 cat("#### apply exclusion criteria to processed data ####\n")
+# remove dummy jcvi_group
 data_eligible_a <- data_vax_processed %>%
-  # apply exclusion criteria
+  filter(!(jcvi_group %in% "99"))
+
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Samples with JCVI group 99 removed",
+    n =  n_distinct(data_eligible_a$patient_id)
+  )
+
+# remove if any missing data for key variables
+data_eligible_a <- data_eligible_a %>%
   filter(
-    # remove dummy jcvi_group
-    !(jcvi_group %in% "99"),
-    # remove if any missing data for key variables
     !is.na(ethnicity),
     !is.na(sex),
     !is.na(imd_0),
-    !is.na(region_0),
-    # remove if initiated end of life care on or before elig_date + 42 days
-    is.na(endoflife_0_date),
-    is.na(midazolam_0_date),
-    # remove if evidence of covid infection on or before elig_date + 42 days
-    is.na(positive_test_0_date),
-    is.na(primary_care_covid_case_0_date),
-    is.na(primary_care_suspected_covid_0_date),
-    is.na(covidadmitted_0_date)
-  ) 
+    !is.na(region_0))
 
-n_a <- n_distinct(data_eligible_a$patient_id)
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Samples with missing ethnicity, sex, imd, region removed.",
+    n =  n_distinct(data_eligible_a$patient_id)
+  )
+
+# remove if initiated end of life care on or before elig_date + 42 days
+data_eligible_a <- data_eligible_a %>%
+  filter(
+    is.na(endoflife_0_date),
+    is.na(midazolam_0_date))
+
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Samples with end of life care initiated removed.",
+    n =  n_distinct(data_eligible_a$patient_id)
+  )
+
+# remove if evidence of covid infection on or before elig_date + 42 days
+# COVID admission
+data_eligible_a <- data_eligible_a %>%
+  filter(is.na(covidadmitted_0_date))
+
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Samples with prior COVID admission removed.",
+    n =  n_distinct(data_eligible_a$patient_id)
+  )
+    
+# positive COVID test
+data_eligible_a <- data_eligible_a %>%
+  filter(is.na(positive_test_0_date))
+
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Samples with prior positive COVID test removed.",
+    n =  n_distinct(data_eligible_a$patient_id)
+  )
+    
+# probable COVID 
+data_eligible_a <- data_eligible_a %>%
+  filter(is.na(primary_care_covid_case_0_date))
+
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Samples with prior probable COVID removed.",
+    n =  n_distinct(data_eligible_a$patient_id)
+  )
+
+# suspected COVID 
+data_eligible_a <- data_eligible_a %>%
+  filter(is.na(primary_care_suspected_covid_0_date))
+
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Samples with prior suspected COVID removed.",
+    n =  n_distinct(data_eligible_a$patient_id)
+  )
 
 readr::write_rds(data_eligible_a %>%
                    select(patient_id, jcvi_group, elig_date, region_0),
@@ -229,21 +287,24 @@ data_eligible_b <- data_eligible_a %>%
   ) %>%
   select(patient_id, jcvi_group, elig_date, region_0)
 
-n_b <- n_distinct(data_eligible_b$patient_id)
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Criteria in box b applied.",
+    n = n_distinct(data_eligible_b$patient_id)
+  )
 
 readr::write_rds(data_eligible_b,
                  here::here("output", "vax", "data", "data_eligible_b.rds"),
                  compress="gz")
 
 # number of people eligible at each stage ----
-n_eligible <- tibble(
-  n_0 = n_0,
-  n_a = n_a,
-  n_b = n_b
-)
+eligibility_count <- eligibility_count %>%
+  # round to nearest 10
+  mutate(across(n, ~round(.x, -1))) %>%
+  mutate(n_removed = lag(n) - n)
 
-readr::write_csv(n_eligible,
-                 here::here("output", "vax", "n_eligible.csv"))
+readr::write_csv(eligibility_count,
+                 here::here("output", "vax", "eligibility_count.csv"))
 
 # jcvi_group, elig_date combos ----
 fix_age <- data_extract %>%
