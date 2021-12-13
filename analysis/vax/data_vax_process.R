@@ -289,4 +289,5 @@ group_age_ranges <- group_age_ranges %>%
 readr::write_rds(group_age_ranges,
                  here::here("output", "lib", "group_age_ranges.rds"))
 
-
+readr::write_csv(group_age_ranges,
+                 here::here("output", "lib", "group_age_ranges.csv"))

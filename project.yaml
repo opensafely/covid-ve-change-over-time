@@ -52,6 +52,7 @@ actions:
       moderately_sensitive:
         data_properties: output/vax/data_vax_processed_tabulate.txt
         n_eligible: output/vax/n_eligible.csv
+        group_age_ranges_csv: output/lib/group_age_ranges.csv
 
   ##########################################################################
   #### identify second vaccination time periods
