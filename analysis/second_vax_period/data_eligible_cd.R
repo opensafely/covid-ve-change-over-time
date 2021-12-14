@@ -12,6 +12,8 @@ library(tidyverse)
 library(lubridate)
 library(glue)
 
+study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
+
 # individuals who are eligible based on criteria in box b of Figure 3 on protocol
 data_eligible_a <- readr::read_rds(
   here::here("output", "data", "data_eligible_a.rds")) 
@@ -24,8 +26,10 @@ data_eligible_b <- readr::read_rds(
 data_vax_wide <- readr::read_rds(
   here::here("output", "data", "data_wide_vax_dates.rds"))
 
+# read second vax period dates and filter to brands with enough individuals
 second_vax_period_dates <- readr::read_csv(
-  here::here("output", "lib", "second_vax_period_dates.csv"))
+  here::here("output", "lib", "second_vax_period_dates.csv")) %>%
+  filter(n_in_period > study_parameters$n_threshold)
 
 ################################################################################
 # apply eligibility criteria in box c ----
@@ -60,7 +64,7 @@ data_eligible_d <- data_eligible_a %>%
   left_join(data_vax_wide %>%
               select(-ends_with("_brand")),
             by = "patient_id") %>%
-  # creates 2 rows per individual, 1 for each brand
+  # creates 1 row per brand, so some individuals in the unvax arm will have 2 rows 
   left_join(second_vax_period_dates, 
             by = c("jcvi_group", "elig_date", "region_0")) %>%
   # remove individuals who had received any vaccination before the start of the second vax period

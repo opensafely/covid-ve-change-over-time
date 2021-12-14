@@ -9,17 +9,18 @@ library(tidyverse)
 library(lubridate)
 library(glue)
 
+print(Sys.getenv("OPENSAFELY_BACKEND"))
+
 # create output directories ----
 fs::dir_create(here::here("output", "lib"))
 
 # create study_parameters ----
-
 study_parameters <-
   list(
     seed = 123456L,
     n = 100000L, # number of individuals in dummy data
     n_comparisons = 3L, # the number of comparisons for each sequence
-    n_threshold = 1000L, # the number of individuals with a second dose in the second vaccination period for a given jcvi_group and brand to include comparison
+    n_threshold = integer(), # the number of individuals with a second dose in the second vaccination period for a given jcvi_group and brand to include comparison
     recur_bmi = 10L, # number of times the bmi variable recurs
     recur_shielded = 10L, # number of times the shielded and nonshieded variables recur
     recur_admissions = 10L, # number of times the hospital admissions variables recur
@@ -33,7 +34,16 @@ study_parameters <-
     start_date_az = "2021-01-04",
     start_date_moderna = "2021-03-04",
     end_date = "2021-09-15" # last date of available vaccination data. NEED TO ALSO CHECK END DATES FOR OTHER DATA SOURCES
-  )
+  ) 
+
+# use lower thresholds if not running in the server
+if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
+  study_parameters$n_threshold <- 100L
+  study_parameters$outcome_threshold <- 10L
+} else {
+  study_parameters$n_threshold <- 1000L
+  study_parameters$outcome_threshold <- 100L
+}
 
 readr::write_rds(study_parameters, here::here("output", "lib", "study_parameters.rds"))
 jsonlite::write_json(study_parameters, path = here::here("output", "lib", "study_parameters.json"), auto_unbox = TRUE, pretty=TRUE)

@@ -114,17 +114,34 @@ actions:
       highly_sensitive:
         cohort: output/input_covs.feather
 
+  # process recurring variables as long data ----
+  data_long_process:
+    run: r:latest analysis/covs/data_long_process.R
+    needs: [design, data_eligible_cd, generate_study_population_covs]
+    outputs:
+      highly_sensitive:
+        data_long_dates: output/data/data_long_*_dates.rds
+
   # ##########################################################################
   # #### process data for each JCVI group
   # ##########################################################################
   
   # process covariates data ----      
-  data_covs_process:
-    run: r:latest analysis/comparisons/data_covs_process.R 02
-    needs: [design, data_vax_process, data_2nd_vax_dates, generate_study_population_covs]
+  data_comparisons_process:
+    run: r:latest analysis/comparisons/data_comparisons_process.R 02
+    needs: [design, data_vax_process, data_2nd_vax_dates, data_eligible_cd, generate_study_population_covs, data_long_process]
     outputs:
       highly_sensitive:
-        dummy_data_vax: output/jcvi_group_*/data/data_covs.rds
+        dummy_data_vax: output/jcvi_group_*/data/data_comparisons.rds
+
+  # check gap between outcomes for combining ----      
+  check_combine_outcomes:
+    run: r:latest analysis/comparisons/check_combine_outcomes.R 02
+    needs: [data_comparisons_process]
+    outputs:
+      moderately_sensitive:
+        plot_check_combine_outcomes: output/jcvi_group_*/images/check_combine_outcomes.png
+        table_check_combine_outcomes: output/jcvi_group_*/tables/check_combine_outcomes.csv
 
   # # process outcomes data ----      
   # data_outcomes_process:

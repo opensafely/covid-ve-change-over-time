@@ -29,13 +29,8 @@ translate_to_R <- function(.data) {
 start_dates <- start_dates %>% translate_to_R()
 end_dates <- end_dates %>% translate_to_R()
 
-# date vars 
-# incidence 0.1
-date_vars_common <- c("positive_test_0_date", 
-                      "primary_care_covid_case_0_date", 
-                      "primary_care_suspected_covid_0_date")
-# incidence 0.05
-date_vars_rare <- c("chronic_cardiac_disease_date",
+# date vars (incidences are higher than reality to ensure code runs on smaller sample)
+date_vars_ever <- c("chronic_cardiac_disease_date",
                     "heart_failure_date",
                     "other_heart_disease_date",
                     "diabetes_date",
@@ -58,15 +53,18 @@ date_vars_rare <- c("chronic_cardiac_disease_date",
                     "dmards_date", 
                     "dementia_date", 
                     "other_neuro_conditions_date", 
-                    "psychosis_schiz_bipolar_date",
-                    "covidadmitted_0_date")
-# incidence 0.01
-date_vars_veryrare <- c("longres_date", 
-                        "endoflife_date", 
-                        "midazolam_date",
-                        "coviddeath_date", 
-                        "death_date",
-                        "dereg_date")
+                    "psychosis_schiz_bipolar_date")
+
+date_vars_recent <- c("positive_test_0_date", 
+                      "primary_care_covid_case_0_date", 
+                      "primary_care_suspected_covid_0_date",
+                      "covidadmitted_0_date",
+                      "death_date",
+                      "longres_date", 
+                      "endoflife_date", 
+                      "midazolam_date",
+                      "coviddeath_date", 
+                      "dereg_date")
 
 
 dummy_data_covs <- dummy_data_vax %>%
@@ -84,13 +82,11 @@ dummy_data_covs <- dummy_data_vax %>%
     conditions = end_dates$condition
   ) %>%
   var_binary(name = flu_vaccine, incidence = 0.3) %>%
-  # date vars 
+  # date vars  ever
   bind_cols(
     pmap(
-      list(a = c(date_vars_common, date_vars_rare, date_vars_veryrare), 
-           b = c(rep(0.1, length(date_vars_common)),
-                 rep(0.05, length(date_vars_rare)),
-                 rep(0.01, length(date_vars_veryrare)))),
+      list(a = date_vars_ever, 
+           b = rep(0.2, length(date_vars_ever))),
       function(a,b) 
         var_date(
           .data = ., 
@@ -98,6 +94,19 @@ dummy_data_covs <- dummy_data_vax %>%
           incidence = b,
           keep_vars = FALSE
         ))) %>%
+  bind_cols(
+    pmap(
+      list(a = date_vars_recent, 
+           b = rep(0.2, length(date_vars_recent))),
+           function(a,b) 
+             var_date(
+               .data = ., 
+               name = !! a,
+               incidence = b,
+               earliest="2020-11-01",
+               latest="2021-12-31",
+               keep_vars = FALSE
+             ))) %>%
   mutate(across(death_date, 
                 ~if_else(
                   !is.na(coviddeath_date), 

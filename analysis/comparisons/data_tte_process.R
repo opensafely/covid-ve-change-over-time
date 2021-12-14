@@ -2,6 +2,9 @@
 
 ################################################################################
 
+library(tidyverse)
+library(survival)
+
 ## import command-line arguments ----
 args <- commandArgs(trailingOnly=TRUE)
 
@@ -15,13 +18,98 @@ if(length(args)==0){
   group <- args[[1]]
 }
 
-vax_brand <- "BNT162b2"
+study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
 
-outcomes <- c("postest", "covidadmitted", "coviddeath", "death")
-censor <- c("noncoviddeath", "dereg")
+data_comparisons <- readr::read_rds(
+  here::here("output", glue("jcvi_group_{group}"), "data", "data_comparisons.rds"))
 
-data_covs <- readr::read_rds(
-  here::here("output", glue("jcvi_group_{group}"), "data", "data_covs.rds"))
+# combine outcomes 
+# TODO
+# data_comparisons_combined <- data_comparisons %>%
+#   mutate(
+#     postest_date = if_else(
+#       !is.na(postest_date) ~ postest_date,
+#       !is.na(covidadmitted_date) ~ covidadmitted_date - days(7),
+#       !is.na(coviddeath_date) ~ coviddeath_date - days(14)
+#     ))
+
+for (b in unique(data_comparisons$brand)) {
+  
+  cat(rep("-",40), "\n")
+  cat(glue("Brand = {b}:"), "\n")
+  
+  outcomes <- c("postest", "covidadmitted", "coviddeath", "death")
+  
+  n_outcomes <- data_comparisons %>%
+    filter(brand %in% b) %>%
+    summarise(across(all_of(str_c(outcomes, "_date")),
+                     ~ sum(!is.na(.x)))) %>%
+    pivot_longer(cols = everything()) 
+  
+  cat("Number of individuals with each outcome:", "\n")
+  n_outcomes %>% 
+    mutate(include = value > study_parameters$outcome_threshold) %>%
+    # round to nearest 10
+    mutate(across(value, ~round(.x,-1))) %>% 
+    rename(n=value) %>%
+    print()
+  
+  
+  
+}
+
+
+
+
+
+
+
+
+
+
+outcomes <- c("postest", "covidadmitted", "coviddeath", "death")censor <- c("noncoviddeath", "dereg")
+
+
+dates <- seq(as.Date("2021-01-01"), as.Date("2021-12-31"), 1)
+
+test <- data_comparisons %>%
+  filter(comparison==1, brand == "BNT162b2") %>%
+  mutate(origin = min(time_zero_date)) %>%
+  mutate(
+    postest_date = sample(dates, size=nrow(.), replace=TRUE),
+    covidadmitted_date = sample(dates, size=nrow(.), replace=TRUE),
+    coviddeath_date = sample(dates, size=nrow(.), replace=TRUE),
+    death_date = sample(dates, size=nrow(.), replace=TRUE)) %>%
+  mutate(across(c(all_of(str_c(c(outcomes, censor), "_date"))),
+                ~ if_else(
+                  .x <= time_zero_date | .x > end_fu_date,
+                  NA_integer_,
+                  as.integer(.x - origin)))) %>%
+  mutate(across(c(time_zero_date, end_fu_date),
+                ~ as.integer(.x - origin))) 
+
+  mutate(across(c(time_zero_date, end_fu_date, 
+                  all_of(str_c(c(outcomes, censor), "_date"))),
+                ~ as.integer(.x - origin)))
+
+library(survival)
+test_tmerge <- as_tibble(
+  tmerge(
+    
+    data1 = test %>% select(patient_id),
+    data2 = test,
+    id = patient_id,
+    
+    tstart = time_zero_date,
+    tstop = end_fu_date,
+    
+    postest = event(postest_date),
+    covidadmitted = event(covidadmitted_date),
+    coviddeath = event(coviddeath_date),
+    death = event(death_date)
+    )
+  )
+
 
 tte <- function(.data, var_string) {
   
