@@ -186,37 +186,7 @@ data_bmi <- data_comparison_arms %>%
 # hospital admissions
 # TODO
 
-# positive covid test
-data_postest <- 
-  data_comparison_arms %>%
-  distinct(patient_id, brand, comparison, time_zero_date, end_fu_date) %>%
-  inner_join(
-    readr::read_rds(here::here("output", "data", "data_long_postest_dates.rds")) %>%
-      select(patient_id, date),
-    by = "patient_id") %>%
-  filter(
-    time_zero_date < date,
-    date <= end_fu_date
-  ) %>%
-  group_by(patient_id, brand, comparison) %>%
-  summarise(postest_date = min(date), .groups = "keep") %>%
-  ungroup()
 
-# covid admission
-data_covidadmitted <- 
-  data_comparison_arms %>%
-  distinct(patient_id, brand, comparison, time_zero_date, end_fu_date) %>%
-  inner_join(
-    readr::read_rds(here::here("output", "data", "data_long_covidadmitted_dates.rds")) %>%
-      select(patient_id, date),
-    by = "patient_id") %>%
-  filter(
-    time_zero_date < date,
-    date <= end_fu_date
-  ) %>%
-  group_by(patient_id, brand, comparison) %>%
-  summarise(covidadmitted_date = min(date), .groups = "keep") %>%
-  ungroup()
 
 ################################################################################
 
@@ -292,12 +262,6 @@ data_comparisons <- data_comparison_arms %>%
                     .x < 35 ~ "Obese I (30-34.9)",
                     .x < 40 ~ "Obese II (35-39.9)",
                     TRUE ~ "Obese III (40+)"))) %>%
-  left_join(
-    data_postest,
-    by = c("patient_id", "brand", "comparison")) %>%
-  left_join(
-    data_covidadmitted,
-    by = c("patient_id", "brand", "comparison")) %>%
   mutate(across(
     all_of(ever_vars), 
      ~ case_when(
@@ -344,26 +308,10 @@ data_comparisons <- data_comparison_arms %>%
       efi <= 0.24 ~ "Mild",
       efi <= 0.36 ~ "Moderate",
       TRUE ~ "Severe"
-    ),
-    
-    # in case coviddeath_date and death_date different dates
-    coviddeath_date = if_else(
-      !is.na(coviddeath_date) & !is.na(death_date),
-      min(coviddeath_date, death_date),
-      coviddeath_date
-    ),
-    death_date = if_else(
-      !is.na(coviddeath_date) & !is.na(death_date),
-      min(coviddeath_date, death_date),
-      death_date
-    ),
-    
-    noncoviddeath_date = if_else(
-      !is.na(death_date) & is.na(coviddeath_date),
-      death_date, 
-      as.Date(NA_character_)),
+    )
     
   ) %>%
+  # select(get rid of unused variables to save space) %>%
   droplevels()
 
 readr::write_rds(

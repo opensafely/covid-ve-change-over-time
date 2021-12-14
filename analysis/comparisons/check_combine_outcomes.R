@@ -1,5 +1,5 @@
 library(tidyverse)
-library(survival)
+library(glue)
 
 ## import command-line arguments ----
 args <- commandArgs(trailingOnly=TRUE)
@@ -14,13 +14,12 @@ if(length(args)==0){
   group <- args[[1]]
 }
 
-data_comparisons <- readr::read_rds(
-  here::here("output", glue("jcvi_group_{group}"), "data", "data_comparisons.rds")) %>%
-  # run distinct as two lines for some unvaxxed 
-  distinct(patient_id, .keep_all = TRUE)
+# read data
+data_outcomes <- readr::read_rds(
+  here::here("output", glue("jcvi_group_{group}"), "data", "data_outcomes.rds")) 
 
 # distribution of days between outcome events
-plot_check <- data_comparisons %>%
+plot_check <- data_outcomes %>%
   transmute(
     postest_covidadmitted = as.integer(covidadmitted_date - postest_date),
     postest_coviddeath = as.integer(coviddeath_date - postest_date),
@@ -35,18 +34,21 @@ plot_check <- data_comparisons %>%
   group_by(name) %>%
   mutate(mean = mean(value)) %>%
   ungroup() %>%
-  ggplot(aes(x = value, y = ..density.., colour = name)) +
+  ggplot(aes(x = value, colour = name)) +
   geom_freqpoly() +
   geom_vline(aes(xintercept = mean, colour = name), linetype = "dashed") +
-  labs(x = "days between events") +
-  scale_color_discrete(name = "events")
+  labs(x = "days between events",
+       caption = "Means are represented by dashed vertical lines.") +
+  scale_color_discrete(name = "events") +
+  coord_cartesian(ylim = c(5, NA))
 
 ggsave(plot_check,
        filename = here::here("output", glue("jcvi_group_{group}"), "images", "check_combine_outcomes.png"),
        width=14, height=12, units="cm")
 
 # how many have each combination of covid outcomes?
-data_check <- data_comparisons %>%
+# note that this is across all comparisons
+data_check <- data_outcomes %>%
   select(patient_id, postest_date, covidadmitted_date, coviddeath_date) %>%
   mutate(across(-patient_id, ~!is.na(.x))) %>%
   group_by(postest_date, covidadmitted_date, coviddeath_date) %>% 

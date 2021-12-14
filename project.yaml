@@ -132,12 +132,20 @@ actions:
     needs: [design, data_vax_process, data_2nd_vax_dates, data_eligible_cd, generate_study_population_covs, data_long_process]
     outputs:
       highly_sensitive:
-        dummy_data_vax: output/jcvi_group_*/data/data_comparisons.rds
+        data_comparisons: output/jcvi_group_*/data/data_comparisons.rds
+
+  # process outcomes data ----      
+  data_outcomes_process:
+    run: r:latest analysis/comparisons/data_outcomes_process.R 02
+    needs: [design, generate_study_population_covs, data_long_process, data_comparisons_process]
+    outputs:
+      highly_sensitive:
+        data_outcomes: output/jcvi_group_*/data/data_outcomes.rds
 
   # check gap between outcomes for combining ----      
   check_combine_outcomes:
     run: r:latest analysis/comparisons/check_combine_outcomes.R 02
-    needs: [data_comparisons_process]
+    needs: [data_outcomes_process]
     outputs:
       moderately_sensitive:
         plot_check_combine_outcomes: output/jcvi_group_*/images/check_combine_outcomes.png
