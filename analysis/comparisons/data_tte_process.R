@@ -1,9 +1,12 @@
+################################################################################
+
+# This script:
 
 
 ################################################################################
 
 library(tidyverse)
-library(survival)
+library(glue)
 
 ## import command-line arguments ----
 args <- commandArgs(trailingOnly=TRUE)
@@ -12,16 +15,21 @@ if(length(args)==0){
   # use for interactive testing
   removeobs <- FALSE
   group <- "02"
+  outcome <- "postest"
   
 } else{
   removeobs <- TRUE
   group <- args[[1]]
+  outcome <- args[[2]]
 }
 
-study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
+# study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
 
 data_comparisons <- readr::read_rds(
   here::here("output", glue("jcvi_group_{group}"), "data", "data_comparisons.rds"))
+
+data_outcomes <- readr::read_rds(
+  here::here("output", glue("jcvi_group_{group}"), "data", "data_outcomes.rds"))
 
 # combine outcomes 
 # TODO
@@ -38,134 +46,57 @@ for (b in unique(data_comparisons$brand)) {
   cat(rep("-",40), "\n")
   cat(glue("Brand = {b}:"), "\n")
   
-  outcomes <- c("postest", "covidadmitted", "coviddeath", "death")
-  
-  n_outcomes <- data_comparisons %>%
+  # derive data_tte  
+  data_tte <- data_comparisons %>%
     filter(brand %in% b) %>%
-    summarise(across(all_of(str_c(outcomes, "_date")),
-                     ~ sum(!is.na(.x)))) %>%
-    pivot_longer(cols = everything()) 
+    select(patient_id, comparison, arm, time_zero_date, end_fu_date) %>%
+    left_join(data_outcomes %>% 
+                select(patient_id, 
+                       starts_with(outcome), 
+                       dereg_date, noncoviddeath_date), 
+              by = "patient_id") %>%
+    mutate(across(c(starts_with(outcome),dereg_date, noncoviddeath_date),
+                  ~ if_else(
+                    !is.na(.x) & time_zero_date < .x & .x <= end_fu_date,
+                    .x,
+                    as.Date(NA_character_)
+                  ))) %>%
+    group_by(comparison) %>%
+    mutate(across(ends_with("date"),
+                  ~ as.integer(.x - min(time_zero_date)))) %>%
+    rename_at(vars(ends_with("_date")),
+              ~ str_remove(.x, "_date")) %>%
+    mutate(
+      tte = pmin(!! sym(outcome), dereg, noncoviddeath, end_fu, na.rm = TRUE),
+      status = if_else(
+        !is.na(!! sym(outcome)) & !! sym(outcome) == tte,
+        TRUE,
+        FALSE
+      )) %>%
+    ungroup() %>%
+    select(patient_id, arm, comparison, tstart = time_zero, tstop = tte, status) 
   
-  cat("Number of individuals with each outcome:", "\n")
-  n_outcomes %>% 
-    mutate(include = value > study_parameters$outcome_threshold) %>%
-    # round to nearest 10
-    mutate(across(value, ~round(.x,-1))) %>% 
-    rename(n=value) %>%
-    print()
+  counts <- data_tte %>%
+    group_by(comparison) %>%
+    summarise(
+      n_rows = n(),
+      n_events = sum(status)) %>%
+    ungroup() %>%
+    mutate(events_per_1000 = 100*n_events/n_rows)
   
+  # checks
+  cat(" \n")
+  cat("summary of data_tte:", "\n")
+  print(counts)
+  cat("\n", glue("memory usage = ", format(object.size(data_tte), units="MB", standard="SI", digits=3L)), "\n")
   
+  stopifnot("tstart should be  >= 0 in data_tte" = data_tte$tstart>=0)
+  stopifnot("tstop - tstart should be strictly > 0 in data_tte" = data_tte$tstop - data_tte$tstart > 0)
+  
+  readr::write_rds(
+    data_tte,
+    here::here("output", glue("jcvi_group_{group}"), "data", glue("data_tte_{b}_{outcome}.rds")),
+    compress = "gz")
   
 }
 
-
-
-
-
-
-
-
-
-
-outcomes <- c("postest", "covidadmitted", "coviddeath", "death")censor <- c("noncoviddeath", "dereg")
-
-
-dates <- seq(as.Date("2021-01-01"), as.Date("2021-12-31"), 1)
-
-test <- data_comparisons %>%
-  filter(comparison==1, brand == "BNT162b2") %>%
-  mutate(origin = min(time_zero_date)) %>%
-  mutate(
-    postest_date = sample(dates, size=nrow(.), replace=TRUE),
-    covidadmitted_date = sample(dates, size=nrow(.), replace=TRUE),
-    coviddeath_date = sample(dates, size=nrow(.), replace=TRUE),
-    death_date = sample(dates, size=nrow(.), replace=TRUE)) %>%
-  mutate(across(c(all_of(str_c(c(outcomes, censor), "_date"))),
-                ~ if_else(
-                  .x <= time_zero_date | .x > end_fu_date,
-                  NA_integer_,
-                  as.integer(.x - origin)))) %>%
-  mutate(across(c(time_zero_date, end_fu_date),
-                ~ as.integer(.x - origin))) 
-
-  mutate(across(c(time_zero_date, end_fu_date, 
-                  all_of(str_c(c(outcomes, censor), "_date"))),
-                ~ as.integer(.x - origin)))
-
-library(survival)
-test_tmerge <- as_tibble(
-  tmerge(
-    
-    data1 = test %>% select(patient_id),
-    data2 = test,
-    id = patient_id,
-    
-    tstart = time_zero_date,
-    tstop = end_fu_date,
-    
-    postest = event(postest_date),
-    covidadmitted = event(covidadmitted_date),
-    coviddeath = event(coviddeath_date),
-    death = event(death_date)
-    )
-  )
-
-
-tte <- function(.data, var_string) {
-  
-  name <- str_remove(var_string, "_date")
-  
-  .data %>% 
-    rename(temp = var_string) %>%
-    mutate(
-      !! glue("{name}_status") := case_when(
-        is.na(temp) ~ 0L,
-        time_zero_date < temp & temp <= end_fu_date ~ 1L,
-        TRUE ~ 0L),
-      !! glue("{name}_tte") := case_when(
-        is.na(temp) ~ as.integer(end_fu_date - origin),
-        time_zero_date < temp & temp <= end_fu_date ~ as.integer(temp - origin),
-        TRUE ~ as.integer(end_fu_date - origin))) %>%
-    select(-temp)
-
-  }
-
-data_tte <- data_covs %>%
-  select(patient_id, 
-         elig_date, region, brand, arm, time_zero_date, end_fu_date, comparison,
-         coviddeath_date, noncoviddeath_date, death_date, dereg_date) %>%
-  left_join(
-    readr::read_rds(
-      here::here("output", glue("jcvi_group_{group}"),  "data", "data_long_postest_dates.rds")
-      ) %>% 
-      select(patient_id, postest_date = date),
-    by = "patient_id"
-  ) %>%
-  left_join(
-    readr::read_rds(
-      here::here("output", glue("jcvi_group_{group}"),  "data", "data_long_covidadmitted_dates.rds")
-    ) %>% 
-      select(patient_id, covidadmitted_date = date),
-    by = "patient_id"
-  ) %>%
-  # derive origin for each brand and k
-  group_by(brand, comparison) %>%
-  mutate(origin = min(time_zero_date)) %>%
-  ungroup() %>%
-  # time to event for all outcomes and censoring events
-  tte("postest_date") %>%
-  tte("covidadmitted_date") %>%
-  tte("coviddeath_date") %>%
-  tte("death_date") %>%
-  tte("noncoviddeath_date") %>%
-  tte("dereg_date") %>%
-  # convert time_zero and end_fu to days since origin
-  mutate(
-    time_zero = as.integer(time_zero_date - origin),
-    end_fu = as.integer(end_fu_date - origin),
-    ) 
-
-readr::write_rds(
-  data_tte, 
-  here::here("output", glue("jcvi_group_{group}"),  "data", "data_tte.rds"), 
-  compress="gz")

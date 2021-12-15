@@ -1,8 +1,7 @@
-
-# # # # # # # # # # # # # # # # # # # # #
+################################################################################
 # This script:
 # creates metadata for aspects of the study design
-# # # # # # # # # # # # # # # # # # # # #
+################################################################################
 
 # Import libraries ----
 library(tidyverse)
@@ -14,6 +13,7 @@ print(Sys.getenv("OPENSAFELY_BACKEND"))
 # create output directories ----
 fs::dir_create(here::here("output", "lib"))
 
+################################################################################
 # create study_parameters ----
 study_parameters <-
   list(
@@ -48,6 +48,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
 readr::write_rds(study_parameters, here::here("output", "lib", "study_parameters.rds"))
 jsonlite::write_json(study_parameters, path = here::here("output", "lib", "study_parameters.json"), auto_unbox = TRUE, pretty=TRUE)
 
+################################################################################
 # create jcvi_groups ----
 jcvi_groups <- 
 tribble(
@@ -69,6 +70,7 @@ tribble(
 
 readr::write_csv(jcvi_groups, here::here("output", "lib", "jcvi_groups.csv"))
 
+################################################################################
 # create elig_dates ----
 # group elig_date if within 7 days of previous elig_date (within jcvi_group)
 elig_dates <-
@@ -117,7 +119,7 @@ tribble(
 
 readr::write_csv(elig_dates, here::here("output", "lib", "elig_dates.csv"))
 
-
+################################################################################
 # create regions ----
 regions <- tribble(
   ~region, ~ratio,
@@ -133,3 +135,23 @@ regions <- tribble(
 )
 
 readr::write_csv(regions, here::here("output", "lib", "regions.csv"))
+
+################################################################################
+# varlists for cox models
+
+clinical <- c(
+  "bmi", "heart_failure", "other_heart_disease", "dialysis",
+  "diabetes", "chronic_liver_disease", "current_copd",
+  "other_respiratory", "lung_cancer", "haematological_cancer",
+  "cancer_excl_lung_and_haem", "any_immunosuppression",
+  "dementia", "other_neuro_conditions", "ld_inc_ds_and_cp",
+  "psychosis_schiz_bipolar", "multimorb", "shielded", "flu_vaccine", "efi"
+)
+
+demographic <- c("age", "sex", "imd", "ethnicity")
+
+readr::write_rds(
+  list(demographic = demographic, clinical = clinical),
+  here::here("output", "lib", "model_varlist.rds")
+)
+

@@ -25,65 +25,6 @@ data_covs <- bind_rows(
   ) %>%
   mutate(across(contains("_date"), ~ as.Date(., format="%Y-%m-%d")))
   
-
-# ## Import data_comparisons ----
-# data_outcomes <- readr::read_rds(
-#   here::here("output", glue("jcvi_group_{group}"), "data", "data_covs.rds")) %>%
-#   distinct(patient_id) %>%
-#   left_join(
-#     arrow::read_feather(here::here("output", "input_covs.feather")) %>%
-#       select(patient_id, 
-#              matches(c("^positive\\_test\\_\\d+\\_date",
-#                        "^primary\\_care\\_covid_case\\_\\d+\\_date",
-#                        "^primary\\_care\\_suspected\\_covid\\_\\d+\\_date",
-#                        "^covidadmitted_\\d+\\_date",
-#                        "^admitted\\_unplanned\\_infectious\\_\\d+\\_date",
-#                        "^discharged\\_unplanned\\_infectious\\_\\d+\\_date",
-#                        "^admitted\\_unplanned\\_\\d+\\_date",
-#                        "^discharged\\_unplanned\\_\\d+\\_date")),
-#              coviddeath_date, death_date),
-#              by = "patient_id") %>%
-#   mutate(across(ends_with("date"), as.Date))
-
-# # check for covid admissions and deaths that are not accompanied by a positive test
-# covidadmission_check <- data_outcomes %>%
-#   filter(!is.na(covidadmitted_0_date)) %>%
-#   # check for positive test 28 days either side of hospital admission
-#   mutate(
-#     postest = case_when(
-#       is.na(positive_test_0_date) ~ FALSE,
-#       abs(as.integer(covidadmitted_0_date - positive_test_0_date)) > 28 ~ FALSE,
-#       TRUE ~ TRUE
-#     )
-#   ) %>% 
-#   group_by(postest) %>%
-#   count() %>%
-#   ungroup() %>%
-#   rename(n_covidasmission = n)
-# 
-# coviddeath_check <- data_outcomes %>%
-#   filter(!is.na(coviddeath_date)) %>%
-#   # check for positive test 28 days either side of hospital admission
-#   mutate(
-#     postest = case_when(
-#       is.na(coviddeath_date) ~ FALSE,
-#       as.integer(coviddeath_date - positive_test_0_date) > 28 ~ FALSE,
-#       TRUE ~ TRUE
-#     )
-#   ) %>% 
-#   group_by(postest) %>%
-#   count() %>%
-#   rename(n_coviddeath = n)
-# 
-# combine_outcomes_check <- full_join(
-#   covidadmission_check, coviddeath_check, 
-#   by = "postest") %>%
-#   mutate(across(starts_with("n_"),
-#                 ~round(.x, -1)))
-# 
-# readr::write_csv()
-
-  
 ## create one-row-per-event datasets ----
 # for positive test, hospitalisation/discharge, covid in primary care, death
 ###############################################################################

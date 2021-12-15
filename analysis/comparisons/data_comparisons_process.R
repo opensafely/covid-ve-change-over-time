@@ -25,9 +25,14 @@ if(length(args)==0){
 fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "data"))
 fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "tables"))
 fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "images"))
+fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "models"))
 
 # import functions ----
 source(here::here("analysis", "lib", "data_process_functions.R"))
+
+model_varlist <- readr::read_rds(
+  here::here("output", "lib", "model_varlist.rds")
+)
 
 # import data ----
 study_parameters <- readr::read_rds(
@@ -128,9 +133,9 @@ comparison_arms <- function(
 data_comparison_arms <- bind_rows(lapply(
   1:study_parameters$n_comparisons,
   function(x)
-    comparison_arms(k=x) 
-)) %>%
-  mutate(across(arm, factor, levels = c("unvax", "vax")))
+    comparison_arms(k=x))) %>%
+  mutate(across(arm, factor, levels = c("vax", "unvax")))  %>%
+  mutate(across(comparison, factor))
 
 ################################################################################
 # read long datasets from recurring variables ----
@@ -139,7 +144,7 @@ data_comparison_arms <- bind_rows(lapply(
 data_imd <- input_covs %>%
   select(patient_id, starts_with("imd")) %>%
   pivot_longer(cols = -patient_id) %>%
-  mutate(comparison = as.integer(str_extract(name, "\\d+"))) %>%
+  mutate(comparison = factor(as.integer(str_extract(name, "\\d+")))) %>%
   select(patient_id, comparison, imd = value)
 
 # shielded (index is time_zero)
@@ -274,7 +279,7 @@ data_comparisons <- data_comparison_arms %>%
     ) %>%
   mutate(
     
-    age = as.numeric(time_zero_date - dob),
+    age = as.numeric(time_zero_date - dob)/365.25,
     
     any_immunosuppression = (permanant_immunosuppression | 
                                asplenia | 
@@ -311,7 +316,12 @@ data_comparisons <- data_comparison_arms %>%
     )
     
   ) %>%
-  # select(get rid of unused variables to save space) %>%
+  select(
+   patient_id, elig_date, region, ethnicity, brand, arm, 
+   time_zero_date, end_fu_date, comparison,
+   dob, 
+   unname(unlist(model_varlist))
+  ) %>%
   droplevels()
 
 readr::write_rds(
