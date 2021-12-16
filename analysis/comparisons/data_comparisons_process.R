@@ -23,8 +23,6 @@ if(length(args)==0){
 
 ## create output directories ----
 fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "data"))
-fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "tables"))
-fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "images"))
 fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "models"))
 
 # import functions ----
@@ -252,6 +250,7 @@ data_comparisons <- data_comparison_arms %>%
   left_join(
     data_imd, 
     by = c("patient_id", "comparison")) %>%
+  mutate(across(imd, factor)) %>%
   left_join(
     data_shielded, 
     by = c("patient_id", "brand", "comparison")) %>%
@@ -307,6 +306,8 @@ data_comparisons <- data_comparison_arms %>%
       breaks = c(0, 1, 2, 3, 4, Inf),
       labels=c("0", "1", "2", "3", "4+"), 
       right=FALSE),
+    
+    flu_vaccine = flu_vaccine == 1,
     
     efi = fct_case_when(
       is.na(efi) | (efi <= 0.12) ~ "None",

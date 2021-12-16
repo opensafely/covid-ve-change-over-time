@@ -1,5 +1,9 @@
 study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
 
+
+fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "tables"))
+fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "images"))
+
 formatpercent100 <- function(x,accuracy){
   formatx <- scales::label_percent(accuracy)(x)
   
@@ -44,7 +48,7 @@ bind_rows(
   facet_wrap(~outcome) +
   scale_y_log10(
     breaks = c(0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5),
-    limits = c(0.05, 1),#max(c(1, msmmod_effect_data_plot$hr.ul))),
+    limits = c(0.05, max(1, (plot_data$upper))),
     oob = scales::oob_keep,
     sec.axis = sec_axis(
       ~(1-.),

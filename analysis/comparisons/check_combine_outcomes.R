@@ -14,6 +14,9 @@ if(length(args)==0){
   group <- args[[1]]
 }
 
+fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "tables"))
+fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "images"))
+
 # read data
 data_outcomes <- readr::read_rds(
   here::here("output", glue("jcvi_group_{group}"), "data", "data_outcomes.rds")) 

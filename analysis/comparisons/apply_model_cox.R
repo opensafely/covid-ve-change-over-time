@@ -5,8 +5,7 @@
 
 ################################################################################
 library(tidyverse)
-library(survival)
-
+library(glue)
 ## import command-line arguments ----
 args <- commandArgs(trailingOnly=TRUE)
 
@@ -73,15 +72,25 @@ for (b in unique(data_comparisons$brand)) {
       model_name = fct_recode(as.character(model), !!!model_names),
       outcome = outcome
     )
-  write_csv(model_glance, here::here("output", "models", outcome, timescale, censor_seconddose, glue("modelcox_glance.csv")))
-
+  
+  readr::write_csv(
+    model_glance,
+    here::here("output", glue("jcvi_group_{group}"), "models", glue("{b}_{outcome}_modelcox_glance.csv"))) 
+  
   model_tidy <- bind_rows(summary0$tidy, summary1$tidy, summary2$tidy) %>%
     mutate(
       model_name = fct_recode(as.character(model), !!!model_names),
       outcome = outcome
     )
-  write_csv(model_tidy, here::here("output", "models", outcome, timescale, censor_seconddose, glue("modelcox_tidy.csv")))
-  write_rds(model_tidy, here::here("output", "models", outcome, timescale, censor_seconddose, glue("modelcox_tidy.rds")))
+  
+  readr::write_rds(
+    model_tidy,
+    here::here("output", glue("jcvi_group_{group}"), "models", glue("{b}_{outcome}_modelcox_tidy.rds")), 
+    compress="gz")
+  readr::write_csv(
+    model_tidy,
+    here::here("output", glue("jcvi_group_{group}"), "models", glue("{b}_{outcome}_modelcox_tidy.csv")))
+  
 
 }
 
