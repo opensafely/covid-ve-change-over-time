@@ -12,7 +12,7 @@ import pandas as pd
 # import the vairables for deriving JCVI groups
 from grouping_variables import (
     seed,
-    n_comparisons,
+    max_comparisons,
     jcvi_variables, 
     start_date,
     end_date,
@@ -101,7 +101,7 @@ study=StudyDefinition(
         longres_primis,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -110,8 +110,8 @@ study=StudyDefinition(
         },
     ),
 
-    **imd_k(n_comparisons),
-    **region_k(n_comparisons),
+    **imd_k(max_comparisons),
+    **region_k(max_comparisons),
 
     # # ##########################
     # # ### CLINICAL VARIABLES ###
@@ -122,7 +122,7 @@ study=StudyDefinition(
     **most_recent_bmi_X(
         name="bmi",
         n=study_parameters["recur_bmi"],
-        index_date=f"end_1_date + {n_comparisons*28} days",
+        index_date=f"end_1_date + {max_comparisons*28} days",
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
             "float": {"distribution": "normal", "mean": 28, "stddev": 8},
@@ -135,7 +135,7 @@ study=StudyDefinition(
         chronic_cardiac_disease_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -149,7 +149,7 @@ study=StudyDefinition(
         heart_failure_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -163,7 +163,7 @@ study=StudyDefinition(
         other_heart_disease_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -177,7 +177,7 @@ study=StudyDefinition(
         diabetes_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -191,7 +191,7 @@ study=StudyDefinition(
         dialysis_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -205,7 +205,7 @@ study=StudyDefinition(
         chronic_liver_disease_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -219,7 +219,7 @@ study=StudyDefinition(
         current_copd_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -233,7 +233,7 @@ study=StudyDefinition(
         learning_disability_including_downs_syndrome_and_cerebral_palsy_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -247,7 +247,7 @@ study=StudyDefinition(
         cystic_fibrosis_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -261,7 +261,7 @@ study=StudyDefinition(
         other_respiratory_conditions_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -275,7 +275,7 @@ study=StudyDefinition(
         lung_cancer_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -289,7 +289,7 @@ study=StudyDefinition(
         haematological_cancer_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -303,7 +303,7 @@ study=StudyDefinition(
         cancer_excluding_lung_and_haematological_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -317,7 +317,7 @@ study=StudyDefinition(
         chemotherapy_or_radiotherapy_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -331,7 +331,7 @@ study=StudyDefinition(
         solid_organ_transplantation_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -345,7 +345,7 @@ study=StudyDefinition(
         bone_marrow_transplant_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -359,7 +359,7 @@ study=StudyDefinition(
         sickle_cell_disease_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -373,7 +373,7 @@ study=StudyDefinition(
         permanent_immunosuppression_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -387,7 +387,7 @@ study=StudyDefinition(
         temporary_immunosuppression_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -401,7 +401,7 @@ study=StudyDefinition(
         asplenia_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -415,7 +415,7 @@ study=StudyDefinition(
         dmards_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -429,7 +429,7 @@ study=StudyDefinition(
         dementia_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -443,7 +443,7 @@ study=StudyDefinition(
         other_neuro_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -457,7 +457,7 @@ study=StudyDefinition(
         psychosis_schizophrenia_bipolar_affective_disease_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -471,7 +471,7 @@ study=StudyDefinition(
         eol_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -485,7 +485,7 @@ study=StudyDefinition(
         midazolam_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -595,7 +595,7 @@ study=StudyDefinition(
         test_result="positive",
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         restrict_to_earliest_specimen_date=False,
         return_expectations={
@@ -613,7 +613,7 @@ study=StudyDefinition(
         covid_primary_care_probable_combined,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -627,7 +627,7 @@ study=StudyDefinition(
         primary_care_suspected_covid_combined,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -657,7 +657,7 @@ study=StudyDefinition(
     
     discharged_unplanned_0_date=patients.admitted_to_hospital(
         returning="date_discharged",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
         with_patient_classification = ["1"],
@@ -676,7 +676,7 @@ study=StudyDefinition(
     # unplanned infectious hospital admission
     admitted_unplanned_infectious_0_date=patients.admitted_to_hospital(
         returning="date_admitted",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
         with_patient_classification = ["1"],
@@ -701,7 +701,7 @@ study=StudyDefinition(
    
     discharged_unplanned_infectious_0_date=patients.admitted_to_hospital(
         returning="date_discharged",
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         with_admission_method=["21", "22", "23", "24", "25", "2A", "2B", "2C", "2D", "28"],
         with_patient_classification = ["1"],
@@ -723,7 +723,7 @@ study=StudyDefinition(
     covidadmitted_0_date=patients.admitted_to_hospital(
         returning="date_admitted",
         with_these_diagnoses=covid_codes,
-        on_or_before=f"end_1_date + {n_comparisons*28} days",
+        on_or_before=f"end_1_date + {max_comparisons*28} days",
         find_first_match_in_period=True,
         date_format="YYYY-MM-DD",
         return_expectations={
