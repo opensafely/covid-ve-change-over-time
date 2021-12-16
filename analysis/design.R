@@ -19,7 +19,7 @@ study_parameters <-
   list(
     seed = 123456L,
     n = 100000L, # number of individuals in dummy data
-    n_comparisons = 3L, # the number of comparisons for each sequence
+    max_comparisons = 8L, # the number of comparisons for each sequence
     n_threshold = integer(), # the number of individuals with a second dose in the second vaccination period for a given jcvi_group and brand to include comparison
     recur_bmi = 10L, # number of times the bmi variable recurs
     recur_shielded = 10L, # number of times the shielded and nonshieded variables recur
@@ -33,7 +33,7 @@ study_parameters <-
     start_date_pfizer = "2020-12-08",
     start_date_az = "2021-01-04",
     start_date_moderna = "2021-03-04",
-    end_date = "2021-09-15" # last date of available vaccination data. NEED TO ALSO CHECK END DATES FOR OTHER DATA SOURCES
+    end_date = "2021-11-30" # need to make sure that vaccine and outcome data are available up until this date
   ) 
 
 # use lower thresholds if not running in the server
