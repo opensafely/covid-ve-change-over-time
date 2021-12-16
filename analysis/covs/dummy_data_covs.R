@@ -19,9 +19,12 @@ end_dates <- readr::read_csv(here::here("output", "lib", "end_dates.csv"))
 
 translate_to_R <- function(.data) {
   .data %>%
+    # add the quotations round elig_date (these weren't needed study_definition_covs.py)
     mutate(across(condition, ~ str_replace_all(.x, "elig_date = ", "elig_date ==\'"))) %>%
-    mutate(across(condition, ~ str_replace_all(.x, "region_0 = ", "region_0 =="))) %>%
-    mutate(across(condition, ~ str_replace_all(.x, " AND", "\' &"))) %>%
+    mutate(across(condition, ~ str_replace_all(.x, " AND region", "\' & region"))) %>%
+    # replace other symbols
+    mutate(across(condition, ~ str_replace_all(.x, "= ", "=="))) %>%
+    mutate(across(condition, ~ str_replace_all(.x, "AND", "&"))) %>%
     mutate(across(condition, ~ str_replace_all(.x, "OR", "|"))) %>%
     mutate(across(condition, ~ str_replace(.x, "DEFAULT", "TRUE"))) 
 }
