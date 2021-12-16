@@ -9,7 +9,7 @@ set.seed(study_parameters$seed)
 
 n <- study_parameters$n
 
-K <- study_parameters$n_comparisons
+K <- study_parameters$max_comparisons
 
 start_date <- study_parameters$start_date
 
