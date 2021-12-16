@@ -139,7 +139,17 @@ second_vax_period_dates <- data_vax_plot %>%
             .groups = "keep") %>%
   ungroup() %>%
   distinct(jcvi_group, brand, elig_date, region_0, 
-           start_of_period, end_of_period, cumulative_sum)
+           start_of_period, end_of_period, cumulative_sum) %>%
+  mutate(
+    include = cumulative_sum > study_parameters$n_threshold
+    ) %>%
+  mutate(
+    # time between start of first comparison and last date of available data
+    days_of_data = as.integer(as.Date(study_parameters$end_date) - start_of_period) + 14,
+    # set n_comparisons based on days of available data
+    n_comparisons = pmin(floor(days_of_data/28) - 1, study_parameters$max_comparisons)
+    ) %>%
+  select(-days_of_data)
 
 # save for plotting
 readr::write_rds(
@@ -154,7 +164,7 @@ readr::write_csv(
 # comparison dates for passing to study_definition_covs
 comparison_dates <- second_vax_period_dates %>%
   # only keep if more than n_threshold individuals vaccinated in the jcvi_group:elig_date:region:brand period
-  filter(cumulative_sum > study_parameters$n_threshold) %>%
+  filter(include) %>%
   # min start date / max end date for each elig_date/region, because cannot condition on vaccine brand in study_definition_covs
   group_by(jcvi_group, elig_date, region_0, brand) %>%
   summarise(start_1_date = min(start_of_period) + days(14), 

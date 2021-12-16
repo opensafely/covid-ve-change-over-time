@@ -21,26 +21,16 @@ if(length(args)==0){
   group <- args[[1]]
 }
 
-study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
-
-# outcome data after the start of comparison 1 
-# (for unvax with 2 brands, use min start date)
-# as this is the earliest possible date that we will look for outcome events
-data_in <- readr::read_rds(
+# get all ids
+data_ids <- readr::read_rds(
   here::here("output", glue("jcvi_group_{group}"), "data", "data_comparisons.rds")) %>%
-  filter(comparison == 1) %>%
-  distinct(patient_id, time_zero_date, end_fu_date) %>%
-  mutate(end_fu_date = end_fu_date + (study_parameters$n_comparisons-1)*28) %>%
-  # keep only the earliest date for each individual
   arrange(patient_id, time_zero_date) %>%
-  distinct(patient_id, .keep_all = TRUE) %>%
-  select(patient_id, 
-         earliest_date = time_zero_date,
-         latest_date = end_fu_date)
+  select(patient_id, time_zero_date) %>%
+  distinct(patient_id, .keep_all = TRUE)
 
 ################################################################################
 ## join outcomes data
-data_outcomes <- data_in %>%
+data_outcomes <- data_ids %>%
   left_join(
     readr::read_rds(here::here("output", "data", "data_long_postest_dates.rds")) %>%
       select(patient_id, postest_date = date),
@@ -72,12 +62,11 @@ data_outcomes <- data_in %>%
       death_date, 
       as.Date(NA_character_))
   ) %>%
+  # discard all data before the earliest time zero for each individual
   mutate(across(c(postest_date, covidadmitted_date, coviddeath_date, death_date, noncoviddeath_date),
-                ~ if_else(!is.na(.x) & earliest_date < .x & .x <= latest_date,
+                ~ if_else(!is.na(.x) & time_zero_date < .x,
                           .x,
-                          as.Date(NA_character_)))) %>%
-  select(-earliest_date, -latest_date)
-  
+                          as.Date(NA_character_)))) 
 
 readr::write_rds(
   data_outcomes,
