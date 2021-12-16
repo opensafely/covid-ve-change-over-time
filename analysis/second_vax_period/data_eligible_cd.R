@@ -27,9 +27,9 @@ data_vax_wide <- readr::read_rds(
   here::here("output", "data", "data_wide_vax_dates.rds"))
 
 # read second vax period dates and filter to brands with enough individuals
-second_vax_period_dates <- readr::read_csv(
-  here::here("output", "lib", "second_vax_period_dates.csv")) %>%
-  filter(n_in_period > study_parameters$n_threshold)
+second_vax_period_dates <- readr::read_rds(
+  here::here("output", "lib", "second_vax_period_dates.rds")) %>%
+  filter(include)
 
 ################################################################################
 # apply eligibility criteria in box c ----
@@ -37,17 +37,17 @@ data_eligible_c <- data_eligible_b %>%
   left_join(data_vax_wide, 
             by = "patient_id") %>%
   mutate(brand = case_when(covid_vax_2_brand %in% "pfizer" ~ "BNT162b2",
-                           covid_vax_2_brand %in% "az" ~ "BNT162b2",
+                           covid_vax_2_brand %in% "az" ~ "ChAdOx",
                            TRUE ~ NA_character_)) %>%
   select(-ends_with("_brand")) %>%
-  left_join(second_vax_period_dates, 
+  # right join to keep only the jcvi_group:elig_date:region_0:brands
+  # with > n_threshold individuals vaccinated during the period
+  right_join(second_vax_period_dates, 
             by = c("jcvi_group", "elig_date", "region_0", "brand")) %>%
   filter(
     # second dose during second vax period
     start_of_period <= covid_vax_2_date,
-    covid_vax_2_date <= end_of_period,
-    # enough individuals in second vax period for a given elig_date and brand to include comparison (i.e. summed over regions)
-    n_in_period >= 100) %>%
+    covid_vax_2_date <= end_of_period) %>%
   select(patient_id, jcvi_group, elig_date, region_0, ethnicity, 
          covid_vax_2_date, covid_vax_3_date, brand, 
          start_of_period, end_of_period) %>%
@@ -61,12 +61,20 @@ readr::write_rds(
 ################################################################################
 # apply eligibility criteria in box d ----
 data_eligible_d <- data_eligible_a %>%
+  # randomly split the unvax 50:50 
+  # one group for odd comparisons, one for even
+  # so that no overlap in follow-up time across comparisons
+  mutate(split = factor(
+    rbernoulli(nrow(.), p=0.5), 
+    labels = c("odd", "even"))) %>%
   left_join(data_vax_wide %>%
               select(-ends_with("_brand")),
             by = "patient_id") %>%
+  # right join to keep only the jcvi_group:elig_date:region_0:brands
+  # with > n_threshold individuals vaccinated during the period
   # creates 1 row per brand, so some individuals in the unvax arm will have 2 rows 
-  left_join(second_vax_period_dates, 
-            by = c("jcvi_group", "elig_date", "region_0")) %>%
+  right_join(second_vax_period_dates, 
+             by = c("jcvi_group", "elig_date", "region_0")) %>%
   # remove individuals who had received any vaccination before the start of the second vax period
   filter(
     is.na(covid_vax_1_date) | covid_vax_1_date >= start_of_period
