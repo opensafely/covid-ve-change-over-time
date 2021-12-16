@@ -13,7 +13,11 @@ library(lubridate)
 images_dir <- here::here("output", "second_vax_period", "images")
 dir.create(images_dir, showWarnings = FALSE, recursive=TRUE)
 
-data_ma <- readr::read_rds(here::here("output", "second_vax_period", "data", "data_ma.rds"))
+data_vax_plot <- readr::read_rds(
+  here::here("output", "second_vax_period", "data", "data_vax_plot.rds"))
+
+second_vax_period_dates <- readr::read_rds(
+  here::here("output", "lib", "second_vax_period_dates.rds"))
 
 # elig_dates info for plot titles
 group_age_ranges <- readr::read_csv(
@@ -54,29 +58,31 @@ plot_2nd_vax_dates_fun <- function(
     geom_bar(data = data %>% filter(brand == "BNT162b2"), 
              aes(y = n, fill = "BNT162b2"), 
              stat = "identity", alpha = 0.5, width = 1) +
-    # line for 7-day moving average for each brand
-    geom_line(data = data %>% filter(brand == "ChAdOx") %>% filter(!is.na(moving_average)), 
-              aes(y = moving_average, colour = "ChAdOx")) +
-    geom_line(data = data %>% filter(brand == "BNT162b2") %>% filter(!is.na(moving_average)),  
-              aes(y = moving_average, colour = "BNT162b2")) +
-    # horizontal lines show the threshold above which the moving average must be fo the second vaccination period
-    geom_hline(data = data %>% filter(brand == "ChAdOx"), 
-               aes(yintercept = threshold, colour = "ChAdOx"), 
+    # vertical lines to show start and end of second vax period
+    geom_vline(data = data %>% filter(brand == "ChAdOx"), 
+               aes(xintercept = start_of_period, colour = "ChAdOx"),
                linetype = "dashed") +
-    geom_hline(data = data %>% filter(brand == "BNT162b2"), 
-               aes(yintercept = threshold, colour = "BNT162b2"), 
+    geom_vline(data = data %>% filter(brand == "ChAdOx"), 
+               aes(xintercept = end_of_period, colour = "ChAdOx"),
+               linetype = "dashed") +
+    geom_vline(data = data %>% filter(brand == "BNT162b2"), 
+               aes(xintercept = start_of_period, colour = "BNT162b2"),
+               linetype = "dashed") +
+    geom_vline(data = data %>% filter(brand == "BNT162b2"), 
+               aes(xintercept = end_of_period, colour = "BNT162b2"),
                linetype = "dashed") +
     # facet by region
     facet_wrap(~ region_0, scales = "free_y") +
     scale_x_continuous(breaks = x_breaks,
                        labels = sapply(x_breaks, function(x) str_c(day(x), " ", month(x, label=TRUE)))) +
     scale_y_continuous(expand = expansion(mult = c(0,.05))) +
-    scale_fill_discrete(guide = "none") +
-    scale_colour_discrete(name = "brand") +
-    labs(x = "date of second vaccination", y = "number of patients",
+    scale_fill_discrete(name = "brand") +
+    scale_colour_discrete(name = "start and end of 28-day second vaccination period") +
+    labs(x = "date of second vaccination", y = "number of individuals",
          title = title_string, subtitle = subtitle_string) +
     theme_bw(base_size = 10) +
     theme(legend.position = "bottom",
+          legend.box="vertical",
           axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0)),
           axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
           axis.text.x = element_text(size = 6),
@@ -96,7 +102,11 @@ plot_2nd_vax_dates_fun <- function(
 }
 
 # generate and save plots
-lapply(data_ma %>% group_split(jcvi_group, elig_date),
+lapply(
+  data_vax_plot %>%
+    left_join(second_vax_period_dates, 
+              by = c("region_0", "brand", "jcvi_group", "elig_date")) %>% 
+    group_split(jcvi_group, elig_date),
        function(x)
          try(plot_2nd_vax_dates_fun(data = x)))
 

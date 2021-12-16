@@ -103,73 +103,65 @@ data_vax_plot <- bind_rows(
                         levels = c("az", "pfizer"),
                         labels = c("ChAdOx", "BNT162b2")))) 
 
-thresholds <- data_vax_plot %>%
-  group_by(jcvi_group, elig_date, region_0, brand) %>%
-  summarise(n = sum(n), .groups = "keep") %>%
-  ungroup() %>%
-  # threshold is 1% of the total number of individuals vaccinated in [+6wks, +20wks) 
-  # start date is the first date that the 7-day average goes above this 1% threshold
-  mutate(threshold = n/100) %>%
-  select(-n)
-
-# number of days in moving average
-l <- 7 
-
-# calculate moving averages for defining second vaccination periods and plotting
-data_ma <- data_vax_plot %>%
-  # calculate moving average number of individuals vaccinated for each elig_date:region_0:brand
-  group_by(jcvi_group, elig_date, region_0, brand) %>%
-  mutate(moving_average = stats::filter(
-    x = n,
-    filter = rep(1/l, l),
-    method = "convolution",
-    sides = 2)) %>% # centred at day 4
-  ungroup() %>%
-  left_join(thresholds, by = c("jcvi_group", "elig_date", "region_0", "brand")) 
-
-readr::write_rds(data_ma,
-                 here::here("output", "second_vax_period", "data", "data_ma.rds"),
+readr::write_rds(data_vax_plot,
+                 here::here("output", "second_vax_period", "data", "data_vax_plot.rds"),
                  compress = "gz")
 
 # second vaccination periods
-second_vax_period_dates <- data_ma %>%
-  # dates on which number of individuals vaccinated above threshold
-  mutate(
-    dose_2_above_threshold = if_else(
-      moving_average > threshold,
-      dose_2,
-      NA_Date_
-    )) %>%
+# number of days in cumulative sum
+l <- 28 
+second_vax_period_dates <- data_vax_plot %>%
+  # calculate moving average number of individuals vaccinated for each elig_date:region_0:brand
   group_by(jcvi_group, elig_date, region_0, brand) %>%
+  arrange(dose_2, .by_group = TRUE) %>%
   mutate(
-    # start the first date above threshold
-    start_of_period = min(dose_2_above_threshold, na.rm = TRUE),
-    # end the last date above threshold
-    end_of_period = max(dose_2_above_threshold, na.rm = TRUE)
-  ) %>%
-  # only keep dates in period
-  filter(dose_2 >= start_of_period, dose_2 <= end_of_period) %>%
-  # count number of individuals vaccinated during period
-  mutate(n_in_period = sum(n)) %>%
+    
+    cumulative_sum = stats::filter(
+      x = n,
+      filter = rep(1, l),
+      method = "convolution",
+      sides = 1),
+    
+    end_of_period = if_else(
+      cumulative_sum == max(cumulative_sum, na.rm = TRUE),
+      dose_2,
+      as.Date(NA_character_)),
+    
+    start_of_period = end_of_period - days(27)
+    
+  ) %>% 
+  # only keep rows where cumulative_sum == max(cumulative_sum, na.rm = TRUE)
+  filter(!is.na(end_of_period)) %>%
+  # in case there are multiple dates with max(cumulative_sum),
+  # take the first date with max(cumulative_sum)
+  summarise(across(c(cumulative_sum, end_of_period, start_of_period), 
+                   min, na.rm = TRUE),
+            .groups = "keep") %>%
   ungroup() %>%
-  # round to the closest 10 (so no need to redact, and reduce risk of secondary disclosure)
-  mutate(across(n_in_period, ~ round(.x, -1))) %>%
-  distinct(jcvi_group, elig_date, region_0, brand, start_of_period, end_of_period, n_in_period)
-# save a version to review and release
-readr::write_csv(second_vax_period_dates,
-                 here::here("output", "lib", "second_vax_period_dates.csv"))
+  distinct(jcvi_group, brand, elig_date, region_0, 
+           start_of_period, end_of_period, cumulative_sum)
+
+# save for plotting
+readr::write_rds(
+  second_vax_period_dates,
+  here::here("output", "lib", "second_vax_period_dates.rds"),
+  compress = "gz")
+# save to review and release, with cumulative sum rounded to nearest 10
+readr::write_csv(
+  second_vax_period_dates %>% mutate(across(cumulative_sum, ~ round(.x, -1))),
+  here::here("output", "lib", "second_vax_period_dates.csv"))
 
 # comparison dates for passing to study_definition_covs
 comparison_dates <- second_vax_period_dates %>%
-  # only keep if more than n_threshold individuals vaccinated with that brand in the second vaccination period
-  filter(n_in_period > study_parameters$n_threshold) %>%
+  # only keep if more than n_threshold individuals vaccinated in the jcvi_group:elig_date:region:brand period
+  filter(cumulative_sum > study_parameters$n_threshold) %>%
   # min start date / max end date for each elig_date/region, because cannot condition on vaccine brand in study_definition_covs
-  group_by(elig_date, region_0, brand) %>%
+  group_by(jcvi_group, elig_date, region_0, brand) %>%
   summarise(start_1_date = min(start_of_period) + days(14), 
             end_1_date = max(end_of_period) + days(14), 
             .groups = "keep") %>%
   ungroup() %>%
-  mutate(condition = as.character(glue("(elig_date = {elig_date} AND region_0 = '{region_0}')"))) %>%
+  mutate(condition = as.character(glue("(jcvi_group = '{jcvi_group}' AND elig_date = {elig_date} AND region_0 = '{region_0}')"))) %>%
   select(start_1_date, end_1_date, condition) %>%
   add_row(start_1_date = as.Date("2100-01-01"), 
           end_1_date = as.Date("2100-12-31"), 
