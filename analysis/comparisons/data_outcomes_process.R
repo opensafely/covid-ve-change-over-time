@@ -1,8 +1,10 @@
 ################################################################################
 
 # This script:
-
-
+# read ids and earliest time_zero from all eligible individuals
+# create data_outcomes: one-row-per-individual of outcome data occurring after the
+# earliest time zero
+# save data_outcomes
 ################################################################################
 
 library(tidyverse)
@@ -21,9 +23,12 @@ if(length(args)==0){
   group <- args[[1]]
 }
 
-# get all ids
+# read comparisons data
 data_ids <- readr::read_rds(
   here::here("output", glue("jcvi_group_{group}"), "data", "data_comparisons.rds")) %>%
+  # only keep patient_id and earliest time_zero
+  # Don't just filter to comparison 1, as unvax arm has two rows per comparison,
+  # one for each brand. Just keep the ealiest.
   arrange(patient_id, time_zero_date) %>%
   select(patient_id, time_zero_date) %>%
   distinct(patient_id, .keep_all = TRUE)
@@ -68,6 +73,7 @@ data_outcomes <- data_ids %>%
                           .x,
                           as.Date(NA_character_)))) 
 
+# save outcomes data
 readr::write_rds(
   data_outcomes,
   here::here("output", glue("jcvi_group_{group}"), "data", "data_outcomes.rds"),
