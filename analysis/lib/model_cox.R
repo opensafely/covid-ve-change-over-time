@@ -73,15 +73,17 @@ cox_model <- function(
   
   cat(glue("...... fitting model {number} ......"), "\n")
   cat(glue("{model_name}"), "\n")
-  tic("time to fit model")
-  coxmod <- coxph(
-    formula = formula_cox,
-    data = data_cox,
-    robust = TRUE,
-    id = patient_id,
-    na.action = "na.fail",
-    control = opt_control)
-  toc()
+  # tic("time to fit model")
+  timetofit <- (
+    coxmod <- coxph(
+      formula = formula_cox,
+      data = data_cox,
+      robust = TRUE,
+      id = patient_id,
+      na.action = "na.fail",
+      control = opt_control)
+  )
+  # toc()
   
   
   # print(warnings())
@@ -109,7 +111,11 @@ cox_model <- function(
       ram = format(object.size(coxmod), units="GB", standard="SI", digits=3L),
       .before = 1
     ) %>%
-    mutate(across(model, factor, levels = names(model_names), labels = model_names))
+    mutate(across(
+      model,
+      factor, levels = names(model_names), labels = model_names)) %>%
+    # add output of system.time
+    bind_rows(as_tibble(t(as.matrix(timetofit))))
   
   coxmod$data <- NULL
   
