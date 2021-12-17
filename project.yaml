@@ -148,6 +148,8 @@ actions:
     run: r:latest analysis/comparisons/check_combine_outcomes.R 02
     needs: [data_outcomes_process]
     outputs:
+      highly_sensitive:
+        data_check_combine_outcomes: output/jcvi_group_*/images/check_combine_outcomes.rds
       moderately_sensitive:
         plot_check_combine_outcomes: output/jcvi_group_*/images/check_combine_outcomes.png
         table_check_combine_outcomes: output/jcvi_group_*/tables/check_combine_outcomes.csv
@@ -166,7 +168,7 @@ actions:
     needs: [design, data_comparisons_process, data_tte_process]
     outputs:
       highly_sensitive:
-        modelnumber: output/jcvi_group_*/models/*_*_model_*.rds
+        modelnumber: output/jcvi_group_*/models/*_*_model*.rds
         model_tidy_rds: output/jcvi_group_*/models/*_*_modelcox_tidy.rds
       moderately_sensitive:
         model_glance: output/jcvi_group_*/models/*_*_modelcox_glance.csv
