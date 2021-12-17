@@ -80,7 +80,7 @@ for (b in as.character(unique(second_vax_period_dates$brand))) {
                              "Region-stratfied Cox model, adjustment for demogrpahic variables",
                              "Region-stratfied Cox model, adjustment for demogrpahic and clinical variables")))
   
-  bind_rows(
+  plot <- bind_rows(
     plot_data %>% mutate(outcome = "postest"),
     plot_data %>% mutate(outcome = "covidadmitted"),
     plot_data %>% mutate(outcome = "coviddeath"),
@@ -138,6 +138,8 @@ for (b in as.character(unique(second_vax_period_dates$brand))) {
       
       legend.position = "bottom"
     ) 
+  
+  print(plot)
   
 }
 

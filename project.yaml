@@ -149,7 +149,7 @@ actions:
     needs: [data_outcomes_process]
     outputs:
       highly_sensitive:
-        data_check_combine_outcomes: output/jcvi_group_*/images/check_combine_outcomes.rds
+        data_check_combine_outcomes: output/jcvi_group_*/data/check_combine_outcomes.rds
       moderately_sensitive:
         plot_check_combine_outcomes: output/jcvi_group_*/images/check_combine_outcomes.png
         table_check_combine_outcomes: output/jcvi_group_*/tables/check_combine_outcomes.csv

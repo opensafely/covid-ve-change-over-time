@@ -7,12 +7,17 @@ library(tictoc)
 ################################################################################
 # define model
 
-opt_control <- coxph.control(iter.max = 30)
-
 cox_model <- function(
   number, 
   filename_prefix
   ) {
+  
+  # so that when cox_model is run in lapply the options are printed after each
+  # evaluation and not all at the end
+  op_warn <- options("warn")
+  on.exit(options(op_warn))
+  
+  options(warn=1)
   
   number <- as.character(number)
   
@@ -71,10 +76,12 @@ cox_model <- function(
   
   model_name <- model_names[number]
   
+  opt_control <- coxph.control(iter.max = 30)
+  
   cat(glue("...... fitting model {number} ......"), "\n")
   cat(glue("{model_name}"), "\n")
   # tic("time to fit model")
-  timetofit <- (
+  timetofit <- system.time((
     coxmod <- coxph(
       formula = formula_cox,
       data = data_cox,
@@ -82,7 +89,7 @@ cox_model <- function(
       id = patient_id,
       na.action = "na.fail",
       control = opt_control)
-  )
+  ))
   # toc()
   
   
@@ -115,7 +122,7 @@ cox_model <- function(
       model,
       factor, levels = names(model_names), labels = model_names)) %>%
     # add output of system.time
-    bind_rows(as_tibble(t(as.matrix(timetofit))))
+    bind_cols(as_tibble(t(as.matrix(timetofit))))
   
   coxmod$data <- NULL
   
