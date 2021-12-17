@@ -2,16 +2,16 @@
 
 # What this script does:
 
+# reads covariate data from eligible individuals
+# create long (one-row-per-event) datasets for recurring variables
+# saves long datasets
 
 ###############################################################################
-
-# Preliminaries ----
-
-## Import libraries ----
 library(tidyverse)
 library(glue)
 
-## Import data ----
+## preliminaries
+# import covariates data for eligible individuals
 data_covs <- bind_rows(
   readr::read_rds(
     here::here("output", "data", "data_eligible_c.rds")) %>%
@@ -25,9 +25,9 @@ data_covs <- bind_rows(
   ) %>%
   mutate(across(contains("_date"), ~ as.Date(., format="%Y-%m-%d")))
   
-## create one-row-per-event datasets ----
-# for positive test, hospitalisation/discharge, covid in primary care, death
 ###############################################################################
+## create one-row-per-event datasets
+
 # shielded
 data_pr_shielded <- data_covs %>%
   select(patient_id,
