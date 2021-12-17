@@ -1,3 +1,16 @@
+###############################################################################
+
+# This script:
+
+# checks the distribution of days between postest, covidadmitted, coviddeath
+# checks how frequently upstream variables are missing 
+# (e.g. postest missing when covidadmiited not missing)
+# the results will be used to decide:
+# 1. is it necessary to impute missing upstread outcomes when downstream nonmissing
+# 2. distribution from which to draw imputed values
+
+###############################################################################
+
 library(tidyverse)
 library(glue)
 
@@ -5,12 +18,9 @@ library(glue)
 args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
-  # use for interactive testing
-  removeobs <- FALSE
   group <- "02"
   
 } else{
-  removeobs <- TRUE
   group <- args[[1]]
 }
 
@@ -22,7 +32,7 @@ data_outcomes <- readr::read_rds(
   here::here("output", glue("jcvi_group_{group}"), "data", "data_outcomes.rds")) 
 
 # distribution of days between outcome events
-plot_check <- data_outcomes %>%
+plot_data <- data_outcomes %>%
   transmute(
     postest_covidadmitted = as.integer(covidadmitted_date - postest_date),
     postest_coviddeath = as.integer(coviddeath_date - postest_date),
@@ -33,7 +43,17 @@ plot_check <- data_outcomes %>%
     values_drop_na = TRUE
   ) %>%
   mutate(across(name,
-         ~str_replace(.x, "_", " and "))) %>%
+         ~str_replace(.x, "_", " and "))) 
+
+# save data
+readr::write_rds(
+  plot_data,
+  here::here("output", glue("jcvi_group_{group}"), "data", "check_combine_outcomes.rds"),
+  compress = "gz"
+)
+
+# plot data
+plot_check <- plot_data %>%
   group_by(name) %>%
   mutate(mean = mean(value)) %>%
   ungroup() %>%
