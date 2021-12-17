@@ -1,11 +1,18 @@
-######################################
+################################################################################
 
 # This script:
+# reads:
+## second vaccination dates, 
+## data from eligible individuals based on boxes c and d
+## covariates data
+# derives:
+## follow-up times for each comparison
+## covariates updated at time_zero for each comparison
+# saves:
+## comparison data with covariates (one-row-per-comparison-per-individual)
 
+################################################################################
 
-######################################
-
-# import libraries ----
 library(tidyverse)
 library(lubridate)
 library(glue)
@@ -16,69 +23,74 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   group <- "02"
-  
 } else {
   group <- args[[1]]
 }
 
-## create output directories ----
+################################################################################
+
+# create output directories ----
 fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "data"))
-fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "models"))
 
 # import functions ----
 source(here::here("analysis", "lib", "data_process_functions.R"))
 
+# import variable names
 model_varlist <- readr::read_rds(
   here::here("output", "lib", "model_varlist.rds")
 )
 
 # import data ----
-# study_parameters <- readr::read_rds(
-#   here::here("output", "lib", "study_parameters.rds"))
-
+# second vaccination period dates
 second_vax_period_dates <- readr::read_rds(
   here::here("output", "lib", "second_vax_period_dates.rds")) %>%
   filter(jcvi_group %in% group, include) 
-
+# individuals eligible based on box c criteria
 data_eligible_c <- readr::read_rds(
   here::here("output", "data", "data_eligible_c.rds")) %>%
   filter(jcvi_group %in% group)
-
+# individuals eligible based on box d criteria
 data_eligible_d <- readr::read_rds(
   here::here("output", "data", "data_eligible_d.rds")) %>%
   filter(jcvi_group %in% group)
-
+# covariate data
 input_covs <- arrow::read_feather(
   here::here("output", "input_covs.feather")) %>%
   mutate(across(where(is.POSIXct), as.Date)) %>%
   filter(jcvi_group %in% group)
 
 ################################################################################
-
+# for the given JCVI group, create a dataset of:
+## the brands to compare and tthe number of comparisons for each brand
 brand_comparisons <- second_vax_period_dates %>%
   distinct(brand, n_comparisons) %>%
   group_by(brand) %>%
   mutate(n = n()) %>%
   ungroup()
 
-condition <- n_distinct(brand_comparisons$brand) %in% c(1,2) && max(brand_comparisons$n) == 1
-
-stopifnot("There must be one or two brands, and one value of K per brand." = condition)
+# check that this is as expected
+condition <- 
+  n_distinct(brand_comparisons$brand) %in% c(1,2) && 
+  max(brand_comparisons$n) == 1
+stopifnot(
+  "There must be one or two brands, and one value of K per brand." = condition)
 
 # derive comparison arms for k comparisons ----
 # define time_zero_date & end_fu_date for each comparison
 comparison_arms <- function(
   b, # vaccine brand
-  k # comparison number, k=1...K
+  k # comparison number, k=1...n_comparisons
 ) {
   
   # comparison starts on d days since second vax date
   d <- 14 + (k-1)*28
   
+  # function to be applied in dplyr::filter
   no_evidence_of <- function(cov_date, index_date) {
     is.na(cov_date) | index_date < cov_date
   }
   
+  # exclude if evidence of these variables before index_date
   exclude_if_evidence_of <- c(
     "positive_test_0_date",
     "primary_care_covid_case_0_date",
@@ -90,70 +102,82 @@ comparison_arms <- function(
     "death_date"
   )
   
-    split_string <- if_else((k %% 2) == 0, "even", "odd") 
-    
-    data_vax <- data_eligible_c %>%
-      filter(brand %in% b) %>%
-      # start date for vax arm depends on second vax date
-      mutate(time_zero_date = covid_vax_2_date + days(d)) %>%
-      # no third dose before time_zero_date
-      filter(no_evidence_of(covid_vax_3_date, time_zero_date)) %>%
-      mutate(arm = "vax") %>%
-      droplevels()
-    
-    data_unvax <- data_eligible_d %>%
-      filter(brand %in% b) %>%
-      # time_zero_date for unvax arm depends on elig_date, region and brand
-      mutate(time_zero_date = start_of_period + days(d)) %>%
-      filter(
-        # no first dose before time_zero_date
-        no_evidence_of(covid_vax_1_date, time_zero_date),
-        # only keep 50% of unvax individuals, depending on if k odd or even
-        split %in% split_string
-      ) %>%
-      mutate(arm = "unvax") %>%
-      # select(-split) %>%
-      droplevels()
-    
-    make_exclusions <- function(.data) {
-      .data %>%
-        left_join(input_covs %>%
-                    select(patient_id, 
-                           all_of(exclude_if_evidence_of), 
-                           region = glue("region_{k}")),
-                  by = "patient_id") %>%
-        # exclude if evidence of xxx before time_zero_date
-        filter_at(all_of(exclude_if_evidence_of),
-                  all_vars(no_evidence_of(., time_zero_date))) %>%
-        select(patient_id, elig_date, region, ethnicity, brand, arm, time_zero_date) 
-    }
-    
-    out <- bind_rows(make_exclusions(data_vax), make_exclusions(data_unvax)) 
-    
-    # elig_date:brand:region-specific end_fu_date for unvax arm
-    end_fu_dates <- out %>%
-      group_by(elig_date, brand, region) %>%
-      # each unvaxxed individual followed up for 2*28 days
-      summarise(end_fu_date = min(time_zero_date) + 2*days(28), 
-                .groups = "keep") %>%
-      ungroup() %>%
-      mutate(arm = "unvax")
-    
-    # join and derive individual-specific end_fu_date for vax arm
-    out <- out %>%
-      left_join(end_fu_dates, 
-                by = c("elig_date", "region", "brand", "arm")) %>%
-      mutate(across(end_fu_date,
-                    ~ if_else(arm %in% "vax", 
-                              # each individual in vax arm followed up for 28 days
-                              time_zero_date + days(28), 
-                              .x))) %>% 
-      mutate(comparison = k)
-    
-    return(out)
-    
-    }
-
+  # which split to keep for comparison k
+  split_string <- if_else((k %% 2) == 0, "even", "odd") 
+  
+  # vaccinated arm for brand b comparison k
+  data_vax <- data_eligible_c %>%
+    filter(brand %in% b) %>%
+    # start date for vax arm depends on second vax date
+    mutate(time_zero_date = covid_vax_2_date + days(d)) %>%
+    # no third dose before time_zero_date
+    filter(no_evidence_of(covid_vax_3_date, time_zero_date)) %>%
+    mutate(arm = "vax") %>%
+    droplevels()
+  
+  # unvaccinated arm for brand b comparison k
+  data_unvax <- data_eligible_d %>%
+    filter(brand %in% b) %>%
+    # time_zero_date for unvax arm depends on elig_date, region and brand
+    mutate(time_zero_date = start_of_period + days(d)) %>%
+    filter(
+      # no first dose before time_zero_date
+      no_evidence_of(covid_vax_1_date, time_zero_date),
+      # only keep 50% of unvax individuals, depending on if k odd or even
+      split %in% split_string
+    ) %>%
+    mutate(arm = "unvax") %>%
+    select(-split) %>%
+    droplevels()
+  
+  # bind datasets from both arms and apply exclusions
+  out <- bind_rows(data_vax, data_unvax) %>%
+    left_join(input_covs %>%
+                select(patient_id, 
+                       all_of(exclude_if_evidence_of)),
+              by = "patient_id") %>%
+    # exclude if evidence of xxx before time_zero_date
+    filter_at(all_of(exclude_if_evidence_of),
+              all_vars(no_evidence_of(., time_zero_date))) %>%
+    select(patient_id, jcvi_group, elig_date, region_0, ethnicity, brand, arm, time_zero_date) 
+  
+  # elig_date:brand:region-specific end_fu_date for unvax arm
+  end_fu_dates <- out %>%
+    group_by(jcvi_group, elig_date, brand, region_0) %>%
+    # each unvaxxed individual followed up for 2*28 days
+    summarise(end_fu_date = min(time_zero_date) + 2*days(28), 
+              .groups = "keep") %>%
+    ungroup() %>%
+    mutate(arm = "unvax")
+  
+  # join and derive individual-specific end_fu_date for vax arm
+  out <- out %>%
+    left_join(end_fu_dates, 
+              by = c("jcvi_group", "elig_date", "region_0", "brand", "arm")) %>%
+    mutate(across(end_fu_date,
+                  ~ if_else(arm %in% "vax", 
+                            # each individual in vax arm followed up for 28 days
+                            time_zero_date + days(28), 
+                            .x))) %>% 
+    mutate(comparison = k)
+  
+  # check follow up times are correct in the two arms
+  check_fu_time <- out %>%
+    mutate(fu_time = as.numeric(end_fu_date - time_zero_date)) %>%
+    group_by(arm) %>%
+    summarise(min_fu = min(fu_time), max_fu = max(fu_time)) %>%
+    ungroup() %>%
+    mutate(check = if_else(
+      arm == "unvax",
+      min_fu == 56 & min_fu == max_fu,
+      min_fu == 28 & min_fu == max_fu
+    ))
+  stopifnot(
+    "Follow-up times must be 28 days in vax arm and 56 days in unvax arm" = all(check_fu_time$check))
+  
+  return(out)
+  
+}
 
 data_comparison_arms <- bind_rows(lapply(
   as.character(brand_comparisons$brand),
@@ -165,9 +189,45 @@ data_comparison_arms <- bind_rows(lapply(
           comparison_arms(b = x, k = y))))) %>%
   mutate(across(arm, factor, levels = c("vax", "unvax"))) %>%
   mutate(across(comparison, factor))
+
+# check that no overlap between individuals in:
+## vax and unvax arms
+## unvax arm in odd and even comparisons
+check_overlap <- data_comparison_arms %>%
+  select(patient_id, arm, comparison) %>%
+  mutate(
+    name = if_else(
+    as.numeric(comparison) %% 2 == 0,
+    "even", 
+    "odd"),
+    value = TRUE) %>%
+  mutate(across(name, 
+                ~ if_else(
+                  arm %in% "vax",
+                  as.character(arm),
+                  str_c(arm, .x, sep = "_")))) %>%
+  distinct(patient_id, name, value) %>%
+  pivot_wider(
+    names_from = name, values_from = value) %>%
+  mutate(
+    vax_unvax = is.na(vax + unvax_even) & is.na(unvax_odd + vax),
+    odd_even = is.na(unvax_odd + unvax_even))
+
+stopifnot("Overlap between vax and unvax arms" = all(check_overlap$vax_unvax))
+stopifnot("Overlap between odd and even splits" = all(check_overlap$odd_even))
          
 ################################################################################
 # read long datasets from recurring variables ----
+
+# region
+# time_zero based on region at elig_date + 42 weeks, but region on time zero
+# used as stratficiation variable in cox models
+data_region <- input_covs %>%
+  select(-region_0) %>%
+  select(patient_id, starts_with("region")) %>%
+  pivot_longer(cols = -patient_id) %>%
+  mutate(comparison = factor(as.integer(str_extract(name, "\\d+")))) %>%
+  select(patient_id, comparison, region = value)
 
 # imd (index is non-brand-specific start_k)
 data_imd <- input_covs %>%
@@ -278,6 +338,9 @@ data_comparisons <- data_comparison_arms %>%
              all_of(clinical_vars[clinical_vars %in% names(.)]),
              all_of(end_vars)), 
     by = "patient_id") %>%
+  left_join(
+    data_region, 
+    by = c("patient_id", "comparison")) %>%
   left_join(
     data_imd, 
     by = c("patient_id", "comparison")) %>%
