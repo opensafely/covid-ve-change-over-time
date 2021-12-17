@@ -1,7 +1,7 @@
 ################################################################################
 
 # This script:
-
+# creates time-to-event data for the given outcome
 
 ################################################################################
 
@@ -22,8 +22,6 @@ if(length(args)==0){
   group <- args[[1]]
   outcome <- args[[2]]
 }
-
-# study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
 
 data_comparisons <- readr::read_rds(
   here::here("output", glue("jcvi_group_{group}"), "data", "data_comparisons.rds"))
