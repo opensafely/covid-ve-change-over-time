@@ -40,7 +40,10 @@ model_varlist <- readr::read_rds(
 
 # for each brand for the given jcvi_group
 for (b in unique(data_comparisons$brand)) {
- 
+  
+  cat(rep("-",40), "\n")
+  cat(glue("Brand = {b}:"), "\n")
+  
   # read data_tte
   data_tte <- readr::read_rds(
     here::here("output", glue("jcvi_group_{group}"), "data", glue("data_tte_{b}_{outcome}.rds")))
@@ -54,7 +57,7 @@ for (b in unique(data_comparisons$brand)) {
               by = c("patient_id", "comparison")) 
   
   # apply coxph model  
-  model_output <- lapply(
+  model_output <- parallel::mclapply(
     0:2,
     function(x)
       try(cox_model(
