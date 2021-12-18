@@ -57,7 +57,7 @@ for (b in unique(data_comparisons$brand)) {
               by = c("patient_id", "comparison")) 
   
   # apply coxph model  
-  model_output <- parallel::mclapply(
+  model_output <- lapply(
     0:2,
     function(x)
       try(cox_model(
