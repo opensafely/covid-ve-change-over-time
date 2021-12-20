@@ -47,7 +47,7 @@ for (b in unique(data_comparisons$brand)) {
   # derive data_tte  
   data_tte <- data_comparisons %>%
     filter(brand %in% b) %>%
-    select(patient_id, comparison, arm, time_zero_date, end_fu_date) %>%
+    select(patient_id, comparison, arm, start_fu_date, end_fu_date) %>%
     left_join(data_outcomes %>% 
                 select(patient_id, 
                        starts_with(outcome), 
@@ -55,13 +55,13 @@ for (b in unique(data_comparisons$brand)) {
               by = "patient_id") %>%
     mutate(across(c(starts_with(outcome),dereg_date, noncoviddeath_date),
                   ~ if_else(
-                    !is.na(.x) & time_zero_date < .x & .x <= end_fu_date,
+                    !is.na(.x) & start_fu_date < .x & .x <= end_fu_date,
                     .x,
                     as.Date(NA_character_)
                   ))) %>%
     group_by(comparison) %>%
     mutate(across(ends_with("date"),
-                  ~ as.integer(.x - min(time_zero_date)))) %>%
+                  ~ as.integer(.x - min(start_fu_date)))) %>%
     rename_at(vars(ends_with("_date")),
               ~ str_remove(.x, "_date")) %>%
     mutate(
@@ -72,7 +72,7 @@ for (b in unique(data_comparisons$brand)) {
         FALSE
       )) %>%
     ungroup() %>%
-    select(patient_id, arm, comparison, tstart = time_zero, tstop = tte, status) 
+    select(patient_id, arm, comparison, tstart = start_fu, tstop = tte, status) 
   
   counts <- data_tte %>%
     group_by(comparison) %>%

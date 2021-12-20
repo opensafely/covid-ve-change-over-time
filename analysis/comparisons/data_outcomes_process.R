@@ -1,7 +1,7 @@
 ################################################################################
 
 # This script:
-# read ids and earliest time_zero from all eligible individuals
+# read ids and earliest start_fu_date from all eligible individuals
 # create data_outcomes: one-row-per-individual of outcome data occurring after the
 # earliest time zero
 # save data_outcomes
@@ -26,11 +26,11 @@ if(length(args)==0){
 # read comparisons data
 data_ids <- readr::read_rds(
   here::here("output", glue("jcvi_group_{group}"), "data", "data_comparisons.rds")) %>%
-  # only keep patient_id and earliest time_zero
+  # only keep patient_id and earliest start_fu_date
   # Don't just filter to comparison 1, as unvax arm has two rows per comparison,
   # one for each brand. Just keep the ealiest.
-  arrange(patient_id, time_zero_date) %>%
-  select(patient_id, time_zero_date) %>%
+  arrange(patient_id, start_fu_date) %>%
+  select(patient_id, start_fu_date) %>%
   distinct(patient_id, .keep_all = TRUE)
 
 ################################################################################
@@ -69,7 +69,7 @@ data_outcomes <- data_ids %>%
   ) %>%
   # discard all data before the earliest time zero for each individual
   mutate(across(c(postest_date, covidadmitted_date, coviddeath_date, death_date, noncoviddeath_date),
-                ~ if_else(!is.na(.x) & time_zero_date < .x,
+                ~ if_else(!is.na(.x) & start_fu_date < .x,
                           .x,
                           as.Date(NA_character_)))) 
 

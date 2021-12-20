@@ -76,7 +76,7 @@ stopifnot(
   "There must be one or two brands, and one value of K per brand." = condition)
 
 # derive comparison arms for k comparisons ----
-# define time_zero_date & end_fu_date for each comparison
+# define start_fu_date & end_fu_date for each comparison
 comparison_arms <- function(
   b, # vaccine brand
   k # comparison number, k=1...n_comparisons
@@ -109,20 +109,20 @@ comparison_arms <- function(
   data_vax <- data_eligible_c %>%
     filter(brand %in% b) %>%
     # start date for vax arm depends on second vax date
-    mutate(time_zero_date = covid_vax_2_date + days(d)) %>%
-    # no third dose before time_zero_date
-    filter(no_evidence_of(covid_vax_3_date, time_zero_date)) %>%
+    mutate(start_fu_date = covid_vax_2_date + days(d)) %>%
+    # no third dose before start_fu_date
+    filter(no_evidence_of(covid_vax_3_date, start_fu_date)) %>%
     mutate(arm = "vax") %>%
     droplevels()
   
   # unvaccinated arm for brand b comparison k
   data_unvax <- data_eligible_d %>%
     filter(brand %in% b) %>%
-    # time_zero_date for unvax arm depends on elig_date, region and brand
-    mutate(time_zero_date = start_of_period + days(d)) %>%
+    # start_fu_date for unvax arm depends on elig_date, region and brand
+    mutate(start_fu_date = start_of_period + days(d)) %>%
     filter(
-      # no first dose before time_zero_date
-      no_evidence_of(covid_vax_1_date, time_zero_date),
+      # no first dose before start_fu_date
+      no_evidence_of(covid_vax_1_date, start_fu_date),
       # only keep 50% of unvax individuals, depending on if k odd or even
       split %in% split_string
     ) %>%
@@ -136,16 +136,16 @@ comparison_arms <- function(
                 select(patient_id, 
                        all_of(exclude_if_evidence_of)),
               by = "patient_id") %>%
-    # exclude if evidence of xxx before time_zero_date
+    # exclude if evidence of xxx before start_fu_date
     filter_at(all_of(exclude_if_evidence_of),
-              all_vars(no_evidence_of(., time_zero_date))) %>%
-    select(patient_id, jcvi_group, elig_date, region_0, ethnicity, brand, arm, time_zero_date) 
+              all_vars(no_evidence_of(., start_fu_date))) %>%
+    select(patient_id, jcvi_group, elig_date, region_0, ethnicity, brand, arm, start_fu_date) 
   
   # elig_date:brand:region-specific end_fu_date for unvax arm
   end_fu_dates <- out %>%
     group_by(jcvi_group, elig_date, brand, region_0) %>%
     # each unvaxxed individual followed up for 2*28 days
-    summarise(end_fu_date = min(time_zero_date) + 2*days(28), 
+    summarise(end_fu_date = min(start_fu_date) + 2*days(28), 
               .groups = "keep") %>%
     ungroup() %>%
     mutate(arm = "unvax")
@@ -157,13 +157,13 @@ comparison_arms <- function(
     mutate(across(end_fu_date,
                   ~ if_else(arm %in% "vax", 
                             # each individual in vax arm followed up for 28 days
-                            time_zero_date + days(28), 
+                            start_fu_date + days(28), 
                             .x))) %>% 
     mutate(comparison = k)
   
   # check follow up times are correct in the two arms
   check_fu_time <- out %>%
-    mutate(fu_time = as.numeric(end_fu_date - time_zero_date)) %>%
+    mutate(fu_time = as.numeric(end_fu_date - start_fu_date)) %>%
     group_by(arm) %>%
     summarise(min_fu = min(fu_time), max_fu = max(fu_time)) %>%
     ungroup() %>%
@@ -238,7 +238,7 @@ data_imd <- input_covs %>%
 
 # shielded (index is time_zero)
 data_shielded <- data_comparison_arms %>%
-  distinct(patient_id, comparison, brand, time_zero_date) %>%
+  distinct(patient_id, comparison, brand, start_fu_date) %>%
   inner_join(
     bind_rows(
       readr::read_rds(
@@ -250,7 +250,7 @@ data_shielded <- data_comparison_arms %>%
         select(patient_id, date) %>%
         mutate(name = "nonshielded")),
             by = "patient_id") %>%
-  filter(date <= time_zero_date) %>%
+  filter(date <= start_fu_date) %>%
   group_by(patient_id, brand, comparison, name) %>%
   summarise(date = max(date), .groups = "keep") %>%
   ungroup() %>%
@@ -264,15 +264,15 @@ data_shielded <- data_comparison_arms %>%
 
 # bmi (index is time_zero)
 data_bmi <- data_comparison_arms %>%
-  distinct(patient_id, brand, comparison, time_zero_date) %>%
+  distinct(patient_id, brand, comparison, start_fu_date) %>%
   inner_join(readr::read_rds(
     here::here("output", "data", "data_long_bmi_dates.rds")) %>%
       select(patient_id, date, bmi),
             by = "patient_id") %>%
-  filter(date <= time_zero_date ) %>%
+  filter(date <= start_fu_date ) %>%
   group_by(patient_id, brand, comparison) %>%
   arrange(desc(date), .by_group = TRUE) %>%
-  # keeps just the most recent before time_zero_date
+  # keeps just the most recent before start_fu_date
   distinct(patient_id, comparison, .keep_all = TRUE) %>%
   ungroup() %>%
   select(patient_id, brand, comparison, bmi)
@@ -364,7 +364,7 @@ data_comparisons <- data_comparison_arms %>%
     all_of(ever_vars), 
      ~ case_when(
        is.na(.x) ~ FALSE,
-       .x <= time_zero_date ~ TRUE,
+       .x <= start_fu_date ~ TRUE,
        TRUE ~ FALSE))) %>%
   rename_with(
     .fn = ~ str_remove(.x, "_date"),
@@ -372,7 +372,7 @@ data_comparisons <- data_comparison_arms %>%
     ) %>%
   mutate(
     
-    age = as.numeric(time_zero_date - dob)/365.25,
+    age = as.numeric(start_fu_date - dob)/365.25,
     
     any_immunosuppression = (permanant_immunosuppression | 
                                asplenia | 
@@ -413,7 +413,7 @@ data_comparisons <- data_comparison_arms %>%
   ) %>%
   select(
    patient_id, elig_date, region, ethnicity, brand, arm, 
-   time_zero_date, end_fu_date, comparison,
+   start_fu_date, end_fu_date, comparison,
    dob, 
    unname(unlist(model_varlist))
   ) %>%
