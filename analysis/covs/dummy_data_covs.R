@@ -95,100 +95,100 @@ dummy_data_covs <- dummy_data_vax %>%
     categories = end_dates$end_1_date,
     conditions = end_dates$condition
   ) %>%
-  # indicator for flu vaccine in past 5 years
-  var_binary(name = flu_vaccine, incidence = 0.3) %>%
-  # date vars ever
-  bind_cols(
-    pmap(
-      list(a = date_vars_ever, 
-           b = rep(0.2, length(date_vars_ever))),
-      function(a,b) 
-        var_date(
-          .data = ., 
-          name = !! a,
-          incidence = b,
-          keep_vars = FALSE
-        ))) %>%
-  # date vars recent
-  bind_cols(
-    pmap(
-      list(a = date_vars_recent, 
-           b = rep(0.2, length(date_vars_recent))),
-           function(a,b) 
-             var_date(
-               .data = ., 
-               name = !! a,
-               incidence = b,
-               earliest="2020-11-01",
-               latest="2021-12-31",
-               keep_vars = FALSE
-             ))) %>%
-  # add death_date if coviddeath_date
-  mutate(across(death_date, 
-                ~if_else(
-                  !is.na(coviddeath_date), 
-                  coviddeath_date,
-                  NA_Date_))) %>%
-  # add recurrent bmi vars
-  bind_cols(vars_bmi_recurrent(.data = ., r = study_parameters$recur_bmi)) %>%
-  # add K region and imd vars
-  bind_cols(vars_region_and_imd_recurrent(.data = ., K=K)) %>%
-  # add recurrent shielded vars
-  bind_cols(
-    var_date_recurrent(
-      .data = ., 
-      name_string = "shielded", 
-      incidence = 0.2,
-      r = study_parameters$recur_shielded)) %>%
-  bind_cols(
-    var_date_recurrent(
-      .data = .,
-      name_string = "nonshielded", 
-      incidence = 0.1,
-      r = study_parameters$recur_shielded)) %>%
-  # add recurrent hospital admission vars
-  bind_cols(
-    var_date_recurrent(
-      .data = ., 
-      name_string = "admitted_unplanned", 
-      incidence = 0.1,
-      r = study_parameters$recur_admissions)) %>%
-  bind_cols(
-    var_date_recurrent(
-      .data = ., 
-      name_string = "admitted_unplanned_infectious", 
-      incidence = 0.1,
-      r = study_parameters$recur_admissions)) %>%
-  # add dob
-  # all 1st of the month as dob YYYY-MM in OpenSAFELY
-  mutate(
-    dob = as.POSIXct(sample(
-      x = seq(as.Date("1930-01-01"), as.Date("2006-01-01"), by = "1 month"), 
-      size = nrow(.),
-      replace = TRUE))) %>%
-  # add efi
-  mutate(
-    efi = if_else(
-      rbernoulli(n = nrow(.), p = 0.99),
-      rnorm(n = nrow(.), mean = 0.2, sd = 0.09),
-      NA_real_)) %>%
-  mutate(across(contains("_date"), as.POSIXct)) 
-
-# add recurrent hospital discharge vars based on admission dates
-dummy_data_covs <- dummy_data_covs %>%
-  bind_cols(
-    lapply(
-      0:study_parameters$recur_admissions,
-      function(x)
-        dummy_data_covs %>%
-        transmute(
-          !! glue("discharged_unplanned_{x}_date") := 
-            !! sym(glue("admitted_unplanned_{x}_date")) +
-            sample(x=1:50, size = nrow(.), replace = TRUE),
-          !! glue("discharged_unplanned_infectious_{x}_date") := 
-            !! sym(glue("admitted_unplanned_infectious_{x}_date")) + 
-            sample(x=1:50, size = nrow(.), replace = TRUE))
-    )) %>%
+#   # indicator for flu vaccine in past 5 years
+#   var_binary(name = flu_vaccine, incidence = 0.3) %>%
+#   # date vars ever
+#   bind_cols(
+#     pmap(
+#       list(a = date_vars_ever, 
+#            b = rep(0.2, length(date_vars_ever))),
+#       function(a,b) 
+#         var_date(
+#           .data = ., 
+#           name = !! a,
+#           incidence = b,
+#           keep_vars = FALSE
+#         ))) %>%
+#   # date vars recent
+#   bind_cols(
+#     pmap(
+#       list(a = date_vars_recent, 
+#            b = rep(0.2, length(date_vars_recent))),
+#            function(a,b) 
+#              var_date(
+#                .data = ., 
+#                name = !! a,
+#                incidence = b,
+#                earliest="2020-11-01",
+#                latest="2021-12-31",
+#                keep_vars = FALSE
+#              ))) %>%
+#   # add death_date if coviddeath_date
+#   mutate(across(death_date, 
+#                 ~if_else(
+#                   !is.na(coviddeath_date), 
+#                   coviddeath_date,
+#                   NA_Date_))) %>%
+#   # add recurrent bmi vars
+#   bind_cols(vars_bmi_recurrent(.data = ., r = study_parameters$recur_bmi)) %>%
+#   # add K region and imd vars
+#   bind_cols(vars_region_and_imd_recurrent(.data = ., K=K)) %>%
+#   # add recurrent shielded vars
+#   bind_cols(
+#     var_date_recurrent(
+#       .data = ., 
+#       name_string = "shielded", 
+#       incidence = 0.2,
+#       r = study_parameters$recur_shielded)) %>%
+#   bind_cols(
+#     var_date_recurrent(
+#       .data = .,
+#       name_string = "nonshielded", 
+#       incidence = 0.1,
+#       r = study_parameters$recur_shielded)) %>%
+#   # add recurrent hospital admission vars
+#   bind_cols(
+#     var_date_recurrent(
+#       .data = ., 
+#       name_string = "admitted_unplanned", 
+#       incidence = 0.1,
+#       r = study_parameters$recur_admissions)) %>%
+#   bind_cols(
+#     var_date_recurrent(
+#       .data = ., 
+#       name_string = "admitted_unplanned_infectious", 
+#       incidence = 0.1,
+#       r = study_parameters$recur_admissions)) %>%
+#   # add dob
+#   # all 1st of the month as dob YYYY-MM in OpenSAFELY
+#   mutate(
+#     dob = as.POSIXct(sample(
+#       x = seq(as.Date("1930-01-01"), as.Date("2006-01-01"), by = "1 month"), 
+#       size = nrow(.),
+#       replace = TRUE))) %>%
+#   # add efi
+#   mutate(
+#     efi = if_else(
+#       rbernoulli(n = nrow(.), p = 0.99),
+#       rnorm(n = nrow(.), mean = 0.2, sd = 0.09),
+#       NA_real_)) %>%
+#   mutate(across(contains("_date"), as.POSIXct)) 
+# 
+# # add recurrent hospital discharge vars based on admission dates
+# dummy_data_covs <- dummy_data_covs %>%
+#   bind_cols(
+#     lapply(
+#       0:study_parameters$recur_admissions,
+#       function(x)
+#         dummy_data_covs %>%
+#         transmute(
+#           !! glue("discharged_unplanned_{x}_date") := 
+#             !! sym(glue("admitted_unplanned_{x}_date")) +
+#             sample(x=1:50, size = nrow(.), replace = TRUE),
+#           !! glue("discharged_unplanned_infectious_{x}_date") := 
+#             !! sym(glue("admitted_unplanned_infectious_{x}_date")) + 
+#             sample(x=1:50, size = nrow(.), replace = TRUE))
+#     )) %>%
   droplevels()
 
 # write data to feather file
