@@ -324,7 +324,7 @@ actions_list <- splice(
     )
   ),
 
-  actions_comparisons(jcvi_group = "01", outcomes = "postest")
+  actions_comparisons(jcvi_group = "02", outcomes = "postest")
   
 )
 
