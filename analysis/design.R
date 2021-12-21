@@ -21,9 +21,9 @@ study_parameters <-
     n = 100000L, # number of individuals in dummy data
     max_comparisons = 8L, # the number of comparisons for each sequence
     n_threshold = integer(), # the number of individuals with a second dose in the second vaccination period for a given jcvi_group and brand to include comparison
-    recur_bmi = 10L, # number of times the bmi variable recurs
-    recur_shielded = 10L, # number of times the shielded and nonshieded variables recur
-    recur_admissions = 10L, # number of times the hospital admissions variables recur
+    recur_bmi = 6L, # number of times the bmi variable recurs
+    recur_shielded = 6L, # number of times the shielded and nonshieded variables recur
+    recur_admissions = 6L, # number of times the hospital admissions variables recur
     ref_age_1 = "2021-03-31", # reference date for calculating age for phase 1 groups
     ref_age_2 = "2021-07-01", # reference date for calculating age for phase 2 groups
     ref_cev = "2021-01-18", # reference date for calculating eligibility for phase 1 group 4 (CEV)
