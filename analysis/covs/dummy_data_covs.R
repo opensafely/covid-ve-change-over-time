@@ -130,7 +130,7 @@ dummy_data_covs <- dummy_data_vax %>%
                   coviddeath_date,
                   NA_Date_))) %>%
   # add recurrent bmi vars
-  bind_cols(vars_bmi_recurrent(.data = .)) %>%
+  bind_cols(vars_bmi_recurrent(.data = ., r = study_parameters$recur_bmi)) %>%
   # add K region and imd vars
   bind_cols(vars_region_and_imd_recurrent(.data = ., K=K)) %>%
   # add recurrent shielded vars
