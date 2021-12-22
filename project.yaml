@@ -22,61 +22,73 @@ actions:
         model_varlist: output/lib/model_varlist.rds
 
   ## #################################### 
-  ## vax 
+  ## study definition 
   ## #################################### 
   ## data for eligibility criteria and vaccines 
   ## generate dummy data for study_definition_vax 
 
-  dummy_data_vax:
-    run: r:latest analysis/vax/dummy_data_vax.R
+  dummy_data:
+    run: r:latest analysis/dummy_data.R
     needs:
     - design
     outputs:
       moderately_sensitive:
-        dummy_data_vax: analysis/vax/dummy_data_vax.feather
+        dummy_data_vax: analysis/dummy_data.feather
 
   ## study definition for eligiblity criteria and vaccine data 
 
-  generate_study_population_vax:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_vax
+  generate_study_population:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition
       --output-format feather
-    dummy_data_file: analysis/vax/dummy_data_vax.feather
+    dummy_data_file: analysis/dummy_data.feather
     needs:
     - design
-    - dummy_data_vax
+    - dummy_data
     outputs:
       highly_sensitive:
-        cohort_vax: output/input_vax.feather
+        cohort_vax: output/input.feather
 
-  # ## process data from study_definition_vax 
 
-  # data_vax_process:
-  #   run: r:latest analysis/vax/data_vax_process.R
-  #   needs:
-  #   - design
-  #   - dummy_data_vax
-  #   - generate_study_population_vax
-  #   outputs:
-  #     highly_sensitive:
-  #       data_vax_covs: output/data/data_vax_covs.rds
-  #       data_vax_dates: output/data/data_*_vax_dates.rds
-  #     moderately_sensitive:
-  #       data_properties: output/vax/tables/data_vax_processed_tabulate.txt
 
-  # ## apply eligiblity criteria from boxes a and b 
+ ## #################################### 
+  ## preprocess data
+  ## #################################### 
+    # ## process data from study_definition_vax 
 
-  # data_eligible_ab:
-  #   run: r:latest analysis/vax/data_eligible_ab.R
-  #   needs:
-  #   - design
-  #   - data_vax_process
-  #   outputs:
-  #     highly_sensitive:
-  #       data_eligible_a: output/data/data_eligible_a.rds
-  #       data_eligible_b: output/data/data_eligible_b.rds
-  #     moderately_sensitive:
-  #       eligibility_count: output/lib/eligibility_count_ab.csv
-  #       group_age_ranges: output/lib/group_age_ranges.csv
+  data_input_process:
+    run: r:latest analysis/preprocess/data_input_process.R
+    needs:
+    - design
+    - generate_study_population
+    outputs:
+      highly_sensitive:
+        data_covs: output/data/data_covs.rds
+        data_vax_dates: output/data/data_*_vax_dates.rds
+      moderately_sensitive:
+        data_properties: output/tables/data_processed_tabulate.txt
+
+  data_long_process:
+    run: r:latest analysis/preprocess/data_long_process.R
+    needs:
+    - data_input_process
+    outputs:
+      highly_sensitive:
+        data_long_dates: output/data/data_long_*_dates.rds
+
+  ## apply eligiblity criteria from boxes a and b 
+
+  data_eligible_ab:
+    run: r:latest analysis/preprocess/data_eligible_ab.R
+    needs:
+    - design
+    - data_input_process
+    outputs:
+      highly_sensitive:
+        data_eligible_a: output/data/data_eligible_a.rds
+        data_eligible_b: output/data/data_eligible_b.rds
+      moderately_sensitive:
+        eligibility_count: output/lib/eligibility_count_ab.csv
+        group_age_ranges: output/lib/group_age_ranges.csv
 
   # ## #################################### 
   # ## second_vax_period 
@@ -84,88 +96,46 @@ actions:
   # ## identify second vaccination time periods 
   # ## create dataset for identifying second vaccination time periods 
 
-  # data_2nd_vax_dates:
-  #   run: r:latest analysis/second_vax_period/data_2nd_vax_dates.R
-  #   needs:
-  #   - design
-  #   - data_vax_process
-  #   - data_eligible_ab
-  #   outputs:
-  #     highly_sensitive:
-  #       data_vax_plot: output/second_vax_period/data/data_vax_plot.rds
-  #       second_vax_period_dates_rds: output/lib/second_vax_period_dates.rds
-  #     moderately_sensitive:
-  #       second_vax_period_dates_csv: output/lib/second_vax_period_dates.csv
-  #       start_dates: output/lib/start_dates.csv
-  #       end_dates: output/lib/end_dates.csv
+  data_2nd_vax_dates:
+    run: r:latest analysis/second_vax_period/data_2nd_vax_dates.R
+    needs:
+    - design
+    - data_input_process
+    - data_eligible_ab
+    outputs:
+      highly_sensitive:
+        data_vax_plot: output/second_vax_period/data/data_vax_plot.rds
+        second_vax_period_dates_rds: output/lib/second_vax_period_dates.rds
+      moderately_sensitive:
+        second_vax_period_dates_csv: output/lib/second_vax_period_dates.csv
+        # start_dates: output/lib/start_dates.csv
+        # end_dates: output/lib/end_dates.csv
 
   # ## identify and plot second vaccination time periods 
 
-  # plot_2nd_vax_dates:
-  #   run: r:latest analysis/second_vax_period/plot_2nd_vax_dates.R
-  #   needs:
-  #   - design
-  #   - data_eligible_ab
-  #   - data_2nd_vax_dates
-  #   outputs:
-  #     moderately_sensitive:
-  #       plots_by_region: output/second_vax_period/images/plot_by_region_*.png
+  plot_2nd_vax_dates:
+    run: r:latest analysis/second_vax_period/plot_2nd_vax_dates.R
+    needs:
+    - design
+    - data_eligible_ab
+    - data_2nd_vax_dates
+    outputs:
+      moderately_sensitive:
+        plots_by_region: output/second_vax_period/images/plot_by_region_*.png
 
   # ## apply eligiblity criteria from boxes c and d 
 
-  # data_eligible_cd:
-  #   run: r:latest analysis/second_vax_period/data_eligible_cd.R
-  #   needs:
-  #   - design
-  #   - data_vax_process
-  #   - data_eligible_ab
-  #   - data_2nd_vax_dates
-  #   outputs:
-  #     highly_sensitive:
-  #       data_eligible_c: output/data/data_eligible_c.rds
-  #       data_eligible_d: output/data/data_eligible_d.rds
-
-  # ## #################################### 
-  # ## covs 
-  # ## #################################### 
-  # ## data for covariates 
-  # ## generate dummy data for study_definition_covs 
-
-  # dummy_data_covs:
-  #   run: r:latest analysis/covs/dummy_data_covs.R
-  #   needs:
-  #   - design
-  #   - dummy_data_vax
-  #   - data_2nd_vax_dates
-  #   outputs:
-  #     moderately_sensitive:
-  #       dummy_data_vax: analysis/covs/dummy_data_covs.feather
-
-  # ## study definition for covariates 
-
-  # generate_study_population_covs:
-  #   run: cohortextractor:latest generate_cohort --study-definition study_definition_covs
-  #     --output-format feather
-  #   dummy_data_file: analysis/covs/dummy_data_covs.feather
-  #   needs:
-  #   - design
-  #   - data_2nd_vax_dates
-  #   - dummy_data_covs
-  #   outputs:
-  #     highly_sensitive:
-  #       cohort_vax: output/input_covs.feather
-
-  # ## process recurring variables as long data 
-
-  # data_long_process:
-  #   run: r:latest analysis/covs/data_long_process.R
-  #   needs:
-  #   - design
-  #   - data_eligible_cd
-  #   - generate_study_population_covs
-  #   outputs:
-  #     highly_sensitive:
-  #       data_long_dates: output/data/data_long_*_dates.rds
+  data_eligible_cd:
+    run: r:latest analysis/second_vax_period/data_eligible_cd.R
+    needs:
+    - design
+    - data_input_process
+    - data_eligible_ab
+    - data_2nd_vax_dates
+    outputs:
+      highly_sensitive:
+        data_eligible_c: output/data/data_eligible_c.rds
+        data_eligible_d: output/data/data_eligible_d.rds
 
   # ## #################################### 
   # ## comparisons 

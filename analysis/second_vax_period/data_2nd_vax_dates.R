@@ -161,39 +161,39 @@ readr::write_csv(
   second_vax_period_dates %>% mutate(across(cumulative_sum, ~ round(.x, -1))),
   here::here("output", "lib", "second_vax_period_dates.csv"))
 
-# comparison dates for passing to study_definition_covs
-comparison_dates <- second_vax_period_dates %>%
-  # only keep if more than n_threshold individuals vaccinated in the jcvi_group:elig_date:region:brand period
-  filter(include) %>%
-  # min start date / max end date for each elig_date/region, because cannot condition on vaccine brand in study_definition_covs
-  group_by(jcvi_group, elig_date, region_0, brand) %>%
-  summarise(start_1_date = min(start_of_period) + days(14), 
-            end_1_date = max(end_of_period) + days(14), 
-            .groups = "keep") %>%
-  ungroup() %>%
-  mutate(condition = as.character(glue("(jcvi_group = '{jcvi_group}' AND elig_date = {elig_date} AND region_0 = '{region_0}')"))) %>%
-  select(start_1_date, end_1_date, condition) %>%
-  add_row(start_1_date = as.Date("2100-01-01"), 
-          end_1_date = as.Date("2100-12-31"), 
-          condition = "DEFAULT")
-
-start_dates <- comparison_dates %>%
-  select(-end_1_date) %>%
-  arrange(start_1_date) %>%
-  group_by(start_1_date) %>%
-  summarise(condition = str_c(condition, collapse  = " OR "), .groups = "keep") %>%
-  ungroup()
-
-end_dates <- comparison_dates %>%
-  select(-start_1_date) %>%
-  arrange(end_1_date) %>%
-  group_by(end_1_date) %>%
-  summarise(condition = str_c(condition, collapse  = " OR "), .groups = "keep") %>%
-  ungroup()
-
-# save for passing to study_definition_covs.py
-readr::write_csv(start_dates,
-                 here::here("output", "lib", "start_dates.csv"))
-
-readr::write_csv(end_dates,
-                 here::here("output", "lib", "end_dates.csv"))
+# # comparison dates for passing to study_definition_covs
+# comparison_dates <- second_vax_period_dates %>%
+#   # only keep if more than n_threshold individuals vaccinated in the jcvi_group:elig_date:region:brand period
+#   filter(include) %>%
+#   # min start date / max end date for each elig_date/region, because cannot condition on vaccine brand in study_definition_covs
+#   group_by(jcvi_group, elig_date, region_0, brand) %>%
+#   summarise(start_1_date = min(start_of_period) + days(14), 
+#             end_1_date = max(end_of_period) + days(14), 
+#             .groups = "keep") %>%
+#   ungroup() %>%
+#   mutate(condition = as.character(glue("(jcvi_group = '{jcvi_group}' AND elig_date = {elig_date} AND region_0 = '{region_0}')"))) %>%
+#   select(start_1_date, end_1_date, condition) %>%
+#   add_row(start_1_date = as.Date("2100-01-01"), 
+#           end_1_date = as.Date("2100-12-31"), 
+#           condition = "DEFAULT")
+# 
+# start_dates <- comparison_dates %>%
+#   select(-end_1_date) %>%
+#   arrange(start_1_date) %>%
+#   group_by(start_1_date) %>%
+#   summarise(condition = str_c(condition, collapse  = " OR "), .groups = "keep") %>%
+#   ungroup()
+# 
+# end_dates <- comparison_dates %>%
+#   select(-start_1_date) %>%
+#   arrange(end_1_date) %>%
+#   group_by(end_1_date) %>%
+#   summarise(condition = str_c(condition, collapse  = " OR "), .groups = "keep") %>%
+#   ungroup()
+# 
+# # save for passing to study_definition_covs.py
+# readr::write_csv(start_dates,
+#                  here::here("output", "lib", "start_dates.csv"))
+# 
+# readr::write_csv(end_dates,
+#                  here::here("output", "lib", "end_dates.csv"))
