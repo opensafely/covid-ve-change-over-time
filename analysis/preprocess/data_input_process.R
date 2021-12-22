@@ -33,7 +33,7 @@ cat("#### extract data ####\n")
 data_extract <- 
   arrow::read_feather(file = here::here("output", "input.feather")) %>%
   # because date types are not returned consistently by cohort extractor
-  mutate(across(contains("_date"), ~ as.Date(., format="%Y-%m-%d"))) %>%
+  mutate(across(c(contains("_date"), dob), ~ as.Date(., format="%Y-%m-%d"))) %>%
   mutate(across(imd_0, ~as.integer(as.character(.x))))
 
 cat("#### process extracted data ####\n")

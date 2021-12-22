@@ -45,19 +45,20 @@ model_varlist <- readr::read_rds(
 second_vax_period_dates <- readr::read_rds(
   here::here("output", "lib", "second_vax_period_dates.rds")) %>%
   filter(jcvi_group %in% group, include) 
+
 # individuals eligible based on box c criteria
 data_eligible_c <- readr::read_rds(
   here::here("output", "data", "data_eligible_c.rds")) %>%
   filter(jcvi_group %in% group)
+
 # individuals eligible based on box d criteria
 data_eligible_d <- readr::read_rds(
   here::here("output", "data", "data_eligible_d.rds")) %>%
   filter(jcvi_group %in% group)
+
 # covariate data
-input_covs <- arrow::read_feather(
-  here::here("output", "input_covs.feather")) %>%
-  mutate(across(where(is.POSIXct), as.Date)) %>%
-  filter(jcvi_group %in% group)
+data_covs <- readr::read_rds(
+  here::here("output", "data", "data_covs.rds"))
 
 ################################################################################
 # for the given JCVI group, create a dataset of:
@@ -132,14 +133,14 @@ comparison_arms <- function(
   
   # bind datasets from both arms and apply exclusions
   out <- bind_rows(data_vax, data_unvax) %>%
-    left_join(input_covs %>%
+    left_join(data_covs %>%
                 select(patient_id, 
                        all_of(exclude_if_evidence_of)),
               by = "patient_id") %>%
     # exclude if evidence of xxx before start_fu_date
     filter_at(all_of(exclude_if_evidence_of),
               all_vars(no_evidence_of(., start_fu_date))) %>%
-    select(patient_id, jcvi_group, elig_date, region_0, ethnicity, brand, arm, start_fu_date) 
+    select(patient_id, jcvi_group, elig_date, region_0, brand, arm, start_fu_date) 
   
   # elig_date:brand:region-specific end_fu_date for unvax arm
   end_fu_dates <- out %>%
@@ -219,23 +220,6 @@ stopifnot("Overlap between odd and even splits" = all(check_overlap$odd_even))
 ################################################################################
 # read long datasets from recurring variables ----
 
-# region
-# time_zero based on region at elig_date + 42 weeks, but region on time zero
-# used as stratficiation variable in cox models
-data_region <- input_covs %>%
-  select(-region_0) %>%
-  select(patient_id, starts_with("region")) %>%
-  pivot_longer(cols = -patient_id) %>%
-  mutate(comparison = factor(as.integer(str_extract(name, "\\d+")))) %>%
-  select(patient_id, comparison, region = value)
-
-# imd (index is non-brand-specific start_k)
-data_imd <- input_covs %>%
-  select(patient_id, starts_with("imd")) %>%
-  pivot_longer(cols = -patient_id) %>%
-  mutate(comparison = factor(as.integer(str_extract(name, "\\d+")))) %>%
-  select(patient_id, comparison, imd = value)
-
 # shielded (index is time_zero)
 data_shielded <- data_comparison_arms %>%
   distinct(patient_id, comparison, brand, start_fu_date) %>%
@@ -278,16 +262,14 @@ data_bmi <- data_comparison_arms %>%
   select(patient_id, brand, comparison, bmi)
 
 # hospital admissions
-# TODO
-
-
+# TODO (maybe)
 
 ################################################################################
 
 # add clinical and demographic covariates to data_comparison_arms ----
 
 strata_vars <- c("region", "elig_date", "comparison")
-demographic_vars <- c("age", "sex", "ethnicity", "imd")
+demographic_vars <- c("age", "sex", "ethnicity", "imd_0")
 ever_vars <- c(
   "longres_date",
   "asplenia_date", 
@@ -330,7 +312,7 @@ end_vars <- c(
 data_comparisons <- data_comparison_arms %>%
   # join and process covariates
   left_join(
-    input_covs %>%
+    data_covs %>%
       select(patient_id, 
              dob, 
              all_of(demographic_vars[demographic_vars %in% names(.)]),
@@ -338,13 +320,7 @@ data_comparisons <- data_comparison_arms %>%
              all_of(clinical_vars[clinical_vars %in% names(.)]),
              all_of(end_vars)), 
     by = "patient_id") %>%
-  left_join(
-    data_region, 
-    by = c("patient_id", "comparison")) %>%
-  left_join(
-    data_imd, 
-    by = c("patient_id", "comparison")) %>%
-  mutate(across(imd, factor)) %>%
+  mutate(imd = factor(imd_0)) %>%
   left_join(
     data_shielded, 
     by = c("patient_id", "brand", "comparison")) %>%
@@ -354,12 +330,11 @@ data_comparisons <- data_comparison_arms %>%
   left_join(
     data_bmi, 
     by = c("patient_id", "brand", "comparison")) %>%
-  mutate(across(
-    bmi,
-    ~ fct_case_when(is.na(.x) | .x < 30 | .x >= 100 ~ "Not Obese",
-                    .x < 35 ~ "Obese I (30-34.9)",
-                    .x < 40 ~ "Obese II (35-39.9)",
-                    TRUE ~ "Obese III (40+)"))) %>%
+  mutate(across(bmi, as.character)) %>%
+  mutate(across(bmi,
+                ~ factor(
+                  if_else(is.na(.x), "Not obese", .x),
+                  levels = levels(data_bmi$bmi)))) %>%
   mutate(across(
     all_of(ever_vars), 
      ~ case_when(
@@ -412,7 +387,7 @@ data_comparisons <- data_comparison_arms %>%
     
   ) %>%
   select(
-   patient_id, elig_date, region, ethnicity, brand, arm, 
+   patient_id, elig_date, region = region_0, ethnicity, brand, arm, 
    start_fu_date, end_fu_date, comparison,
    dob, 
    unname(unlist(model_varlist))
