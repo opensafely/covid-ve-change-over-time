@@ -156,7 +156,8 @@ dummy_data <- dummy_data %>%
     covid_vax_moderna_3_date = covid_vax_moderna_2_date + days(round(rnorm(nrow(.), mean = 6*4*7, sd = 7))),
   ) %>%
   select(-starts_with("missing"), -vaccine_1_type) %>%
-  mutate(across(ends_with("date"), as.POSIXct))
+  mutate(across(ends_with("date"), as.POSIXct)) %>%
+  droplevels()
 
 arrow::write_feather(dummy_data, here::here("analysis", "vax", "dummy_data_vax.feather"))
 

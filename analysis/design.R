@@ -1,27 +1,29 @@
-
-# # # # # # # # # # # # # # # # # # # # #
+################################################################################
 # This script:
 # creates metadata for aspects of the study design
-# # # # # # # # # # # # # # # # # # # # #
+################################################################################
 
 # Import libraries ----
 library(tidyverse)
 library(lubridate)
 library(glue)
 
+print(Sys.getenv("OPENSAFELY_BACKEND"))
+
 # create output directories ----
 fs::dir_create(here::here("output", "lib"))
 
+################################################################################
 # create study_parameters ----
-
 study_parameters <-
   list(
     seed = 123456L,
     n = 100000L, # number of individuals in dummy data
-    n_comparisons = 3L, # the number of comparisons for each sequence
-    n_threshold = 1000L, # the number of individuals with a second dose in the second vaccination period for a given jcvi_group and brand to include comparison
-    recur_bmi = 10L, # number of times the bmi variable recurs
-    recur_shielded = 10L, # number of times the shielded and nonshieded variables recur
+    max_comparisons = 8L, # the number of comparisons for each sequence
+    n_threshold = integer(), # the number of individuals with a second dose in the second vaccination period for a given jcvi_group and brand to include comparison
+    recur_bmi = 6L, # number of times the bmi variable recurs
+    recur_shielded = 6L, # number of times the shielded and nonshieded variables recur
+    recur_admissions = 6L, # number of times the hospital admissions variables recur
     ref_age_1 = "2021-03-31", # reference date for calculating age for phase 1 groups
     ref_age_2 = "2021-07-01", # reference date for calculating age for phase 2 groups
     ref_cev = "2021-01-18", # reference date for calculating eligibility for phase 1 group 4 (CEV)
@@ -31,12 +33,22 @@ study_parameters <-
     start_date_pfizer = "2020-12-08",
     start_date_az = "2021-01-04",
     start_date_moderna = "2021-03-04",
-    end_date = "2021-09-15" # last date of available vaccination data. NEED TO ALSO CHECK END DATES FOR OTHER DATA SOURCES
-  )
+    end_date = "2021-11-30" # need to make sure that vaccine and outcome data are available up until this date
+  ) 
+
+# use lower thresholds if not running in the server
+if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
+  study_parameters$n_threshold <- 100L
+  study_parameters$outcome_threshold <- 10L
+} else {
+  study_parameters$n_threshold <- 1000L
+  study_parameters$outcome_threshold <- 100L
+}
 
 readr::write_rds(study_parameters, here::here("output", "lib", "study_parameters.rds"))
 jsonlite::write_json(study_parameters, path = here::here("output", "lib", "study_parameters.json"), auto_unbox = TRUE, pretty=TRUE)
 
+################################################################################
 # create jcvi_groups ----
 jcvi_groups <- 
 tribble(
@@ -58,6 +70,7 @@ tribble(
 
 readr::write_csv(jcvi_groups, here::here("output", "lib", "jcvi_groups.csv"))
 
+################################################################################
 # create elig_dates ----
 # group elig_date if within 7 days of previous elig_date (within jcvi_group)
 elig_dates <-
@@ -106,7 +119,7 @@ tribble(
 
 readr::write_csv(elig_dates, here::here("output", "lib", "elig_dates.csv"))
 
-
+################################################################################
 # create regions ----
 regions <- tribble(
   ~region, ~ratio,
@@ -122,3 +135,23 @@ regions <- tribble(
 )
 
 readr::write_csv(regions, here::here("output", "lib", "regions.csv"))
+
+################################################################################
+# varlists for cox models
+
+clinical <- c(
+  "bmi", "heart_failure", "other_heart_disease", "dialysis",
+  "diabetes", "chronic_liver_disease", "current_copd",
+  "other_respiratory", "lung_cancer", "haematological_cancer",
+  "cancer_excl_lung_and_haem", "any_immunosuppression",
+  "dementia", "other_neuro_conditions", "ld_inc_ds_and_cp",
+  "psychosis_schiz_bipolar", "multimorb", "shielded", "flu_vaccine", "efi"
+)
+
+demographic <- c("age", "sex", "imd", "ethnicity")
+
+readr::write_rds(
+  list(demographic = demographic, clinical = clinical),
+  here::here("output", "lib", "model_varlist.rds")
+)
+
