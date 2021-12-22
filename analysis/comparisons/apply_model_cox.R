@@ -57,12 +57,23 @@ for (b in unique(data_comparisons$brand)) {
               by = c("patient_id", "comparison")) 
   
   # apply coxph model  
-  model_output <- lapply(
-    0:2,
-    function(x)
-      try(cox_model(
-        number = x, 
-        filename_prefix = glue("{b}_{outcome}"))))
+  # model_output <- lapply(
+  #   0:2,
+  #   function(x)
+  #     try(cox_model(
+  #       number = x, 
+  #       filename_prefix = glue("{b}_{outcome}"))))
+  # problems with variable names when coxph applied within lapply or purrr::map
+  model_output <- list()
+  model_output[[1]] <- cox_model(
+    number = 0, 
+    filename_prefix = glue("{b}_{outcome}"))
+  model_output[[2]] <- cox_model(
+    number = 1, 
+    filename_prefix = glue("{b}_{outcome}"))
+  model_output[[3]] <- cox_model(
+    number = 2, 
+    filename_prefix = glue("{b}_{outcome}"))
   
   # combine results
   model_glance <- bind_rows(
