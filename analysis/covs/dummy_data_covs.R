@@ -172,7 +172,7 @@ dummy_data_covs <- dummy_data_vax %>%
 #       rbernoulli(n = nrow(.), p = 0.99),
 #       rnorm(n = nrow(.), mean = 0.2, sd = 0.09),
 #       NA_real_)) %>%
-  mutate(across(contains("_date"), as.POSIXct))
+#   mutate(across(contains("_date"), as.POSIXct)) 
 # 
 # # add recurrent hospital discharge vars based on admission dates
 # dummy_data_covs <- dummy_data_covs %>%
@@ -189,7 +189,7 @@ dummy_data_covs <- dummy_data_vax %>%
 #             !! sym(glue("admitted_unplanned_infectious_{x}_date")) + 
 #             sample(x=1:50, size = nrow(.), replace = TRUE))
 #     )) %>%
-  # droplevels()
+  droplevels()
 
 # write data to feather file
 arrow::write_feather(
