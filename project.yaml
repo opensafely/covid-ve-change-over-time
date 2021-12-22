@@ -155,88 +155,88 @@ actions:
       highly_sensitive:
         cohort_vax: output/input_covs.feather
 
-  # ## process recurring variables as long data 
+  ## process recurring variables as long data 
 
-  # data_long_process:
-  #   run: r:latest analysis/covs/data_long_process.R
-  #   needs:
-  #   - design
-  #   - data_eligible_cd
-  #   - generate_study_population_covs
-  #   outputs:
-  #     highly_sensitive:
-  #       data_long_dates: output/data/data_long_*_dates.rds
+  data_long_process:
+    run: r:latest analysis/covs/data_long_process.R
+    needs:
+    - design
+    - data_eligible_cd
+    - generate_study_population_covs
+    outputs:
+      highly_sensitive:
+        data_long_dates: output/data/data_long_*_dates.rds
 
-  # ## #################################### 
-  # ## comparisons 
-  # ## #################################### 
-  # ## process data, apply model and generate report for JCVI group 02 
-  # ## process covariates data 
+  ## #################################### 
+  ## comparisons 
+  ## #################################### 
+  ## process data, apply model and generate report for JCVI group 02 
+  ## process covariates data 
 
-  # data_comparisons_process_02:
-  #   run: r:latest analysis/comparisons/data_comparisons_process.R 02
-  #   needs:
-  #   - design
-  #   - data_vax_process
-  #   - data_2nd_vax_dates
-  #   - data_eligible_cd
-  #   - generate_study_population_covs
-  #   - data_long_process
-  #   outputs:
-  #     highly_sensitive:
-  #       data_comparisons: output/jcvi_group_02/data/data_comparisons.rds
+  data_comparisons_process_02:
+    run: r:latest analysis/comparisons/data_comparisons_process.R 02
+    needs:
+    - design
+    - data_vax_process
+    - data_2nd_vax_dates
+    - data_eligible_cd
+    - generate_study_population_covs
+    - data_long_process
+    outputs:
+      highly_sensitive:
+        data_comparisons: output/jcvi_group_02/data/data_comparisons.rds
 
-  # ## process outcomes data 
+  ## process outcomes data 
 
-  # data_outcomes_process_02:
-  #   run: r:latest analysis/comparisons/data_outcomes_process.R 02
-  #   needs:
-  #   - design
-  #   - generate_study_population_covs
-  #   - data_long_process
-  #   - data_comparisons_process_02
-  #   outputs:
-  #     highly_sensitive:
-  #       data_outcomes: output/jcvi_group_02/data/data_outcomes.rds
+  data_outcomes_process_02:
+    run: r:latest analysis/comparisons/data_outcomes_process.R 02
+    needs:
+    - design
+    - generate_study_population_covs
+    - data_long_process
+    - data_comparisons_process_02
+    outputs:
+      highly_sensitive:
+        data_outcomes: output/jcvi_group_02/data/data_outcomes.rds
 
-  # ## check gap between outcomes for combining 
+  ## check gap between outcomes for combining 
 
-  # check_combine_outcomes_02:
-  #   run: r:latest analysis/comparisons/check_combine_outcomes.R 02
-  #   needs:
-  #   - data_outcomes_process_02
-  #   outputs:
-  #     highly_sensitive:
-  #       data_check_combine_outcomes: output/jcvi_group_02/data/check_combine_outcomes.rds
-  #     moderately_sensitive:
-  #       plot_check_combine_outcomes: output/jcvi_group_02/images/check_combine_outcomes.png
-  #       table_check_combine_outcomes: output/jcvi_group_02/tables/check_combine_outcomes.csv
+  check_combine_outcomes_02:
+    run: r:latest analysis/comparisons/check_combine_outcomes.R 02
+    needs:
+    - data_outcomes_process_02
+    outputs:
+      highly_sensitive:
+        data_check_combine_outcomes: output/jcvi_group_02/data/check_combine_outcomes.rds
+      moderately_sensitive:
+        plot_check_combine_outcomes: output/jcvi_group_02/images/check_combine_outcomes.png
+        table_check_combine_outcomes: output/jcvi_group_02/tables/check_combine_outcomes.csv
 
-  # ## outcome = postest 
-  # ## process tte data for postest 
+  ## outcome = postest 
+  ## process tte data for postest 
 
-  # data_tte_process_02_postest:
-  #   run: r:latest analysis/comparisons/data_tte_process.R 02 postest
-  #   needs:
-  #   - data_comparisons_process_02
-  #   - data_outcomes_process_02
-  #   outputs:
-  #     highly_sensitive:
-  #       data_tte_brand_outcome: output/jcvi_group_02/data/data_tte_*_postest.rds
+  data_tte_process_02_postest:
+    run: r:latest analysis/comparisons/data_tte_process.R 02 postest
+    needs:
+    - data_comparisons_process_02
+    - data_outcomes_process_02
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_02/data/data_tte_*_postest.rds
 
-  # ## apply cox model for postest 
+  ## apply cox model for postest 
 
-  # apply_model_cox_02_postest:
-  #   run: r:latest analysis/comparisons/apply_model_cox.R 02 postest
-  #   needs:
-  #   - design
-  #   - data_comparisons_process_02
-  #   - data_tte_process_02_postest
-  #   outputs:
-  #     highly_sensitive:
-  #       modelnumber: output/jcvi_group_02/models/*_postest_model*.rds
-  #       model_tidy_rds: output/jcvi_group_02/models/*_postest_modelcox_tidy.rds
-  #     moderately_sensitive:
-  #       model_glance: output/jcvi_group_02/models/*_postest_modelcox_glance.csv
-  #       model_tidy_csv: output/jcvi_group_02/models/*_postest_modelcox_tidy.csv
+  apply_model_cox_02_postest:
+    run: r:latest analysis/comparisons/apply_model_cox.R 02 postest
+    needs:
+    - design
+    - data_comparisons_process_02
+    - data_tte_process_02_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_02/models/*_postest_model*.rds
+        model_tidy_rds: output/jcvi_group_02/models/*_postest_modelcox_tidy.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_02/models/*_postest_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_02/models/*_postest_modelcox_tidy.csv
 
