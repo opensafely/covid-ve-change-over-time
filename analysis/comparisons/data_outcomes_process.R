@@ -47,8 +47,8 @@ data_outcomes <- data_ids %>%
     by = "patient_id"
   ) %>%
   left_join(
-    arrow::read_feather(
-      here::here("output", "input_covs.feather")) %>%
+    readr::read_rds(
+      here::here("output", "data", "data_covs.rds")) %>%
       select(patient_id, coviddeath_date, death_date, dereg_date) %>%
       mutate(across(ends_with("date"), as.Date)),
     by = "patient_id"
