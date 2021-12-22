@@ -297,7 +297,7 @@ actions_list <- splice(
   action(
     name = "dummy_data_covs",
     run = "r:latest analysis/covs/dummy_data_covs.R",
-    needs = list("design", "dummy_data_vax", "data_2nd_vax_dates"),
+    needs = list("design", "dummy_data_vax"),
     moderately_sensitive = list(
       dummy_data_vax = "analysis/covs/dummy_data_covs.feather"
     )
@@ -308,7 +308,7 @@ actions_list <- splice(
     name = "generate_study_population_covs",
     run = "cohortextractor:latest generate_cohort --study-definition study_definition_covs --output-format feather",
     dummy_data_file = "analysis/covs/dummy_data_covs.feather",
-    needs = list("design", "data_2nd_vax_dates", "dummy_data_covs"),
+    needs = list("design", "dummy_data_covs"),
     highly_sensitive = list(
       cohort_vax = "output/input_covs.feather"
     )

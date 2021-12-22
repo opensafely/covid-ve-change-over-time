@@ -119,52 +119,6 @@ vars_bmi_recurrent <- function(.data, r = 10, decay = 0.2) {
   
 }
 
-# region and imd variables for the K start dates
-vars_region_and_imd_recurrent <- function(.data, K, prob=0.001) {
-  
-  out <- .data %>%
-    var_category(
-      region_1, 
-      categories = regions$region, 
-      ratios = regions$ratio,
-      keep_vars = FALSE) %>%
-    mutate(imd_1 = sample(
-      x = seq(100L,32100L,100L),
-      size = n,
-      replace = TRUE))
-    
-  
-  for (i in 2:K) {
-    
-    out <- out %>%
-      mutate(update = rbernoulli(n = nrow(.), p=prob)) %>%
-      mutate(
-        !! glue("imd_{i}") := if_else(
-          update,
-          sample(
-            x = seq(100L,32100L,100L),
-            size = nrow(.),
-            replace = TRUE
-          ),
-          !! sym(glue("imd_{i-1}")) 
-        ),
-
-        !! glue("region_{i}") := if_else(
-          update,
-          sample(
-            x = regions$region,
-            size = nrow(.),
-            replace = TRUE
-          ),
-          !! sym(glue("region_{i-1}")) 
-        )) 
-      
-  }
-  
-  return(out %>% select(-update))
-  
-}
-
 # recurrent date variable, where var_1 is the earliest date
 var_date_recurrent <- function(.data, name_string, incidence, earliest = start_date, r = 10, decay = 0.5) {
   

@@ -47,13 +47,12 @@ seed=int(study_parameters["seed"])
 np.random.seed(seed)
 
 # define variables explicitly
-max_comparisons=study_parameters["max_comparisons"]
 ref_age_1=study_parameters["ref_age_1"] # reference date for calculating age for phase 1 groups
 ref_age_2=study_parameters["ref_age_1"] # reference date for calculating age for phase 2 groups
 ref_cev=study_parameters["ref_cev"] # reference date for calculating clinically extremely vulnerable group
 ref_ar=study_parameters["ref_ar"] #reference date for caluclating at risk group
 start_date=study_parameters["start_date"] # start of phase 1
-end_date=study_parameters["end_date"] # end of followup
+end_date=study_parameters["end_date"] # latest date of data
 pandemic_start=study_parameters["pandemic_start"]
 
 ## function to add days to a string date

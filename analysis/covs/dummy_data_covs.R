@@ -19,26 +19,6 @@ dummy_data_vax <- arrow::read_feather(
 # read functions for creating dummy data
 source(here::here("analysis", "lib", "dummy_data_functions.R"))
 
-# read start and end dates for second vax period
-start_dates <- readr::read_csv(here::here("output", "lib", "start_dates.csv"))
-end_dates <- readr::read_csv(here::here("output", "lib", "end_dates.csv"))
-
-# define function for translating the conditions from python to R
-translate_to_R <- function(.data) {
-  .data %>%
-    # add the quotations round elig_date (these weren't needed study_definition_covs.py)
-    mutate(across(condition, ~ str_replace_all(.x, "elig_date = ", "elig_date ==\'"))) %>%
-    mutate(across(condition, ~ str_replace_all(.x, " AND region", "\' & region"))) %>%
-    # replace other symbols
-    mutate(across(condition, ~ str_replace_all(.x, "= ", "=="))) %>%
-    mutate(across(condition, ~ str_replace_all(.x, "AND", "&"))) %>%
-    mutate(across(condition, ~ str_replace_all(.x, "OR", "|"))) %>%
-    mutate(across(condition, ~ str_replace(.x, "DEFAULT", "TRUE"))) 
-}
-# translate start and end date conditions to R
-start_dates <- start_dates %>% translate_to_R()
-end_dates <- end_dates %>% translate_to_R()
-
 # date vars 
 # set these to have occured ever during lifetime
 date_vars_ever <- c("chronic_cardiac_disease_date",
@@ -84,17 +64,6 @@ date_vars_recent <- c("positive_test_0_date",
 dummy_data_covs <- dummy_data_vax %>%
   select(patient_id, age_1, age_2, sex, jcvi_group, elig_date, region_0) %>%
   mutate(across(ends_with("_date"), as.Date)) %>%
-  # start and end dates for second vax period
-  var_category(
-    start_1_date,
-    categories = start_dates$start_1_date,
-    conditions = start_dates$condition
-  ) %>%
-  var_category(
-    end_1_date,
-    categories = end_dates$end_1_date,
-    conditions = end_dates$condition
-  ) %>%
   # indicator for flu vaccine in past 5 years
   var_binary(name = flu_vaccine, incidence = 0.3) %>%
   # date vars ever
@@ -131,8 +100,11 @@ dummy_data_covs <- dummy_data_vax %>%
                   NA_Date_))) %>%
   # add recurrent bmi vars
   bind_cols(vars_bmi_recurrent(.data = ., r = study_parameters$recur_bmi)) %>%
-  # add K region and imd vars
-  bind_cols(vars_region_and_imd_recurrent(.data = ., K=K)) %>%
+  # add imd
+  mutate(imd = sample(
+    x = seq(100L,32100L,100L),
+    size = n,
+    replace = TRUE)) %>%
   # add recurrent shielded vars
   bind_cols(
     var_date_recurrent(
