@@ -160,6 +160,7 @@ actions:
     run: r:latest analysis/comparisons/data_outcomes_process.R 02
     needs:
     - design
+    - data_input_process
     - data_long_process
     - data_comparisons_process_02
     outputs:

@@ -84,7 +84,7 @@ actions_comparisons <- function(
       name = glue("data_outcomes_process_{jcvi_group}"),
       run = "r:latest analysis/comparisons/data_outcomes_process.R",
       arguments = c(jcvi_group),
-      needs = list("design", "data_long_process", glue("data_comparisons_process_{jcvi_group}")),
+      needs = list("design", "data_input_process", "data_long_process", glue("data_comparisons_process_{jcvi_group}")),
       highly_sensitive = list(
         data_outcomes = glue("output/jcvi_group_{jcvi_group}/data/data_outcomes.rds")
       )
