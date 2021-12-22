@@ -73,7 +73,7 @@ actions_comparisons <- function(
       name = glue("data_comparisons_process_{jcvi_group}"),
       run = "r:latest analysis/comparisons/data_comparisons_process.R",
       arguments = c(jcvi_group),
-      needs = list("design", "data_vax_process", "data_2nd_vax_dates", "data_eligible_cd", "generate_study_population_covs", "data_long_process"),
+      needs = list("design", "data_input_process", "data_long_process", "data_2nd_vax_dates", "data_eligible_cd"),
       highly_sensitive = list(
         data_comparisons = glue("output/jcvi_group_{jcvi_group}/data/data_comparisons.rds")
       )
@@ -84,7 +84,7 @@ actions_comparisons <- function(
       name = glue("data_outcomes_process_{jcvi_group}"),
       run = "r:latest analysis/comparisons/data_outcomes_process.R",
       arguments = c(jcvi_group),
-      needs = list("design", "generate_study_population_covs", "data_long_process", glue("data_comparisons_process_{jcvi_group}")),
+      needs = list("design", "data_long_process", glue("data_comparisons_process_{jcvi_group}")),
       highly_sensitive = list(
         data_outcomes = glue("output/jcvi_group_{jcvi_group}/data/data_outcomes.rds")
       )
@@ -195,49 +195,62 @@ actions_list <- splice(
   ),
   
   comment("####################################", 
-          "vax",
+          "study definition",
           "####################################"),
-  comment("data for eligibility criteria and vaccines"),
-  comment("generate dummy data for study_definition_vax"),
+  comment("generate dummy data for study_definition"),
   action(
-    name = "dummy_data_vax",
-    run = "r:latest analysis/vax/dummy_data_vax.R",
+    name = "dummy_data",
+    run = "r:latest analysis/dummy_data.R",
     needs = list("design"),
     moderately_sensitive = list(
-      dummy_data_vax = "analysis/vax/dummy_data_vax.feather"
+      dummy_data = "analysis/dummy_data.feather"
     )
   ),
   
-  comment("study definition for eligiblity criteria and vaccine data"),
+  comment("study definition"),
   action(
-    name = "generate_study_population_vax",
-    run = "cohortextractor:latest generate_cohort --study-definition study_definition_vax --output-format feather",
-    dummy_data_file = "analysis/vax/dummy_data_vax.feather",
-    needs = list("design", "dummy_data_vax"),
+    name = "generate_study_population",
+    run = "cohortextractor:latest generate_cohort --study-definition study_definition --output-format feather",
+    dummy_data_file = "analysis/dummy_data.feather",
+    needs = list("design", "dummy_data"),
     highly_sensitive = list(
-      cohort_vax = "output/input_vax.feather"
+      cohort = "output/input.feather"
     )
   ),
   
-  comment("process data from study_definition_vax"),
+  comment("####################################", 
+          "preprocessing",
+          "####################################"),
+  
+  comment("process data from study_definition"),
   action(
-    name = "data_vax_process",
-    run = "r:latest analysis/vax/data_vax_process.R",
-    needs = list("design", "dummy_data_vax", "generate_study_population_vax"),
+    name = "data_input_process",
+    run = "r:latest analysis/preprocess/data_input_process.R",
+    needs = list("design", "dummy_data", "generate_study_population"),
     highly_sensitive = list(
-      data_vax_covs = "output/data/data_vax_covs.rds",
+      data_covs = "output/data/data_covs.rds",
       data_vax_dates = "output/data/data_*_vax_dates.rds"
     ),
     moderately_sensitive = list(
-      data_properties = "output/vax/tables/data_vax_processed_tabulate.txt"
+      data_properties = "output/tables/data_processed_tabulate.txt"
+    )
+  ),
+  
+  comment("process recurring variables as long data"),
+  action(
+    name = "data_long_process",
+    run = "r:latest analysis/preprocess/data_long_process.R",
+    needs = list("design", "data_input_process"),
+    highly_sensitive = list(
+      data_long_dates = "output/data/data_long_*_dates.rds"
     )
   ),
   
   comment("apply eligiblity criteria from boxes a and b"),
   action(
     name = "data_eligible_ab",
-    run = "r:latest analysis/vax/data_eligible_ab.R",
-    needs = list("design", "data_vax_process"),
+    run = "r:latest analysis/preprocess/data_eligible_ab.R",
+    needs = list("design", "data_input_process"),
     highly_sensitive = list(
       data_eligible_a = "output/data/data_eligible_a.rds",
       data_eligible_b = "output/data/data_eligible_b.rds"
@@ -256,19 +269,17 @@ actions_list <- splice(
   action(
     name = "data_2nd_vax_dates",
     run = "r:latest analysis/second_vax_period/data_2nd_vax_dates.R",
-    needs = list("design", "data_vax_process", "data_eligible_ab"),
+    needs = list("design", "data_input_process", "data_eligible_ab"),
     highly_sensitive = list(
       data_vax_plot = "output/second_vax_period/data/data_vax_plot.rds",
       second_vax_period_dates_rds = "output/lib/second_vax_period_dates.rds"
     ),
     moderately_sensitive = list(
-      second_vax_period_dates_csv = "output/lib/second_vax_period_dates.csv",
-      start_dates = "output/lib/start_dates.csv",
-      end_dates = "output/lib/end_dates.csv"
+      second_vax_period_dates_csv = "output/lib/second_vax_period_dates.csv"
     )
   ),
   
-  comment("identify and plot second vaccination time periods"),
+  comment("plot second vaccination time periods"),
   action(
     name = "plot_2nd_vax_dates",
     run = "r:latest analysis/second_vax_period/plot_2nd_vax_dates.R",
@@ -282,48 +293,13 @@ actions_list <- splice(
   action(
     name = "data_eligible_cd",
     run = "r:latest analysis/second_vax_period/data_eligible_cd.R",
-    needs = list("design", "data_vax_process", "data_eligible_ab", "data_2nd_vax_dates"),
+    needs = list("design", "data_input_process", "data_eligible_ab", "data_2nd_vax_dates"),
     highly_sensitive = list(
       data_eligible_c = "output/data/data_eligible_c.rds",
       data_eligible_d = "output/data/data_eligible_d.rds"
     )
   ),
   
-  comment("####################################",
-          "covs", 
-          "####################################"),
-  comment("data for covariates"),
-  comment("generate dummy data for study_definition_covs"),
-  action(
-    name = "dummy_data_covs",
-    run = "r:latest analysis/covs/dummy_data_covs.R",
-    needs = list("design", "dummy_data_vax"),
-    moderately_sensitive = list(
-      dummy_data_vax = "analysis/covs/dummy_data_covs.feather"
-    )
-  ),
-  
-  comment("study definition for covariates"),
-  action(
-    name = "generate_study_population_covs",
-    run = "cohortextractor:latest generate_cohort --study-definition study_definition_covs --output-format feather",
-    dummy_data_file = "analysis/covs/dummy_data_covs.feather",
-    needs = list("design", "dummy_data_covs"),
-    highly_sensitive = list(
-      cohort_vax = "output/input_covs.feather"
-    )
-  ),
-  
-  comment("process recurring variables as long data"),
-  action(
-    name = "data_long_process",
-    run = "r:latest analysis/covs/data_long_process.R",
-    needs = list("design", "data_eligible_cd", "generate_study_population_covs"),
-    highly_sensitive = list(
-      data_long_dates = "output/data/data_long_*_dates.rds"
-    )
-  ),
-
   actions_comparisons(jcvi_group = "02", outcomes = "postest")
   
 )
