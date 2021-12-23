@@ -298,8 +298,8 @@ ever_vars <- c(
   "temporary_immunosuppression_date"
 )
 clinical_vars <- c(
-  "flu_vaccine",
-  "efi",
+  # "flu_vaccine",
+  # "efi",
   "bmi"
 )
 end_vars <- c(
@@ -374,16 +374,16 @@ data_comparisons <- data_comparison_arms %>%
       multimorb, 
       breaks = c(0, 1, 2, 3, 4, Inf),
       labels=c("0", "1", "2", "3", "4+"), 
-      right=FALSE),
+      right=FALSE) #,
     
-    flu_vaccine = flu_vaccine == 1,
+    # flu_vaccine = flu_vaccine == 1,
     
-    efi = fct_case_when(
-      is.na(efi) | (efi <= 0.12) ~ "None",
-      efi <= 0.24 ~ "Mild",
-      efi <= 0.36 ~ "Moderate",
-      TRUE ~ "Severe"
-    )
+    # efi = fct_case_when(
+    #   is.na(efi) | (efi <= 0.12) ~ "None",
+    #   efi <= 0.24 ~ "Mild",
+    #   efi <= 0.36 ~ "Moderate",
+    #   TRUE ~ "Severe"
+    # )
     
   ) %>%
   select(

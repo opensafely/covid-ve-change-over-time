@@ -171,7 +171,7 @@ dummy_data_vax <- dummy_data_elig %>%
 ### from dummy_data_covs
 dummy_data_covs <- dummy_data_vax %>%
   # indicator for flu vaccine in past 5 years
-  mutate(flu_vaccine = rbernoulli(n = nrow(.), p=0.3)) %>%
+  # mutate(flu_vaccine = rbernoulli(n = nrow(.), p=0.3)) %>%
   # date vars ever
   bind_cols(
     pmap(
@@ -240,11 +240,11 @@ dummy_data_covs <- dummy_data_vax %>%
       size = nrow(.),
       replace = TRUE))) %>%
   # add efi
-  mutate(
-    efi = if_else(
-      rbernoulli(n = nrow(.), p = 0.99),
-      rnorm(n = nrow(.), mean = 0.2, sd = 0.09),
-      NA_real_)) %>%
+  # mutate(
+  #   efi = if_else(
+  #     rbernoulli(n = nrow(.), p = 0.99),
+  #     rnorm(n = nrow(.), mean = 0.2, sd = 0.09),
+  #     NA_real_)) %>%
   mutate(across(contains("_date"), as.POSIXct)) %>%
   mutate(across(ends_with("date"), as.POSIXct)) %>%
   mutate(across(c(ethnicity_6, ethnicity_6_sus, jcvi_group, region_0, sex),
