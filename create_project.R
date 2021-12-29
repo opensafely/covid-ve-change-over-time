@@ -216,7 +216,8 @@ actions_list <- splice(
       jcvi_groups = "output/lib/jcvi_groups.csv",
       elig_dates = "output/lib/elig_dates.csv",
       regions = "output/lib/regions.csv",
-      model_varlist = "output/lib/model_varlist.rds"
+      model_varlist = "output/lib/model_varlist.rds",
+      outcomes = "output/lib/outcomes.rds"
     )
   ),
   
