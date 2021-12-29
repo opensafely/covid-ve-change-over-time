@@ -30,6 +30,10 @@ second_vax_period_dates <- readr::read_rds(
   filter(jcvi_group %in% group, include) %>%
   distinct(brand, n_comparisons)
 
+outcomes <- readr::read_rds(
+  here::here("output", "lib", "outcomes.rds")
+)
+
 
 formatpercent100 <- function(x,accuracy){
   formatx <- scales::label_percent(accuracy)(x)
@@ -44,8 +48,19 @@ formatpercent100 <- function(x,accuracy){
 
 for (b in as.character(unique(second_vax_period_dates$brand))) {
   
-  model_tidy <- readr::read_rds(
-    here::here("output", glue("jcvi_group_{group}"), "models", glue("{b}_{outcome}_modelcox_tidy.rds"))) 
+  model_tidy <- lapply(
+    outcomes,
+    function(x)
+    try(readr::read_rds(here::here("output", glue("jcvi_group_{group}"), "models", glue("{b}_{x}_modelcox_tidy.rds"))))
+  )
+  
+  model_tidy_tibble <- bind_rows(
+    lapply(
+      # only bind tibbles (to avoid errors in case some models did not converge)
+      seq_along(model_tidy)[sapply(model_tidy, function(x) is_tibble(x))],
+      # select glance
+      function(x) model_tidy[[x]]
+    )) 
   
   K <- second_vax_period_dates$n_comparisons[second_vax_period_dates$brand == b]
   
@@ -53,7 +68,7 @@ for (b in as.character(unique(second_vax_period_dates$brand))) {
   starts <- ends + 1
   days_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
   
-  plot_data <- model_tidy %>% 
+  plot_data <- model_tidy_tibble %>% 
     filter(str_detect(term, "^comparison"), !str_detect(label, "unvax")) %>%
     mutate(
       comparison = factor(as.integer(str_extract(label, "\\d")),
