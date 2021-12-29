@@ -155,3 +155,11 @@ readr::write_rds(
   here::here("output", "lib", "model_varlist.rds")
 )
 
+################################################################################
+# outcomes ----
+outcomes <- c("postest", "covidadmitted", "coviddeath", "death")
+
+readr::write_rds(
+  outcomes,
+  here::here("output", "lib", "outcomes.rds")
+)
