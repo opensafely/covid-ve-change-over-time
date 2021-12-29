@@ -138,7 +138,8 @@ actions_comparisons <- function(
           needs = list("design", glue("data_comparisons_process_{jcvi_group}"), glue("data_tte_process_{jcvi_group}_{outcome}")),
           highly_sensitive = list(
             modelnumber = glue("output/jcvi_group_{jcvi_group}/models/*_{outcome}_model*.rds"),
-            model_tidy_rds = glue("output/jcvi_group_{jcvi_group}/models/*_{outcome}_modelcox_tidy.rds")
+            model_tidy_rds = glue("output/jcvi_group_{jcvi_group}/models/*_{outcome}_modelcox_tidy.rds"),
+            model_summary_rds = glue("output/jcvi_group_{jcvi_group}/models/*_{outcome}_modelcox_summary.rds")
           ),
           moderately_sensitive = list(
             model_glance = glue("output/jcvi_group_{jcvi_group}/models/*_{outcome}_modelcox_glance.csv"),
@@ -169,7 +170,9 @@ actions_comparisons <- function(
                            outcomes, 
                            function(x) glue("apply_model_cox_{jcvi_group}_{x}"))),
           moderately_sensitive = list(
-            plot = glue("output/jcvi_group_{group}/tables/*_modelcox_glance.txt"))
+            table_glance = glue("output/jcvi_group_{group}/tables/*_modelcox_glance.txt"),
+            table_coefficients = glue("output/jcvi_group_{group}/tables/*_modelcox_coefficients.txt")
+            )
         )
         
       )

@@ -205,6 +205,7 @@ actions:
       highly_sensitive:
         modelnumber: output/jcvi_group_02/models/*_postest_model*.rds
         model_tidy_rds: output/jcvi_group_02/models/*_postest_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_02/models/*_postest_modelcox_summary.rds
       moderately_sensitive:
         model_glance: output/jcvi_group_02/models/*_postest_modelcox_glance.csv
         model_tidy_csv: output/jcvi_group_02/models/*_postest_modelcox_tidy.csv
@@ -231,5 +232,6 @@ actions:
     - apply_model_cox_02_postest
     outputs:
       moderately_sensitive:
-        plot: output/jcvi_group_02/tables/*_modelcox_glance.txt
+        table_glance: output/jcvi_group_02/tables/*_modelcox_glance.txt
+        table_coefficients: output/jcvi_group_02/tables/*_modelcox_coefficients.txt
 

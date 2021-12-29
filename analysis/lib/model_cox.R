@@ -5,10 +5,68 @@ library(broom.helpers)
 library(tictoc)
 
 ################################################################################
+# define formulas
+
+formula_unadj <- Surv(tstart, tstop, status) ~ comparison:arm + strata(region) + strata(comparison)
+formula_demog <- . ~ . + poly(age, degree=2, raw=TRUE) + sex + imd + ethnicity
+formula_clinical <- . ~ . +
+  
+  bmi +
+  heart_failure +
+  other_heart_disease +
+  
+  dialysis +
+  diabetes +
+  chronic_liver_disease +
+  
+  current_copd +
+  #cystic_fibrosis +
+  other_respiratory +
+  
+  lung_cancer +
+  haematological_cancer +
+  cancer_excl_lung_and_haem +
+  
+  any_immunosuppression +
+  
+  dementia +
+  other_neuro_conditions +
+  
+  ld_inc_ds_and_cp +
+  psychosis_schiz_bipolar +
+  
+  multimorb +
+  
+  shielded #+
+
+# flu_vaccine +
+
+# efi
+
+
+model_names = c(
+  "0" = "Unadjusted",
+  "1" = "Adjusting demographics",
+  "2" = "Adjusting for demographics + clinical"
+)
+
+formula_cox_0 <- formula_unadj
+formula_cox_1 <- formula_unadj %>% update(formula_demog)
+formula_cox_2 <- formula_unadj %>% update(formula_demog) %>% update(formula_clinical)
+# if (number == "0") {
+#   formula_cox <- formula_unadj
+# } else if (number == "1") {
+#   formula_cox <- formula_unadj %>% update(formula_demog)
+# } else if (number == "2") {
+#   formula_cox <- formula_unadj %>% update(formula_demog) %>% update(formula_clinical)
+# }
+
+################################################################################
 # define model
 
 cox_model <- function(
   number, 
+  formula_cox,
   filename_prefix
   ) {
   
@@ -21,66 +79,12 @@ cox_model <- function(
   
   number <- as.character(number)
   
-  # define formulas
-  
-  formula_unadj <- Surv(tstart, tstop, status) ~ comparison:arm + strata(region) + strata(comparison)
-  formula_demog <- . ~ . + poly(age, degree=2, raw=TRUE) + sex + imd + ethnicity
-  formula_clinical <- . ~ . +
-    
-    bmi +
-    heart_failure +
-    other_heart_disease +
-    
-    dialysis +
-    diabetes +
-    chronic_liver_disease +
-    
-    current_copd +
-    #cystic_fibrosis +
-    other_respiratory +
-    
-    lung_cancer +
-    haematological_cancer +
-    cancer_excl_lung_and_haem +
-    
-    any_immunosuppression +
-    
-    dementia +
-    other_neuro_conditions +
-    
-    ld_inc_ds_and_cp +
-    psychosis_schiz_bipolar +
-    
-    multimorb +
-    
-    shielded #+
-    
-    # flu_vaccine +
-    
-    # efi
-  
-  
-  model_names = c(
-    "0" = "Unadjusted",
-    "1" = "Adjusting demographics",
-    "2" = "Adjusting for demographics + clinical"
-  )
-  
-  if (number == "0") {
-    formula_cox <- formula_unadj
-  } else if (number == "1") {
-    formula_cox <- formula_unadj %>% update(formula_demog)
-  } else if (number == "2") {
-    formula_cox <- formula_unadj %>% update(formula_demog) %>% update(formula_clinical)
-  }
-  
   model_name <- model_names[number]
   
   opt_control <- coxph.control(iter.max = 30)
   
   cat(glue("...... fitting model {number} ......"), "\n")
   cat(glue("{model_name}"), "\n")
-  # tic("time to fit model")
   timetofit <- system.time((
     coxmod <- coxph(
       formula = formula_cox,
@@ -90,7 +94,17 @@ cox_model <- function(
       na.action = "na.fail",
       control = opt_control)
   ))
-  # toc()
+  
+  # process model (as having issues with broom)
+  coxmod_summary <- as_tibble(
+    summary(coxmod)$conf.int, 
+    rownames = "term"
+  ) %>% 
+    select(term,
+           estimate = `exp(coef)`, 
+           lower = `lower .95`, 
+           upper = `upper .95`) %>%
+    mutate(model = number) 
   
   
   # print(warnings())
@@ -131,5 +145,5 @@ cox_model <- function(
     here::here("output", glue("jcvi_group_{group}"), "models", glue("{filename_prefix}_model{number}.rds")), 
     compress="gz")
   
-  lst(glance, tidy)
+  lst(glance = glance, tidy = tidy, summary = coxmod_summary)
 }
