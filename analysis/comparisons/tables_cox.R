@@ -11,7 +11,6 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  removeobs <- FALSE
   group <- "02"
   
 } else{
