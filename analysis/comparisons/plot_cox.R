@@ -54,7 +54,7 @@ for (b in as.character(unique(second_vax_period_dates$brand))) {
   
   model_tidy_tibble <- bind_rows(
     lapply(
-      # only bind tibbles (to avoid errors in case some models did not converge)
+      # only bind tibbles 
       seq_along(model_tidy)[sapply(model_tidy, function(x) is_tibble(x))],
       # select glance
       function(x) model_tidy[[x]]
