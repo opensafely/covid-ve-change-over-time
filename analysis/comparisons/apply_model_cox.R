@@ -11,12 +11,10 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  removeobs <- FALSE
   group <- "02"
   outcome <- "postest"
   
 } else{
-  removeobs <- TRUE
   group <- args[[1]]
   outcome <- args[[2]]
 }
@@ -34,6 +32,8 @@ source(here::here("analysis", "lib", "model_cox.R"))
 model_varlist <- readr::read_rds(
   here::here("output", "lib", "model_varlist.rds")
 )
+
+
 
 ################################################################################
 # apply model
@@ -67,14 +67,32 @@ for (b in unique(data_comparisons$brand)) {
   model_output <- list()
   model_output[[1]] <- cox_model(
     number = 0, 
+    formula = formula_cox_0,
     filename_prefix = glue("{b}_{outcome}"))
   model_output[[2]] <- cox_model(
     number = 1, 
+    formula = formula_cox_1,
     filename_prefix = glue("{b}_{outcome}"))
   model_output[[3]] <- cox_model(
     number = 2, 
+    formula = formula_cox_2,
     filename_prefix = glue("{b}_{outcome}"))
   
+
+  model_summary <- bind_rows(
+    lapply(
+      # only bind tibbles (to avoid errors in case some models did not converge)
+      seq_along(model_output)[sapply(model_output, function(x) is_tibble(x[[1]]))],
+      # select summary
+      function(x) model_output[[x]]$summary
+    )) %>%
+    mutate(outcome = outcome)
+  readr::write_rds(
+    model_summary,
+    here::here("output", glue("jcvi_group_{group}"), "models", glue("{b}_{outcome}_modelcox_summary.rds"))) 
+  
+    
+  ### postprocessing using broom (may be unreliable)
   # combine results
   model_glance <- bind_rows(
     lapply(
