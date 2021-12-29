@@ -151,10 +151,26 @@ actions_comparisons <- function(
           name = glue("plot_model_cox_{jcvi_group}"),
           run = "r:latest analysis/comparisons/plot_cox.R",
           arguments = c(jcvi_group),
-          needs = list("design", glue("apply_model_cox_{jcvi_group}_{outcome}")),
+          needs = splice("design", "data_2nd_vax_dates",
+                         lapply(
+                           outcomes, 
+                           function(x) glue("apply_model_cox_{jcvi_group}_{x}"))),
           moderately_sensitive = list(
             plot = glue("output/jcvi_group_{group}/images/plot_res_*.png"))
-          )
+          ),
+        
+        comment(glue("tabulate cox model for all outcomes")),
+        action(
+          name = glue("tables_model_cox_{jcvi_group}"),
+          run = "r:latest analysis/comparisons/tables_cox.R",
+          arguments = c(jcvi_group),
+          needs = splice("design", "data_2nd_vax_dates",
+                         lapply(
+                           outcomes, 
+                           function(x) glue("apply_model_cox_{jcvi_group}_{x}"))),
+          moderately_sensitive = list(
+            plot = glue("output/jcvi_group_{group}/tables/*_modelcox_glance.txt"))
+        )
         
       )
     }

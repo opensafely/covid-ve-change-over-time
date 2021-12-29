@@ -214,8 +214,21 @@ actions:
     run: r:latest analysis/comparisons/plot_cox.R 02
     needs:
     - design
+    - data_2nd_vax_dates
     - apply_model_cox_02_postest
     outputs:
       moderately_sensitive:
         plot: output/jcvi_group_02/images/plot_res_*.png
+
+  ## tabulate cox model for all outcomes 
+
+  tables_model_cox_02:
+    run: r:latest analysis/comparisons/tables_cox.R 02
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - apply_model_cox_02_postest
+    outputs:
+      moderately_sensitive:
+        plot: output/jcvi_group_02/tables/*_modelcox_glance.txt
 
