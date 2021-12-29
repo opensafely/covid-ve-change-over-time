@@ -100,7 +100,7 @@ actions_comparisons <- function(
         name = glue("check_combine_outcomes_{jcvi_group}"),
         run = "r:latest analysis/comparisons/check_combine_outcomes.R",
         arguments = c(jcvi_group),
-        needs = list("design", glue("data_outcomes_process_{jcvi_group}")),
+        needs = list(glue("data_outcomes_process_{jcvi_group}")),
         highly_sensitive = list(
           data_check_combine_outcomes = glue("output/jcvi_group_{jcvi_group}/data/check_combine_outcomes.rds")
         ),
@@ -151,7 +151,7 @@ actions_comparisons <- function(
           name = glue("plot_model_cox_{jcvi_group}"),
           run = "r:latest analysis/comparisons/plot_cox.R",
           arguments = c(jcvi_group),
-          needs = list(glue("apply_model_cox_{jcvi_group}_{outcome}")),
+          needs = list("design", glue("apply_model_cox_{jcvi_group}_{outcome}")),
           moderately_sensitive = list(
             plot = glue("output/jcvi_group_{group}/images/plot_res_*.png"))
           )
