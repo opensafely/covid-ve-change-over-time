@@ -172,6 +172,7 @@ actions:
   check_combine_outcomes_02:
     run: r:latest analysis/comparisons/check_combine_outcomes.R 02
     needs:
+    - design
     - data_outcomes_process_02
     outputs:
       highly_sensitive:
