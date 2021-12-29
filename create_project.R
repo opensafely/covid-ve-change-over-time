@@ -144,7 +144,17 @@ actions_comparisons <- function(
             model_glance = glue("output/jcvi_group_{jcvi_group}/models/*_{outcome}_modelcox_glance.csv"),
             model_tidy_csv = glue("output/jcvi_group_{jcvi_group}/models/*_{outcome}_modelcox_tidy.csv")
           )
-        )
+        ),
+        
+        comment(glue("plot cox model for all outcomes")),
+        action(
+          name = glue("plot_model_cox_{jcvi_group}"),
+          run = "r:latest analysis/comparisons/plot_cox.R",
+          arguments = c(jcvi_group),
+          needs = list(glue("apply_model_cox_{jcvi_group}_{outcome}")),
+          moderately_sensitive = list(
+            plot = glue("output/jcvi_group_{group}/images/plot_res_*.png"))
+          )
         
       )
     }

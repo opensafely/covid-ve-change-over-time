@@ -208,3 +208,13 @@ actions:
         model_glance: output/jcvi_group_02/models/*_postest_modelcox_glance.csv
         model_tidy_csv: output/jcvi_group_02/models/*_postest_modelcox_tidy.csv
 
+  ## plot cox model for all outcomes 
+
+  plot_model_cox_02:
+    run: r:latest analysis/comparisons/plot_cox.R 02
+    needs:
+    - apply_model_cox_02_postest
+    outputs:
+      moderately_sensitive:
+        plot: output/jcvi_group_02/images/plot_res_*.png
+
