@@ -13,12 +13,10 @@ if(length(args)==0){
   # use for interactive testing
   removeobs <- FALSE
   group <- "02"
-  outcome <- "postest"
   
 } else{
   removeobs <- TRUE
   group <- args[[1]]
-  outcome <- args[[2]]
 }
 
 ################################################################################
