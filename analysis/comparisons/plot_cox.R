@@ -115,13 +115,13 @@ for (b in as.character(unique(second_vax_period_dates$brand))) {
     geom_hline(aes(yintercept=1), colour='grey') +
     facet_wrap(~outcome) +
     scale_y_log10(
-      breaks = c(0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5),
+      breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5),
       limits = c(0.05, max(1, (plot_data$upper))),
       oob = scales::oob_keep,
       sec.axis = sec_axis(
         ~(1-.),
         name="Effectiveness (1 - HR)",
-        breaks = c(-4, -1, 0, 0.5, 0.80, 0.9, 0.95, 0.98, 0.99),
+        breaks = c(-4, -1, 0, 0.5, 0.80, 0.9, 0.95, 0.98, 0.99, 1.00),
         labels = function(x) {formatpercent100(x, 1)}
       )
     ) +
