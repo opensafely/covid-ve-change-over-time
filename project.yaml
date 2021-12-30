@@ -220,6 +220,9 @@ actions:
     - design
     - data_2nd_vax_dates
     - apply_model_cox_02_postest
+    - apply_model_cox_02_covidadmitted
+    - apply_model_cox_02_coviddeath
+    - apply_model_cox_02_death
     outputs:
       moderately_sensitive:
         plot: output/jcvi_group_02/images/plot_res_*.png
@@ -232,55 +235,17 @@ actions:
     - design
     - data_2nd_vax_dates
     - data_tte_process_02_postest
+    - data_tte_process_02_postest
+    - data_tte_process_02_postest
+    - data_tte_process_02_postest
     - apply_model_cox_02_postest
+    - apply_model_cox_02_covidadmitted
+    - apply_model_cox_02_coviddeath
+    - apply_model_cox_02_death
     outputs:
       moderately_sensitive:
         table_glance: output/jcvi_group_02/tables/*_modelcox_glance.txt
         table_coefficients: output/jcvi_group_02/tables/*_modelcox_coefficients.txt
-
-  ## #################################### 
-  ## comparisons 
-  ## #################################### 
-  ## process data, apply model and generate report for JCVI group 02 
-  ## process covariates data 
-
-  data_comparisons_process_02:
-    run: r:latest analysis/comparisons/data_comparisons_process.R 02
-    needs:
-    - design
-    - data_input_process
-    - data_long_process
-    - data_2nd_vax_dates
-    - data_eligible_cd
-    outputs:
-      highly_sensitive:
-        data_comparisons: output/jcvi_group_02/data/data_comparisons.rds
-
-  ## process outcomes data 
-
-  data_outcomes_process_02:
-    run: r:latest analysis/comparisons/data_outcomes_process.R 02
-    needs:
-    - design
-    - data_input_process
-    - data_long_process
-    - data_comparisons_process_02
-    outputs:
-      highly_sensitive:
-        data_outcomes: output/jcvi_group_02/data/data_outcomes.rds
-
-  ## check gap between outcomes for combining 
-
-  check_combine_outcomes_02:
-    run: r:latest analysis/comparisons/check_combine_outcomes.R 02
-    needs:
-    - data_outcomes_process_02
-    outputs:
-      highly_sensitive:
-        data_check_combine_outcomes: output/jcvi_group_02/data/check_combine_outcomes.rds
-      moderately_sensitive:
-        plot_check_combine_outcomes: output/jcvi_group_02/images/check_combine_outcomes.png
-        table_check_combine_outcomes: output/jcvi_group_02/tables/check_combine_outcomes.csv
 
   ## outcome = covidadmitted 
   ## process tte data for covidadmitted 
@@ -320,7 +285,10 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - apply_model_cox_02_postest
     - apply_model_cox_02_covidadmitted
+    - apply_model_cox_02_coviddeath
+    - apply_model_cox_02_death
     outputs:
       moderately_sensitive:
         plot: output/jcvi_group_02/images/plot_res_*.png
@@ -333,55 +301,17 @@ actions:
     - design
     - data_2nd_vax_dates
     - data_tte_process_02_covidadmitted
+    - data_tte_process_02_covidadmitted
+    - data_tte_process_02_covidadmitted
+    - data_tte_process_02_covidadmitted
+    - apply_model_cox_02_postest
     - apply_model_cox_02_covidadmitted
+    - apply_model_cox_02_coviddeath
+    - apply_model_cox_02_death
     outputs:
       moderately_sensitive:
         table_glance: output/jcvi_group_02/tables/*_modelcox_glance.txt
         table_coefficients: output/jcvi_group_02/tables/*_modelcox_coefficients.txt
-
-  ## #################################### 
-  ## comparisons 
-  ## #################################### 
-  ## process data, apply model and generate report for JCVI group 02 
-  ## process covariates data 
-
-  data_comparisons_process_02:
-    run: r:latest analysis/comparisons/data_comparisons_process.R 02
-    needs:
-    - design
-    - data_input_process
-    - data_long_process
-    - data_2nd_vax_dates
-    - data_eligible_cd
-    outputs:
-      highly_sensitive:
-        data_comparisons: output/jcvi_group_02/data/data_comparisons.rds
-
-  ## process outcomes data 
-
-  data_outcomes_process_02:
-    run: r:latest analysis/comparisons/data_outcomes_process.R 02
-    needs:
-    - design
-    - data_input_process
-    - data_long_process
-    - data_comparisons_process_02
-    outputs:
-      highly_sensitive:
-        data_outcomes: output/jcvi_group_02/data/data_outcomes.rds
-
-  ## check gap between outcomes for combining 
-
-  check_combine_outcomes_02:
-    run: r:latest analysis/comparisons/check_combine_outcomes.R 02
-    needs:
-    - data_outcomes_process_02
-    outputs:
-      highly_sensitive:
-        data_check_combine_outcomes: output/jcvi_group_02/data/check_combine_outcomes.rds
-      moderately_sensitive:
-        plot_check_combine_outcomes: output/jcvi_group_02/images/check_combine_outcomes.png
-        table_check_combine_outcomes: output/jcvi_group_02/tables/check_combine_outcomes.csv
 
   ## outcome = coviddeath 
   ## process tte data for coviddeath 
@@ -421,7 +351,10 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - apply_model_cox_02_postest
+    - apply_model_cox_02_covidadmitted
     - apply_model_cox_02_coviddeath
+    - apply_model_cox_02_death
     outputs:
       moderately_sensitive:
         plot: output/jcvi_group_02/images/plot_res_*.png
@@ -434,55 +367,17 @@ actions:
     - design
     - data_2nd_vax_dates
     - data_tte_process_02_coviddeath
+    - data_tte_process_02_coviddeath
+    - data_tte_process_02_coviddeath
+    - data_tte_process_02_coviddeath
+    - apply_model_cox_02_postest
+    - apply_model_cox_02_covidadmitted
     - apply_model_cox_02_coviddeath
+    - apply_model_cox_02_death
     outputs:
       moderately_sensitive:
         table_glance: output/jcvi_group_02/tables/*_modelcox_glance.txt
         table_coefficients: output/jcvi_group_02/tables/*_modelcox_coefficients.txt
-
-  ## #################################### 
-  ## comparisons 
-  ## #################################### 
-  ## process data, apply model and generate report for JCVI group 02 
-  ## process covariates data 
-
-  data_comparisons_process_02:
-    run: r:latest analysis/comparisons/data_comparisons_process.R 02
-    needs:
-    - design
-    - data_input_process
-    - data_long_process
-    - data_2nd_vax_dates
-    - data_eligible_cd
-    outputs:
-      highly_sensitive:
-        data_comparisons: output/jcvi_group_02/data/data_comparisons.rds
-
-  ## process outcomes data 
-
-  data_outcomes_process_02:
-    run: r:latest analysis/comparisons/data_outcomes_process.R 02
-    needs:
-    - design
-    - data_input_process
-    - data_long_process
-    - data_comparisons_process_02
-    outputs:
-      highly_sensitive:
-        data_outcomes: output/jcvi_group_02/data/data_outcomes.rds
-
-  ## check gap between outcomes for combining 
-
-  check_combine_outcomes_02:
-    run: r:latest analysis/comparisons/check_combine_outcomes.R 02
-    needs:
-    - data_outcomes_process_02
-    outputs:
-      highly_sensitive:
-        data_check_combine_outcomes: output/jcvi_group_02/data/check_combine_outcomes.rds
-      moderately_sensitive:
-        plot_check_combine_outcomes: output/jcvi_group_02/images/check_combine_outcomes.png
-        table_check_combine_outcomes: output/jcvi_group_02/tables/check_combine_outcomes.csv
 
   ## outcome = death 
   ## process tte data for death 
@@ -522,6 +417,9 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - apply_model_cox_02_postest
+    - apply_model_cox_02_covidadmitted
+    - apply_model_cox_02_coviddeath
     - apply_model_cox_02_death
     outputs:
       moderately_sensitive:
@@ -535,6 +433,12 @@ actions:
     - design
     - data_2nd_vax_dates
     - data_tte_process_02_death
+    - data_tte_process_02_death
+    - data_tte_process_02_death
+    - data_tte_process_02_death
+    - apply_model_cox_02_postest
+    - apply_model_cox_02_covidadmitted
+    - apply_model_cox_02_coviddeath
     - apply_model_cox_02_death
     outputs:
       moderately_sensitive:
@@ -624,6 +528,9 @@ actions:
     - design
     - data_2nd_vax_dates
     - apply_model_cox_05_postest
+    - apply_model_cox_05_covidadmitted
+    - apply_model_cox_05_coviddeath
+    - apply_model_cox_05_death
     outputs:
       moderately_sensitive:
         plot: output/jcvi_group_05/images/plot_res_*.png
@@ -636,55 +543,17 @@ actions:
     - design
     - data_2nd_vax_dates
     - data_tte_process_05_postest
+    - data_tte_process_05_postest
+    - data_tte_process_05_postest
+    - data_tte_process_05_postest
     - apply_model_cox_05_postest
+    - apply_model_cox_05_covidadmitted
+    - apply_model_cox_05_coviddeath
+    - apply_model_cox_05_death
     outputs:
       moderately_sensitive:
         table_glance: output/jcvi_group_05/tables/*_modelcox_glance.txt
         table_coefficients: output/jcvi_group_05/tables/*_modelcox_coefficients.txt
-
-  ## #################################### 
-  ## comparisons 
-  ## #################################### 
-  ## process data, apply model and generate report for JCVI group 05 
-  ## process covariates data 
-
-  data_comparisons_process_05:
-    run: r:latest analysis/comparisons/data_comparisons_process.R 05
-    needs:
-    - design
-    - data_input_process
-    - data_long_process
-    - data_2nd_vax_dates
-    - data_eligible_cd
-    outputs:
-      highly_sensitive:
-        data_comparisons: output/jcvi_group_05/data/data_comparisons.rds
-
-  ## process outcomes data 
-
-  data_outcomes_process_05:
-    run: r:latest analysis/comparisons/data_outcomes_process.R 05
-    needs:
-    - design
-    - data_input_process
-    - data_long_process
-    - data_comparisons_process_05
-    outputs:
-      highly_sensitive:
-        data_outcomes: output/jcvi_group_05/data/data_outcomes.rds
-
-  ## check gap between outcomes for combining 
-
-  check_combine_outcomes_05:
-    run: r:latest analysis/comparisons/check_combine_outcomes.R 05
-    needs:
-    - data_outcomes_process_05
-    outputs:
-      highly_sensitive:
-        data_check_combine_outcomes: output/jcvi_group_05/data/check_combine_outcomes.rds
-      moderately_sensitive:
-        plot_check_combine_outcomes: output/jcvi_group_05/images/check_combine_outcomes.png
-        table_check_combine_outcomes: output/jcvi_group_05/tables/check_combine_outcomes.csv
 
   ## outcome = covidadmitted 
   ## process tte data for covidadmitted 
@@ -724,7 +593,10 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - apply_model_cox_05_postest
     - apply_model_cox_05_covidadmitted
+    - apply_model_cox_05_coviddeath
+    - apply_model_cox_05_death
     outputs:
       moderately_sensitive:
         plot: output/jcvi_group_05/images/plot_res_*.png
@@ -737,55 +609,17 @@ actions:
     - design
     - data_2nd_vax_dates
     - data_tte_process_05_covidadmitted
+    - data_tte_process_05_covidadmitted
+    - data_tte_process_05_covidadmitted
+    - data_tte_process_05_covidadmitted
+    - apply_model_cox_05_postest
     - apply_model_cox_05_covidadmitted
+    - apply_model_cox_05_coviddeath
+    - apply_model_cox_05_death
     outputs:
       moderately_sensitive:
         table_glance: output/jcvi_group_05/tables/*_modelcox_glance.txt
         table_coefficients: output/jcvi_group_05/tables/*_modelcox_coefficients.txt
-
-  ## #################################### 
-  ## comparisons 
-  ## #################################### 
-  ## process data, apply model and generate report for JCVI group 05 
-  ## process covariates data 
-
-  data_comparisons_process_05:
-    run: r:latest analysis/comparisons/data_comparisons_process.R 05
-    needs:
-    - design
-    - data_input_process
-    - data_long_process
-    - data_2nd_vax_dates
-    - data_eligible_cd
-    outputs:
-      highly_sensitive:
-        data_comparisons: output/jcvi_group_05/data/data_comparisons.rds
-
-  ## process outcomes data 
-
-  data_outcomes_process_05:
-    run: r:latest analysis/comparisons/data_outcomes_process.R 05
-    needs:
-    - design
-    - data_input_process
-    - data_long_process
-    - data_comparisons_process_05
-    outputs:
-      highly_sensitive:
-        data_outcomes: output/jcvi_group_05/data/data_outcomes.rds
-
-  ## check gap between outcomes for combining 
-
-  check_combine_outcomes_05:
-    run: r:latest analysis/comparisons/check_combine_outcomes.R 05
-    needs:
-    - data_outcomes_process_05
-    outputs:
-      highly_sensitive:
-        data_check_combine_outcomes: output/jcvi_group_05/data/check_combine_outcomes.rds
-      moderately_sensitive:
-        plot_check_combine_outcomes: output/jcvi_group_05/images/check_combine_outcomes.png
-        table_check_combine_outcomes: output/jcvi_group_05/tables/check_combine_outcomes.csv
 
   ## outcome = coviddeath 
   ## process tte data for coviddeath 
@@ -825,7 +659,10 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - apply_model_cox_05_postest
+    - apply_model_cox_05_covidadmitted
     - apply_model_cox_05_coviddeath
+    - apply_model_cox_05_death
     outputs:
       moderately_sensitive:
         plot: output/jcvi_group_05/images/plot_res_*.png
@@ -838,55 +675,17 @@ actions:
     - design
     - data_2nd_vax_dates
     - data_tte_process_05_coviddeath
+    - data_tte_process_05_coviddeath
+    - data_tte_process_05_coviddeath
+    - data_tte_process_05_coviddeath
+    - apply_model_cox_05_postest
+    - apply_model_cox_05_covidadmitted
     - apply_model_cox_05_coviddeath
+    - apply_model_cox_05_death
     outputs:
       moderately_sensitive:
         table_glance: output/jcvi_group_05/tables/*_modelcox_glance.txt
         table_coefficients: output/jcvi_group_05/tables/*_modelcox_coefficients.txt
-
-  ## #################################### 
-  ## comparisons 
-  ## #################################### 
-  ## process data, apply model and generate report for JCVI group 05 
-  ## process covariates data 
-
-  data_comparisons_process_05:
-    run: r:latest analysis/comparisons/data_comparisons_process.R 05
-    needs:
-    - design
-    - data_input_process
-    - data_long_process
-    - data_2nd_vax_dates
-    - data_eligible_cd
-    outputs:
-      highly_sensitive:
-        data_comparisons: output/jcvi_group_05/data/data_comparisons.rds
-
-  ## process outcomes data 
-
-  data_outcomes_process_05:
-    run: r:latest analysis/comparisons/data_outcomes_process.R 05
-    needs:
-    - design
-    - data_input_process
-    - data_long_process
-    - data_comparisons_process_05
-    outputs:
-      highly_sensitive:
-        data_outcomes: output/jcvi_group_05/data/data_outcomes.rds
-
-  ## check gap between outcomes for combining 
-
-  check_combine_outcomes_05:
-    run: r:latest analysis/comparisons/check_combine_outcomes.R 05
-    needs:
-    - data_outcomes_process_05
-    outputs:
-      highly_sensitive:
-        data_check_combine_outcomes: output/jcvi_group_05/data/check_combine_outcomes.rds
-      moderately_sensitive:
-        plot_check_combine_outcomes: output/jcvi_group_05/images/check_combine_outcomes.png
-        table_check_combine_outcomes: output/jcvi_group_05/tables/check_combine_outcomes.csv
 
   ## outcome = death 
   ## process tte data for death 
@@ -926,6 +725,9 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - apply_model_cox_05_postest
+    - apply_model_cox_05_covidadmitted
+    - apply_model_cox_05_coviddeath
     - apply_model_cox_05_death
     outputs:
       moderately_sensitive:
@@ -939,6 +741,12 @@ actions:
     - design
     - data_2nd_vax_dates
     - data_tte_process_05_death
+    - data_tte_process_05_death
+    - data_tte_process_05_death
+    - data_tte_process_05_death
+    - apply_model_cox_05_postest
+    - apply_model_cox_05_covidadmitted
+    - apply_model_cox_05_coviddeath
     - apply_model_cox_05_death
     outputs:
       moderately_sensitive:

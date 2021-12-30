@@ -1,25 +1,25 @@
    design     dummy_data  generate_study_population     data_input_process  data_long_process  data_eligible_ab      data_2nd_vax_dates  plot_2nd_vax_dates  data_eligible_cd      data_comparisons_process_02  data_outcomes_process_02  check_combine_outcomes_02   data_tte_process_02_postest 
 apply_model_cox_02_postest 
 plot_model_cox_02 
-tables_model_cox_02      data_comparisons_process_02  data_outcomes_process_02  check_combine_outcomes_02   data_tte_process_02_covidadmitted 
+tables_model_cox_02   data_tte_process_02_covidadmitted 
 apply_model_cox_02_covidadmitted 
 plot_model_cox_02 
-tables_model_cox_02      data_comparisons_process_02  data_outcomes_process_02  check_combine_outcomes_02   data_tte_process_02_coviddeath 
+tables_model_cox_02   data_tte_process_02_coviddeath 
 apply_model_cox_02_coviddeath 
 plot_model_cox_02 
-tables_model_cox_02      data_comparisons_process_02  data_outcomes_process_02  check_combine_outcomes_02   data_tte_process_02_death 
+tables_model_cox_02   data_tte_process_02_death 
 apply_model_cox_02_death 
 plot_model_cox_02 
 tables_model_cox_02      data_comparisons_process_05  data_outcomes_process_05  check_combine_outcomes_05   data_tte_process_05_postest 
 apply_model_cox_05_postest 
 plot_model_cox_05 
-tables_model_cox_05      data_comparisons_process_05  data_outcomes_process_05  check_combine_outcomes_05   data_tte_process_05_covidadmitted 
+tables_model_cox_05   data_tte_process_05_covidadmitted 
 apply_model_cox_05_covidadmitted 
 plot_model_cox_05 
-tables_model_cox_05      data_comparisons_process_05  data_outcomes_process_05  check_combine_outcomes_05   data_tte_process_05_coviddeath 
+tables_model_cox_05   data_tte_process_05_coviddeath 
 apply_model_cox_05_coviddeath 
 plot_model_cox_05 
-tables_model_cox_05      data_comparisons_process_05  data_outcomes_process_05  check_combine_outcomes_05   data_tte_process_05_death 
+tables_model_cox_05   data_tte_process_05_death 
 apply_model_cox_05_death 
 plot_model_cox_05 
 tables_model_cox_05
