@@ -129,7 +129,7 @@ actions_comparisons <- function(
             data_tte_brand_outcome = glue("output/jcvi_group_{jcvi_group}/data/data_tte_*_{outcome}.rds")
           ),
           moderately_sensitive = list(
-            table_incidence = glue("output/jcvi_group_{group}/tables/{b}_{outcome}_incidence.txt")
+            table_incidence = glue("output/jcvi_group_{jcvi_group}/tables/*_{outcome}_incidence.txt")
           )
         ),
         
@@ -160,7 +160,7 @@ actions_comparisons <- function(
                            outcomes, 
                            function(x) glue("apply_model_cox_{jcvi_group}_{x}"))),
           moderately_sensitive = list(
-            plot = glue("output/jcvi_group_{group}/images/plot_res_*.png"))
+            plot = glue("output/jcvi_group_{jcvi_group}/images/plot_res_*.png"))
           ),
         
         comment(glue("tabulate cox model for all outcomes")),
@@ -173,8 +173,8 @@ actions_comparisons <- function(
                            outcomes, 
                            function(x) glue("apply_model_cox_{jcvi_group}_{x}"))),
           moderately_sensitive = list(
-            table_glance = glue("output/jcvi_group_{group}/tables/*_modelcox_glance.txt"),
-            table_coefficients = glue("output/jcvi_group_{group}/tables/*_modelcox_coefficients.txt")
+            table_glance = glue("output/jcvi_group_{jcvi_group}/tables/*_modelcox_glance.txt"),
+            table_coefficients = glue("output/jcvi_group_{jcvi_group}/tables/*_modelcox_coefficients.txt")
             )
         )
         

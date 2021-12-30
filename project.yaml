@@ -193,7 +193,7 @@ actions:
       highly_sensitive:
         data_tte_brand_outcome: output/jcvi_group_02/data/data_tte_*_postest.rds
       moderately_sensitive:
-        table_incidence: output/jcvi_group_02/tables/ChAdOx_postest_incidence.txt
+        table_incidence: output/jcvi_group_02/tables/*_postest_incidence.txt
 
   ## apply cox model for postest 
 
@@ -293,7 +293,7 @@ actions:
       highly_sensitive:
         data_tte_brand_outcome: output/jcvi_group_05/data/data_tte_*_postest.rds
       moderately_sensitive:
-        table_incidence: output/jcvi_group_02/tables/ChAdOx_postest_incidence.txt
+        table_incidence: output/jcvi_group_05/tables/*_postest_incidence.txt
 
   ## apply cox model for postest 
 
@@ -322,7 +322,7 @@ actions:
     - apply_model_cox_05_postest
     outputs:
       moderately_sensitive:
-        plot: output/jcvi_group_02/images/plot_res_*.png
+        plot: output/jcvi_group_05/images/plot_res_*.png
 
   ## tabulate cox model for all outcomes 
 
@@ -334,6 +334,6 @@ actions:
     - apply_model_cox_05_postest
     outputs:
       moderately_sensitive:
-        table_glance: output/jcvi_group_02/tables/*_modelcox_glance.txt
-        table_coefficients: output/jcvi_group_02/tables/*_modelcox_coefficients.txt
+        table_glance: output/jcvi_group_05/tables/*_modelcox_glance.txt
+        table_coefficients: output/jcvi_group_05/tables/*_modelcox_coefficients.txt
 
