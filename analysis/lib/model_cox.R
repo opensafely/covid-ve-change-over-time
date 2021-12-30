@@ -7,7 +7,7 @@ library(tictoc)
 ################################################################################
 # define formulas
 
-formula_unadj <- Surv(tstart, tstop, status) ~ comparison:arm + strata(region) + strata(comparison)
+formula_unadj <- Surv(tstart, tstop, status, type = "counting") ~ arm:strata(comparison) + strata(region) 
 formula_demog <- . ~ . + poly(age, degree=2, raw=TRUE) + sex + imd + ethnicity
 formula_clinical <- . ~ . +
   
