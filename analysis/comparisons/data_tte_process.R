@@ -30,14 +30,20 @@ data_outcomes <- readr::read_rds(
   here::here("output", glue("jcvi_group_{group}"), "data", "data_outcomes.rds"))
 
 # combine outcomes 
-# TODO
-# data_comparisons_combined <- data_comparisons %>%
-#   mutate(
-#     postest_date = if_else(
-#       !is.na(postest_date) ~ postest_date,
-#       !is.na(covidadmitted_date) ~ covidadmitted_date - days(7),
-#       !is.na(coviddeath_date) ~ coviddeath_date - days(14)
-#     ))
+data_outcomes_combined <- data_outcomes %>%
+  mutate(across(postest_date,
+                ~ case_when(
+                  !is.na(.x) ~ .x,
+                  !is.na(covidadmitted_date) ~ covidadmitted_date,
+                  !is.na(coviddeath_date) ~ coviddeath_date,
+                  TRUE ~ .x            
+                ))) %>%
+  mutate(across(covidadmitted_date,
+                ~ case_when(
+                  !is.na(.x) ~ .x,
+                  !is.na(coviddeath_date) ~ coviddeath_date,
+                  TRUE ~ .x            
+                )))
 
 for (b in unique(data_comparisons$brand)) {
   
@@ -48,12 +54,12 @@ for (b in unique(data_comparisons$brand)) {
   data_tte <- data_comparisons %>%
     filter(brand %in% b) %>%
     select(patient_id, comparison, arm, start_fu_date, end_fu_date) %>%
-    left_join(data_outcomes %>% 
+    left_join(data_outcomes_combined %>% 
                 select(patient_id, 
                        starts_with(outcome), 
                        dereg_date, noncoviddeath_date), 
               by = "patient_id") %>%
-    mutate(across(c(starts_with(outcome),dereg_date, noncoviddeath_date),
+    mutate(across(c(starts_with(outcome), dereg_date, noncoviddeath_date),
                   ~ if_else(
                     !is.na(.x) & start_fu_date < .x & .x <= end_fu_date,
                     .x,
@@ -86,20 +92,21 @@ for (b in unique(data_comparisons$brand)) {
       mutate(days = tstop-tstart) %>%
       group_by(comparison, arm) %>%
       summarise(
+        n = n(),
         personyears = sum(days)/365,
         events = sum(status),
         .groups = "keep"
       ) %>%
       ungroup() %>%
-      mutate(across(c(events, personyears), 
+      mutate(across(c(n, events, personyears), 
                     # round to nearest 10
                     ~ scales::comma(round(.x, -1), accuracy = 1))) %>%
-      mutate(`events / person-years` = str_c(events, " / ", personyears)) %>%
-      select(comparison, arm, `events / person-years`) %>%
-      pivot_wider(names_from = arm, values_from = `events / person-years`) %>%
+      mutate(value = str_c(events, " / ", personyears, " (",n,")")) %>%
+      select(comparison, arm, value) %>%
+      pivot_wider(names_from = arm, values_from = value) %>%
       kableExtra::kable(
         "pipe",
-        caption = glue("{outcome} events / person-years")
+        caption = glue("{outcome} events / person-years (n)")
       )
   }
   
