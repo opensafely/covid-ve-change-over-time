@@ -15,11 +15,9 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  removeobs <- FALSE
   group <- "02"
   
 } else{
-  removeobs <- TRUE
   group <- args[[1]]
 }
 
@@ -57,7 +55,7 @@ data_outcomes <- data_ids %>%
   mutate(across(c(coviddeath_date, death_date),
                 ~ if_else(
                   !is.na(coviddeath_date) & !is.na(death_date),
-                  min(coviddeath_date, death_date),
+                  pmin(coviddeath_date, death_date, na.rm = TRUE),
                   .x
                 ))) %>%
   # add outcome for noncoviddeath
