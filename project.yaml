@@ -212,41 +212,6 @@ actions:
         model_glance: output/jcvi_group_02/models/*_postest_modelcox_glance.csv
         model_tidy_csv: output/jcvi_group_02/models/*_postest_modelcox_tidy.csv
 
-  ## plot cox model for all outcomes 
-
-  plot_model_cox_02:
-    run: r:latest analysis/comparisons/plot_cox.R 02
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - apply_model_cox_02_postest
-    - apply_model_cox_02_covidadmitted
-    - apply_model_cox_02_coviddeath
-    - apply_model_cox_02_death
-    outputs:
-      moderately_sensitive:
-        plot: output/jcvi_group_02/images/plot_res_*.png
-
-  ## tabulate cox model for all outcomes 
-
-  tables_model_cox_02:
-    run: r:latest analysis/comparisons/tables_cox.R 02
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - data_tte_process_02_postest
-    - data_tte_process_02_postest
-    - data_tte_process_02_postest
-    - data_tte_process_02_postest
-    - apply_model_cox_02_postest
-    - apply_model_cox_02_covidadmitted
-    - apply_model_cox_02_coviddeath
-    - apply_model_cox_02_death
-    outputs:
-      moderately_sensitive:
-        table_glance: output/jcvi_group_02/tables/*_modelcox_glance.txt
-        table_coefficients: output/jcvi_group_02/tables/*_modelcox_coefficients.txt
-
   ## outcome = covidadmitted 
   ## process tte data for covidadmitted 
 
@@ -278,41 +243,6 @@ actions:
         model_glance: output/jcvi_group_02/models/*_covidadmitted_modelcox_glance.csv
         model_tidy_csv: output/jcvi_group_02/models/*_covidadmitted_modelcox_tidy.csv
 
-  ## plot cox model for all outcomes 
-
-  plot_model_cox_02:
-    run: r:latest analysis/comparisons/plot_cox.R 02
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - apply_model_cox_02_postest
-    - apply_model_cox_02_covidadmitted
-    - apply_model_cox_02_coviddeath
-    - apply_model_cox_02_death
-    outputs:
-      moderately_sensitive:
-        plot: output/jcvi_group_02/images/plot_res_*.png
-
-  ## tabulate cox model for all outcomes 
-
-  tables_model_cox_02:
-    run: r:latest analysis/comparisons/tables_cox.R 02
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - data_tte_process_02_covidadmitted
-    - data_tte_process_02_covidadmitted
-    - data_tte_process_02_covidadmitted
-    - data_tte_process_02_covidadmitted
-    - apply_model_cox_02_postest
-    - apply_model_cox_02_covidadmitted
-    - apply_model_cox_02_coviddeath
-    - apply_model_cox_02_death
-    outputs:
-      moderately_sensitive:
-        table_glance: output/jcvi_group_02/tables/*_modelcox_glance.txt
-        table_coefficients: output/jcvi_group_02/tables/*_modelcox_coefficients.txt
-
   ## outcome = coviddeath 
   ## process tte data for coviddeath 
 
@@ -343,41 +273,6 @@ actions:
       moderately_sensitive:
         model_glance: output/jcvi_group_02/models/*_coviddeath_modelcox_glance.csv
         model_tidy_csv: output/jcvi_group_02/models/*_coviddeath_modelcox_tidy.csv
-
-  ## plot cox model for all outcomes 
-
-  plot_model_cox_02:
-    run: r:latest analysis/comparisons/plot_cox.R 02
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - apply_model_cox_02_postest
-    - apply_model_cox_02_covidadmitted
-    - apply_model_cox_02_coviddeath
-    - apply_model_cox_02_death
-    outputs:
-      moderately_sensitive:
-        plot: output/jcvi_group_02/images/plot_res_*.png
-
-  ## tabulate cox model for all outcomes 
-
-  tables_model_cox_02:
-    run: r:latest analysis/comparisons/tables_cox.R 02
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - data_tte_process_02_coviddeath
-    - data_tte_process_02_coviddeath
-    - data_tte_process_02_coviddeath
-    - data_tte_process_02_coviddeath
-    - apply_model_cox_02_postest
-    - apply_model_cox_02_covidadmitted
-    - apply_model_cox_02_coviddeath
-    - apply_model_cox_02_death
-    outputs:
-      moderately_sensitive:
-        table_glance: output/jcvi_group_02/tables/*_modelcox_glance.txt
-        table_coefficients: output/jcvi_group_02/tables/*_modelcox_coefficients.txt
 
   ## outcome = death 
   ## process tte data for death 
@@ -432,9 +327,9 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
-    - data_tte_process_02_death
-    - data_tte_process_02_death
-    - data_tte_process_02_death
+    - data_tte_process_02_postest
+    - data_tte_process_02_covidadmitted
+    - data_tte_process_02_coviddeath
     - data_tte_process_02_death
     - apply_model_cox_02_postest
     - apply_model_cox_02_covidadmitted
@@ -445,9 +340,6 @@ actions:
         table_glance: output/jcvi_group_02/tables/*_modelcox_glance.txt
         table_coefficients: output/jcvi_group_02/tables/*_modelcox_coefficients.txt
 
-  ## #################################### 
-  ## comparisons 
-  ## #################################### 
   ## process data, apply model and generate report for JCVI group 05 
   ## process covariates data 
 
@@ -520,41 +412,6 @@ actions:
         model_glance: output/jcvi_group_05/models/*_postest_modelcox_glance.csv
         model_tidy_csv: output/jcvi_group_05/models/*_postest_modelcox_tidy.csv
 
-  ## plot cox model for all outcomes 
-
-  plot_model_cox_05:
-    run: r:latest analysis/comparisons/plot_cox.R 05
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - apply_model_cox_05_postest
-    - apply_model_cox_05_covidadmitted
-    - apply_model_cox_05_coviddeath
-    - apply_model_cox_05_death
-    outputs:
-      moderately_sensitive:
-        plot: output/jcvi_group_05/images/plot_res_*.png
-
-  ## tabulate cox model for all outcomes 
-
-  tables_model_cox_05:
-    run: r:latest analysis/comparisons/tables_cox.R 05
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - data_tte_process_05_postest
-    - data_tte_process_05_postest
-    - data_tte_process_05_postest
-    - data_tte_process_05_postest
-    - apply_model_cox_05_postest
-    - apply_model_cox_05_covidadmitted
-    - apply_model_cox_05_coviddeath
-    - apply_model_cox_05_death
-    outputs:
-      moderately_sensitive:
-        table_glance: output/jcvi_group_05/tables/*_modelcox_glance.txt
-        table_coefficients: output/jcvi_group_05/tables/*_modelcox_coefficients.txt
-
   ## outcome = covidadmitted 
   ## process tte data for covidadmitted 
 
@@ -586,41 +443,6 @@ actions:
         model_glance: output/jcvi_group_05/models/*_covidadmitted_modelcox_glance.csv
         model_tidy_csv: output/jcvi_group_05/models/*_covidadmitted_modelcox_tidy.csv
 
-  ## plot cox model for all outcomes 
-
-  plot_model_cox_05:
-    run: r:latest analysis/comparisons/plot_cox.R 05
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - apply_model_cox_05_postest
-    - apply_model_cox_05_covidadmitted
-    - apply_model_cox_05_coviddeath
-    - apply_model_cox_05_death
-    outputs:
-      moderately_sensitive:
-        plot: output/jcvi_group_05/images/plot_res_*.png
-
-  ## tabulate cox model for all outcomes 
-
-  tables_model_cox_05:
-    run: r:latest analysis/comparisons/tables_cox.R 05
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - data_tte_process_05_covidadmitted
-    - data_tte_process_05_covidadmitted
-    - data_tte_process_05_covidadmitted
-    - data_tte_process_05_covidadmitted
-    - apply_model_cox_05_postest
-    - apply_model_cox_05_covidadmitted
-    - apply_model_cox_05_coviddeath
-    - apply_model_cox_05_death
-    outputs:
-      moderately_sensitive:
-        table_glance: output/jcvi_group_05/tables/*_modelcox_glance.txt
-        table_coefficients: output/jcvi_group_05/tables/*_modelcox_coefficients.txt
-
   ## outcome = coviddeath 
   ## process tte data for coviddeath 
 
@@ -651,41 +473,6 @@ actions:
       moderately_sensitive:
         model_glance: output/jcvi_group_05/models/*_coviddeath_modelcox_glance.csv
         model_tidy_csv: output/jcvi_group_05/models/*_coviddeath_modelcox_tidy.csv
-
-  ## plot cox model for all outcomes 
-
-  plot_model_cox_05:
-    run: r:latest analysis/comparisons/plot_cox.R 05
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - apply_model_cox_05_postest
-    - apply_model_cox_05_covidadmitted
-    - apply_model_cox_05_coviddeath
-    - apply_model_cox_05_death
-    outputs:
-      moderately_sensitive:
-        plot: output/jcvi_group_05/images/plot_res_*.png
-
-  ## tabulate cox model for all outcomes 
-
-  tables_model_cox_05:
-    run: r:latest analysis/comparisons/tables_cox.R 05
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - data_tte_process_05_coviddeath
-    - data_tte_process_05_coviddeath
-    - data_tte_process_05_coviddeath
-    - data_tte_process_05_coviddeath
-    - apply_model_cox_05_postest
-    - apply_model_cox_05_covidadmitted
-    - apply_model_cox_05_coviddeath
-    - apply_model_cox_05_death
-    outputs:
-      moderately_sensitive:
-        table_glance: output/jcvi_group_05/tables/*_modelcox_glance.txt
-        table_coefficients: output/jcvi_group_05/tables/*_modelcox_coefficients.txt
 
   ## outcome = death 
   ## process tte data for death 
@@ -740,9 +527,9 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
-    - data_tte_process_05_death
-    - data_tte_process_05_death
-    - data_tte_process_05_death
+    - data_tte_process_05_postest
+    - data_tte_process_05_covidadmitted
+    - data_tte_process_05_coviddeath
     - data_tte_process_05_death
     - apply_model_cox_05_postest
     - apply_model_cox_05_covidadmitted

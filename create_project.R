@@ -64,9 +64,6 @@ actions_comparisons <- function(
   
   actions <- splice(
     
-    comment("####################################",
-            "comparisons", 
-            "####################################"),
     comment(glue("process data, apply model and generate report for JCVI group {jcvi_group}")),
     comment("process covariates data"),
     action(
@@ -148,8 +145,14 @@ actions_comparisons <- function(
             model_glance = glue("output/jcvi_group_{jcvi_group}/models/*_{outcome}_modelcox_glance.csv"),
             model_tidy_csv = glue("output/jcvi_group_{jcvi_group}/models/*_{outcome}_modelcox_tidy.csv")
           )
-        ),
+        )
         
+      )
+    }
+    
+    report <- function(outcomes) {
+      
+      splice(
         comment(glue("plot cox model for all outcomes")),
         action(
           name = glue("plot_model_cox_{jcvi_group}"),
@@ -161,7 +164,7 @@ actions_comparisons <- function(
                            function(x) glue("apply_model_cox_{jcvi_group}_{x}"))),
           moderately_sensitive = list(
             plot = glue("output/jcvi_group_{jcvi_group}/images/plot_res_*.png"))
-          ),
+        ),
         
         comment(glue("tabulate cox model for all outcomes")),
         action(
@@ -172,19 +175,19 @@ actions_comparisons <- function(
                          lapply(
                            outcomes, 
                            function(x) 
-                             glue("data_tte_process_{jcvi_group}_{outcome}")),
+                             glue("data_tte_process_{jcvi_group}_{x}")),
                          lapply(
                            outcomes, 
                            function(x) 
-                           glue("apply_model_cox_{jcvi_group}_{x}"))),
+                             glue("apply_model_cox_{jcvi_group}_{x}"))),
           moderately_sensitive = list(
             table_glance = glue("output/jcvi_group_{jcvi_group}/tables/*_modelcox_glance.txt"),
             table_coefficients = glue("output/jcvi_group_{jcvi_group}/tables/*_modelcox_coefficients.txt"))
         )
-        
       )
+      
     }
-    
+      
     
     actions <- splice(
       
@@ -195,7 +198,9 @@ actions_comparisons <- function(
         apply_models_fun
       ),
       recursive = FALSE
-      )
+      ),
+      
+      report(outcomes)
     )
   }
   
@@ -336,6 +341,10 @@ actions_list <- splice(
       data_eligible_d = "output/data/data_eligible_d.rds"
     )
   ),
+  
+  comment("####################################",
+          "comparisons", 
+          "####################################"),
   
   actions_comparisons(jcvi_group = "02", outcomes = c("postest", "covidadmitted", "coviddeath", "death")),
   
