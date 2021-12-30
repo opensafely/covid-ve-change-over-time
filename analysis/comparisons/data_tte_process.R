@@ -13,15 +13,15 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  removeobs <- FALSE
   group <- "02"
   outcome <- "postest"
   
 } else{
-  removeobs <- TRUE
   group <- args[[1]]
   outcome <- args[[2]]
 }
+
+fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "tables"))
 
 data_comparisons <- readr::read_rds(
   here::here("output", glue("jcvi_group_{group}"), "data", "data_comparisons.rds"))
@@ -74,22 +74,40 @@ for (b in unique(data_comparisons$brand)) {
     ungroup() %>%
     select(patient_id, arm, comparison, tstart = start_fu, tstop = tte, status) 
   
-  counts <- data_tte %>%
-    group_by(comparison) %>%
-    summarise(
-      n_rows = n(),
-      n_events = sum(status)) %>%
-    ungroup() %>%
-    mutate(events_per_1000 = 100*n_events/n_rows)
-  
   # checks
   cat(" \n")
-  cat("summary of data_tte:", "\n")
-  print(counts)
   cat("\n", glue("memory usage = ", format(object.size(data_tte), units="MB", standard="SI", digits=3L)), "\n")
   
   stopifnot("tstart should be  >= 0 in data_tte" = data_tte$tstart>=0)
   stopifnot("tstop - tstart should be strictly > 0 in data_tte" = data_tte$tstop - data_tte$tstart > 0)
+  
+  events_per_personyears <- function(.data) {
+    .data %>%
+      mutate(days = tstop-tstart) %>%
+      group_by(comparison, arm) %>%
+      summarise(
+        personyears = sum(days)/365,
+        events = sum(status),
+        .groups = "keep"
+      ) %>%
+      ungroup() %>%
+      mutate(across(c(events, personyears), 
+                    # round to nearest 10
+                    ~ scales::comma(round(.x, -1), accuracy = 1))) %>%
+      mutate(`events / person-years` = str_c(events, " / ", personyears)) %>%
+      select(comparison, arm, `events / person-years`) %>%
+      pivot_wider(names_from = arm, values_from = `events / person-years`) %>%
+      kableExtra::kable(
+        "pipe",
+        caption = glue("{outcome} events / person-years")
+      )
+  }
+  
+  capture.output(
+    data_tte %>% events_per_personyears,
+    file = here::here("output", glue("jcvi_group_{group}"), "tables", glue("{b}_{outcome}_incidence.txt")),
+    append=FALSE
+  )
   
   readr::write_rds(
     data_tte,
