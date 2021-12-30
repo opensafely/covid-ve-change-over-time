@@ -18,9 +18,6 @@ if(length(args)==0){
 }
 
 ################################################################################
-
-fs::dir_create(here::here("output", glue("jcvi_group_{group}"), "tables"))
-
 second_vax_period_dates <- readr::read_rds(
   here::here("output", "lib", "second_vax_period_dates.rds")) %>%
   filter(jcvi_group %in% group, include) %>%
