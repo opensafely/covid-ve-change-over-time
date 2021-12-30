@@ -231,6 +231,7 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - data_tte_process_02_postest
     - apply_model_cox_02_postest
     outputs:
       moderately_sensitive:
@@ -331,6 +332,7 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - data_tte_process_05_postest
     - apply_model_cox_05_postest
     outputs:
       moderately_sensitive:

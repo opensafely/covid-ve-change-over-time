@@ -171,11 +171,15 @@ actions_comparisons <- function(
           needs = splice("design", "data_2nd_vax_dates",
                          lapply(
                            outcomes, 
-                           function(x) glue("apply_model_cox_{jcvi_group}_{x}"))),
+                           function(x) 
+                             glue("data_tte_process_{jcvi_group}_{outcome}")),
+                         lapply(
+                           outcomes, 
+                           function(x) 
+                           glue("apply_model_cox_{jcvi_group}_{x}"))),
           moderately_sensitive = list(
             table_glance = glue("output/jcvi_group_{jcvi_group}/tables/*_modelcox_glance.txt"),
-            table_coefficients = glue("output/jcvi_group_{jcvi_group}/tables/*_modelcox_coefficients.txt")
-            )
+            table_coefficients = glue("output/jcvi_group_{jcvi_group}/tables/*_modelcox_coefficients.txt"))
         )
         
       )
