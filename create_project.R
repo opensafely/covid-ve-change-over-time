@@ -128,6 +128,9 @@ actions_comparisons <- function(
           highly_sensitive = list(
             data_tte_brand_outcome = glue("output/jcvi_group_{jcvi_group}/data/data_tte_*_{outcome}.rds")
           ),
+          moderately_sensitive = list(
+            table_incidence = glue("output/jcvi_group_{group}/tables/{b}_{outcome}_incidence.txt")
+          )
         ),
         
         comment(glue("apply cox model for {outcome}")),
@@ -330,7 +333,9 @@ actions_list <- splice(
     )
   ),
   
-  actions_comparisons(jcvi_group = "02", outcomes = "postest")
+  actions_comparisons(jcvi_group = "02", outcomes = "postest"),
+  
+  actions_comparisons(jcvi_group = "05", outcomes = "postest")
   
 )
 
