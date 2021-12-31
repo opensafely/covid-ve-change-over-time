@@ -119,7 +119,10 @@ actions_comparisons <- function(
           name = glue("data_tte_process_{jcvi_group}_{outcome}"),
           run = "r:latest analysis/comparisons/data_tte_process.R",
           arguments = c(jcvi_group, outcome),
-          needs = list(glue("data_comparisons_process_{jcvi_group}"), glue("data_outcomes_process_{jcvi_group}")),
+          needs = list(
+            glue("data_comparisons_process_{jcvi_group}"), 
+            glue("data_outcomes_process_{jcvi_group}"), 
+            glue("check_combine_outcomes_{jcvi_group}")),
           highly_sensitive = list(
             data_tte_brand_outcome = glue("output/jcvi_group_{jcvi_group}/data/data_tte_*_{outcome}.rds")
           ),
