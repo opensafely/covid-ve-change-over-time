@@ -39,14 +39,14 @@ data_outcomes_combined <- data_outcomes %>%
   mutate(across(postest_date,
                 ~ case_when(
                   !is.na(.x) ~ .x,
-                  !is.na(covidadmitted_date) ~ covidadmitted_date + median_times_between_outcomes[median_times_between_outcomes$name == "postest and covidadmitted",]$median,
-                  !is.na(coviddeath_date) ~ coviddeath_date + median_times_between_outcomes[median_times_between_outcomes$name == "postest and coviddeath",]$median,
+                  !is.na(covidadmitted_date) ~ covidadmitted_date - median_times_between_outcomes[median_times_between_outcomes$name == "postest and covidadmitted",]$median,
+                  !is.na(coviddeath_date) ~ coviddeath_date - median_times_between_outcomes[median_times_between_outcomes$name == "postest and coviddeath",]$median,
                   TRUE ~ .x            
                 ))) %>%
   mutate(across(covidadmitted_date,
                 ~ case_when(
                   !is.na(.x) ~ .x,
-                  !is.na(coviddeath_date) ~ coviddeath_date + median_times_between_outcomes[median_times_between_outcomes$name == "covidadmitted and coviddeath",]$median,
+                  !is.na(coviddeath_date) ~ coviddeath_date - median_times_between_outcomes[median_times_between_outcomes$name == "covidadmitted and coviddeath",]$median,
                   TRUE ~ .x            
                 )))
 
