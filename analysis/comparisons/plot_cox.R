@@ -95,7 +95,7 @@ for (b in as.character(unique(second_vax_period_dates$brand))) {
     facet_wrap(~outcome) +
     scale_y_log10(
       breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5),
-      limits = c(0.00, max(1, (plot_data$upper))),
+      limits = c(0.01, max(1, (plot_data$upper))),
       oob = scales::oob_keep,
       sec.axis = sec_axis(
         ~(1-.),
