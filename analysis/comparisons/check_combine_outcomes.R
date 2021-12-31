@@ -39,18 +39,20 @@ plot_data <- data_outcomes %>%
     covidadmitted_coviddeath = as.integer(coviddeath_date - covidadmitted_date),
   ) %>%
   pivot_longer(
-    cols = everything(),
-    values_drop_na = TRUE
+    cols = everything()
   ) %>%
   mutate(across(name,
          ~str_replace(.x, "_", " and "))) 
 
+median_times_between_outcomes <- plot_data %>%
+  group_by(name) %>%
+  summarise(median = median(value, na.rm = TRUE), .groups = "keep") %>%
+  ungroup()
+
 # save data
-readr::write_rds(
-  plot_data,
-  here::here("output", glue("jcvi_group_{group}"), "data", "check_combine_outcomes.rds"),
-  compress = "gz"
-)
+readr::write_csv(
+  median_times_between_outcomes,
+  here::here("output", glue("jcvi_group_{group}"), "data", "median_times_between_outcomes.csv"))
 
 # plot data
 plot_check <- plot_data %>%
@@ -68,6 +70,7 @@ plot_check <- plot_data %>%
 ggsave(plot_check,
        filename = here::here("output", glue("jcvi_group_{group}"), "images", "check_combine_outcomes.png"),
        width=14, height=12, units="cm")
+
 
 # how many have each combination of covid outcomes?
 # note that this is across all comparisons
