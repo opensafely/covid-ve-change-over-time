@@ -175,9 +175,8 @@ actions:
     needs:
     - data_outcomes_process_02
     outputs:
-      highly_sensitive:
-        data_check_combine_outcomes: output/jcvi_group_02/data/check_combine_outcomes.rds
       moderately_sensitive:
+        median_times_between_outcomes: output/jcvi_group_02/data/median_times_between_outcomes.csv
         plot_check_combine_outcomes: output/jcvi_group_02/images/check_combine_outcomes.png
         table_check_combine_outcomes: output/jcvi_group_02/tables/check_combine_outcomes.csv
 
@@ -375,9 +374,8 @@ actions:
     needs:
     - data_outcomes_process_05
     outputs:
-      highly_sensitive:
-        data_check_combine_outcomes: output/jcvi_group_05/data/check_combine_outcomes.rds
       moderately_sensitive:
+        median_times_between_outcomes: output/jcvi_group_05/data/median_times_between_outcomes.csv
         plot_check_combine_outcomes: output/jcvi_group_05/images/check_combine_outcomes.png
         table_check_combine_outcomes: output/jcvi_group_05/tables/check_combine_outcomes.csv
 

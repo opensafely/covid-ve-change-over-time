@@ -98,10 +98,8 @@ actions_comparisons <- function(
         run = "r:latest analysis/comparisons/check_combine_outcomes.R",
         arguments = c(jcvi_group),
         needs = list(glue("data_outcomes_process_{jcvi_group}")),
-        highly_sensitive = list(
-          data_check_combine_outcomes = glue("output/jcvi_group_{jcvi_group}/data/check_combine_outcomes.rds")
-        ),
         moderately_sensitive = list(
+          median_times_between_outcomes = glue("output/jcvi_group_{jcvi_group}/data/median_times_between_outcomes.csv"),
           plot_check_combine_outcomes = glue("output/jcvi_group_{jcvi_group}/images/check_combine_outcomes.png"),
           table_check_combine_outcomes = glue("output/jcvi_group_{jcvi_group}/tables/check_combine_outcomes.csv")
         )
