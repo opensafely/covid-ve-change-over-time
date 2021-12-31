@@ -29,19 +29,24 @@ data_comparisons <- readr::read_rds(
 data_outcomes <- readr::read_rds(
   here::here("output", glue("jcvi_group_{group}"), "data", "data_outcomes.rds"))
 
+median_times_between_outcomes <- readr::read_csv(
+  here::here("output", glue("jcvi_group_{group}"), "data", "median_times_between_outcomes.csv"))
+
 # combine outcomes 
+# for patients that have covidadmitted but not postest (and coviddeath but not covidadmitted or postest)
+# impute the median time between outcomes in those patients who do have the upstream outcomes
 data_outcomes_combined <- data_outcomes %>%
   mutate(across(postest_date,
                 ~ case_when(
                   !is.na(.x) ~ .x,
-                  !is.na(covidadmitted_date) ~ covidadmitted_date,
-                  !is.na(coviddeath_date) ~ coviddeath_date,
+                  !is.na(covidadmitted_date) ~ covidadmitted_date + median_times_between_outcomes[median_times_between_outcomes$name == "postest and covidadmitted",]$median,
+                  !is.na(coviddeath_date) ~ coviddeath_date + median_times_between_outcomes[median_times_between_outcomes$name == "postest and coviddeath",]$median,
                   TRUE ~ .x            
                 ))) %>%
   mutate(across(covidadmitted_date,
                 ~ case_when(
                   !is.na(.x) ~ .x,
-                  !is.na(coviddeath_date) ~ coviddeath_date,
+                  !is.na(coviddeath_date) ~ coviddeath_date + median_times_between_outcomes[median_times_between_outcomes$name == "covidadmitted and coviddeath",]$median,
                   TRUE ~ .x            
                 )))
 
