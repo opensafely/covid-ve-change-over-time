@@ -41,36 +41,16 @@ formatpercent100 <- function(x,accuracy){
   )
 }
 
-
-# process_model <- function(outcome, number) {
-#   
-#     model <- readr::read_rds(here::here("output", glue("jcvi_group_{group}"), "models", glue("{brand}_{outcome}_model{number}.rds")))
-#     
-#     model_processed <- as_tibble(
-#       summary(model)$conf.int, 
-#       rownames = "term"
-#     ) %>% 
-#       filter(str_detect(term, "comparison\\d:armvax")) %>%
-#       select(term,
-#              estimate = `exp(coef)`, lower = `lower .95`, upper = `upper .95`) %>%
-#       mutate(outcome = outcome,
-#              model = number)
-#     
-#   return(model_processed)
-#   
-# }
-
-
 for (b in as.character(unique(second_vax_period_dates$brand))) {
   
   models <- as.character(0:2)
 
-  model_tidy_list <- map2(
-    .x = rep(outcomes, each = length(models)),
-    .y = rep(models, times = length(outcomes)),
-    ~try(
+  model_tidy_list <- lapply(
+    outcomes,
+    function(x)
+    try(
       readr::read_rds(
-        here::here("output", glue("jcvi_group_{group}"), "models", glue("{b}_{.x}_modelcox_summary.rds")
+        here::here("output", glue("jcvi_group_{group}"), "models", glue("{b}_{x}_modelcox_summary.rds")
                    )
         )
       )
@@ -79,7 +59,7 @@ for (b in as.character(unique(second_vax_period_dates$brand))) {
   model_tidy_tibble <- bind_rows(
     model_tidy_list[sapply(model_tidy_list, function(x) is_tibble(x))]
     ) %>%
-    filter(str_detect(term, "comparison\\d:armvax")) 
+    filter(str_detect(term, "^armvax")) 
   
   
   K <- second_vax_period_dates$n_comparisons[second_vax_period_dates$brand == b]
@@ -89,7 +69,6 @@ for (b in as.character(unique(second_vax_period_dates$brand))) {
   days_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
   
   plot_data <- model_tidy_tibble %>% 
-    filter(str_detect(term, "^comparison"), !str_detect(term, "unvax")) %>%
     mutate(
       comparison = factor(as.integer(str_extract(term, "\\d")),
                           labels = days_since_2nd_vax)
