@@ -62,19 +62,20 @@ data_covs <- readr::read_rds(
 
 ################################################################################
 # for the given JCVI group, create a dataset of:
-## the brands to compare and tthe number of comparisons for each brand
+## the brands to compare and the number of comparisons for each brand
+## (if there are multiple eligibility dates within the JCVI group, there might 
+## be multiple values for K. In this case, select the minimum value)
 brand_comparisons <- second_vax_period_dates %>%
   distinct(brand, n_comparisons) %>%
   group_by(brand) %>%
-  mutate(n = n()) %>%
+  filter(n_comparisons == min(n_comparisons)) %>%
   ungroup()
 
 # check that this is as expected
 condition <- 
-  n_distinct(brand_comparisons$brand) %in% c(1,2) && 
-  max(brand_comparisons$n) == 1
+  n_distinct(brand_comparisons$brand) %in% c(1,2) 
 stopifnot(
-  "There must be one or two brands, and one value of K per brand." = condition)
+  "There must be one or two brands." = condition)
 
 # derive comparison arms for k comparisons ----
 # define start_fu_date & end_fu_date for each comparison
