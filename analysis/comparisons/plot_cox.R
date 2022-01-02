@@ -62,7 +62,7 @@ for (b in as.character(unique(second_vax_period_dates$brand))) {
     filter(str_detect(term, "^armvax")) 
   
   
-  K <- second_vax_period_dates$n_comparisons[second_vax_period_dates$brand == b]
+  K <- min(second_vax_period_dates$n_comparisons[second_vax_period_dates$brand == b])
   
   ends <- seq(14, (K+1)*28, 28)
   starts <- ends + 1
