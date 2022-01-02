@@ -10,4 +10,16 @@ apply_model_cox_05_covidadmitted   data_tte_process_05_coviddeath
 apply_model_cox_05_coviddeath   data_tte_process_05_death 
 apply_model_cox_05_death 
 plot_model_cox_05 
-tables_model_cox_05
+tables_model_cox_05   data_comparisons_process_06  data_outcomes_process_06  check_combine_outcomes_06   data_tte_process_06_postest 
+apply_model_cox_06_postest   data_tte_process_06_covidadmitted 
+apply_model_cox_06_covidadmitted   data_tte_process_06_coviddeath 
+apply_model_cox_06_coviddeath   data_tte_process_06_death 
+apply_model_cox_06_death 
+plot_model_cox_06 
+tables_model_cox_06   data_comparisons_process_10  data_outcomes_process_10  check_combine_outcomes_10   data_tte_process_10_postest 
+apply_model_cox_10_postest   data_tte_process_10_covidadmitted 
+apply_model_cox_10_covidadmitted   data_tte_process_10_coviddeath 
+apply_model_cox_10_coviddeath   data_tte_process_10_death 
+apply_model_cox_10_death 
+plot_model_cox_10 
+tables_model_cox_10

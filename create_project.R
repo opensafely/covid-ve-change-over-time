@@ -349,7 +349,11 @@ actions_list <- splice(
   
   actions_comparisons(jcvi_group = "02", outcomes = c("postest", "covidadmitted", "coviddeath", "death")),
   
-  actions_comparisons(jcvi_group = "05", outcomes = c("postest", "covidadmitted", "coviddeath", "death"))
+  actions_comparisons(jcvi_group = "05", outcomes = c("postest", "covidadmitted", "coviddeath", "death")),
+  
+  actions_comparisons(jcvi_group = "06", outcomes = c("postest", "covidadmitted", "coviddeath", "death")),
+  
+  actions_comparisons(jcvi_group = "10", outcomes = c("postest", "covidadmitted", "coviddeath", "death"))
   
 )
 
