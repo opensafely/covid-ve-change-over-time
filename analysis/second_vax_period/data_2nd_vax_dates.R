@@ -111,7 +111,7 @@ readr::write_rds(data_vax_plot,
 # number of days in cumulative sum
 l <- 28 
 second_vax_period_dates <- data_vax_plot %>%
-  # calculate moving average number of individuals vaccinated for each elig_date:region_0:brand
+  # calculate moving 28-day total number of individuals vaccinated for each elig_date:region_0:brand
   group_by(jcvi_group, elig_date, region_0, brand) %>%
   arrange(dose_2, .by_group = TRUE) %>%
   mutate(
