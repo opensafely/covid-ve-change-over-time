@@ -1,98 +1,954 @@
 version: '3.0'
 
 expectations:
+
   population_size: 100000
 
 actions:
 
-  ##########################################################################
-  #### preliminaries
-  ##########################################################################
-  # study parameters ----
+  ## #################################### 
+  ## preliminaries 
+  ## #################################### 
+
   design:
     run: r:latest analysis/design.R
     outputs:
-      highly_sensitive:
+      moderately_sensitive:
         study_dates_json: output/lib/study_parameters.json
         study_dates_rds: output/lib/study_parameters.rds
         jcvi_groups: output/lib/jcvi_groups.csv
         elig_dates: output/lib/elig_dates.csv
         regions: output/lib/regions.csv
+        model_varlist: output/lib/model_varlist.rds
+        outcomes: output/lib/outcomes.rds
 
-  ##########################################################################
-  #### data for eligibility criteria and vaccines
-  ##########################################################################
-  # generate dummy data for study_definition_vax ----      
-  dummy_data_vax:
-    run: r:latest analysis/vax/dummy_data_vax.R
-    needs: [design]
-    outputs:
-      highly_sensitive:
-        dummy_data_vax: analysis/vax/dummy_data_vax.feather
+  ## #################################### 
+  ## study definition 
+  ## #################################### 
+  ## generate dummy data for study_definition 
 
-  # study definition for eligiblity criteria and vaccine data ----  
-  generate_study_population_vax:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_vax --output-format feather
-    dummy_data_file: analysis/vax/dummy_data_vax.feather
-    needs: [design, dummy_data_vax]
+  dummy_data:
+    run: r:latest analysis/dummy_data.R
+    needs:
+    - design
     outputs:
-      highly_sensitive:
-        cohort: output/input_vax.feather
-        
-  # process data from study_definition_vax ----  
-  data_vax_process:
-    run: r:latest analysis/vax/data_vax_process.R
-    needs: [design, dummy_data_vax, generate_study_population_vax]
-    outputs:
-      highly_sensitive:
-        data_eligible_a: output/vax/data/data_eligible_a.rds
-        data_eligible_b: output/vax/data/data_eligible_b.rds
-        vax_data: output/vax/data/data_*_vax_dates.rds
-        group_age_ranges: output/lib/group_age_ranges.rds
       moderately_sensitive:
-        data_properties: output/vax/data_vax_processed_tabulate.txt
-        eligibility_count: output/vax/eligibility_count.csv
-        group_age_ranges_csv: output/lib/group_age_ranges.csv
+        dummy_data: analysis/dummy_data.feather
 
-  ##########################################################################
-  #### identify second vaccination time periods
-  ##########################################################################
-  # create dataset for identifying second vaccination time periods ----  
-  data_vax_plot:
-    run: r:latest analysis/second_vax_period/data_vax_plot.R
-    needs: [design, data_vax_process]
+  ## study definition 
+
+  generate_study_population:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition
+      --output-format feather
+    dummy_data_file: analysis/dummy_data.feather
+    needs:
+    - design
+    - dummy_data
     outputs:
       highly_sensitive:
-        data_moving_average: output/second_vax_period/data/data_ma.rds
-      moderately_sensitive:
-        second_vax_period_dates: output/lib/second_vax_period_dates.csv
-        start_dates: output/lib/start_dates.csv
-        end_dates: output/lib/end_dates.csv
+        cohort: output/input.feather
 
-  # identify and plot second vaccination time periods ----  
+  ## #################################### 
+  ## preprocessing 
+  ## #################################### 
+  ## process data from study_definition 
+
+  data_input_process:
+    run: r:latest analysis/preprocess/data_input_process.R
+    needs:
+    - design
+    - dummy_data
+    - generate_study_population
+    outputs:
+      highly_sensitive:
+        data_covs: output/data/data_covs.rds
+        data_vax_dates: output/data/data_*_vax_dates.rds
+      moderately_sensitive:
+        data_properties: output/tables/data_processed_tabulate.txt
+
+  ## process recurring variables as long data 
+
+  data_long_process:
+    run: r:latest analysis/preprocess/data_long_process.R
+    needs:
+    - design
+    - data_input_process
+    outputs:
+      highly_sensitive:
+        data_long_dates: output/data/data_long_*_dates.rds
+
+  ## apply eligiblity criteria from boxes a and b 
+
+  data_eligible_ab:
+    run: r:latest analysis/preprocess/data_eligible_ab.R
+    needs:
+    - design
+    - data_input_process
+    outputs:
+      highly_sensitive:
+        data_eligible_a: output/data/data_eligible_a.rds
+        data_eligible_b: output/data/data_eligible_b.rds
+      moderately_sensitive:
+        eligibility_count: output/lib/eligibility_count_ab.csv
+        group_age_ranges: output/lib/group_age_ranges.csv
+
+  ## #################################### 
+  ## second_vax_period 
+  ## #################################### 
+  ## identify second vaccination time periods 
+  ## create dataset for identifying second vaccination time periods 
+
+  data_2nd_vax_dates:
+    run: r:latest analysis/second_vax_period/data_2nd_vax_dates.R
+    needs:
+    - design
+    - data_input_process
+    - data_eligible_ab
+    outputs:
+      highly_sensitive:
+        data_vax_plot: output/second_vax_period/data/data_vax_plot.rds
+        second_vax_period_dates_rds: output/lib/second_vax_period_dates.rds
+      moderately_sensitive:
+        second_vax_period_dates_csv: output/lib/second_vax_period_dates.csv
+
+  ## plot second vaccination time periods 
+
   plot_2nd_vax_dates:
     run: r:latest analysis/second_vax_period/plot_2nd_vax_dates.R
-    needs: [design, data_vax_process, data_vax_plot]
+    needs:
+    - design
+    - data_eligible_ab
+    - data_2nd_vax_dates
     outputs:
       moderately_sensitive:
         plots_by_region: output/second_vax_period/images/plot_by_region_*.png
 
-  ##########################################################################
-  #### data for covariates
-  ##########################################################################
-    # generate dummy data for study_definition_vax ----      
-  dummy_data_covs:
-    run: r:latest analysis/covs/dummy_data_covs.R
-    needs: [design, dummy_data_vax, data_vax_plot]
-    outputs:
-      highly_sensitive:
-        dummy_data_vax: analysis/covs/dummy_data_covs.feather
+  ## apply eligiblity criteria from boxes c and d 
 
-  # study definition for covariates ----  
-  generate_study_population_covs:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_covs --output-format feather
-    dummy_data_file: analysis/covs/dummy_data_covs.feather
-    needs: [design, data_vax_plot, dummy_data_covs]
+  data_eligible_cd:
+    run: r:latest analysis/second_vax_period/data_eligible_cd.R
+    needs:
+    - design
+    - data_input_process
+    - data_eligible_ab
+    - data_2nd_vax_dates
     outputs:
       highly_sensitive:
-        cohort: output/input_covs.feather
+        data_eligible_c: output/data/data_eligible_c.rds
+        data_eligible_d: output/data/data_eligible_d.rds
+
+  ## #################################### 
+  ## comparisons 
+  ## #################################### 
+  ## process data, apply model and generate report for JCVI group 02 
+  ## process covariates data 
+
+  data_comparisons_process_02:
+    run: r:latest analysis/comparisons/data_comparisons_process.R 02
+    needs:
+    - design
+    - data_input_process
+    - data_long_process
+    - data_2nd_vax_dates
+    - data_eligible_cd
+    outputs:
+      highly_sensitive:
+        data_comparisons: output/jcvi_group_02/data/data_comparisons.rds
+
+  ## process outcomes data 
+
+  data_outcomes_process_02:
+    run: r:latest analysis/comparisons/data_outcomes_process.R 02
+    needs:
+    - design
+    - data_input_process
+    - data_long_process
+    - data_comparisons_process_02
+    outputs:
+      highly_sensitive:
+        data_outcomes: output/jcvi_group_02/data/data_outcomes.rds
+
+  ## check gap between outcomes for combining 
+
+  check_combine_outcomes_02:
+    run: r:latest analysis/comparisons/check_combine_outcomes.R 02
+    needs:
+    - data_outcomes_process_02
+    outputs:
+      moderately_sensitive:
+        median_times_between_outcomes: output/jcvi_group_02/data/median_times_between_outcomes.csv
+        plot_check_combine_outcomes: output/jcvi_group_02/images/check_combine_outcomes.png
+        table_check_combine_outcomes: output/jcvi_group_02/tables/check_combine_outcomes.csv
+
+  ## outcome = postest 
+  ## process tte data for postest 
+
+  data_tte_process_02_postest:
+    run: r:latest analysis/comparisons/data_tte_process.R 02 postest
+    needs:
+    - data_comparisons_process_02
+    - data_outcomes_process_02
+    - check_combine_outcomes_02
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_02/data/data_tte_*_postest.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_02/tables/*_postest_incidence.txt
+
+  ## apply cox model for postest 
+
+  apply_model_cox_02_postest:
+    run: r:latest analysis/comparisons/apply_model_cox.R 02 postest
+    needs:
+    - design
+    - data_comparisons_process_02
+    - data_tte_process_02_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_02/models/*_postest_model*.rds
+        model_tidy_rds: output/jcvi_group_02/models/*_postest_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_02/models/*_postest_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_02/models/*_postest_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_02/models/*_postest_modelcox_tidy.csv
+
+  ## outcome = covidadmitted 
+  ## process tte data for covidadmitted 
+
+  data_tte_process_02_covidadmitted:
+    run: r:latest analysis/comparisons/data_tte_process.R 02 covidadmitted
+    needs:
+    - data_comparisons_process_02
+    - data_outcomes_process_02
+    - check_combine_outcomes_02
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_02/data/data_tte_*_covidadmitted.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_02/tables/*_covidadmitted_incidence.txt
+
+  ## apply cox model for covidadmitted 
+
+  apply_model_cox_02_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox.R 02 covidadmitted
+    needs:
+    - design
+    - data_comparisons_process_02
+    - data_tte_process_02_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_02/models/*_covidadmitted_model*.rds
+        model_tidy_rds: output/jcvi_group_02/models/*_covidadmitted_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_02/models/*_covidadmitted_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_02/models/*_covidadmitted_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_02/models/*_covidadmitted_modelcox_tidy.csv
+
+  ## outcome = coviddeath 
+  ## process tte data for coviddeath 
+
+  data_tte_process_02_coviddeath:
+    run: r:latest analysis/comparisons/data_tte_process.R 02 coviddeath
+    needs:
+    - data_comparisons_process_02
+    - data_outcomes_process_02
+    - check_combine_outcomes_02
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_02/data/data_tte_*_coviddeath.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_02/tables/*_coviddeath_incidence.txt
+
+  ## apply cox model for coviddeath 
+
+  apply_model_cox_02_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox.R 02 coviddeath
+    needs:
+    - design
+    - data_comparisons_process_02
+    - data_tte_process_02_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_02/models/*_coviddeath_model*.rds
+        model_tidy_rds: output/jcvi_group_02/models/*_coviddeath_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_02/models/*_coviddeath_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_02/models/*_coviddeath_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_02/models/*_coviddeath_modelcox_tidy.csv
+
+  ## outcome = death 
+  ## process tte data for death 
+
+  data_tte_process_02_death:
+    run: r:latest analysis/comparisons/data_tte_process.R 02 death
+    needs:
+    - data_comparisons_process_02
+    - data_outcomes_process_02
+    - check_combine_outcomes_02
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_02/data/data_tte_*_death.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_02/tables/*_death_incidence.txt
+
+  ## apply cox model for death 
+
+  apply_model_cox_02_death:
+    run: r:latest analysis/comparisons/apply_model_cox.R 02 death
+    needs:
+    - design
+    - data_comparisons_process_02
+    - data_tte_process_02_death
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_02/models/*_death_model*.rds
+        model_tidy_rds: output/jcvi_group_02/models/*_death_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_02/models/*_death_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_02/models/*_death_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_02/models/*_death_modelcox_tidy.csv
+
+  ## plot cox model for all outcomes 
+
+  plot_model_cox_02:
+    run: r:latest analysis/comparisons/plot_cox.R 02
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - apply_model_cox_02_postest
+    - apply_model_cox_02_covidadmitted
+    - apply_model_cox_02_coviddeath
+    - apply_model_cox_02_death
+    outputs:
+      moderately_sensitive:
+        plot: output/jcvi_group_02/images/plot_res_*.png
+
+  ## tabulate cox model for all outcomes 
+
+  tables_model_cox_02:
+    run: r:latest analysis/comparisons/tables_cox.R 02
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - data_tte_process_02_postest
+    - data_tte_process_02_covidadmitted
+    - data_tte_process_02_coviddeath
+    - data_tte_process_02_death
+    - apply_model_cox_02_postest
+    - apply_model_cox_02_covidadmitted
+    - apply_model_cox_02_coviddeath
+    - apply_model_cox_02_death
+    outputs:
+      moderately_sensitive:
+        table_glance: output/jcvi_group_02/tables/*_modelcox_glance.txt
+        table_coefficients: output/jcvi_group_02/tables/*_modelcox_coefficients.txt
+
+  ## process data, apply model and generate report for JCVI group 05 
+  ## process covariates data 
+
+  data_comparisons_process_05:
+    run: r:latest analysis/comparisons/data_comparisons_process.R 05
+    needs:
+    - design
+    - data_input_process
+    - data_long_process
+    - data_2nd_vax_dates
+    - data_eligible_cd
+    outputs:
+      highly_sensitive:
+        data_comparisons: output/jcvi_group_05/data/data_comparisons.rds
+
+  ## process outcomes data 
+
+  data_outcomes_process_05:
+    run: r:latest analysis/comparisons/data_outcomes_process.R 05
+    needs:
+    - design
+    - data_input_process
+    - data_long_process
+    - data_comparisons_process_05
+    outputs:
+      highly_sensitive:
+        data_outcomes: output/jcvi_group_05/data/data_outcomes.rds
+
+  ## check gap between outcomes for combining 
+
+  check_combine_outcomes_05:
+    run: r:latest analysis/comparisons/check_combine_outcomes.R 05
+    needs:
+    - data_outcomes_process_05
+    outputs:
+      moderately_sensitive:
+        median_times_between_outcomes: output/jcvi_group_05/data/median_times_between_outcomes.csv
+        plot_check_combine_outcomes: output/jcvi_group_05/images/check_combine_outcomes.png
+        table_check_combine_outcomes: output/jcvi_group_05/tables/check_combine_outcomes.csv
+
+  ## outcome = postest 
+  ## process tte data for postest 
+
+  data_tte_process_05_postest:
+    run: r:latest analysis/comparisons/data_tte_process.R 05 postest
+    needs:
+    - data_comparisons_process_05
+    - data_outcomes_process_05
+    - check_combine_outcomes_05
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_05/data/data_tte_*_postest.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_05/tables/*_postest_incidence.txt
+
+  ## apply cox model for postest 
+
+  apply_model_cox_05_postest:
+    run: r:latest analysis/comparisons/apply_model_cox.R 05 postest
+    needs:
+    - design
+    - data_comparisons_process_05
+    - data_tte_process_05_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_05/models/*_postest_model*.rds
+        model_tidy_rds: output/jcvi_group_05/models/*_postest_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_05/models/*_postest_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_05/models/*_postest_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_05/models/*_postest_modelcox_tidy.csv
+
+  ## outcome = covidadmitted 
+  ## process tte data for covidadmitted 
+
+  data_tte_process_05_covidadmitted:
+    run: r:latest analysis/comparisons/data_tte_process.R 05 covidadmitted
+    needs:
+    - data_comparisons_process_05
+    - data_outcomes_process_05
+    - check_combine_outcomes_05
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_05/data/data_tte_*_covidadmitted.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_05/tables/*_covidadmitted_incidence.txt
+
+  ## apply cox model for covidadmitted 
+
+  apply_model_cox_05_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox.R 05 covidadmitted
+    needs:
+    - design
+    - data_comparisons_process_05
+    - data_tte_process_05_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_05/models/*_covidadmitted_model*.rds
+        model_tidy_rds: output/jcvi_group_05/models/*_covidadmitted_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_05/models/*_covidadmitted_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_05/models/*_covidadmitted_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_05/models/*_covidadmitted_modelcox_tidy.csv
+
+  ## outcome = coviddeath 
+  ## process tte data for coviddeath 
+
+  data_tte_process_05_coviddeath:
+    run: r:latest analysis/comparisons/data_tte_process.R 05 coviddeath
+    needs:
+    - data_comparisons_process_05
+    - data_outcomes_process_05
+    - check_combine_outcomes_05
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_05/data/data_tte_*_coviddeath.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_05/tables/*_coviddeath_incidence.txt
+
+  ## apply cox model for coviddeath 
+
+  apply_model_cox_05_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox.R 05 coviddeath
+    needs:
+    - design
+    - data_comparisons_process_05
+    - data_tte_process_05_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_05/models/*_coviddeath_model*.rds
+        model_tidy_rds: output/jcvi_group_05/models/*_coviddeath_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_05/models/*_coviddeath_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_05/models/*_coviddeath_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_05/models/*_coviddeath_modelcox_tidy.csv
+
+  ## outcome = death 
+  ## process tte data for death 
+
+  data_tte_process_05_death:
+    run: r:latest analysis/comparisons/data_tte_process.R 05 death
+    needs:
+    - data_comparisons_process_05
+    - data_outcomes_process_05
+    - check_combine_outcomes_05
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_05/data/data_tte_*_death.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_05/tables/*_death_incidence.txt
+
+  ## apply cox model for death 
+
+  apply_model_cox_05_death:
+    run: r:latest analysis/comparisons/apply_model_cox.R 05 death
+    needs:
+    - design
+    - data_comparisons_process_05
+    - data_tte_process_05_death
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_05/models/*_death_model*.rds
+        model_tidy_rds: output/jcvi_group_05/models/*_death_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_05/models/*_death_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_05/models/*_death_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_05/models/*_death_modelcox_tidy.csv
+
+  ## plot cox model for all outcomes 
+
+  plot_model_cox_05:
+    run: r:latest analysis/comparisons/plot_cox.R 05
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - apply_model_cox_05_postest
+    - apply_model_cox_05_covidadmitted
+    - apply_model_cox_05_coviddeath
+    - apply_model_cox_05_death
+    outputs:
+      moderately_sensitive:
+        plot: output/jcvi_group_05/images/plot_res_*.png
+
+  ## tabulate cox model for all outcomes 
+
+  tables_model_cox_05:
+    run: r:latest analysis/comparisons/tables_cox.R 05
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - data_tte_process_05_postest
+    - data_tte_process_05_covidadmitted
+    - data_tte_process_05_coviddeath
+    - data_tte_process_05_death
+    - apply_model_cox_05_postest
+    - apply_model_cox_05_covidadmitted
+    - apply_model_cox_05_coviddeath
+    - apply_model_cox_05_death
+    outputs:
+      moderately_sensitive:
+        table_glance: output/jcvi_group_05/tables/*_modelcox_glance.txt
+        table_coefficients: output/jcvi_group_05/tables/*_modelcox_coefficients.txt
+
+  ## process data, apply model and generate report for JCVI group 06 
+  ## process covariates data 
+
+  data_comparisons_process_06:
+    run: r:latest analysis/comparisons/data_comparisons_process.R 06
+    needs:
+    - design
+    - data_input_process
+    - data_long_process
+    - data_2nd_vax_dates
+    - data_eligible_cd
+    outputs:
+      highly_sensitive:
+        data_comparisons: output/jcvi_group_06/data/data_comparisons.rds
+
+  ## process outcomes data 
+
+  data_outcomes_process_06:
+    run: r:latest analysis/comparisons/data_outcomes_process.R 06
+    needs:
+    - design
+    - data_input_process
+    - data_long_process
+    - data_comparisons_process_06
+    outputs:
+      highly_sensitive:
+        data_outcomes: output/jcvi_group_06/data/data_outcomes.rds
+
+  ## check gap between outcomes for combining 
+
+  check_combine_outcomes_06:
+    run: r:latest analysis/comparisons/check_combine_outcomes.R 06
+    needs:
+    - data_outcomes_process_06
+    outputs:
+      moderately_sensitive:
+        median_times_between_outcomes: output/jcvi_group_06/data/median_times_between_outcomes.csv
+        plot_check_combine_outcomes: output/jcvi_group_06/images/check_combine_outcomes.png
+        table_check_combine_outcomes: output/jcvi_group_06/tables/check_combine_outcomes.csv
+
+  ## outcome = postest 
+  ## process tte data for postest 
+
+  data_tte_process_06_postest:
+    run: r:latest analysis/comparisons/data_tte_process.R 06 postest
+    needs:
+    - data_comparisons_process_06
+    - data_outcomes_process_06
+    - check_combine_outcomes_06
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_06/data/data_tte_*_postest.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_06/tables/*_postest_incidence.txt
+
+  ## apply cox model for postest 
+
+  apply_model_cox_06_postest:
+    run: r:latest analysis/comparisons/apply_model_cox.R 06 postest
+    needs:
+    - design
+    - data_comparisons_process_06
+    - data_tte_process_06_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_06/models/*_postest_model*.rds
+        model_tidy_rds: output/jcvi_group_06/models/*_postest_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_06/models/*_postest_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_06/models/*_postest_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_06/models/*_postest_modelcox_tidy.csv
+
+  ## outcome = covidadmitted 
+  ## process tte data for covidadmitted 
+
+  data_tte_process_06_covidadmitted:
+    run: r:latest analysis/comparisons/data_tte_process.R 06 covidadmitted
+    needs:
+    - data_comparisons_process_06
+    - data_outcomes_process_06
+    - check_combine_outcomes_06
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_06/data/data_tte_*_covidadmitted.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_06/tables/*_covidadmitted_incidence.txt
+
+  ## apply cox model for covidadmitted 
+
+  apply_model_cox_06_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox.R 06 covidadmitted
+    needs:
+    - design
+    - data_comparisons_process_06
+    - data_tte_process_06_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_06/models/*_covidadmitted_model*.rds
+        model_tidy_rds: output/jcvi_group_06/models/*_covidadmitted_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_06/models/*_covidadmitted_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_06/models/*_covidadmitted_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_06/models/*_covidadmitted_modelcox_tidy.csv
+
+  ## outcome = coviddeath 
+  ## process tte data for coviddeath 
+
+  data_tte_process_06_coviddeath:
+    run: r:latest analysis/comparisons/data_tte_process.R 06 coviddeath
+    needs:
+    - data_comparisons_process_06
+    - data_outcomes_process_06
+    - check_combine_outcomes_06
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_06/data/data_tte_*_coviddeath.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_06/tables/*_coviddeath_incidence.txt
+
+  ## apply cox model for coviddeath 
+
+  apply_model_cox_06_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox.R 06 coviddeath
+    needs:
+    - design
+    - data_comparisons_process_06
+    - data_tte_process_06_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_06/models/*_coviddeath_model*.rds
+        model_tidy_rds: output/jcvi_group_06/models/*_coviddeath_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_06/models/*_coviddeath_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_06/models/*_coviddeath_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_06/models/*_coviddeath_modelcox_tidy.csv
+
+  ## outcome = death 
+  ## process tte data for death 
+
+  data_tte_process_06_death:
+    run: r:latest analysis/comparisons/data_tte_process.R 06 death
+    needs:
+    - data_comparisons_process_06
+    - data_outcomes_process_06
+    - check_combine_outcomes_06
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_06/data/data_tte_*_death.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_06/tables/*_death_incidence.txt
+
+  ## apply cox model for death 
+
+  apply_model_cox_06_death:
+    run: r:latest analysis/comparisons/apply_model_cox.R 06 death
+    needs:
+    - design
+    - data_comparisons_process_06
+    - data_tte_process_06_death
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_06/models/*_death_model*.rds
+        model_tidy_rds: output/jcvi_group_06/models/*_death_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_06/models/*_death_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_06/models/*_death_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_06/models/*_death_modelcox_tidy.csv
+
+  ## plot cox model for all outcomes 
+
+  plot_model_cox_06:
+    run: r:latest analysis/comparisons/plot_cox.R 06
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - apply_model_cox_06_postest
+    - apply_model_cox_06_covidadmitted
+    - apply_model_cox_06_coviddeath
+    - apply_model_cox_06_death
+    outputs:
+      moderately_sensitive:
+        plot: output/jcvi_group_06/images/plot_res_*.png
+
+  ## tabulate cox model for all outcomes 
+
+  tables_model_cox_06:
+    run: r:latest analysis/comparisons/tables_cox.R 06
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - data_tte_process_06_postest
+    - data_tte_process_06_covidadmitted
+    - data_tte_process_06_coviddeath
+    - data_tte_process_06_death
+    - apply_model_cox_06_postest
+    - apply_model_cox_06_covidadmitted
+    - apply_model_cox_06_coviddeath
+    - apply_model_cox_06_death
+    outputs:
+      moderately_sensitive:
+        table_glance: output/jcvi_group_06/tables/*_modelcox_glance.txt
+        table_coefficients: output/jcvi_group_06/tables/*_modelcox_coefficients.txt
+
+  ## process data, apply model and generate report for JCVI group 10 
+  ## process covariates data 
+
+  data_comparisons_process_10:
+    run: r:latest analysis/comparisons/data_comparisons_process.R 10
+    needs:
+    - design
+    - data_input_process
+    - data_long_process
+    - data_2nd_vax_dates
+    - data_eligible_cd
+    outputs:
+      highly_sensitive:
+        data_comparisons: output/jcvi_group_10/data/data_comparisons.rds
+
+  ## process outcomes data 
+
+  data_outcomes_process_10:
+    run: r:latest analysis/comparisons/data_outcomes_process.R 10
+    needs:
+    - design
+    - data_input_process
+    - data_long_process
+    - data_comparisons_process_10
+    outputs:
+      highly_sensitive:
+        data_outcomes: output/jcvi_group_10/data/data_outcomes.rds
+
+  ## check gap between outcomes for combining 
+
+  check_combine_outcomes_10:
+    run: r:latest analysis/comparisons/check_combine_outcomes.R 10
+    needs:
+    - data_outcomes_process_10
+    outputs:
+      moderately_sensitive:
+        median_times_between_outcomes: output/jcvi_group_10/data/median_times_between_outcomes.csv
+        plot_check_combine_outcomes: output/jcvi_group_10/images/check_combine_outcomes.png
+        table_check_combine_outcomes: output/jcvi_group_10/tables/check_combine_outcomes.csv
+
+  ## outcome = postest 
+  ## process tte data for postest 
+
+  data_tte_process_10_postest:
+    run: r:latest analysis/comparisons/data_tte_process.R 10 postest
+    needs:
+    - data_comparisons_process_10
+    - data_outcomes_process_10
+    - check_combine_outcomes_10
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_10/data/data_tte_*_postest.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_10/tables/*_postest_incidence.txt
+
+  ## apply cox model for postest 
+
+  apply_model_cox_10_postest:
+    run: r:latest analysis/comparisons/apply_model_cox.R 10 postest
+    needs:
+    - design
+    - data_comparisons_process_10
+    - data_tte_process_10_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_10/models/*_postest_model*.rds
+        model_tidy_rds: output/jcvi_group_10/models/*_postest_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_10/models/*_postest_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_10/models/*_postest_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_10/models/*_postest_modelcox_tidy.csv
+
+  ## outcome = covidadmitted 
+  ## process tte data for covidadmitted 
+
+  data_tte_process_10_covidadmitted:
+    run: r:latest analysis/comparisons/data_tte_process.R 10 covidadmitted
+    needs:
+    - data_comparisons_process_10
+    - data_outcomes_process_10
+    - check_combine_outcomes_10
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_10/data/data_tte_*_covidadmitted.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_10/tables/*_covidadmitted_incidence.txt
+
+  ## apply cox model for covidadmitted 
+
+  apply_model_cox_10_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox.R 10 covidadmitted
+    needs:
+    - design
+    - data_comparisons_process_10
+    - data_tte_process_10_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_10/models/*_covidadmitted_model*.rds
+        model_tidy_rds: output/jcvi_group_10/models/*_covidadmitted_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_10/models/*_covidadmitted_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_10/models/*_covidadmitted_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_10/models/*_covidadmitted_modelcox_tidy.csv
+
+  ## outcome = coviddeath 
+  ## process tte data for coviddeath 
+
+  data_tte_process_10_coviddeath:
+    run: r:latest analysis/comparisons/data_tte_process.R 10 coviddeath
+    needs:
+    - data_comparisons_process_10
+    - data_outcomes_process_10
+    - check_combine_outcomes_10
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_10/data/data_tte_*_coviddeath.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_10/tables/*_coviddeath_incidence.txt
+
+  ## apply cox model for coviddeath 
+
+  apply_model_cox_10_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox.R 10 coviddeath
+    needs:
+    - design
+    - data_comparisons_process_10
+    - data_tte_process_10_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_10/models/*_coviddeath_model*.rds
+        model_tidy_rds: output/jcvi_group_10/models/*_coviddeath_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_10/models/*_coviddeath_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_10/models/*_coviddeath_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_10/models/*_coviddeath_modelcox_tidy.csv
+
+  ## outcome = death 
+  ## process tte data for death 
+
+  data_tte_process_10_death:
+    run: r:latest analysis/comparisons/data_tte_process.R 10 death
+    needs:
+    - data_comparisons_process_10
+    - data_outcomes_process_10
+    - check_combine_outcomes_10
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/jcvi_group_10/data/data_tte_*_death.rds
+      moderately_sensitive:
+        table_incidence: output/jcvi_group_10/tables/*_death_incidence.txt
+
+  ## apply cox model for death 
+
+  apply_model_cox_10_death:
+    run: r:latest analysis/comparisons/apply_model_cox.R 10 death
+    needs:
+    - design
+    - data_comparisons_process_10
+    - data_tte_process_10_death
+    outputs:
+      highly_sensitive:
+        modelnumber: output/jcvi_group_10/models/*_death_model*.rds
+        model_tidy_rds: output/jcvi_group_10/models/*_death_modelcox_tidy.rds
+        model_summary_rds: output/jcvi_group_10/models/*_death_modelcox_summary.rds
+      moderately_sensitive:
+        model_glance: output/jcvi_group_10/models/*_death_modelcox_glance.csv
+        model_tidy_csv: output/jcvi_group_10/models/*_death_modelcox_tidy.csv
+
+  ## plot cox model for all outcomes 
+
+  plot_model_cox_10:
+    run: r:latest analysis/comparisons/plot_cox.R 10
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - apply_model_cox_10_postest
+    - apply_model_cox_10_covidadmitted
+    - apply_model_cox_10_coviddeath
+    - apply_model_cox_10_death
+    outputs:
+      moderately_sensitive:
+        plot: output/jcvi_group_10/images/plot_res_*.png
+
+  ## tabulate cox model for all outcomes 
+
+  tables_model_cox_10:
+    run: r:latest analysis/comparisons/tables_cox.R 10
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - data_tte_process_10_postest
+    - data_tte_process_10_covidadmitted
+    - data_tte_process_10_coviddeath
+    - data_tte_process_10_death
+    - apply_model_cox_10_postest
+    - apply_model_cox_10_covidadmitted
+    - apply_model_cox_10_coviddeath
+    - apply_model_cox_10_death
+    outputs:
+      moderately_sensitive:
+        table_glance: output/jcvi_group_10/tables/*_modelcox_glance.txt
+        table_coefficients: output/jcvi_group_10/tables/*_modelcox_coefficients.txt
+
