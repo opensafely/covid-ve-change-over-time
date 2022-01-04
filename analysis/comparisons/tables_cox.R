@@ -1,7 +1,7 @@
 ################################################################################
 
 # This script:
-
+# - creates and saves tables of metadata and coefficients from the cox models
 
 ################################################################################
 library(tidyverse)
@@ -11,18 +11,15 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  group <- "02"
+  comparison <- "BNT162b2"
   
 } else{
-  group <- args[[1]]
+  comparison <- args[[1]]
 }
 
 ################################################################################
 second_vax_period_dates <- readr::read_rds(
-  here::here("output", "lib", "second_vax_period_dates.rds")) %>%
-  filter(jcvi_group %in% group, include) %>%
-  distinct(brand, n_comparisons)
-
+  here::here("output", "lib", "second_vax_period_dates.rds")) 
 
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds")
@@ -30,9 +27,9 @@ outcomes <- readr::read_rds(
 
 ################################################################################
 # function for printing glance
-print_table <- function(b, outcome) {
+print_table <- function(outcome) {
   
-  model_glance <- readr::read_csv(here::here("output", glue("jcvi_group_{group}"), "models", glue("{b}_{outcome}_modelcox_glance.csv")))
+  model_glance <- readr::read_csv(here::here("output", "models", glue("{comparison}_{outcome}_modelcox_glance.csv")))
   
   model_glance %>%
     select(-outcome) %>%
@@ -49,23 +46,23 @@ print_table <- function(b, outcome) {
   
 }
 
-for (b in as.character(unique(second_vax_period_dates$brand))) {
-  capture.output(
-        map(outcomes, function(x) try(print_table(b, outcome = x))),
-        file = here::here("output", glue("jcvi_group_{group}"), "tables", glue("{b}_modelcox_glance.txt")),
-        append=FALSE
-      )
-}
+
+capture.output(
+  map(outcomes, function(x) try(print_table(outcome = x))),
+  file = here::here("output", "tables", glue("{comparison}_modelcox_glance.txt")),
+  append=FALSE
+)
+
 
 ################################################################################
 # function for printing coefficients from all three models
-print_coefficients <- function(b, outcome) {
+print_coefficients <- function(outcome) {
   
   data <- readr::read_rds(
-    here::here("output", glue("jcvi_group_{group}"), "models", glue("{b}_{outcome}_modelcox_summary.rds")))
+    here::here("output", "models", glue("{comparison}_{outcome}_modelcox_summary.rds")))
                
   data %>%
-    filter(outcome %in% outcome, !str_detect(term, "unvax")) %>%
+    filter(outcome %in% outcome) %>%
     mutate(across(c(estimate, lower, upper), round, 2)) %>%
     mutate(value = str_c(estimate, " (", lower, "-", upper, ")")) %>%
     select(term, value, model) %>% 
@@ -80,12 +77,10 @@ print_coefficients <- function(b, outcome) {
   
 }
 
-for (b in as.character(unique(second_vax_period_dates$brand))) {
-  capture.output(
-    map(outcomes, function(x) try(print_coefficients(b, outcome = x))),
-    file = here::here("output", glue("jcvi_group_{group}"), "tables", glue("{b}_modelcox_coefficients.txt")),
-    append=FALSE
-  )
-}
+capture.output(
+  map(outcomes, function(x) try(print_coefficients(outcome = x))),
+  file = here::here("output", "tables", glue("{comparison}_modelcox_coefficients.txt")),
+  append=FALSE
+)
 
 
