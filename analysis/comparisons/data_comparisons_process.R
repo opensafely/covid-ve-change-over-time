@@ -144,7 +144,8 @@ comparison_arms <- function(
   out <- bind_rows(lapply(
     1:K, 
     comparison_k
-  ))
+  )) %>%
+    mutate(across(comparison, factor, levels = 1:K))
   
   return(out)
   
