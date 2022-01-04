@@ -1,3 +1,11 @@
+################################################################################
+
+# This script:
+# - generates 1 row per individual per comparison
+# - derives comparison start and end dates
+# - derives covariates
+
+################################################################################
 library(tidyverse)
 library(lubridate)
 library(glue)
