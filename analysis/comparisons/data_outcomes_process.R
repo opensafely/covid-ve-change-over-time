@@ -1,4 +1,12 @@
+################################################################################
+
+# This script:
+# - processes the outcome data
+
+################################################################################
+
 library(tidyverse)
+library(lubridate)
 library(glue)
 
 
@@ -88,21 +96,21 @@ for (b in c("BNT162b2", "ChAdOx")) {
         postest_coviddeath = as.integer(coviddeath_date - postest_date),
         covidadmitted_coviddeath = as.integer(coviddeath_date - covidadmitted_date)
       ) %>%
-      summarise(across(everything(), ~median(.x, na.rm = TRUE))) 
+      summarise(across(everything(), ~round(median(.x, na.rm = TRUE),0))) 
     
     
     data_outcomes_combined <- data_outcomes %>%
       mutate(across(postest_date,
                     ~ case_when(
                       !is.na(.x) ~ .x,
-                      !is.na(covidadmitted_date) ~ covidadmitted_date - median_times_between_outcomes$postest_covidadmitted,
-                      !is.na(coviddeath_date) ~ coviddeath_date - median_times_between_outcomes$postest_coviddeath,
+                      !is.na(covidadmitted_date) ~ covidadmitted_date - days(median_times_between_outcomes$postest_covidadmitted),
+                      !is.na(coviddeath_date) ~ coviddeath_date - days(median_times_between_outcomes$postest_coviddeath),
                       TRUE ~ .x            
                     ))) %>%
       mutate(across(covidadmitted_date,
                     ~ case_when(
                       !is.na(.x) ~ .x,
-                      !is.na(coviddeath_date) ~ coviddeath_date - median_times_between_outcomes$covidadmitted_coviddeath,
+                      !is.na(coviddeath_date) ~ coviddeath_date - days(median_times_between_outcomes$covidadmitted_coviddeath),
                       TRUE ~ .x            
                     )))
     
