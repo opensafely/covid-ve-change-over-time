@@ -50,6 +50,13 @@ comparison_arms <- function(
   K = study_parameters$max_comparisons 
 ) {
   
+  if (b=="BNT162b2") {
+    jcvi_groups_keep <- c("02","03","04","05","06","07","08","09","10", "11", "12")
+  } else {
+    jcvi_groups_keep <- c("03","04","05","06","07","08","09","10")
+  }
+
+  
   comparison_k <- function(k) {
     
     # comparison starts on d days since second vax date
@@ -124,8 +131,9 @@ comparison_arms <- function(
       
     }
     
-    # bind datasets from both arms and apply exclusions
+    # apply exclusions
     out_k <- data %>%
+      filter(jcvi_group %in% jcvi_groups_keep) %>%
       left_join(data_covs %>%
                   select(patient_id, 
                          all_of(exclude_if_evidence_of)),

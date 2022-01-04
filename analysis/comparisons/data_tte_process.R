@@ -56,7 +56,7 @@ if (comparison %in% c("BNT162b2", "ChAdOx")) {
         readr::read_rds(
           here::here("output", "data", glue("data_comparisons_{x}_vax.rds"))) %>%
         # remove certain groups for brands comparison
-        filter(!(jcvi_group %in% c("01", "11", "12"))) %>%
+        filter(!(jcvi_group %in% c("01", "02", "11", "12"))) %>%
         select(patient_id, comparison, arm, start_fu_date, end_fu_date) %>%
         left_join(
           readr::read_rds(

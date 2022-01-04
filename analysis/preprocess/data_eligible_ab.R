@@ -37,6 +37,16 @@ eligibility_count <- eligibility_count %>%
     n =  n_distinct(data_eligible_a$patient_id)
   )
 
+# remove dummy jcvi_group
+data_eligible_a <- data_eligible_a %>%
+  filter(!(jcvi_group %in% "01"))
+
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Samples with JCVI group 01 removed",
+    n =  n_distinct(data_eligible_a$patient_id)
+  )
+
 # remove if aged under 16 or over 120 (the latter probs error)
 data_eligible_a <- data_eligible_a %>%
   filter(age_2 >= 16, age_2 <= 120)
