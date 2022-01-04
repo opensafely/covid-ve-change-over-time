@@ -56,159 +56,120 @@ convert_comment_actions <-function(yaml.txt){
 
 ## actions that extract and process data ----
 
-actions_comparisons <- function(
-  jcvi_group, outcomes, # arguments
-  check_combine_outcomes=TRUE,
-  apply_models=TRUE
+  
+comparisons_fun <- function(
+  comparison,
+  outcomes,
+  apply_model = TRUE,
+  report = TRUE
   ) {
   
-  actions <- splice(
-    
-    comment(glue("process data, apply model and generate report for JCVI group {jcvi_group}")),
-    comment("process covariates data"),
-    action(
-      name = glue("data_comparisons_process_{jcvi_group}"),
-      run = "r:latest analysis/comparisons/data_comparisons_process.R",
-      arguments = c(jcvi_group),
-      needs = list("design", "data_input_process", "data_long_process", "data_2nd_vax_dates", "data_eligible_cd"),
-      highly_sensitive = list(
-        data_comparisons = glue("output/jcvi_group_{jcvi_group}/data/data_comparisons.rds")
-      )
-    ),
-    
-    comment(glue("process outcomes data")),
-    action(
-      name = glue("data_outcomes_process_{jcvi_group}"),
-      run = "r:latest analysis/comparisons/data_outcomes_process.R",
-      arguments = c(jcvi_group),
-      needs = list("design", "data_input_process", "data_long_process", glue("data_comparisons_process_{jcvi_group}")),
-      highly_sensitive = list(
-        data_outcomes = glue("output/jcvi_group_{jcvi_group}/data/data_outcomes.rds")
-      )
-    )
-  )
+  out <- list()
   
-  if (check_combine_outcomes) {
-    actions <- splice(
-      actions,
+  if (apply_model) {
+    
+    apply_model_fun <- function(outcome) {
       
-      comment(glue("check gap between outcomes for combining")),
-      action(
-        name = glue("check_combine_outcomes_{jcvi_group}"),
-        run = "r:latest analysis/comparisons/check_combine_outcomes.R",
-        arguments = c(jcvi_group),
-        needs = list(glue("data_outcomes_process_{jcvi_group}")),
-        moderately_sensitive = list(
-          median_times_between_outcomes = glue("output/jcvi_group_{jcvi_group}/data/median_times_between_outcomes.csv"),
-          plot_check_combine_outcomes = glue("output/jcvi_group_{jcvi_group}/images/check_combine_outcomes.png"),
-          table_check_combine_outcomes = glue("output/jcvi_group_{jcvi_group}/tables/check_combine_outcomes.csv")
-        )
-      )
-    )
-  }
-  
-  # define function for apply models actions
-  if (apply_models) {
-    
-    apply_models_fun <- function(outcome) {
       splice(
         
-        comment(glue("outcome = {outcome}")),
+        comment(glue("comparison = {comparison}, outcome = {outcome}")),
         comment(glue("process tte data for {outcome}")),
         action(
-          name = glue("data_tte_process_{jcvi_group}_{outcome}"),
+          name = glue("data_tte_process_{comparison}_{outcome}"),
           run = "r:latest analysis/comparisons/data_tte_process.R",
-          arguments = c(jcvi_group, outcome),
+          arguments = c(comparison, outcome),
           needs = list(
-            glue("data_comparisons_process_{jcvi_group}"), 
-            glue("data_outcomes_process_{jcvi_group}"), 
-            glue("check_combine_outcomes_{jcvi_group}")),
+            "data_comparisons_process", 
+            "data_outcomes_process"),
           highly_sensitive = list(
-            data_tte_brand_outcome = glue("output/jcvi_group_{jcvi_group}/data/data_tte_*_{outcome}.rds")
-          ),
-          moderately_sensitive = list(
-            table_incidence = glue("output/jcvi_group_{jcvi_group}/tables/*_{outcome}_incidence.txt")
+            data_tte_brand_outcome = glue("output/data/data_tte_{comparison}_{outcome}.rds")
           )
         ),
         
         comment(glue("apply cox model for {outcome}")),
         action(
-          name = glue("apply_model_cox_{jcvi_group}_{outcome}"),
+          name = glue("apply_model_cox_{comparison}_{outcome}"),
           run = "r:latest analysis/comparisons/apply_model_cox.R",
-          arguments = c(jcvi_group, outcome),
-          needs = list("design", glue("data_comparisons_process_{jcvi_group}"), glue("data_tte_process_{jcvi_group}_{outcome}")),
+          arguments = c(comparison, outcome),
+          needs = list(
+            "design", 
+            "data_comparisons_process", 
+            glue("data_tte_process_{comparison}_{outcome}")),
           highly_sensitive = list(
-            modelnumber = glue("output/jcvi_group_{jcvi_group}/models/*_{outcome}_model*.rds"),
-            model_tidy_rds = glue("output/jcvi_group_{jcvi_group}/models/*_{outcome}_modelcox_tidy.rds"),
-            model_summary_rds = glue("output/jcvi_group_{jcvi_group}/models/*_{outcome}_modelcox_summary.rds")
+            modelnumber = glue("output/models/{comparison}_{outcome}_model*.rds"),
+            # model_tidy_rds = glue("output/models/{comparison}_{outcome}_modelcox_tidy.rds"),
+            model_summary_rds = glue("output/models/{comparison}_{outcome}_modelcox_summary.rds")
           ),
           moderately_sensitive = list(
-            model_glance = glue("output/jcvi_group_{jcvi_group}/models/*_{outcome}_modelcox_glance.csv"),
-            model_tidy_csv = glue("output/jcvi_group_{jcvi_group}/models/*_{outcome}_modelcox_tidy.csv")
+            model_glance = glue("output/models/{comparison}_{outcome}_modelcox_glance.csv")#,
+            # model_tidy_csv = glue("output/models/{comparison}_{outcome}_modelcox_tidy.csv")
           )
         )
         
       )
-    }
-    
-    report <- function(outcomes) {
-      
-      splice(
-        comment(glue("plot cox model for all outcomes")),
-        action(
-          name = glue("plot_model_cox_{jcvi_group}"),
-          run = "r:latest analysis/comparisons/plot_cox.R",
-          arguments = c(jcvi_group),
-          needs = splice("design", "data_2nd_vax_dates",
-                         lapply(
-                           outcomes, 
-                           function(x) glue("apply_model_cox_{jcvi_group}_{x}"))),
-          moderately_sensitive = list(
-            plot = glue("output/jcvi_group_{jcvi_group}/images/plot_res_*.png"))
-        ),
-        
-        comment(glue("tabulate cox model for all outcomes")),
-        action(
-          name = glue("tables_model_cox_{jcvi_group}"),
-          run = "r:latest analysis/comparisons/tables_cox.R",
-          arguments = c(jcvi_group),
-          needs = splice("design", "data_2nd_vax_dates",
-                         lapply(
-                           outcomes, 
-                           function(x) 
-                             glue("data_tte_process_{jcvi_group}_{x}")),
-                         lapply(
-                           outcomes, 
-                           function(x) 
-                             glue("apply_model_cox_{jcvi_group}_{x}"))),
-          moderately_sensitive = list(
-            table_glance = glue("output/jcvi_group_{jcvi_group}/tables/*_modelcox_glance.txt"),
-            table_coefficients = glue("output/jcvi_group_{jcvi_group}/tables/*_modelcox_coefficients.txt"))
-        )
-      )
       
     }
-      
     
-    actions <- splice(
-      
-      actions,
-      # apply models actions for all outcomes
+    out <- splice(
+      out,
       unlist(lapply(
         outcomes,
-        apply_models_fun
+        function(x)
+          apply_model_fun(outcome = x)
       ),
       recursive = FALSE
-      ),
-      
-      report(outcomes)
+      )
     )
+    
   }
   
-  return(actions)
+  if (report) {
+    
+    out <- splice(
+      
+      out,
+      
+      comment(glue("plot cox model for all outcomes")),
+      action(
+        name = glue("plot_model_cox_{comparison}"),
+        run = "r:latest analysis/comparisons/plot_cox.R",
+        arguments = c(comparison),
+        needs = splice("design",
+                       "data_2nd_vax_dates",
+                       lapply(
+                         outcomes, 
+                         function(x) glue("apply_model_cox_{comparison}_{x}"))),
+        moderately_sensitive = list(
+          plot = glue("output/images/plot_res_{comparison}.png"))
+      ),
+      
+      comment(glue("tabulate cox model for all outcomes")),
+      action(
+        name = glue("tables_model_cox_{comparison}"),
+        run = "r:latest analysis/comparisons/tables_cox.R",
+        arguments = c(comparison),
+        needs = splice("design", 
+                       "data_2nd_vax_dates",
+                       lapply(
+                         outcomes, 
+                         function(x) 
+                           glue("data_tte_process_{comparison}_{x}")),
+                       lapply(
+                         outcomes, 
+                         function(x) 
+                           glue("apply_model_cox_{comparison}_{x}"))),
+        moderately_sensitive = list(
+          table_glance = glue("output/tables/{comparison}_modelcox_glance.txt"),
+          table_coefficients = glue("output/tables/{comparison}_modelcox_coefficients.txt"))
+      )
+    )
+    
+  }
+  
+  return(out)
   
 }
-
+    
 # specify project ----
 
 ## defaults ----
@@ -216,6 +177,7 @@ defaults_list <- list(
   version = "3.0",
   expectations= list(population_size=100000L)
 )
+
 
 ## actions ----
 actions_list <- splice(
@@ -365,7 +327,23 @@ actions_list <- splice(
     highly_sensitive = list(
       data_outcomes = "output/data/data_outcomes_*_*.rds"
     )
+  ),
+  
+  comment("apply models and generate reports"),
+  splice(
+    # over comparisons
+    unlist(lapply(
+      c("BNT162b2", "ChAdOx", "both"),
+      function(x)
+        comparisons_fun(
+          comparison = x, 
+          outcomes = c("postest", "covidadmitted", "coviddeath", "death"))
+    ),
+    recursive = FALSE
+    )
+    #
   )
+  
   
 )
 
