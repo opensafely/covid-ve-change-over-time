@@ -148,7 +148,7 @@ clinical <- c(
   "psychosis_schiz_bipolar", "multimorb", "shielded" #, "flu_vaccine", "efi"
 )
 
-demographic <- c("age", "sex", "imd", "ethnicity")
+demographic <- c("age_band", "sex", "imd", "ethnicity")
 
 readr::write_rds(
   list(demographic = demographic, clinical = clinical),
