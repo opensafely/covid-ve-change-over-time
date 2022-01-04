@@ -233,12 +233,12 @@ dummy_data_covs <- dummy_data_vax %>%
   #     incidence = 0.1,
   #     r = study_parameters$recur_admissions)) %>%
   # add dob
-  # all 1st of the month as dob YYYY-MM in OpenSAFELY
   mutate(
-    dob = as.POSIXct(sample(
-      x = seq(as.Date("1930-01-01"), as.Date("2006-01-01"), by = "1 month"), 
-      size = nrow(.),
-      replace = TRUE))) %>%
+    dob = as.POSIXct(
+      # floor_date as all 1st of the month as dob YYYY-MM in OpenSAFELY
+      # then add days(31) to make sure no ages are below 16 because of floor_date
+      floor_date(as.Date(study_parameters$ref_age_2) - years(age_2) + days(31), unit = "months"))
+       ) %>%
   # add efi
   mutate(
     efi = if_else(
