@@ -1,10 +1,7 @@
 ###############################################################################
 
-# What this script does:
-
-# reads covariate data from eligible individuals
-# create long (one-row-per-event) datasets for recurring variables
-# saves long datasets
+# This script:
+# creates and saves long (one-row-per-event) datasets for recurring variables
 
 ###############################################################################
 library(tidyverse)
