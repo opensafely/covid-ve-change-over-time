@@ -18,11 +18,9 @@ if(length(args)==0){
   outcome <- "postest"
   
 } else{
-  group <- args[[1]]
+  comparison <- args[[1]]
   outcome <- args[[2]]
 }
-
-fs::dir_create(here::here("output", glue("comparison_{comparison}"), "tables"))
 
 if (comparison %in% c("BNT162b2", "ChAdOx")) {
   
@@ -77,7 +75,7 @@ if (comparison %in% c("BNT162b2", "ChAdOx")) {
 data_tte <- data %>%
   mutate(across(c(starts_with(outcome), dereg_date, noncoviddeath_date),
                 ~ if_else(
-                  !is.na(.x) & start_fu_date < .x & .x <= end_fu_date,
+                  !is.na(.x) & (start_fu_date < .x) & (.x <= end_fu_date),
                   .x,
                   as.Date(NA_character_)
                 ))) %>%
@@ -101,35 +99,6 @@ cat("\n", glue("memory usage = ", format(object.size(data_tte), units="MB", stan
 
 stopifnot("tstart should be  >= 0 in data_tte" = data_tte$tstart>=0)
 stopifnot("tstop - tstart should be strictly > 0 in data_tte" = data_tte$tstop - data_tte$tstart > 0)
-
-# events_per_personyears <- function(.data) {
-#   .data %>%
-#     mutate(days = tstop-tstart) %>%
-#     group_by(comparison, arm) %>%
-#     summarise(
-#       n = n(),
-#       personyears = sum(days)/365,
-#       events = sum(status),
-#       .groups = "keep"
-#     ) %>%
-#     ungroup() %>%
-#     mutate(across(c(n, events, personyears), 
-#                   # round to nearest 10
-#                   ~ scales::comma(round(.x, -1), accuracy = 1))) %>%
-#     mutate(value = str_c(events, " / ", personyears, " (",n,")")) %>%
-#     select(comparison, arm, value) %>%
-#     pivot_wider(names_from = arm, values_from = value) %>%
-#     kableExtra::kable(
-#       "pipe",
-#       caption = glue("{outcome} events / person-years (n)")
-#     )
-# }
-# 
-# capture.output(
-#   data_tte %>% events_per_personyears,
-#   file = here::here("output", glue("jcvi_group_{group}"), "tables", glue("{b}_{outcome}_incidence.txt")),
-#   append=FALSE
-# )
 
 readr::write_rds(
   data_tte,
