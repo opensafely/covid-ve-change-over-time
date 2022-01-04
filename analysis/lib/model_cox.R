@@ -2,13 +2,20 @@ library(tidyverse)
 library(survival)
 library(broom)
 library(broom.helpers)
-library(tictoc)
+
+
+# read study parameters
+study_parameters <- readr::read_rds(
+  here::here("output", "lib", "study_parameters.rds"))
 
 ################################################################################
 # define formulas
 
-formula_unadj <- Surv(tstart, tstop, status, type = "counting") ~ arm:strata(comparison) + strata(region) 
-formula_demog <- . ~ . + poly(age, degree=2, raw=TRUE) + sex + imd + ethnicity
+formula_unadj <- as.formula(str_c(
+  "Surv(tstart, tstop, status, type = \"counting\") ~ ",
+  str_c(str_c("comprison_", 1:study_parameters$max_comparisons), collapse = " + "),
+  " + strata(strata_var)"))
+formula_demog <- . ~ . + age_band + sex + imd + ethnicity
 formula_clinical <- . ~ . +
   
   bmi +
@@ -53,13 +60,6 @@ model_names = c(
 formula_cox_0 <- formula_unadj
 formula_cox_1 <- formula_unadj %>% update(formula_demog)
 formula_cox_2 <- formula_unadj %>% update(formula_demog) %>% update(formula_clinical)
-# if (number == "0") {
-#   formula_cox <- formula_unadj
-# } else if (number == "1") {
-#   formula_cox <- formula_unadj %>% update(formula_demog)
-# } else if (number == "2") {
-#   formula_cox <- formula_unadj %>% update(formula_demog) %>% update(formula_clinical)
-# }
 
 ################################################################################
 # define model
@@ -107,23 +107,6 @@ cox_model <- function(
     mutate(model = number) 
   
   
-  # print(warnings())
-  # logoutput(
-  #   glue("model{number} data size = ", coxmod$n),
-  #   glue("model{number} memory usage = ", format(object.size(coxmod), units="GB", standard="SI", digits=3L)),
-  #   glue("convergence status: ", coxmod$info[["convergence"]])
-  # )
-  
-  tidy <-
-    broom.helpers::tidy_plus_plus(
-      coxmod,
-      exponentiate = FALSE
-    ) %>%
-    add_column(
-      model = number,
-      .before=1
-    )
-  
   glance <-
     broom::glance(coxmod) %>%
     add_column(
@@ -142,8 +125,8 @@ cox_model <- function(
   
   readr::write_rds(
     coxmod,
-    here::here("output", glue("jcvi_group_{group}"), "models", glue("{filename_prefix}_model{number}.rds")), 
+    here::here("output", "models", glue("{filename_prefix}_model{number}.rds")), 
     compress="gz")
   
-  lst(glance = glance, tidy = tidy, summary = coxmod_summary)
+  lst(glance = glance, summary = coxmod_summary)
 }
