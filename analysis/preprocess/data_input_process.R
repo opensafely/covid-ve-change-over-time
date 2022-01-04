@@ -1,11 +1,9 @@
-######################################
+################################################################################
 
 # This script:
-# - reads the extracted data
-# - processes the extracted data
-# - saves processed data
+# - reads, processes and saves the extracted data
 
-######################################
+################################################################################
 
 ## setup
 library(tidyverse)
@@ -33,7 +31,10 @@ cat("#### extract data ####\n")
 data_extract <- 
   arrow::read_feather(file = here::here("output", "input.feather")) %>%
   # because date types are not returned consistently by cohort extractor
-  mutate(across(c(contains("_date"), dob), ~ as.Date(., format="%Y-%m-%d"))) %>%
+  mutate(across(c(contains("_date"), dob), 
+                ~ floor_date(
+                  as.Date(., format="%Y-%m-%d"),
+                  unit = "days"))) %>%
   mutate(across(imd_0, ~as.integer(as.character(.x))))
 
 cat("#### process extracted data ####\n")
