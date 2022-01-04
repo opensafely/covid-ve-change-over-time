@@ -3,8 +3,6 @@
 # This script:
 # - reads the processed data
 # - applies eligibility criteria from boxes a and b of Figure 3 in protocol
-# - saves preocessed data from eligible individuals
-# - records the age range in each JCVI group and saves for later use
 
 ################################################################################
 
@@ -39,13 +37,23 @@ eligibility_count <- eligibility_count %>%
     n =  n_distinct(data_eligible_a$patient_id)
   )
 
+# remove if aged under 16 or over 120 (the latter probs error)
+data_eligible_a <- data_eligible_a %>%
+  filter(age_2 >= 16, age_2 <= 120)
+
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Samples with age_2 < 16 and > 120 removed.",
+    n =  n_distinct(data_eligible_a$patient_id)
+  )
+
 # remove if any missing data for key variables
 data_eligible_a <- data_eligible_a %>%
   filter(
-    !is.na(ethnicity),
     !is.na(sex),
-    !is.na(imd_0),
-    !is.na(region_0))
+    !is.na(region_0),
+    !is.na(ethnicity),
+    !is.na(imd_0))
 
 eligibility_count <- eligibility_count %>%
   add_row(
