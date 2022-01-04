@@ -349,11 +349,21 @@ actions_list <- splice(
   
   comment("process comparisons data"),
   action(
-    name = glue("data_comparisons_process"),
+    name = "data_comparisons_process",
     run = "r:latest analysis/comparisons/data_comparisons_process.R",
     needs = list("design", "data_input_process", "data_long_process", "data_2nd_vax_dates", "data_eligible_cd"),
     highly_sensitive = list(
       data_comparisons = glue("output/data/data_comparisons_*_*.rds")
+    )
+  ),
+  
+  comment(glue("process outcomes data")),
+  action(
+    name = "data_outcomes_process",
+    run = "r:latest analysis/comparisons/data_outcomes_process.R",
+    needs = list("design", "data_input_process", "data_long_process", "data_comparisons_process"),
+    highly_sensitive = list(
+      data_outcomes = "output/data/data_outcomes_*_*.rds"
     )
   )
   

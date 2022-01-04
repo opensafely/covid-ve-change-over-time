@@ -1,1 +1,1 @@
-   design     dummy_data  generate_study_population     data_input_process  data_long_process  data_eligible_ab      data_2nd_vax_dates  plot_2nd_vax_dates  data_eligible_cd     data_comparisons_process
+   design     dummy_data  generate_study_population     data_input_process  data_long_process  data_eligible_ab      data_2nd_vax_dates  plot_2nd_vax_dates  data_eligible_cd     data_comparisons_process  data_outcomes_process
