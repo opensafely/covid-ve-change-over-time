@@ -18,6 +18,8 @@ if(length(args)==0){
 }
 
 ################################################################################
+fs::dir_create(here::here("output", "tables"))
+
 second_vax_period_dates <- readr::read_rds(
   here::here("output", "lib", "second_vax_period_dates.rds")) 
 
