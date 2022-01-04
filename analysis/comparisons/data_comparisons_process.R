@@ -28,10 +28,6 @@ study_parameters <- readr::read_rds(
   here::here("output", "lib", "study_parameters.rds"))
 
 # import data ----
-# second vaccination period dates
-second_vax_period_dates <- readr::read_rds(
-  here::here("output", "lib", "second_vax_period_dates.rds"))
-
 # individuals eligible based on box c criteria
 data_eligible_c <- readr::read_rds(
   here::here("output", "data", "data_eligible_c.rds"))
