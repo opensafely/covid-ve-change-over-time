@@ -21,6 +21,45 @@ if(length(args)==0){
 ################################################################################
 # read long datasets from recurring variables ----
 
+
+
+# check that no overlap between individuals in:
+## brand arms
+## vax and unvax arms
+## unvax arm in odd and even comparisons
+check_overlap <- function(.data) {
+  
+  data <- .data %>%
+    select(patient_id, brand, arm, comparison) %>%
+    mutate(
+      name = if_else(
+        as.numeric(comparison) %% 2 == 0,
+        "even", 
+        "odd"),
+      value = TRUE) %>%
+    mutate(across(name, 
+                  ~ if_else(
+                    arm %in% "vax",
+                    as.character(arm),
+                    str_c(arm, .x, sep = "_")))) %>%
+    mutate(across(name, ~str_c(brand, .x, sep = "_"))) %>%
+    distinct(patient_id, name, value) %>%
+    pivot_wider(
+      names_from = name, values_from = value
+    ) %>%
+    mutate(across(-patient_id, ~!is.na(.x))) %>%
+    filter(rowSums(.[-1]) > 1)
+  
+  
+  stopifnot("Overlap ids between arms or odd and even comparisons" = nrow(data) == 0)
+  
+  return(TRUE)
+  
+}
+
+
+
+
 data_long_shielded_dates <- readr::read_rds(
   here::here("output", "data", "data_long_shielded_dates.rds")) %>%
   select(patient_id, date) %>%
@@ -102,8 +141,8 @@ process_covariates <- function(.data) {
     "temporary_immunosuppression_date"
   )
   clinical_vars <- c(
-    # "flu_vaccine",
-    # "efi",
+    "flu_vaccine",
+    "efi",
     "bmi"
   )
   end_vars <- c(
@@ -113,14 +152,8 @@ process_covariates <- function(.data) {
   )
   
   
-  data_comparisons <- .data %>%
-    mutate(
-      arm = if_else(
-        arm %in% "vax",
-        brand,
-        "unvax"
-      )
-    ) %>%
+  out <- .data %>%
+    mutate(arm = str_c(brand, arm, sep = "_")) %>%
     select(-brand) %>%
     # join and process covariates
     left_join(
@@ -159,7 +192,20 @@ process_covariates <- function(.data) {
     ) %>%
     mutate(
       
-      age = as.numeric(start_fu_date - dob)/365.25,
+      # 5-year age bands
+      age = cut(
+        floor(as.numeric(start_fu_date - dob)/365.25),
+        breaks = c(seq(15,90,5), Inf),
+        include.lowest = TRUE
+        ),
+      
+      # change age band labels from "(lower,upper]" to "lower-upper"
+      age = str_remove(age, "\("),
+      age = str_remove(age, "\["),
+      age = str_remove(age, "\]"),
+      age = str_replace(age, ",Inf", "+"),
+      age = str_replace(age, ",", "-"),
+      age = factor(age),
       
       any_immunosuppression = (permanant_immunosuppression | 
                                  asplenia | 
@@ -206,19 +252,8 @@ process_covariates <- function(.data) {
     ) %>%
     droplevels()
   
+  return(out)
+  
 }
 
 
-
-
-
-
-
-################################################################################
-
-
-
-readr::write_rds(
-  data_comparisons,
-  here::here("output", glue("jcvi_group_{group}"), "data", "data_comparisons.rds"),
-  compress = "gz")
