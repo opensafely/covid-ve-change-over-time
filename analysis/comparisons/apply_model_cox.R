@@ -29,6 +29,7 @@ if(length(args)==0){
 # read data
 
 fs::dir_create(here::here("output", "models"))
+fs::dir_create(here::here("output", "tables"))
 
 model_varlist <- readr::read_rds(
   here::here("output", "lib", "model_varlist.rds")
