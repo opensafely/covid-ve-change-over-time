@@ -347,13 +347,15 @@ actions_list <- splice(
           "comparisons", 
           "####################################"),
   
-  actions_comparisons(jcvi_group = "02", outcomes = c("postest", "covidadmitted", "coviddeath", "death")),
-  
-  actions_comparisons(jcvi_group = "05", outcomes = c("postest", "covidadmitted", "coviddeath", "death")),
-  
-  actions_comparisons(jcvi_group = "06", outcomes = c("postest", "covidadmitted", "coviddeath", "death")),
-  
-  actions_comparisons(jcvi_group = "10", outcomes = c("postest", "covidadmitted", "coviddeath", "death"))
+  comment("process comparisons data"),
+  action(
+    name = glue("data_comparisons_process"),
+    run = "r:latest analysis/comparisons/data_comparisons_process.R",
+    needs = list("design", "data_input_process", "data_long_process", "data_2nd_vax_dates", "data_eligible_cd"),
+    highly_sensitive = list(
+      data_comparisons = glue("output/data/data_comparisons_*_*.rds")
+    )
+  )
   
 )
 
