@@ -249,7 +249,7 @@ process_covariates <- function(.data) {
     "temporary_immunosuppression_date"
   )
   clinical_vars <- c(
-    "flu_vaccine",
+    # "flu_vaccine",
     # "efi",
     "bmi"
   )

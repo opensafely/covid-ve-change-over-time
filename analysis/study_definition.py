@@ -651,33 +651,33 @@ study=StudyDefinition(
         },
     ),
 
-    # flu vaccine in the 5 years before elig_date
-    flu_vaccine=patients.satisfying(
-        """
-        flu_vaccine_tpp_table>0 OR
-        flu_vaccine_med>0 OR
-        flu_vaccine_clinical>0
-        """,
+    # # flu vaccine in the 5 years before elig_date
+    # flu_vaccine=patients.satisfying(
+    #     """
+    #     flu_vaccine_tpp_table>0 OR
+    #     flu_vaccine_med>0 OR
+    #     flu_vaccine_clinical>0
+    #     """,
         
-        flu_vaccine_tpp_table=patients.with_tpp_vaccination_record(
-            target_disease_matches="INFLUENZA",
-            between=["elig_date - 5 years", "elig_date"], 
-            returning="binary_flag",
-        ),
+    #     flu_vaccine_tpp_table=patients.with_tpp_vaccination_record(
+    #         target_disease_matches="INFLUENZA",
+    #         between=["elig_date - 5 years", "elig_date"], 
+    #         returning="binary_flag",
+    #     ),
         
-        flu_vaccine_med=patients.with_these_medications(
-            flu_med_codes,
-            between=["elig_date - 5 years", "elig_date"], 
-            returning="binary_flag",
-        ),
-        flu_vaccine_clinical=patients.with_these_clinical_events(
-            flu_clinical_given_codes,
-            ignore_days_where_these_codes_occur=flu_clinical_not_given_codes,
-            between=["elig_date - 5 years", "elig_date"], 
-            returning="binary_flag",
-        ),
-        return_expectations={"incidence": 0.5, },
-    ),
+    #     flu_vaccine_med=patients.with_these_medications(
+    #         flu_med_codes,
+    #         between=["elig_date - 5 years", "elig_date"], 
+    #         returning="binary_flag",
+    #     ),
+    #     flu_vaccine_clinical=patients.with_these_clinical_events(
+    #         flu_clinical_given_codes,
+    #         ignore_days_where_these_codes_occur=flu_clinical_not_given_codes,
+    #         between=["elig_date - 5 years", "elig_date"], 
+    #         returning="binary_flag",
+    #     ),
+    #     return_expectations={"incidence": 0.5, },
+    # ),
 
     # # electronic frailty index
     # # date hard-coded because there are few dates available for efi

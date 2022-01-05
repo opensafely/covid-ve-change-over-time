@@ -169,9 +169,9 @@ formula_clinical <- . ~ . +
   
   multimorb +
   
-  shielded +
+  shielded #+
   
-  flu_vaccine #+
+  # flu_vaccine #+
   
   # efi
 

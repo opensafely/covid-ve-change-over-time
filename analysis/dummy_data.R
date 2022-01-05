@@ -171,7 +171,7 @@ dummy_data_vax <- dummy_data_elig %>%
 ### from dummy_data_covs
 dummy_data_covs <- dummy_data_vax %>%
   # indicator for flu vaccine in past 5 years
-  mutate(flu_vaccine = rbernoulli(n = nrow(.), p=0.3)) %>%
+  # mutate(flu_vaccine = rbernoulli(n = nrow(.), p=0.3)) %>%
   # date vars ever
   bind_cols(
     pmap(
