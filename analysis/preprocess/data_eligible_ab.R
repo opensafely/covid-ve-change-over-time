@@ -47,13 +47,13 @@ eligibility_count <- eligibility_count %>%
     n =  n_distinct(data_eligible_a$patient_id)
   )
 
-# remove if aged under 16 or over 120 (the latter probs error)
+# remove if aged under 16 or over 120 (the latter to avoid probable errors)
 data_eligible_a <- data_eligible_a %>%
-  filter(age_2 >= 16, age_2 <= 120)
+  filter(age_1 >= 16, age_1 <= 120)
 
 eligibility_count <- eligibility_count %>%
   add_row(
-    description = "Samples with age_2 < 16 and > 120 removed.",
+    description = "Samples with age_1 < 16 and > 120 removed.",
     n =  n_distinct(data_eligible_a$patient_id)
   )
 
