@@ -349,9 +349,9 @@ process_covariates <- function(.data) {
         multimorb, 
         breaks = c(0, 1, 2, 3, 4, Inf),
         labels=c("0", "1", "2", "3", "4+"), 
-        right=FALSE),
+        right=FALSE)#,
       
-      flu_vaccine = flu_vaccine == 1#,
+      # flu_vaccine = flu_vaccine == 1#,
       
       # efi = fct_case_when(
       #   is.na(efi) | (efi <= 0.12) ~ "None",
