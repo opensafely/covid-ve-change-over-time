@@ -234,22 +234,23 @@ actions_list <- splice(
     needs = list("design", "dummy_data", "generate_study_population"),
     highly_sensitive = list(
       data_covs = "output/data/data_covs.rds",
-      data_vax_dates = "output/data/data_*_vax_dates.rds"
+      data_vax_dates = "output/data/data_*_vax_dates.rds",
+      data_covid_any = "output/data/data_covid_any.rds"
     ),
     moderately_sensitive = list(
       data_properties = "output/tables/data_processed_tabulate.txt"
     )
   ),
   
-  comment("process recurring variables as long data"),
-  action(
-    name = "data_long_process",
-    run = "r:latest analysis/preprocess/data_long_process.R",
-    needs = list("design", "data_input_process"),
-    highly_sensitive = list(
-      data_long_dates = "output/data/data_long_*_dates.rds"
-    )
-  ),
+  # comment("process recurring variables as long data"),
+  # action(
+  #   name = "data_long_process",
+  #   run = "r:latest analysis/preprocess/data_long_process.R",
+  #   needs = list("design", "data_input_process"),
+  #   highly_sensitive = list(
+  #     data_long_dates = "output/data/data_long_*_dates.rds"
+  #   )
+  # ),
   
   comment("apply eligiblity criteria from boxes a and b"),
   action(
@@ -313,7 +314,12 @@ actions_list <- splice(
   action(
     name = "data_comparisons_process",
     run = "r:latest analysis/comparisons/data_comparisons_process.R",
-    needs = list("design", "data_input_process", "data_long_process", "data_2nd_vax_dates", "data_eligible_cd"),
+    needs = list(
+      "design", 
+      "data_input_process", 
+      # "data_long_process", 
+      "data_2nd_vax_dates", 
+      "data_eligible_cd"),
     highly_sensitive = list(
       data_comparisons = glue("output/data/data_comparisons_*_*.rds")
     )
@@ -323,7 +329,11 @@ actions_list <- splice(
   action(
     name = "data_outcomes_process",
     run = "r:latest analysis/comparisons/data_outcomes_process.R",
-    needs = list("design", "data_input_process", "data_long_process", "data_comparisons_process"),
+    needs = list(
+      "design",
+      "data_input_process",
+      # "data_long_process",
+      "data_comparisons_process"),
     highly_sensitive = list(
       data_outcomes = "output/data/data_outcomes_*_*.rds"
     )

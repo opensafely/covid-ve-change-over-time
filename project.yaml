@@ -63,19 +63,9 @@ actions:
       highly_sensitive:
         data_covs: output/data/data_covs.rds
         data_vax_dates: output/data/data_*_vax_dates.rds
+        data_covid_any: output/data/data_covid_any.rds
       moderately_sensitive:
         data_properties: output/tables/data_processed_tabulate.txt
-
-  ## process recurring variables as long data 
-
-  data_long_process:
-    run: r:latest analysis/preprocess/data_long_process.R
-    needs:
-    - design
-    - data_input_process
-    outputs:
-      highly_sensitive:
-        data_long_dates: output/data/data_long_*_dates.rds
 
   ## apply eligiblity criteria from boxes a and b 
 
@@ -147,7 +137,6 @@ actions:
     needs:
     - design
     - data_input_process
-    - data_long_process
     - data_2nd_vax_dates
     - data_eligible_cd
     outputs:
@@ -161,7 +150,6 @@ actions:
     needs:
     - design
     - data_input_process
-    - data_long_process
     - data_comparisons_process
     outputs:
       highly_sensitive:
