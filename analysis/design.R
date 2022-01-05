@@ -39,10 +39,10 @@ study_parameters <-
 # use lower thresholds if not running in the server
 if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
   study_parameters$n_threshold <- 100L
-  study_parameters$outcome_threshold <- 10L
+  # study_parameters$outcome_threshold <- 10L
 } else {
   study_parameters$n_threshold <- 1000L
-  study_parameters$outcome_threshold <- 100L
+  # study_parameters$outcome_threshold <- 100L
 }
 
 readr::write_rds(study_parameters, here::here("output", "lib", "study_parameters.rds"))
