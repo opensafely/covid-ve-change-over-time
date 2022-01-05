@@ -171,9 +171,9 @@ formula_clinical <- . ~ . +
   
   shielded +
   
-  flu_vaccine +
+  flu_vaccine #+
   
-  efi
+  # efi
 
 
 model_names = c(

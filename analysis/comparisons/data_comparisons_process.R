@@ -246,7 +246,7 @@ process_covariates <- function(.data) {
   )
   clinical_vars <- c(
     "flu_vaccine",
-    "efi",
+    # "efi",
     "bmi"
   )
   end_vars <- c(
@@ -347,14 +347,14 @@ process_covariates <- function(.data) {
         labels=c("0", "1", "2", "3", "4+"), 
         right=FALSE),
       
-      flu_vaccine = flu_vaccine == 1,
+      flu_vaccine = flu_vaccine == 1#,
       
-      efi = fct_case_when(
-        is.na(efi) | (efi <= 0.12) ~ "None",
-        efi <= 0.24 ~ "Mild",
-        efi <= 0.36 ~ "Moderate",
-        TRUE ~ "Severe"
-      )
+      # efi = fct_case_when(
+      #   is.na(efi) | (efi <= 0.12) ~ "None",
+      #   efi <= 0.24 ~ "Mild",
+      #   efi <= 0.36 ~ "Moderate",
+      #   TRUE ~ "Severe"
+      # )
       
     ) %>%
     select(
