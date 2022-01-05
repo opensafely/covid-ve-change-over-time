@@ -76,7 +76,8 @@ comparison_arms <- function(
       "coviddeath_date",
       "endoflife_date",
       "midazolam_date",
-      "death_date"
+      "death_date",
+      "dereg_date"
     )
     
     # which split to keep for comparison k
