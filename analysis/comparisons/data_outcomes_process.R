@@ -106,13 +106,14 @@ for (b in c("BNT162b2", "ChAdOx")) {
                       !is.na(covidadmitted_date) ~ covidadmitted_date - days(median_times_between_outcomes$postest_covidadmitted),
                       !is.na(coviddeath_date) ~ coviddeath_date - days(median_times_between_outcomes$postest_coviddeath),
                       TRUE ~ .x            
-                    ))) %>%
-      mutate(across(covidadmitted_date,
-                    ~ case_when(
-                      !is.na(.x) ~ .x,
-                      !is.na(coviddeath_date) ~ coviddeath_date - days(median_times_between_outcomes$covidadmitted_coviddeath),
-                      TRUE ~ .x            
-                    )))
+                    ))) #%>%
+    # don't impute covidadmitted_date using coviddeath_date, as individuals may die with COVID-19 having not been admitted to hospital with COVID-19
+      # mutate(across(covidadmitted_date,
+      #               ~ case_when(
+      #                 !is.na(.x) ~ .x,
+      #                 !is.na(coviddeath_date) ~ coviddeath_date - days(median_times_between_outcomes$covidadmitted_coviddeath),
+      #                 TRUE ~ .x            
+      #               )))
     
     # save outcomes data
     readr::write_rds(
