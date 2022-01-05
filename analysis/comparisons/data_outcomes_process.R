@@ -73,51 +73,9 @@ for (b in c("BNT162b2", "ChAdOx")) {
                               .x,
                               as.Date(NA_character_)))) 
     
-    
-    
-    # print the number of samples for which upstream outcomes missing
-    # e.g. if postest missing but covidadmitted nonmissing
-    data_outcomes %>%
-      select(patient_id, postest_date, covidadmitted_date, coviddeath_date) %>%
-      mutate(across(-patient_id, ~!is.na(.x))) %>%
-      group_by(postest_date, covidadmitted_date, coviddeath_date) %>% 
-      count() %>%
-      ungroup() %>%
-      # round n to closest 10
-      mutate(n = round(n, -1)) %>%
-      print(n=Inf)
-    
-    
-    # combine outcomes where upstream outcome missing 
-    # impute using median gap between outcomes
-    median_times_between_outcomes <- data_outcomes %>%
-      transmute(
-        postest_covidadmitted = as.integer(covidadmitted_date - postest_date),
-        postest_coviddeath = as.integer(coviddeath_date - postest_date),
-        covidadmitted_coviddeath = as.integer(coviddeath_date - covidadmitted_date)
-      ) %>%
-      summarise(across(everything(), ~round(median(.x, na.rm = TRUE),0))) 
-    
-    
-    data_outcomes_combined <- data_outcomes %>%
-      mutate(across(postest_date,
-                    ~ case_when(
-                      !is.na(.x) ~ .x,
-                      !is.na(covidadmitted_date) ~ covidadmitted_date - days(median_times_between_outcomes$postest_covidadmitted),
-                      !is.na(coviddeath_date) ~ coviddeath_date - days(median_times_between_outcomes$postest_coviddeath),
-                      TRUE ~ .x            
-                    ))) #%>%
-    # don't impute covidadmitted_date using coviddeath_date, as individuals may die with COVID-19 having not been admitted to hospital with COVID-19
-      # mutate(across(covidadmitted_date,
-      #               ~ case_when(
-      #                 !is.na(.x) ~ .x,
-      #                 !is.na(coviddeath_date) ~ coviddeath_date - days(median_times_between_outcomes$covidadmitted_coviddeath),
-      #                 TRUE ~ .x            
-      #               )))
-    
     # save outcomes data
     readr::write_rds(
-      data_outcomes_combined,
+      data_outcomes,
       here::here("output", "data", glue("data_outcomes_{b}_{a}.rds")),
       compress = "gz")
     

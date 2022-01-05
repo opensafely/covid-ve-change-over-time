@@ -38,7 +38,13 @@ data_eligible_d <- readr::read_rds(
 
 # covariate data
 data_covs <- readr::read_rds(
-  here::here("output", "data", "data_covs.rds"))
+  here::here("output", "data", "data_covs.rds")) %>%
+  # date of first evidence of covid
+  left_join(
+    readr::read_rds(
+      here::here("output", "data", "data_covid_any.rds")),
+    by = "patient_id"
+  )
 
 ################################################################################
 
@@ -69,10 +75,7 @@ comparison_arms <- function(
     
     # exclude if evidence of these variables before index_date
     exclude_if_evidence_of <- c(
-      "positive_test_0_date",
-      "primary_care_covid_case_0_date",
-      "primary_care_suspected_covid_0_date",
-      "covidadmitted_0_date",
+      "covid_any_date",
       "coviddeath_date",
       "endoflife_date",
       "midazolam_date",

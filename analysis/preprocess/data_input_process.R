@@ -1,7 +1,10 @@
 ################################################################################
 
 # This script:
-# - reads, processes and saves the extracted data
+# - reads, processes the extracted data, saves the following:
+# - data_covs.rds = wide covariates and outcome data
+# - data_*_vax_dates.rds = long and wide vaccine data
+# - data_long_*_dates.rds = long covariates and outcome data
 
 ################################################################################
 
@@ -27,6 +30,8 @@ regions <- readr::read_csv(
   here::here("output", "lib", "regions.csv")
 )
 
+################################################################################
+# inital pre-processing
 cat("#### extract data ####\n")
 data_extract <- 
   arrow::read_feather(file = here::here("output", "input.feather")) %>%
@@ -74,6 +79,15 @@ data_processed <- data_extract %>%
   select(-ethnicity_6, -ethnicity_6_sus) %>%
   droplevels()
 
+################################################################################
+cat("#### properties of data_processed ####\n")
+# for checking for errors
+data_properties(
+  data = data_processed,
+  path = file.path("output", "tables")
+)
+
+################################################################################
 # process vaccine data
 data_vax <- local({
   
@@ -150,21 +164,6 @@ data_vax_wide <- data_vax %>%
     names_glue = "covid_vax_{vax_index}_{.value}"
   )
 
-
-cat("#### properties of data_processed ####\n")
-data_properties(
-  data = data_processed,
-  path = file.path("output", "tables")
-)
-
-# save dataset of covariates 
-# (i.e. remove vaccine variables as they are saved elsewhere)
-readr::write_rds(
-  data_processed %>%
-    select(-contains("_vax_")),
-  here::here("output", "data", "data_covs.rds"), 
-  compress="gz")
-
 # save long and wide datasets or vaccine variables
 readr::write_rds(
   data_vax, 
@@ -174,4 +173,228 @@ readr::write_rds(
 readr::write_rds(
   data_vax_wide,
   here::here("output", "data", "data_wide_vax_dates.rds"), 
+  compress="gz")
+
+###############################################################################
+## create one-row-per-event datasets for recurring variables
+
+# shielded
+data_pr_shielded <- data_processed %>%
+  select(patient_id,
+         matches("^shielded\\_\\d+\\_date")) %>%
+  pivot_longer(
+    cols = -patient_id,
+    names_to = c(NA, "shielded_index"),
+    names_pattern = "^(.*)_(\\d+)_date",
+    values_to = "date",
+    values_drop_na = TRUE
+  ) %>%
+  arrange(patient_id, date)
+
+readr::write_rds(
+  data_pr_shielded, 
+  here::here("output", "data", "data_long_shielded_dates.rds"), 
+  compress="gz")
+
+###############################################################################
+# nonshielded
+data_pr_nonshielded <- data_processed %>%
+  select(patient_id,
+         matches("^nonshielded\\_\\d+\\_date")) %>%
+  pivot_longer(
+    cols = -patient_id,
+    names_to = c(NA, "nonshielded_index"),
+    names_pattern = "^(.*)_(\\d+)_date",
+    values_to = "date",
+    values_drop_na = TRUE
+  ) %>%
+  arrange(patient_id, date)
+
+readr::write_rds(
+  data_pr_nonshielded, 
+  here::here("output", "data", "data_long_nonshielded_dates.rds"), 
+  compress="gz")
+
+###############################################################################
+# bmi
+data_pr_bmi <- data_processed %>%
+  select(patient_id,
+         matches("^bmi\\_\\d+")) %>%
+  rename_at(vars(contains("date")),
+            ~ str_c("date_", str_extract(.x, "\\d+"))) %>%
+  pivot_longer(
+    cols = -patient_id,
+    names_sep = "_",
+    names_to = c(".value", "bmi_index"),
+    values_drop_na = TRUE) %>%
+  mutate(bmi = fct_case_when(
+    bmi < 30 | bmi >=100 ~ "Not obese", # this cat includes missing and clinically implausible values
+    bmi >= 30 & bmi < 35 ~ "Obese I (30-34.9)",
+    bmi >= 35 & bmi < 40 ~ "Obese II (35-39.9)",
+    bmi >= 40 & bmi < 100 ~ "Obese III (40+)",
+    TRUE ~ NA_character_
+  )) %>%
+  arrange(patient_id, date) 
+
+readr::write_rds(
+  data_pr_bmi, 
+  here::here("output", "data", "data_long_bmi_dates.rds"), 
+  compress="gz")
+
+###############################################################################
+# suspected covid
+data_pr_suspected_covid <- data_processed %>%
+  select(patient_id,
+         matches("^primary\\_care\\_suspected\\_covid\\_\\d+\\_date")) %>%
+  pivot_longer(
+    cols = -patient_id,
+    names_to = c(NA, "suspected_index"),
+    names_pattern = "^(.*)_(\\d+)_date",
+    values_to = "date",
+    values_drop_na = TRUE
+  ) %>%
+  arrange(patient_id, date)
+
+readr::write_rds(
+  data_pr_suspected_covid, 
+  here::here("output", "data", "data_long_pr_suspected_covid_dates.rds"), 
+  compress="gz")
+
+###############################################################################
+# probable covid
+data_pr_probable_covid <- data_processed %>%
+  select(patient_id,
+         matches("^primary\\_care\\_covid\\_case\\_\\d+\\_date")) %>%
+  pivot_longer(
+    cols = -patient_id,
+    names_to = c(NA, "probable_index"),
+    names_pattern = "^(.*)_(\\d+)_date",
+    values_to = "date",
+    values_drop_na = TRUE
+  ) %>%
+  arrange(patient_id, date)
+
+readr::write_rds(
+  data_pr_probable_covid, 
+  here::here("output", "data", "data_long_pr_probable_covid_dates.rds"),
+  compress="gz")
+
+###############################################################################
+# covid admission
+data_covidadmitted <- data_processed %>%
+  select(patient_id, 
+         matches("^covidadmitted\\_\\d+\\_date")) %>%
+  pivot_longer(
+    cols = -patient_id,
+    names_to = c(NA, "covidadmitted_index"),
+    names_pattern = "^(.*)_(\\d+)_date",
+    values_to = "date",
+    values_drop_na = TRUE
+  ) %>%
+  arrange(patient_id, date)
+
+readr::write_rds(
+  data_covidadmitted, 
+  here::here("output", "data", "data_long_covidadmitted_dates.rds"), 
+  compress="gz")
+
+###############################################################################
+# positive test
+data_postest <- data_processed %>%
+  select(patient_id, 
+         matches("^positive\\_test\\_\\d+\\_date")) %>%
+  pivot_longer(
+    cols = -patient_id,
+    names_to = c(NA, "postest_index"),
+    names_pattern = "^(.*)_(\\d+)_date",
+    values_to = "date",
+    values_drop_na = TRUE
+  ) %>%
+  arrange(patient_id, date)
+
+# combine outcomes where postest missing
+# individuals with covidadmitted but not postest
+data_covidadmitted_impute <- data_covidadmitted %>% 
+  anti_join(data_postest, by = "patient_id") %>%
+  rename(postest_index = covidadmitted_index)
+
+# individuals with coviddeath but not postest
+data_coviddeath_impute <- data_processed %>%
+  select(patient_id, coviddeath_date) %>%
+  filter(!is.na(coviddeath_date)) %>%
+  anti_join(data_postest,
+            by = "patient_id") %>%
+  anti_join(data_covidadmitted_impute,
+            by = "patient_id") %>%
+  mutate(postest_index = "0") %>%
+  rename(date = coviddeath_date)
+
+#### may have to re-think this approach to combining outcomes if outcomes do 
+#### become recurring rather than "ever"
+data_postest <- bind_rows(
+  data_postest,
+  data_covidadmitted_impute,
+  data_coviddeath_impute
+)
+
+readr::write_rds(
+  data_postest, 
+  here::here("output", "data", "data_long_postest_dates.rds"), 
+  compress="gz")
+
+################################################################################
+# create dataset which contains the earliest date of any evidence of covid
+# (not including covid death, as only applied to alive individuals)
+data_covid_any <- list(
+  data_pr_suspected_covid,
+  data_pr_probable_covid,
+  data_covidadmitted,
+  data_postest
+)
+
+data_covid_any <- bind_rows(
+  lapply(
+    data_covid_any, 
+    function(x) {
+      name <- str_remove(names(x %>% select(ends_with("index"))), "_index")
+      x %>% select(patient_id, date) %>% mutate(covid_event = name)
+    }
+    )
+  ) %>%
+  mutate(across(covid_event,
+                factor,
+                # if multiple recorded on the same date, this is the order of preference
+                levels = c(
+                  "covidadmitted",
+                  "postest",
+                  "probable",
+                  "suspected"
+                ))) %>%
+  arrange(patient_id, date, covid_event) %>%
+  # keep the first event to occur
+  distinct(patient_id, .keep_all = TRUE) %>%
+  rename(covid_any_date = date)
+
+readr::write_rds(
+  data_covid_any, 
+  here::here("output", "data", "data_covid_any.rds"), 
+  compress="gz")
+
+################################################################################
+# save dataset of covariates 
+# (remove variables that are saved elsewhere)
+readr::write_rds(
+  data_processed %>%
+    # remove vaccine variables
+    select(-contains("_vax_")) %>%
+    # remove recurring variables
+    select(-starts_with(c(
+      "shielded",
+      "nonshielded",
+      "bmi", 
+      "primary_care_suspected_covid", 
+      "primary_care_covid_case",
+      "positive_test",
+      "covidadmitted"))),
+  here::here("output", "data", "data_covs.rds"), 
   compress="gz")
