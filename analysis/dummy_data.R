@@ -240,11 +240,11 @@ dummy_data_covs <- dummy_data_vax %>%
       floor_date(as.Date(study_parameters$ref_age_2) - years(age_2) + days(31), unit = "months"))
        ) %>%
   # add efi
-  mutate(
-    efi = if_else(
-      rbernoulli(n = nrow(.), p = 0.99),
-      rnorm(n = nrow(.), mean = 0.2, sd = 0.09),
-      NA_real_)) %>%
+  # mutate(
+  #   efi = if_else(
+  #     rbernoulli(n = nrow(.), p = 0.99),
+  #     rnorm(n = nrow(.), mean = 0.2, sd = 0.09),
+  #     NA_real_)) %>%
   mutate(across(contains("_date"), as.POSIXct)) %>%
   mutate(across(ends_with("date"), as.POSIXct)) %>%
   mutate(across(c(ethnicity_6, ethnicity_6_sus, jcvi_group, region_0, sex),
