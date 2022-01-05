@@ -235,6 +235,7 @@ actions_list <- splice(
     highly_sensitive = list(
       data_covs = "output/data/data_covs.rds",
       data_vax_dates = "output/data/data_*_vax_dates.rds",
+      data_long_dates = "output/data/data_long_*_dates.rds",
       data_covid_any = "output/data/data_covid_any.rds"
     ),
     moderately_sensitive = list(
