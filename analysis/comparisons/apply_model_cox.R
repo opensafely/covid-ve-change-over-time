@@ -86,8 +86,15 @@ data_strata <- data %>%
 ################################################################################
 
 events_per_personyears <- function(strata) {
-  data_strata %>%
-    filter(strata_var %in% strata) %>%
+  
+  if (strata == "all") {
+    data <- data_strata
+  } else {
+    data <- data_strata %>%
+      filter(strata_var %in% strata)
+  }
+  
+  data %>%
     mutate(days = tstop-tstart) %>%
     group_by(comparison, arm) %>%
     summarise(
@@ -112,7 +119,7 @@ events_per_personyears <- function(strata) {
 ################################################################################
 
 capture.output(
-  for (s in levels(data_strata$strata_var)) {
+  for (s in c("all", levels(data_strata$strata_var))) {
     print(events_per_personyears(s))
   },
   file = here::here("output", "tables", glue("{comparison}_{outcome}_incidence.txt")),
