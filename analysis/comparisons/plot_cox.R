@@ -103,18 +103,30 @@ plot_res <- plot_data %>%
   geom_linerange(aes(ymin = lower, ymax = upper), position = position_dodge(width = 0.25)) +
   geom_point(position = position_dodge(width = 0.25)) +
   geom_hline(aes(yintercept=1), colour='grey') +
-  facet_wrap(~outcome, nrow=2, ncol=2) +
-  scale_y_log10(
-    breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5),
-    limits = c(0.01, max(1, (plot_data$upper))),
-    oob = scales::oob_keep,
-    sec.axis = sec_axis(
-      ~(1-.),
-      name="Effectiveness (1 - HR)",
-      breaks = c(-4, -1, 0, 0.5, 0.80, 0.9, 0.95, 0.98, 0.99, 1.00),
-      labels = function(x) {formatpercent100(x, 1)}
+  facet_wrap(~outcome, nrow=2, ncol=2) 
+
+if (comparison %in% c("BNT162b2", "ChAdOx")) {
+  plot_res <- plot_res +
+    scale_y_log10(
+      breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5),
+      limits = c(0.01, max(1, (plot_data$upper))),
+      oob = scales::oob_keep,
+      sec.axis = sec_axis(
+        ~(1-.),
+        name="Effectiveness (1 - HR)",
+        breaks = c(-4, -1, 0, 0.5, 0.80, 0.9, 0.95, 0.98, 0.99, 1.00),
+        labels = function(x) {formatpercent100(x, 1)}
+      )
     )
-  ) +
+} else if (comparison %in% "both") {
+  plot_res <- plot_res +
+    scale_y_log10(
+      breaks=c(0.25, 0.33, 0.5, 0.67, 0.80, 1, 1.25, 1.5, 2, 3, 4),
+      sec.axis = dup_axis(name="HR in favour of\n<- ChAdOx / BNT162b2 ->", breaks = NULL)
+    ) 
+}
+
+plot_res <- plot_res +
   scale_colour_brewer(name = NULL, type="qual", palette="Set2", guide=guide_legend(ncol=1))+
   labs(
     y="Hazard Ratio (HR)",
