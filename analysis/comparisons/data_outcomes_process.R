@@ -33,11 +33,13 @@ for (b in c("BNT162b2", "ChAdOx")) {
     cat(glue("----process outcomes data for {b} {a}----"), "\n")
     
     # read comparisons data
-    # keep only patient_id and start_fu_date for comparison 1
+    # keep only patient_id and earliest start_fu_date 
+    # (i.e. from comparison 1 for vax and odd unvax, comparison 2 for even unvax)
     data_ids <- readr::read_rds(
       here::here("output", "data", glue("data_comparisons_{b}_{a}.rds"))) %>%
-      filter(comparison %in% "1") %>%
-      distinct(patient_id, start_fu_date) 
+      arrange(patient_id, start_fu_date) %>%
+      select(patient_id, start_fu_date) %>%
+      distinct(patient_id, .keep_all = TRUE)
     
     ## join outcomes data
     data_outcomes <- data_ids %>%
