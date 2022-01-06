@@ -101,6 +101,7 @@ comparisons_fun <- function(
             model_summary_rds = glue("output/models/{comparison}_{outcome}_modelcox_summary.rds")
           ),
           moderately_sensitive = list(
+            incidence_table = glue("output/tables/{comparison}_{outcome}_incidence.txt"),
             model_glance = glue("output/models/{comparison}_{outcome}_modelcox_glance.csv")#,
             # model_tidy_csv = glue("output/models/{comparison}_{outcome}_modelcox_tidy.csv")
           )

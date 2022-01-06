@@ -182,6 +182,7 @@ actions:
         modelnumber: output/models/BNT162b2_postest_model*.rds
         model_summary_rds: output/models/BNT162b2_postest_modelcox_summary.rds
       moderately_sensitive:
+        incidence_table: output/tables/BNT162b2_postest_incidence.txt
         model_glance: output/models/BNT162b2_postest_modelcox_glance.csv
 
   ## comparison = BNT162b2, outcome = covidadmitted 
@@ -209,6 +210,7 @@ actions:
         modelnumber: output/models/BNT162b2_covidadmitted_model*.rds
         model_summary_rds: output/models/BNT162b2_covidadmitted_modelcox_summary.rds
       moderately_sensitive:
+        incidence_table: output/tables/BNT162b2_covidadmitted_incidence.txt
         model_glance: output/models/BNT162b2_covidadmitted_modelcox_glance.csv
 
   ## comparison = BNT162b2, outcome = coviddeath 
@@ -236,6 +238,7 @@ actions:
         modelnumber: output/models/BNT162b2_coviddeath_model*.rds
         model_summary_rds: output/models/BNT162b2_coviddeath_modelcox_summary.rds
       moderately_sensitive:
+        incidence_table: output/tables/BNT162b2_coviddeath_incidence.txt
         model_glance: output/models/BNT162b2_coviddeath_modelcox_glance.csv
 
   ## comparison = BNT162b2, outcome = death 
@@ -263,6 +266,7 @@ actions:
         modelnumber: output/models/BNT162b2_death_model*.rds
         model_summary_rds: output/models/BNT162b2_death_modelcox_summary.rds
       moderately_sensitive:
+        incidence_table: output/tables/BNT162b2_death_incidence.txt
         model_glance: output/models/BNT162b2_death_modelcox_glance.csv
 
   ## plot cox model for all outcomes 
@@ -325,6 +329,7 @@ actions:
         modelnumber: output/models/ChAdOx_postest_model*.rds
         model_summary_rds: output/models/ChAdOx_postest_modelcox_summary.rds
       moderately_sensitive:
+        incidence_table: output/tables/ChAdOx_postest_incidence.txt
         model_glance: output/models/ChAdOx_postest_modelcox_glance.csv
 
   ## comparison = ChAdOx, outcome = covidadmitted 
@@ -352,6 +357,7 @@ actions:
         modelnumber: output/models/ChAdOx_covidadmitted_model*.rds
         model_summary_rds: output/models/ChAdOx_covidadmitted_modelcox_summary.rds
       moderately_sensitive:
+        incidence_table: output/tables/ChAdOx_covidadmitted_incidence.txt
         model_glance: output/models/ChAdOx_covidadmitted_modelcox_glance.csv
 
   ## comparison = ChAdOx, outcome = coviddeath 
@@ -379,6 +385,7 @@ actions:
         modelnumber: output/models/ChAdOx_coviddeath_model*.rds
         model_summary_rds: output/models/ChAdOx_coviddeath_modelcox_summary.rds
       moderately_sensitive:
+        incidence_table: output/tables/ChAdOx_coviddeath_incidence.txt
         model_glance: output/models/ChAdOx_coviddeath_modelcox_glance.csv
 
   ## comparison = ChAdOx, outcome = death 
@@ -406,6 +413,7 @@ actions:
         modelnumber: output/models/ChAdOx_death_model*.rds
         model_summary_rds: output/models/ChAdOx_death_modelcox_summary.rds
       moderately_sensitive:
+        incidence_table: output/tables/ChAdOx_death_incidence.txt
         model_glance: output/models/ChAdOx_death_modelcox_glance.csv
 
   ## plot cox model for all outcomes 
@@ -468,6 +476,7 @@ actions:
         modelnumber: output/models/both_postest_model*.rds
         model_summary_rds: output/models/both_postest_modelcox_summary.rds
       moderately_sensitive:
+        incidence_table: output/tables/both_postest_incidence.txt
         model_glance: output/models/both_postest_modelcox_glance.csv
 
   ## comparison = both, outcome = covidadmitted 
@@ -495,6 +504,7 @@ actions:
         modelnumber: output/models/both_covidadmitted_model*.rds
         model_summary_rds: output/models/both_covidadmitted_modelcox_summary.rds
       moderately_sensitive:
+        incidence_table: output/tables/both_covidadmitted_incidence.txt
         model_glance: output/models/both_covidadmitted_modelcox_glance.csv
 
   ## comparison = both, outcome = coviddeath 
@@ -522,6 +532,7 @@ actions:
         modelnumber: output/models/both_coviddeath_model*.rds
         model_summary_rds: output/models/both_coviddeath_modelcox_summary.rds
       moderately_sensitive:
+        incidence_table: output/tables/both_coviddeath_incidence.txt
         model_glance: output/models/both_coviddeath_modelcox_glance.csv
 
   ## comparison = both, outcome = death 
@@ -549,6 +560,7 @@ actions:
         modelnumber: output/models/both_death_model*.rds
         model_summary_rds: output/models/both_death_modelcox_summary.rds
       moderately_sensitive:
+        incidence_table: output/tables/both_death_incidence.txt
         model_glance: output/models/both_death_modelcox_glance.csv
 
   ## plot cox model for all outcomes 
