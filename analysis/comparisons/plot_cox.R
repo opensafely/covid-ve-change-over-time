@@ -103,7 +103,7 @@ plot_res <- plot_data %>%
   geom_linerange(aes(ymin = lower, ymax = upper), position = position_dodge(width = 0.25)) +
   geom_point(position = position_dodge(width = 0.25)) +
   geom_hline(aes(yintercept=1), colour='grey') +
-  facet_wrap(~outcome) +
+  facet_wrap(~outcome, nrow=2, ncol=2) +
   scale_y_log10(
     breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5),
     limits = c(0.01, max(1, (plot_data$upper))),
