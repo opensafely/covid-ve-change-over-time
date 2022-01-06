@@ -12,8 +12,7 @@ apply_model_cox_ChAdOx_death
 plot_model_cox_ChAdOx 
 tables_model_cox_ChAdOx   data_tte_process_both_postest 
 apply_model_cox_both_postest   data_tte_process_both_covidadmitted 
-apply_model_cox_both_covidadmitted   data_tte_process_both_coviddeath 
-apply_model_cox_both_coviddeath   data_tte_process_both_death 
+apply_model_cox_both_covidadmitted   data_tte_process_both_death 
 apply_model_cox_both_death 
 plot_model_cox_both 
 tables_model_cox_both

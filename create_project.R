@@ -64,6 +64,8 @@ comparisons_fun <- function(
   report = TRUE
   ) {
   
+  if (comparison == "both") outcomes <- outcomes[-which(outcomes=="coviddeath")]
+  
   out <- list()
   
   if (apply_model) {
