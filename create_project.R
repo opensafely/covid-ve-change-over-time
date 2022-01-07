@@ -58,13 +58,14 @@ convert_comment_actions <-function(yaml.txt){
 
   
 comparisons_fun <- function(
+  subgroup,
   comparison,
   outcomes,
   apply_model = TRUE,
   report = TRUE
   ) {
   
-  if (comparison == "both") outcomes <- outcomes[-which(outcomes=="coviddeath")]
+  # if (comparison == "both") outcomes <- outcomes[-which(outcomes=="coviddeath")]
   
   out <- list()
   
@@ -74,38 +75,37 @@ comparisons_fun <- function(
       
       splice(
         
-        comment(glue("comparison = {comparison}, outcome = {outcome}")),
+        comment(glue("subgroup = {subgroup}, comparison = {comparison}, outcome = {outcome}")),
         comment(glue("process tte data for {outcome}")),
         action(
-          name = glue("data_tte_process_{comparison}_{outcome}"),
+          name = glue("data_tte_process_{subgroup}_{comparison}_{outcome}"),
           run = "r:latest analysis/comparisons/data_tte_process.R",
-          arguments = c(comparison, outcome),
+          arguments = c(subgroup, comparison, outcome),
           needs = list(
             "data_comparisons_process", 
             "data_outcomes_process"),
           highly_sensitive = list(
-            data_tte_brand_outcome = glue("output/data/data_tte_{comparison}_{outcome}.rds")
+            data_tte_brand_outcome = glue("output/data/data_tte_{subgroup}_{comparison}_{outcome}.rds")
           )
         ),
         
         comment(glue("apply cox model for {outcome}")),
         action(
-          name = glue("apply_model_cox_{comparison}_{outcome}"),
+          name = glue("apply_model_cox_{subgroup}_{comparison}_{outcome}"),
           run = "r:latest analysis/comparisons/apply_model_cox.R",
-          arguments = c(comparison, outcome),
+          arguments = c(subgroup, comparison, outcome),
           needs = list(
             "design", 
             "data_comparisons_process", 
-            glue("data_tte_process_{comparison}_{outcome}")),
+            glue("data_tte_process_{subgroup}_{comparison}_{outcome}")),
           highly_sensitive = list(
-            modelnumber = glue("output/models/{comparison}_{outcome}_model*.rds"),
-            # model_tidy_rds = glue("output/models/{comparison}_{outcome}_modelcox_tidy.rds"),
-            model_summary_rds = glue("output/models/{comparison}_{outcome}_modelcox_summary.rds")
+            modelnumber = glue("output/models/model*_{subgroup}_{comparison}_{outcome}.rds"),
+            model_summary_rds = glue("output/models/modelcox_summary_{subgroup}_{comparison}_{outcome}.rds")
           ),
           moderately_sensitive = list(
-            incidence_table = glue("output/tables/{comparison}_{outcome}_incidence.txt"),
-            model_glance = glue("output/models/{comparison}_{outcome}_modelcox_glance.csv")#,
-            # model_tidy_csv = glue("output/models/{comparison}_{outcome}_modelcox_tidy.csv")
+            incidence_table_all = glue("output/tables/incidence_{subgroup}_{comparison}_{outcome}_all.txt"),
+            incidence_table_strata = glue("output/tables/incidence_{subgroup}_{comparison}_{outcome}_strata.txt"),
+            model_glance = glue("output/models/modelcox_glance_{subgroup}_{comparison}_{outcome}.csv")#,
           )
         )
         
@@ -246,16 +246,6 @@ actions_list <- splice(
     )
   ),
   
-  # comment("process recurring variables as long data"),
-  # action(
-  #   name = "data_long_process",
-  #   run = "r:latest analysis/preprocess/data_long_process.R",
-  #   needs = list("design", "data_input_process"),
-  #   highly_sensitive = list(
-  #     data_long_dates = "output/data/data_long_*_dates.rds"
-  #   )
-  # ),
-  
   comment("apply eligiblity criteria from boxes a and b"),
   action(
     name = "data_eligible_ab",
@@ -285,7 +275,7 @@ actions_list <- splice(
       second_vax_period_dates_rds = "output/lib/second_vax_period_dates.rds"
     ),
     moderately_sensitive = list(
-      second_vax_period_dates_csv = "output/lib/second_vax_period_dates.csv"
+      second_vax_period_dates_txt = "output/tables/second_vax_period_dates.txt"
     )
   ),
   
@@ -321,7 +311,6 @@ actions_list <- splice(
     needs = list(
       "design", 
       "data_input_process", 
-      # "data_long_process", 
       "data_2nd_vax_dates", 
       "data_eligible_cd"),
     highly_sensitive = list(
@@ -336,7 +325,6 @@ actions_list <- splice(
     needs = list(
       "design",
       "data_input_process",
-      # "data_long_process",
       "data_comparisons_process"),
     highly_sensitive = list(
       data_outcomes = "output/data/data_outcomes_*_*.rds"
@@ -345,13 +333,30 @@ actions_list <- splice(
   
   comment("apply models and generate reports"),
   splice(
-    # over comparisons
+    # over subgroups
     unlist(lapply(
-      c("BNT162b2", "ChAdOx", "both"),
-      function(x)
-        comparisons_fun(
-          comparison = x, 
-          outcomes = c("postest", "covidadmitted", "coviddeath", "death"))
+      c("02", "03-10", "11-12"), # subgroups
+      function(x) {
+        
+        if (x %in% c("02", "11-12")) {
+          comparisons <- "BNT162b2"
+        } else {
+          comparisons <- c("BNT162b2", "ChAdOx", "both")
+        }
+        
+        # over comparisons
+        unlist(lapply(
+          comparisons,
+          function(y)
+            comparisons_fun(
+              subgroup = x,
+              comparison = y, 
+              outcomes = c("postest", "covidadmitted", "coviddeath", "death"),
+              report = FALSE)
+        ),
+        recursive = FALSE)
+      }
+        
     ),
     recursive = FALSE
     )

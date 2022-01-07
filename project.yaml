@@ -100,7 +100,7 @@ actions:
         data_vax_plot: output/second_vax_period/data/data_vax_plot.rds
         second_vax_period_dates_rds: output/lib/second_vax_period_dates.rds
       moderately_sensitive:
-        second_vax_period_dates_csv: output/lib/second_vax_period_dates.csv
+        second_vax_period_dates_txt: output/tables/second_vax_period_dates.txt
 
   ## plot second vaccination time periods 
 
@@ -157,413 +157,583 @@ actions:
         data_outcomes: output/data/data_outcomes_*_*.rds
 
   ## apply models and generate reports 
-  ## comparison = BNT162b2, outcome = postest 
+  ## subgroup = 02, comparison = BNT162b2, outcome = postest 
   ## process tte data for postest 
 
-  data_tte_process_BNT162b2_postest:
-    run: r:latest analysis/comparisons/data_tte_process.R BNT162b2 postest
+  data_tte_process_02_BNT162b2_postest:
+    run: r:latest analysis/comparisons/data_tte_process.R 02 BNT162b2 postest
     needs:
     - data_comparisons_process
     - data_outcomes_process
     outputs:
       highly_sensitive:
-        data_tte_brand_outcome: output/data/data_tte_BNT162b2_postest.rds
+        data_tte_brand_outcome: output/data/data_tte_02_BNT162b2_postest.rds
 
   ## apply cox model for postest 
 
-  apply_model_cox_BNT162b2_postest:
-    run: r:latest analysis/comparisons/apply_model_cox.R BNT162b2 postest
+  apply_model_cox_02_BNT162b2_postest:
+    run: r:latest analysis/comparisons/apply_model_cox.R 02 BNT162b2 postest
     needs:
     - design
     - data_comparisons_process
-    - data_tte_process_BNT162b2_postest
+    - data_tte_process_02_BNT162b2_postest
     outputs:
       highly_sensitive:
-        modelnumber: output/models/BNT162b2_postest_model*.rds
-        model_summary_rds: output/models/BNT162b2_postest_modelcox_summary.rds
+        modelnumber: output/models/model*_02_BNT162b2_postest.rds
+        model_summary_rds: output/models/modelcox_summary_02_BNT162b2_postest.rds
       moderately_sensitive:
-        incidence_table: output/tables/BNT162b2_postest_incidence.txt
-        model_glance: output/models/BNT162b2_postest_modelcox_glance.csv
+        incidence_table_all: output/tables/incidence_02_BNT162b2_postest_all.txt
+        incidence_table_strata: output/tables/incidence_02_BNT162b2_postest_strata.txt
+        model_glance: output/models/modelcox_glance_02_BNT162b2_postest.csv
 
-  ## comparison = BNT162b2, outcome = covidadmitted 
+  ## subgroup = 02, comparison = BNT162b2, outcome = covidadmitted 
   ## process tte data for covidadmitted 
 
-  data_tte_process_BNT162b2_covidadmitted:
-    run: r:latest analysis/comparisons/data_tte_process.R BNT162b2 covidadmitted
+  data_tte_process_02_BNT162b2_covidadmitted:
+    run: r:latest analysis/comparisons/data_tte_process.R 02 BNT162b2 covidadmitted
     needs:
     - data_comparisons_process
     - data_outcomes_process
     outputs:
       highly_sensitive:
-        data_tte_brand_outcome: output/data/data_tte_BNT162b2_covidadmitted.rds
+        data_tte_brand_outcome: output/data/data_tte_02_BNT162b2_covidadmitted.rds
 
   ## apply cox model for covidadmitted 
 
-  apply_model_cox_BNT162b2_covidadmitted:
-    run: r:latest analysis/comparisons/apply_model_cox.R BNT162b2 covidadmitted
+  apply_model_cox_02_BNT162b2_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox.R 02 BNT162b2 covidadmitted
     needs:
     - design
     - data_comparisons_process
-    - data_tte_process_BNT162b2_covidadmitted
+    - data_tte_process_02_BNT162b2_covidadmitted
     outputs:
       highly_sensitive:
-        modelnumber: output/models/BNT162b2_covidadmitted_model*.rds
-        model_summary_rds: output/models/BNT162b2_covidadmitted_modelcox_summary.rds
+        modelnumber: output/models/model*_02_BNT162b2_covidadmitted.rds
+        model_summary_rds: output/models/modelcox_summary_02_BNT162b2_covidadmitted.rds
       moderately_sensitive:
-        incidence_table: output/tables/BNT162b2_covidadmitted_incidence.txt
-        model_glance: output/models/BNT162b2_covidadmitted_modelcox_glance.csv
+        incidence_table_all: output/tables/incidence_02_BNT162b2_covidadmitted_all.txt
+        incidence_table_strata: output/tables/incidence_02_BNT162b2_covidadmitted_strata.txt
+        model_glance: output/models/modelcox_glance_02_BNT162b2_covidadmitted.csv
 
-  ## comparison = BNT162b2, outcome = coviddeath 
+  ## subgroup = 02, comparison = BNT162b2, outcome = coviddeath 
   ## process tte data for coviddeath 
 
-  data_tte_process_BNT162b2_coviddeath:
-    run: r:latest analysis/comparisons/data_tte_process.R BNT162b2 coviddeath
+  data_tte_process_02_BNT162b2_coviddeath:
+    run: r:latest analysis/comparisons/data_tte_process.R 02 BNT162b2 coviddeath
     needs:
     - data_comparisons_process
     - data_outcomes_process
     outputs:
       highly_sensitive:
-        data_tte_brand_outcome: output/data/data_tte_BNT162b2_coviddeath.rds
+        data_tte_brand_outcome: output/data/data_tte_02_BNT162b2_coviddeath.rds
 
   ## apply cox model for coviddeath 
 
-  apply_model_cox_BNT162b2_coviddeath:
-    run: r:latest analysis/comparisons/apply_model_cox.R BNT162b2 coviddeath
+  apply_model_cox_02_BNT162b2_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox.R 02 BNT162b2 coviddeath
     needs:
     - design
     - data_comparisons_process
-    - data_tte_process_BNT162b2_coviddeath
+    - data_tte_process_02_BNT162b2_coviddeath
     outputs:
       highly_sensitive:
-        modelnumber: output/models/BNT162b2_coviddeath_model*.rds
-        model_summary_rds: output/models/BNT162b2_coviddeath_modelcox_summary.rds
+        modelnumber: output/models/model*_02_BNT162b2_coviddeath.rds
+        model_summary_rds: output/models/modelcox_summary_02_BNT162b2_coviddeath.rds
       moderately_sensitive:
-        incidence_table: output/tables/BNT162b2_coviddeath_incidence.txt
-        model_glance: output/models/BNT162b2_coviddeath_modelcox_glance.csv
+        incidence_table_all: output/tables/incidence_02_BNT162b2_coviddeath_all.txt
+        incidence_table_strata: output/tables/incidence_02_BNT162b2_coviddeath_strata.txt
+        model_glance: output/models/modelcox_glance_02_BNT162b2_coviddeath.csv
 
-  ## comparison = BNT162b2, outcome = death 
+  ## subgroup = 02, comparison = BNT162b2, outcome = death 
   ## process tte data for death 
 
-  data_tte_process_BNT162b2_death:
-    run: r:latest analysis/comparisons/data_tte_process.R BNT162b2 death
+  data_tte_process_02_BNT162b2_death:
+    run: r:latest analysis/comparisons/data_tte_process.R 02 BNT162b2 death
     needs:
     - data_comparisons_process
     - data_outcomes_process
     outputs:
       highly_sensitive:
-        data_tte_brand_outcome: output/data/data_tte_BNT162b2_death.rds
+        data_tte_brand_outcome: output/data/data_tte_02_BNT162b2_death.rds
 
   ## apply cox model for death 
 
-  apply_model_cox_BNT162b2_death:
-    run: r:latest analysis/comparisons/apply_model_cox.R BNT162b2 death
+  apply_model_cox_02_BNT162b2_death:
+    run: r:latest analysis/comparisons/apply_model_cox.R 02 BNT162b2 death
     needs:
     - design
     - data_comparisons_process
-    - data_tte_process_BNT162b2_death
+    - data_tte_process_02_BNT162b2_death
     outputs:
       highly_sensitive:
-        modelnumber: output/models/BNT162b2_death_model*.rds
-        model_summary_rds: output/models/BNT162b2_death_modelcox_summary.rds
+        modelnumber: output/models/model*_02_BNT162b2_death.rds
+        model_summary_rds: output/models/modelcox_summary_02_BNT162b2_death.rds
       moderately_sensitive:
-        incidence_table: output/tables/BNT162b2_death_incidence.txt
-        model_glance: output/models/BNT162b2_death_modelcox_glance.csv
+        incidence_table_all: output/tables/incidence_02_BNT162b2_death_all.txt
+        incidence_table_strata: output/tables/incidence_02_BNT162b2_death_strata.txt
+        model_glance: output/models/modelcox_glance_02_BNT162b2_death.csv
 
-  ## plot cox model for all outcomes 
-
-  plot_model_cox_BNT162b2:
-    run: r:latest analysis/comparisons/plot_cox.R BNT162b2
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - apply_model_cox_BNT162b2_postest
-    - apply_model_cox_BNT162b2_covidadmitted
-    - apply_model_cox_BNT162b2_coviddeath
-    - apply_model_cox_BNT162b2_death
-    outputs:
-      moderately_sensitive:
-        plot: output/images/plot_res_BNT162b2.png
-
-  ## tabulate cox model for all outcomes 
-
-  tables_model_cox_BNT162b2:
-    run: r:latest analysis/comparisons/tables_cox.R BNT162b2
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - data_tte_process_BNT162b2_postest
-    - data_tte_process_BNT162b2_covidadmitted
-    - data_tte_process_BNT162b2_coviddeath
-    - data_tte_process_BNT162b2_death
-    - apply_model_cox_BNT162b2_postest
-    - apply_model_cox_BNT162b2_covidadmitted
-    - apply_model_cox_BNT162b2_coviddeath
-    - apply_model_cox_BNT162b2_death
-    outputs:
-      moderately_sensitive:
-        table_glance: output/tables/BNT162b2_modelcox_glance.txt
-        table_coefficients: output/tables/BNT162b2_modelcox_coefficients.txt
-
-  ## comparison = ChAdOx, outcome = postest 
+  ## subgroup = 03-10, comparison = BNT162b2, outcome = postest 
   ## process tte data for postest 
 
-  data_tte_process_ChAdOx_postest:
-    run: r:latest analysis/comparisons/data_tte_process.R ChAdOx postest
+  data_tte_process_03-10_BNT162b2_postest:
+    run: r:latest analysis/comparisons/data_tte_process.R 03-10 BNT162b2 postest
     needs:
     - data_comparisons_process
     - data_outcomes_process
     outputs:
       highly_sensitive:
-        data_tte_brand_outcome: output/data/data_tte_ChAdOx_postest.rds
+        data_tte_brand_outcome: output/data/data_tte_03-10_BNT162b2_postest.rds
 
   ## apply cox model for postest 
 
-  apply_model_cox_ChAdOx_postest:
-    run: r:latest analysis/comparisons/apply_model_cox.R ChAdOx postest
+  apply_model_cox_03-10_BNT162b2_postest:
+    run: r:latest analysis/comparisons/apply_model_cox.R 03-10 BNT162b2 postest
     needs:
     - design
     - data_comparisons_process
-    - data_tte_process_ChAdOx_postest
+    - data_tte_process_03-10_BNT162b2_postest
     outputs:
       highly_sensitive:
-        modelnumber: output/models/ChAdOx_postest_model*.rds
-        model_summary_rds: output/models/ChAdOx_postest_modelcox_summary.rds
+        modelnumber: output/models/model*_03-10_BNT162b2_postest.rds
+        model_summary_rds: output/models/modelcox_summary_03-10_BNT162b2_postest.rds
       moderately_sensitive:
-        incidence_table: output/tables/ChAdOx_postest_incidence.txt
-        model_glance: output/models/ChAdOx_postest_modelcox_glance.csv
+        incidence_table_all: output/tables/incidence_03-10_BNT162b2_postest_all.txt
+        incidence_table_strata: output/tables/incidence_03-10_BNT162b2_postest_strata.txt
+        model_glance: output/models/modelcox_glance_03-10_BNT162b2_postest.csv
 
-  ## comparison = ChAdOx, outcome = covidadmitted 
+  ## subgroup = 03-10, comparison = BNT162b2, outcome = covidadmitted 
   ## process tte data for covidadmitted 
 
-  data_tte_process_ChAdOx_covidadmitted:
-    run: r:latest analysis/comparisons/data_tte_process.R ChAdOx covidadmitted
+  data_tte_process_03-10_BNT162b2_covidadmitted:
+    run: r:latest analysis/comparisons/data_tte_process.R 03-10 BNT162b2 covidadmitted
     needs:
     - data_comparisons_process
     - data_outcomes_process
     outputs:
       highly_sensitive:
-        data_tte_brand_outcome: output/data/data_tte_ChAdOx_covidadmitted.rds
+        data_tte_brand_outcome: output/data/data_tte_03-10_BNT162b2_covidadmitted.rds
 
   ## apply cox model for covidadmitted 
 
-  apply_model_cox_ChAdOx_covidadmitted:
-    run: r:latest analysis/comparisons/apply_model_cox.R ChAdOx covidadmitted
+  apply_model_cox_03-10_BNT162b2_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox.R 03-10 BNT162b2 covidadmitted
     needs:
     - design
     - data_comparisons_process
-    - data_tte_process_ChAdOx_covidadmitted
+    - data_tte_process_03-10_BNT162b2_covidadmitted
     outputs:
       highly_sensitive:
-        modelnumber: output/models/ChAdOx_covidadmitted_model*.rds
-        model_summary_rds: output/models/ChAdOx_covidadmitted_modelcox_summary.rds
+        modelnumber: output/models/model*_03-10_BNT162b2_covidadmitted.rds
+        model_summary_rds: output/models/modelcox_summary_03-10_BNT162b2_covidadmitted.rds
       moderately_sensitive:
-        incidence_table: output/tables/ChAdOx_covidadmitted_incidence.txt
-        model_glance: output/models/ChAdOx_covidadmitted_modelcox_glance.csv
+        incidence_table_all: output/tables/incidence_03-10_BNT162b2_covidadmitted_all.txt
+        incidence_table_strata: output/tables/incidence_03-10_BNT162b2_covidadmitted_strata.txt
+        model_glance: output/models/modelcox_glance_03-10_BNT162b2_covidadmitted.csv
 
-  ## comparison = ChAdOx, outcome = coviddeath 
+  ## subgroup = 03-10, comparison = BNT162b2, outcome = coviddeath 
   ## process tte data for coviddeath 
 
-  data_tte_process_ChAdOx_coviddeath:
-    run: r:latest analysis/comparisons/data_tte_process.R ChAdOx coviddeath
+  data_tte_process_03-10_BNT162b2_coviddeath:
+    run: r:latest analysis/comparisons/data_tte_process.R 03-10 BNT162b2 coviddeath
     needs:
     - data_comparisons_process
     - data_outcomes_process
     outputs:
       highly_sensitive:
-        data_tte_brand_outcome: output/data/data_tte_ChAdOx_coviddeath.rds
+        data_tte_brand_outcome: output/data/data_tte_03-10_BNT162b2_coviddeath.rds
 
   ## apply cox model for coviddeath 
 
-  apply_model_cox_ChAdOx_coviddeath:
-    run: r:latest analysis/comparisons/apply_model_cox.R ChAdOx coviddeath
+  apply_model_cox_03-10_BNT162b2_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox.R 03-10 BNT162b2 coviddeath
     needs:
     - design
     - data_comparisons_process
-    - data_tte_process_ChAdOx_coviddeath
+    - data_tte_process_03-10_BNT162b2_coviddeath
     outputs:
       highly_sensitive:
-        modelnumber: output/models/ChAdOx_coviddeath_model*.rds
-        model_summary_rds: output/models/ChAdOx_coviddeath_modelcox_summary.rds
+        modelnumber: output/models/model*_03-10_BNT162b2_coviddeath.rds
+        model_summary_rds: output/models/modelcox_summary_03-10_BNT162b2_coviddeath.rds
       moderately_sensitive:
-        incidence_table: output/tables/ChAdOx_coviddeath_incidence.txt
-        model_glance: output/models/ChAdOx_coviddeath_modelcox_glance.csv
+        incidence_table_all: output/tables/incidence_03-10_BNT162b2_coviddeath_all.txt
+        incidence_table_strata: output/tables/incidence_03-10_BNT162b2_coviddeath_strata.txt
+        model_glance: output/models/modelcox_glance_03-10_BNT162b2_coviddeath.csv
 
-  ## comparison = ChAdOx, outcome = death 
+  ## subgroup = 03-10, comparison = BNT162b2, outcome = death 
   ## process tte data for death 
 
-  data_tte_process_ChAdOx_death:
-    run: r:latest analysis/comparisons/data_tte_process.R ChAdOx death
+  data_tte_process_03-10_BNT162b2_death:
+    run: r:latest analysis/comparisons/data_tte_process.R 03-10 BNT162b2 death
     needs:
     - data_comparisons_process
     - data_outcomes_process
     outputs:
       highly_sensitive:
-        data_tte_brand_outcome: output/data/data_tte_ChAdOx_death.rds
+        data_tte_brand_outcome: output/data/data_tte_03-10_BNT162b2_death.rds
 
   ## apply cox model for death 
 
-  apply_model_cox_ChAdOx_death:
-    run: r:latest analysis/comparisons/apply_model_cox.R ChAdOx death
+  apply_model_cox_03-10_BNT162b2_death:
+    run: r:latest analysis/comparisons/apply_model_cox.R 03-10 BNT162b2 death
     needs:
     - design
     - data_comparisons_process
-    - data_tte_process_ChAdOx_death
+    - data_tte_process_03-10_BNT162b2_death
     outputs:
       highly_sensitive:
-        modelnumber: output/models/ChAdOx_death_model*.rds
-        model_summary_rds: output/models/ChAdOx_death_modelcox_summary.rds
+        modelnumber: output/models/model*_03-10_BNT162b2_death.rds
+        model_summary_rds: output/models/modelcox_summary_03-10_BNT162b2_death.rds
       moderately_sensitive:
-        incidence_table: output/tables/ChAdOx_death_incidence.txt
-        model_glance: output/models/ChAdOx_death_modelcox_glance.csv
+        incidence_table_all: output/tables/incidence_03-10_BNT162b2_death_all.txt
+        incidence_table_strata: output/tables/incidence_03-10_BNT162b2_death_strata.txt
+        model_glance: output/models/modelcox_glance_03-10_BNT162b2_death.csv
 
-  ## plot cox model for all outcomes 
-
-  plot_model_cox_ChAdOx:
-    run: r:latest analysis/comparisons/plot_cox.R ChAdOx
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - apply_model_cox_ChAdOx_postest
-    - apply_model_cox_ChAdOx_covidadmitted
-    - apply_model_cox_ChAdOx_coviddeath
-    - apply_model_cox_ChAdOx_death
-    outputs:
-      moderately_sensitive:
-        plot: output/images/plot_res_ChAdOx.png
-
-  ## tabulate cox model for all outcomes 
-
-  tables_model_cox_ChAdOx:
-    run: r:latest analysis/comparisons/tables_cox.R ChAdOx
-    needs:
-    - design
-    - data_2nd_vax_dates
-    - data_tte_process_ChAdOx_postest
-    - data_tte_process_ChAdOx_covidadmitted
-    - data_tte_process_ChAdOx_coviddeath
-    - data_tte_process_ChAdOx_death
-    - apply_model_cox_ChAdOx_postest
-    - apply_model_cox_ChAdOx_covidadmitted
-    - apply_model_cox_ChAdOx_coviddeath
-    - apply_model_cox_ChAdOx_death
-    outputs:
-      moderately_sensitive:
-        table_glance: output/tables/ChAdOx_modelcox_glance.txt
-        table_coefficients: output/tables/ChAdOx_modelcox_coefficients.txt
-
-  ## comparison = both, outcome = postest 
+  ## subgroup = 03-10, comparison = ChAdOx, outcome = postest 
   ## process tte data for postest 
 
-  data_tte_process_both_postest:
-    run: r:latest analysis/comparisons/data_tte_process.R both postest
+  data_tte_process_03-10_ChAdOx_postest:
+    run: r:latest analysis/comparisons/data_tte_process.R 03-10 ChAdOx postest
     needs:
     - data_comparisons_process
     - data_outcomes_process
     outputs:
       highly_sensitive:
-        data_tte_brand_outcome: output/data/data_tte_both_postest.rds
+        data_tte_brand_outcome: output/data/data_tte_03-10_ChAdOx_postest.rds
 
   ## apply cox model for postest 
 
-  apply_model_cox_both_postest:
-    run: r:latest analysis/comparisons/apply_model_cox.R both postest
+  apply_model_cox_03-10_ChAdOx_postest:
+    run: r:latest analysis/comparisons/apply_model_cox.R 03-10 ChAdOx postest
     needs:
     - design
     - data_comparisons_process
-    - data_tte_process_both_postest
+    - data_tte_process_03-10_ChAdOx_postest
     outputs:
       highly_sensitive:
-        modelnumber: output/models/both_postest_model*.rds
-        model_summary_rds: output/models/both_postest_modelcox_summary.rds
+        modelnumber: output/models/model*_03-10_ChAdOx_postest.rds
+        model_summary_rds: output/models/modelcox_summary_03-10_ChAdOx_postest.rds
       moderately_sensitive:
-        incidence_table: output/tables/both_postest_incidence.txt
-        model_glance: output/models/both_postest_modelcox_glance.csv
+        incidence_table_all: output/tables/incidence_03-10_ChAdOx_postest_all.txt
+        incidence_table_strata: output/tables/incidence_03-10_ChAdOx_postest_strata.txt
+        model_glance: output/models/modelcox_glance_03-10_ChAdOx_postest.csv
 
-  ## comparison = both, outcome = covidadmitted 
+  ## subgroup = 03-10, comparison = ChAdOx, outcome = covidadmitted 
   ## process tte data for covidadmitted 
 
-  data_tte_process_both_covidadmitted:
-    run: r:latest analysis/comparisons/data_tte_process.R both covidadmitted
+  data_tte_process_03-10_ChAdOx_covidadmitted:
+    run: r:latest analysis/comparisons/data_tte_process.R 03-10 ChAdOx covidadmitted
     needs:
     - data_comparisons_process
     - data_outcomes_process
     outputs:
       highly_sensitive:
-        data_tte_brand_outcome: output/data/data_tte_both_covidadmitted.rds
+        data_tte_brand_outcome: output/data/data_tte_03-10_ChAdOx_covidadmitted.rds
 
   ## apply cox model for covidadmitted 
 
-  apply_model_cox_both_covidadmitted:
-    run: r:latest analysis/comparisons/apply_model_cox.R both covidadmitted
+  apply_model_cox_03-10_ChAdOx_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox.R 03-10 ChAdOx covidadmitted
     needs:
     - design
     - data_comparisons_process
-    - data_tte_process_both_covidadmitted
+    - data_tte_process_03-10_ChAdOx_covidadmitted
     outputs:
       highly_sensitive:
-        modelnumber: output/models/both_covidadmitted_model*.rds
-        model_summary_rds: output/models/both_covidadmitted_modelcox_summary.rds
+        modelnumber: output/models/model*_03-10_ChAdOx_covidadmitted.rds
+        model_summary_rds: output/models/modelcox_summary_03-10_ChAdOx_covidadmitted.rds
       moderately_sensitive:
-        incidence_table: output/tables/both_covidadmitted_incidence.txt
-        model_glance: output/models/both_covidadmitted_modelcox_glance.csv
+        incidence_table_all: output/tables/incidence_03-10_ChAdOx_covidadmitted_all.txt
+        incidence_table_strata: output/tables/incidence_03-10_ChAdOx_covidadmitted_strata.txt
+        model_glance: output/models/modelcox_glance_03-10_ChAdOx_covidadmitted.csv
 
-  ## comparison = both, outcome = death 
-  ## process tte data for death 
+  ## subgroup = 03-10, comparison = ChAdOx, outcome = coviddeath 
+  ## process tte data for coviddeath 
 
-  data_tte_process_both_death:
-    run: r:latest analysis/comparisons/data_tte_process.R both death
+  data_tte_process_03-10_ChAdOx_coviddeath:
+    run: r:latest analysis/comparisons/data_tte_process.R 03-10 ChAdOx coviddeath
     needs:
     - data_comparisons_process
     - data_outcomes_process
     outputs:
       highly_sensitive:
-        data_tte_brand_outcome: output/data/data_tte_both_death.rds
+        data_tte_brand_outcome: output/data/data_tte_03-10_ChAdOx_coviddeath.rds
 
-  ## apply cox model for death 
+  ## apply cox model for coviddeath 
 
-  apply_model_cox_both_death:
-    run: r:latest analysis/comparisons/apply_model_cox.R both death
+  apply_model_cox_03-10_ChAdOx_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox.R 03-10 ChAdOx coviddeath
     needs:
     - design
     - data_comparisons_process
-    - data_tte_process_both_death
+    - data_tte_process_03-10_ChAdOx_coviddeath
     outputs:
       highly_sensitive:
-        modelnumber: output/models/both_death_model*.rds
-        model_summary_rds: output/models/both_death_modelcox_summary.rds
+        modelnumber: output/models/model*_03-10_ChAdOx_coviddeath.rds
+        model_summary_rds: output/models/modelcox_summary_03-10_ChAdOx_coviddeath.rds
       moderately_sensitive:
-        incidence_table: output/tables/both_death_incidence.txt
-        model_glance: output/models/both_death_modelcox_glance.csv
+        incidence_table_all: output/tables/incidence_03-10_ChAdOx_coviddeath_all.txt
+        incidence_table_strata: output/tables/incidence_03-10_ChAdOx_coviddeath_strata.txt
+        model_glance: output/models/modelcox_glance_03-10_ChAdOx_coviddeath.csv
 
-  ## plot cox model for all outcomes 
+  ## subgroup = 03-10, comparison = ChAdOx, outcome = death 
+  ## process tte data for death 
 
-  plot_model_cox_both:
-    run: r:latest analysis/comparisons/plot_cox.R both
+  data_tte_process_03-10_ChAdOx_death:
+    run: r:latest analysis/comparisons/data_tte_process.R 03-10 ChAdOx death
+    needs:
+    - data_comparisons_process
+    - data_outcomes_process
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/data/data_tte_03-10_ChAdOx_death.rds
+
+  ## apply cox model for death 
+
+  apply_model_cox_03-10_ChAdOx_death:
+    run: r:latest analysis/comparisons/apply_model_cox.R 03-10 ChAdOx death
     needs:
     - design
-    - data_2nd_vax_dates
-    - apply_model_cox_both_postest
-    - apply_model_cox_both_covidadmitted
-    - apply_model_cox_both_death
+    - data_comparisons_process
+    - data_tte_process_03-10_ChAdOx_death
     outputs:
+      highly_sensitive:
+        modelnumber: output/models/model*_03-10_ChAdOx_death.rds
+        model_summary_rds: output/models/modelcox_summary_03-10_ChAdOx_death.rds
       moderately_sensitive:
-        plot: output/images/plot_res_both.png
+        incidence_table_all: output/tables/incidence_03-10_ChAdOx_death_all.txt
+        incidence_table_strata: output/tables/incidence_03-10_ChAdOx_death_strata.txt
+        model_glance: output/models/modelcox_glance_03-10_ChAdOx_death.csv
 
-  ## tabulate cox model for all outcomes 
+  ## subgroup = 03-10, comparison = both, outcome = postest 
+  ## process tte data for postest 
 
-  tables_model_cox_both:
-    run: r:latest analysis/comparisons/tables_cox.R both
+  data_tte_process_03-10_both_postest:
+    run: r:latest analysis/comparisons/data_tte_process.R 03-10 both postest
+    needs:
+    - data_comparisons_process
+    - data_outcomes_process
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/data/data_tte_03-10_both_postest.rds
+
+  ## apply cox model for postest 
+
+  apply_model_cox_03-10_both_postest:
+    run: r:latest analysis/comparisons/apply_model_cox.R 03-10 both postest
     needs:
     - design
-    - data_2nd_vax_dates
-    - data_tte_process_both_postest
-    - data_tte_process_both_covidadmitted
-    - data_tte_process_both_death
-    - apply_model_cox_both_postest
-    - apply_model_cox_both_covidadmitted
-    - apply_model_cox_both_death
+    - data_comparisons_process
+    - data_tte_process_03-10_both_postest
     outputs:
+      highly_sensitive:
+        modelnumber: output/models/model*_03-10_both_postest.rds
+        model_summary_rds: output/models/modelcox_summary_03-10_both_postest.rds
       moderately_sensitive:
-        table_glance: output/tables/both_modelcox_glance.txt
-        table_coefficients: output/tables/both_modelcox_coefficients.txt
+        incidence_table_all: output/tables/incidence_03-10_both_postest_all.txt
+        incidence_table_strata: output/tables/incidence_03-10_both_postest_strata.txt
+        model_glance: output/models/modelcox_glance_03-10_both_postest.csv
+
+  ## subgroup = 03-10, comparison = both, outcome = covidadmitted 
+  ## process tte data for covidadmitted 
+
+  data_tte_process_03-10_both_covidadmitted:
+    run: r:latest analysis/comparisons/data_tte_process.R 03-10 both covidadmitted
+    needs:
+    - data_comparisons_process
+    - data_outcomes_process
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/data/data_tte_03-10_both_covidadmitted.rds
+
+  ## apply cox model for covidadmitted 
+
+  apply_model_cox_03-10_both_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox.R 03-10 both covidadmitted
+    needs:
+    - design
+    - data_comparisons_process
+    - data_tte_process_03-10_both_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models/model*_03-10_both_covidadmitted.rds
+        model_summary_rds: output/models/modelcox_summary_03-10_both_covidadmitted.rds
+      moderately_sensitive:
+        incidence_table_all: output/tables/incidence_03-10_both_covidadmitted_all.txt
+        incidence_table_strata: output/tables/incidence_03-10_both_covidadmitted_strata.txt
+        model_glance: output/models/modelcox_glance_03-10_both_covidadmitted.csv
+
+  ## subgroup = 03-10, comparison = both, outcome = coviddeath 
+  ## process tte data for coviddeath 
+
+  data_tte_process_03-10_both_coviddeath:
+    run: r:latest analysis/comparisons/data_tte_process.R 03-10 both coviddeath
+    needs:
+    - data_comparisons_process
+    - data_outcomes_process
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/data/data_tte_03-10_both_coviddeath.rds
+
+  ## apply cox model for coviddeath 
+
+  apply_model_cox_03-10_both_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox.R 03-10 both coviddeath
+    needs:
+    - design
+    - data_comparisons_process
+    - data_tte_process_03-10_both_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models/model*_03-10_both_coviddeath.rds
+        model_summary_rds: output/models/modelcox_summary_03-10_both_coviddeath.rds
+      moderately_sensitive:
+        incidence_table_all: output/tables/incidence_03-10_both_coviddeath_all.txt
+        incidence_table_strata: output/tables/incidence_03-10_both_coviddeath_strata.txt
+        model_glance: output/models/modelcox_glance_03-10_both_coviddeath.csv
+
+  ## subgroup = 03-10, comparison = both, outcome = death 
+  ## process tte data for death 
+
+  data_tte_process_03-10_both_death:
+    run: r:latest analysis/comparisons/data_tte_process.R 03-10 both death
+    needs:
+    - data_comparisons_process
+    - data_outcomes_process
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/data/data_tte_03-10_both_death.rds
+
+  ## apply cox model for death 
+
+  apply_model_cox_03-10_both_death:
+    run: r:latest analysis/comparisons/apply_model_cox.R 03-10 both death
+    needs:
+    - design
+    - data_comparisons_process
+    - data_tte_process_03-10_both_death
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models/model*_03-10_both_death.rds
+        model_summary_rds: output/models/modelcox_summary_03-10_both_death.rds
+      moderately_sensitive:
+        incidence_table_all: output/tables/incidence_03-10_both_death_all.txt
+        incidence_table_strata: output/tables/incidence_03-10_both_death_strata.txt
+        model_glance: output/models/modelcox_glance_03-10_both_death.csv
+
+  ## subgroup = 11-12, comparison = BNT162b2, outcome = postest 
+  ## process tte data for postest 
+
+  data_tte_process_11-12_BNT162b2_postest:
+    run: r:latest analysis/comparisons/data_tte_process.R 11-12 BNT162b2 postest
+    needs:
+    - data_comparisons_process
+    - data_outcomes_process
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/data/data_tte_11-12_BNT162b2_postest.rds
+
+  ## apply cox model for postest 
+
+  apply_model_cox_11-12_BNT162b2_postest:
+    run: r:latest analysis/comparisons/apply_model_cox.R 11-12 BNT162b2 postest
+    needs:
+    - design
+    - data_comparisons_process
+    - data_tte_process_11-12_BNT162b2_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models/model*_11-12_BNT162b2_postest.rds
+        model_summary_rds: output/models/modelcox_summary_11-12_BNT162b2_postest.rds
+      moderately_sensitive:
+        incidence_table_all: output/tables/incidence_11-12_BNT162b2_postest_all.txt
+        incidence_table_strata: output/tables/incidence_11-12_BNT162b2_postest_strata.txt
+        model_glance: output/models/modelcox_glance_11-12_BNT162b2_postest.csv
+
+  ## subgroup = 11-12, comparison = BNT162b2, outcome = covidadmitted 
+  ## process tte data for covidadmitted 
+
+  data_tte_process_11-12_BNT162b2_covidadmitted:
+    run: r:latest analysis/comparisons/data_tte_process.R 11-12 BNT162b2 covidadmitted
+    needs:
+    - data_comparisons_process
+    - data_outcomes_process
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/data/data_tte_11-12_BNT162b2_covidadmitted.rds
+
+  ## apply cox model for covidadmitted 
+
+  apply_model_cox_11-12_BNT162b2_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox.R 11-12 BNT162b2 covidadmitted
+    needs:
+    - design
+    - data_comparisons_process
+    - data_tte_process_11-12_BNT162b2_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models/model*_11-12_BNT162b2_covidadmitted.rds
+        model_summary_rds: output/models/modelcox_summary_11-12_BNT162b2_covidadmitted.rds
+      moderately_sensitive:
+        incidence_table_all: output/tables/incidence_11-12_BNT162b2_covidadmitted_all.txt
+        incidence_table_strata: output/tables/incidence_11-12_BNT162b2_covidadmitted_strata.txt
+        model_glance: output/models/modelcox_glance_11-12_BNT162b2_covidadmitted.csv
+
+  ## subgroup = 11-12, comparison = BNT162b2, outcome = coviddeath 
+  ## process tte data for coviddeath 
+
+  data_tte_process_11-12_BNT162b2_coviddeath:
+    run: r:latest analysis/comparisons/data_tte_process.R 11-12 BNT162b2 coviddeath
+    needs:
+    - data_comparisons_process
+    - data_outcomes_process
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/data/data_tte_11-12_BNT162b2_coviddeath.rds
+
+  ## apply cox model for coviddeath 
+
+  apply_model_cox_11-12_BNT162b2_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox.R 11-12 BNT162b2 coviddeath
+    needs:
+    - design
+    - data_comparisons_process
+    - data_tte_process_11-12_BNT162b2_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models/model*_11-12_BNT162b2_coviddeath.rds
+        model_summary_rds: output/models/modelcox_summary_11-12_BNT162b2_coviddeath.rds
+      moderately_sensitive:
+        incidence_table_all: output/tables/incidence_11-12_BNT162b2_coviddeath_all.txt
+        incidence_table_strata: output/tables/incidence_11-12_BNT162b2_coviddeath_strata.txt
+        model_glance: output/models/modelcox_glance_11-12_BNT162b2_coviddeath.csv
+
+  ## subgroup = 11-12, comparison = BNT162b2, outcome = death 
+  ## process tte data for death 
+
+  data_tte_process_11-12_BNT162b2_death:
+    run: r:latest analysis/comparisons/data_tte_process.R 11-12 BNT162b2 death
+    needs:
+    - data_comparisons_process
+    - data_outcomes_process
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/data/data_tte_11-12_BNT162b2_death.rds
+
+  ## apply cox model for death 
+
+  apply_model_cox_11-12_BNT162b2_death:
+    run: r:latest analysis/comparisons/apply_model_cox.R 11-12 BNT162b2 death
+    needs:
+    - design
+    - data_comparisons_process
+    - data_tte_process_11-12_BNT162b2_death
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models/model*_11-12_BNT162b2_death.rds
+        model_summary_rds: output/models/modelcox_summary_11-12_BNT162b2_death.rds
+      moderately_sensitive:
+        incidence_table_all: output/tables/incidence_11-12_BNT162b2_death_all.txt
+        incidence_table_strata: output/tables/incidence_11-12_BNT162b2_death_strata.txt
+        model_glance: output/models/modelcox_glance_11-12_BNT162b2_death.csv
 
