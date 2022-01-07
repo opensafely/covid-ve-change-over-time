@@ -286,45 +286,51 @@ cox_model <- function(
 ################################################################################
 
 model_output <- list()
-model_output[[1]] <- cox_model(
+model_output[[1]] <- try(cox_model(
   number = 0, 
   formula = formula_cox_0,
-  filename_prefix = glue("{subgroup}_{comparison}_{outcome}"))
+  filename_prefix = glue("{subgroup}_{comparison}_{outcome}")))
 # discard demographic only adjusted model for now
-# model_output[[2]] <- cox_model(
-#   number = 1, 
+# model_output[[2]] <- try(cox_model(
+#   number = 1,
 #   formula = formula_cox_1,
-#   filename_prefix = glue("{subgroup}_{comparison}_{outcome}"))
-model_output[[3]] <- cox_model(
+#   filename_prefix = glue("{subgroup}_{comparison}_{outcome}")))
+model_output[[3]] <- try(cox_model(
   number = 2, 
   formula = formula_cox_2,
-  filename_prefix = glue("{subgroup}_{comparison}_{outcome}"))
+  filename_prefix = glue("{subgroup}_{comparison}_{outcome}")))
 
 
-model_summary <- bind_rows(
-  lapply(
-    # only bind tibbles (to avoid errors in case some models did not converge)
-    seq_along(model_output)[sapply(model_output, function(x) is_tibble(x[[1]]))],
-    # select summary
-    function(x) model_output[[x]]$summary
-  )) %>%
-  mutate(outcome = outcome)
-readr::write_rds(
-  model_summary,
-  here::here("output", "models", glue("modelcox_summary_{subgroup}_{comparison}_{outcome}.rds"))) 
+# check for errors 
+check_errors <- sapply(model_output, function(x) any(class(x) %in% "try-error"))
 
-### postprocessing using broom (may be unreliable)
-# combine results
-model_glance <- bind_rows(
-  lapply(
-    # only bind tibbles (to avoid errors in case some models did not converge)
-    seq_along(model_output)[sapply(model_output, function(x) is_tibble(x[[1]]))],
-    # select glance
-    function(x) model_output[[x]]$glance
-  )) %>%
-  mutate(outcome = outcome)
-
-readr::write_csv(
-  model_glance,
-  here::here("output", "models", glue("modelcox_glance_{subgroup}_{comparison}_{outcome}.csv"))) 
-
+if (!all(check_errors)) {
+  
+  model_summary <- bind_rows(
+    lapply(
+      # only bind tibbles (to avoid errors in case some models did not converge)
+      seq_along(model_output)[sapply(model_output, function(x) is_tibble(x[[1]]))],
+      # select summary
+      function(x) model_output[[x]]$summary
+    )) %>%
+    mutate(outcome = outcome)
+  readr::write_rds(
+    model_summary,
+    here::here("output", "models", glue("modelcox_summary_{subgroup}_{comparison}_{outcome}.rds"))) 
+  
+  ### postprocessing using broom (may be unreliable)
+  # combine results
+  model_glance <- bind_rows(
+    lapply(
+      # only bind tibbles (to avoid errors in case some models did not converge)
+      seq_along(model_output)[sapply(model_output, function(x) is_tibble(x[[1]]))],
+      # select glance
+      function(x) model_output[[x]]$glance
+    )) %>%
+    mutate(outcome = outcome)
+  
+  readr::write_csv(
+    model_glance,
+    here::here("output", "models", glue("modelcox_glance_{subgroup}_{comparison}_{outcome}.csv"))) 
+  
+}
