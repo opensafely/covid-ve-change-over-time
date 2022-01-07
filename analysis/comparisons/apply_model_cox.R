@@ -17,12 +17,14 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
+  subgroup <- "03-10" # "02", "11-12"
   comparison <- "BNT162b2"
   outcome <- "postest"
   
 } else{
-  comparison <- args[[1]]
-  outcome <- args[[2]]
+  subgroup <- args[[1]]
+  comparison <- args[[2]]
+  outcome <- args[[3]]
 }
 
 ################################################################################
@@ -42,7 +44,7 @@ if (comparison %in% c("BNT162b2", "ChAdOx")) {
   trt <- str_c(comparison, "_vax")
   
   data <- readr::read_rds(
-    here::here("output", "data", glue("data_tte_{comparison}_{outcome}.rds"))) %>%
+    here::here("output", "data", glue("data_tte_{subgroup}_{comparison}_{outcome}.rds"))) %>%
     left_join(
       bind_rows(
         lapply(
@@ -62,7 +64,7 @@ if (comparison %in% c("BNT162b2", "ChAdOx")) {
   trt <- "BNT162b2_vax"
   
   data <- readr::read_rds(
-    here::here("output", "data", glue("data_tte_{comparison}_{outcome}.rds"))) %>%
+    here::here("output", "data", glue("data_tte_{subgroup}_{comparison}_{outcome}.rds"))) %>%
     left_join(
       bind_rows(
         lapply(
@@ -103,28 +105,46 @@ events_per_personyears <- function(strata) {
       events = sum(status),
       .groups = "keep"
     ) %>%
+    ungroup(comparison) %>%
+    arrange(comparison, .by_group = TRUE) %>%
+    mutate(n_lag_1 = lag(n),
+           n_lag_2 = lag(n_lag_1),
+           percent = if_else(
+             str_detect(arm, "unvax"),
+             round(100*n/n_lag_2,0),
+             round(100*n/n_lag_1,0)
+           )) %>%
     ungroup() %>%
+    mutate(across(percent, ~if_else(is.na(.x), "", str_c(", ", .x, "%")))) %>%
     mutate(across(c(n, events, personyears),
                   # round to nearest 10
                   ~ scales::comma(round(.x, -1), accuracy = 1))) %>%
-    mutate(value = str_c(events, " / ", personyears, " (",n,")")) %>%
+    mutate(value = str_c(events, " / ", personyears, " (",n, percent, ")")) %>%
     select(comparison, arm, value) %>%
+    rename("comparison (k)" = comparison) %>%
     pivot_wider(names_from = arm, values_from = value) %>%
     kableExtra::kable(
       "pipe",
-      caption = glue("Strata: {strata}; {outcome} events / person-years (n)")
+      caption = str_c(glue("Strata: {strata}; {outcome} events / person-years"), " (n_{k}, percent of n_{k-1} for vax and n_{k-2} for unvax)")
     )
 }
 
 ################################################################################
 
 capture.output(
-  for (s in c("all", levels(data_strata$strata_var))) {
-    print(events_per_personyears(s))
-  },
-  file = here::here("output", "tables", glue("{comparison}_{outcome}_incidence.txt")),
+  print(events_per_personyears("all")),
+  file = here::here("output", "tables", glue("incidence_{subgroup}_{comparison}_{outcome}_all.txt")),
   append=FALSE
 )
+
+capture.output(
+  for (s in levels(data_strata$strata_var)) {
+    print(events_per_personyears(s))
+  },
+  file = here::here("output", "tables", glue("incidence_{subgroup}_{comparison}_{outcome}_strata.txt")),
+  append=FALSE
+)
+
 
 ################################################################################
 
@@ -257,7 +277,7 @@ cox_model <- function(
   
   readr::write_rds(
     coxmod,
-    here::here("output", "models", glue("{filename_prefix}_model{number}.rds")), 
+    here::here("output", "models", glue("model{number}_{filename_prefix}.rds")), 
     compress="gz")
   
   lst(glance = glance, summary = coxmod_summary)
@@ -269,15 +289,16 @@ model_output <- list()
 model_output[[1]] <- cox_model(
   number = 0, 
   formula = formula_cox_0,
-  filename_prefix = glue("{comparison}_{outcome}"))
-model_output[[2]] <- cox_model(
-  number = 1, 
-  formula = formula_cox_1,
-  filename_prefix = glue("{comparison}_{outcome}"))
+  filename_prefix = glue("{subgroup}_{comparison}_{outcome}"))
+# discard demographic only adjusted model for now
+# model_output[[2]] <- cox_model(
+#   number = 1, 
+#   formula = formula_cox_1,
+#   filename_prefix = glue("{subgroup}_{comparison}_{outcome}"))
 model_output[[3]] <- cox_model(
   number = 2, 
   formula = formula_cox_2,
-  filename_prefix = glue("{comparison}_{outcome}"))
+  filename_prefix = glue("{subgroup}_{comparison}_{outcome}"))
 
 
 model_summary <- bind_rows(
@@ -290,7 +311,7 @@ model_summary <- bind_rows(
   mutate(outcome = outcome)
 readr::write_rds(
   model_summary,
-  here::here("output", "models", glue("{comparison}_{outcome}_modelcox_summary.rds"))) 
+  here::here("output", "models", glue("modelcox_summary_{subgroup}_{comparison}_{outcome}.rds"))) 
 
 ### postprocessing using broom (may be unreliable)
 # combine results
@@ -305,5 +326,5 @@ model_glance <- bind_rows(
 
 readr::write_csv(
   model_glance,
-  here::here("output", "models", glue("{comparison}_{outcome}_modelcox_glance.csv"))) 
+  here::here("output", "models", glue("modelcox_glance_{subgroup}_{comparison}_{outcome}.csv"))) 
 
