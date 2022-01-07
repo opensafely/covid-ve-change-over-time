@@ -95,11 +95,11 @@ comparison_arms <- function(
         mutate(
           start_fu_date = covid_vax_2_date + days(d),
           # censor at study_parameters$end_date
-          end_fu_date = min(start_fu_date + days(28), as.Date(study_parameters$end_date))
+          end_fu_date = pmin(start_fu_date + days(28), as.Date(study_parameters$end_date))
         ) %>%
-        # remove individuals for whom start_fu_date is after study_parameters$end_date
+        # remove individuals for whom start_fu_date is on or after study_parameters$end_date
         filter(
-          start_fu_date <= study_parameters$end_date
+          start_fu_date < as.Date(study_parameters$end_date)
         ) %>%
         # no third dose before start_fu_date
         filter(no_evidence_of(covid_vax_3_date, start_fu_date)) %>%
@@ -114,11 +114,11 @@ comparison_arms <- function(
         # start_fu_date for unvax arm depends on elig_date, region and brand
         mutate(
           start_fu_date = start_of_period + days(d),
-          end_fu_date = min(start_fu_date + days(56), study_parameters$end_date)
+          end_fu_date = pmin(start_fu_date + days(56), as.Date(study_parameters$end_date))
         ) %>%
-        # remove individuals for whom start_fu_date is after study_parameters$end_date
+        # remove individuals for whom start_fu_date is on or after study_parameters$end_date
         filter(
-          start_fu_date <= study_parameters$end_date
+          start_fu_date < as.Date(study_parameters$end_date)
         ) %>%
         filter(
           # no first dose before start_fu_date
