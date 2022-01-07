@@ -141,9 +141,6 @@ second_vax_period_dates <- data_vax_plot %>%
   distinct(jcvi_group, brand, elig_date, region_0, 
            start_of_period, end_of_period, cumulative_sum) %>%
   mutate(
-    include = cumulative_sum > study_parameters$n_threshold
-    ) %>%
-  mutate(
     # time between start of first comparison and last date of available data
     days_of_data = as.integer(as.Date(study_parameters$end_date) - start_of_period) + 14,
     # set n_comparisons based on days of available data
@@ -157,6 +154,10 @@ readr::write_rds(
   here::here("output", "lib", "second_vax_period_dates.rds"),
   compress = "gz")
 # save to review and release, with cumulative sum rounded to nearest 10
-readr::write_csv(
-  second_vax_period_dates %>% mutate(across(cumulative_sum, ~ round(.x, -1))),
-  here::here("output", "lib", "second_vax_period_dates.csv"))
+capture.output(
+  second_vax_period_dates %>% 
+    mutate(across(cumulative_sum, ~ round(.x, -1))) %>% 
+    kableExtra::kable("pipe"),
+  file = here::here("output", "tables", "second_vax_period_dates.txt"),
+  append=FALSE
+)
