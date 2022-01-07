@@ -30,9 +30,7 @@ data_vax_wide <- readr::read_rds(
 
 # read second vax period dates 
 second_vax_period_dates <- readr::read_rds(
-  here::here("output", "lib", "second_vax_period_dates.rds")) %>%
-  # filter to brands with enough individuals
-  filter(include)
+  here::here("output", "lib", "second_vax_period_dates.rds"))
 
 ################################################################################
 # apply eligibility criteria in box c ----
