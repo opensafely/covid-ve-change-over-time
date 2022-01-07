@@ -144,7 +144,7 @@ second_vax_period_dates <- data_vax_plot %>%
     # time between start of first comparison and last date of available data
     days_of_data = as.integer(as.Date(study_parameters$end_date) - start_of_period) + 14,
     # set n_comparisons based on days of available data
-    n_comparisons = pmin(floor(days_of_data/28) - 1, study_parameters$max_comparisons)
+    n_comparisons = pmin(ceiling(days_of_data/28), study_parameters$max_comparisons)
     ) %>%
   select(-days_of_data)
 
