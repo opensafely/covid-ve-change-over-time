@@ -14,12 +14,24 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
+  subgroup <- "03-10" # "02", "11-12"
   comparison <- "BNT162b2"
   outcome <- "postest"
   
 } else{
-  comparison <- args[[1]]
-  outcome <- args[[2]]
+  subgroup <- args[[1]]
+  comparison <- args[[2]]
+  outcome <- args[[3]]
+}
+
+if (subgroup == "02") {
+  jcvi_groups <- "02"
+} else if (subgroup == "03-10") {
+  jcvi_groups <- c("03", "04", "05", "06", "07", "08", "09", "10")
+} else if (subgroup == "11-12") {
+  jcvi_groups <- c("11", "12")
+} else {
+  stop("subgroup argument not valid")
 }
 
 if (comparison %in% c("BNT162b2", "ChAdOx")) {
@@ -33,6 +45,8 @@ if (comparison %in% c("BNT162b2", "ChAdOx")) {
       function(x)
         readr::read_rds(
           here::here("output", "data", glue("data_comparisons_{comparison}_{x}.rds"))) %>%
+        # select subgroup
+        filter(jcvi_group %in% jcvi_groups) %>%
         select(patient_id, comparison, arm, start_fu_date, end_fu_date) %>%
         left_join(
           readr::read_rds(
@@ -55,8 +69,8 @@ if (comparison %in% c("BNT162b2", "ChAdOx")) {
       function(x)
         readr::read_rds(
           here::here("output", "data", glue("data_comparisons_{x}_vax.rds"))) %>%
-        # remove certain groups for brands comparison
-        filter(!(jcvi_group %in% c("01", "02", "11", "12"))) %>%
+        # select subgroup
+        filter(jcvi_group %in% jcvi_groups) %>%
         select(patient_id, comparison, arm, start_fu_date, end_fu_date) %>%
         left_join(
           readr::read_rds(
@@ -102,5 +116,5 @@ stopifnot("tstop - tstart should be strictly > 0 in data_tte" = data_tte$tstop -
 
 readr::write_rds(
   data_tte,
-  here::here("output", "data", glue("data_tte_{comparison}_{outcome}.rds")),
+  here::here("output", "data", glue("data_tte_{subgroup}_{comparison}_{outcome}.rds")),
   compress = "gz")
