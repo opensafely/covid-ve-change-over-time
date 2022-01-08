@@ -1,21 +1,21 @@
-   design     dummy_data  generate_study_population     data_input_process  data_eligible_ab      data_2nd_vax_dates  plot_2nd_vax_dates  data_eligible_cd     data_comparisons_process  data_outcomes_process    data_tte_process_02_BNT162b2_postest 
-apply_model_cox_02_BNT162b2_postest   data_tte_process_02_BNT162b2_covidadmitted 
-apply_model_cox_02_BNT162b2_covidadmitted   data_tte_process_02_BNT162b2_coviddeath 
-apply_model_cox_02_BNT162b2_coviddeath   data_tte_process_02_BNT162b2_death 
-apply_model_cox_02_BNT162b2_death   data_tte_process_03-10_BNT162b2_postest 
-apply_model_cox_03-10_BNT162b2_postest   data_tte_process_03-10_BNT162b2_covidadmitted 
-apply_model_cox_03-10_BNT162b2_covidadmitted   data_tte_process_03-10_BNT162b2_coviddeath 
-apply_model_cox_03-10_BNT162b2_coviddeath   data_tte_process_03-10_BNT162b2_death 
-apply_model_cox_03-10_BNT162b2_death   data_tte_process_03-10_ChAdOx_postest 
-apply_model_cox_03-10_ChAdOx_postest   data_tte_process_03-10_ChAdOx_covidadmitted 
-apply_model_cox_03-10_ChAdOx_covidadmitted   data_tte_process_03-10_ChAdOx_coviddeath 
-apply_model_cox_03-10_ChAdOx_coviddeath   data_tte_process_03-10_ChAdOx_death 
-apply_model_cox_03-10_ChAdOx_death   data_tte_process_03-10_both_postest 
-apply_model_cox_03-10_both_postest   data_tte_process_03-10_both_covidadmitted 
-apply_model_cox_03-10_both_covidadmitted   data_tte_process_03-10_both_coviddeath 
-apply_model_cox_03-10_both_coviddeath   data_tte_process_03-10_both_death 
-apply_model_cox_03-10_both_death   data_tte_process_11-12_BNT162b2_postest 
-apply_model_cox_11-12_BNT162b2_postest   data_tte_process_11-12_BNT162b2_covidadmitted 
-apply_model_cox_11-12_BNT162b2_covidadmitted   data_tte_process_11-12_BNT162b2_coviddeath 
-apply_model_cox_11-12_BNT162b2_coviddeath   data_tte_process_11-12_BNT162b2_death 
+   design     dummy_data  generate_study_population     data_input_process  data_eligible_ab      data_2nd_vax_dates  plot_2nd_vax_dates  data_eligible_cd     data_comparisons_process  data_outcomes_process  data_tte_process   
+apply_model_cox_02_BNT162b2_postest  
+apply_model_cox_02_BNT162b2_covidadmitted  
+apply_model_cox_02_BNT162b2_coviddeath  
+apply_model_cox_02_BNT162b2_death  
+apply_model_cox_03-10_BNT162b2_postest  
+apply_model_cox_03-10_BNT162b2_covidadmitted  
+apply_model_cox_03-10_BNT162b2_coviddeath  
+apply_model_cox_03-10_BNT162b2_death  
+apply_model_cox_03-10_ChAdOx_postest  
+apply_model_cox_03-10_ChAdOx_covidadmitted  
+apply_model_cox_03-10_ChAdOx_coviddeath  
+apply_model_cox_03-10_ChAdOx_death  
+apply_model_cox_03-10_both_postest  
+apply_model_cox_03-10_both_covidadmitted  
+apply_model_cox_03-10_both_coviddeath  
+apply_model_cox_03-10_both_death  
+apply_model_cox_11-12_BNT162b2_postest  
+apply_model_cox_11-12_BNT162b2_covidadmitted  
+apply_model_cox_11-12_BNT162b2_coviddeath  
 apply_model_cox_11-12_BNT162b2_death

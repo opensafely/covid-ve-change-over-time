@@ -76,18 +76,6 @@ comparisons_fun <- function(
       splice(
         
         comment(glue("subgroup = {subgroup}, comparison = {comparison}, outcome = {outcome}")),
-        comment(glue("process tte data for {outcome}")),
-        action(
-          name = glue("data_tte_process_{subgroup}_{comparison}_{outcome}"),
-          run = "r:latest analysis/comparisons/data_tte_process.R",
-          arguments = c(subgroup, comparison, outcome),
-          needs = list(
-            "data_comparisons_process", 
-            "data_outcomes_process"),
-          highly_sensitive = list(
-            data_tte_brand_outcome = glue("output/data/data_tte_{subgroup}_{comparison}_{outcome}.rds")
-          )
-        ),
         
         comment(glue("apply cox model for {outcome}")),
         action(
@@ -97,7 +85,7 @@ comparisons_fun <- function(
           needs = list(
             "design", 
             "data_comparisons_process", 
-            glue("data_tte_process_{subgroup}_{comparison}_{outcome}")),
+            "data_tte_process"),
           highly_sensitive = list(
             modelnumber = glue("output/models/model*_{subgroup}_{comparison}_{outcome}.rds"),
             model_summary_rds = glue("output/models/modelcox_summary_{subgroup}_{comparison}_{outcome}.rds")
@@ -156,7 +144,7 @@ comparisons_fun <- function(
                        lapply(
                          outcomes, 
                          function(x) 
-                           glue("data_tte_process_{comparison}_{x}")),
+                           "data_tte_process"),
                        lapply(
                          outcomes, 
                          function(x) 
@@ -314,7 +302,7 @@ actions_list <- splice(
       "data_2nd_vax_dates", 
       "data_eligible_cd"),
     highly_sensitive = list(
-      data_comparisons = glue("output/data/data_comparisons_*_*.rds")
+      data_comparisons = glue("output/data/data_comparisons_*.rds")
     )
   ),
   
@@ -327,7 +315,21 @@ actions_list <- splice(
       "data_input_process",
       "data_comparisons_process"),
     highly_sensitive = list(
-      data_outcomes = "output/data/data_outcomes_*_*.rds"
+      data_outcomes = "output/data/data_outcomes_*.rds"
+    )
+  ),
+  
+  comment(glue("process tte data")),
+  action(
+    name = "data_tte_process",
+    run = "r:latest analysis/comparisons/data_tte_process.R",
+    arguments = c(subgroup, comparison, outcome),
+    needs = list(
+      "design",
+      "data_comparisons_process", 
+      "data_outcomes_process"),
+    highly_sensitive = list(
+      data_tte_brand_outcome = "output/data/data_tte_*.rds"
     )
   ),
   
