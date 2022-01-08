@@ -7,16 +7,20 @@
 ################################################################################
 library(tidyverse)
 library(glue)
+
 ## import command-line arguments ----
 args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  comparison <- "BNT162b2"
+  plot <- "BNT162b2andChAdOx" #"ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
   
-} else{
-  comparison <- args[[1]]
+} else {
+   
+  plot <- args[[1]]
+  
 }
+
 
 ################################################################################
 
@@ -32,6 +36,20 @@ second_vax_period_dates <- readr::read_rds(
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds")
 )
+
+################################################################################
+
+subgroups <- "03-10"
+if (plot == "BNT162b2") {
+  subgroups <- c("02", "03-10", "11-12")
+  comparison <- "BNT162b2"
+}else if (plot == "ChAdOx") {
+  comparison <- "ChAdOx"
+} else if (plot == "BNT162b2andChAdOx") {
+  comparison <- c("BNT162b2", "ChAdOx")
+} else if (plot == "BNT162b2vsChAdOx") {
+  comparison <- "both"
+}
 
 ################################################################################
 
@@ -54,17 +72,30 @@ if (comparison %in% c("BNT162b2", "ChAdOx")) {
 }
 
 
-models <- as.character(0:2)
+models <- c("0","2")
 
-model_tidy_list <- lapply(
-  outcomes,
+model_tidy_list <- unlist(lapply(
+  subgroups,
   function(x)
-    try(
-      readr::read_rds(
-        here::here("output", "models", glue("{comparison}_{x}_modelcox_summary.rds")
+    unlist(lapply(
+      comparison,
+      function(y)
+        lapply(
+          outcomes,
+          function(z)
+            try(
+              readr::read_rds(
+                here::here("output", "models", glue("modelcox_summary_{x}_{y}_{z}.rds")
+                )
+              ) %>%
+                mutate(subgroup = x, comparison = y)
+            )
         )
-      )
+    ),
+    recursive = FALSE
     )
+),
+recursive = FALSE
 )
 
 model_tidy_tibble <- bind_rows(
@@ -72,6 +103,10 @@ model_tidy_tibble <- bind_rows(
 ) %>%
   filter(str_detect(term, "^comparison")) 
 
+if (plot == "BNT162b2andChAdOx") {
+  model_tidy_tibble <- model_tidy_tibble %>%
+    filter(model %in% "2")
+}
 
 K <- study_parameters$max_comparisons
 
@@ -81,7 +116,7 @@ days_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
 
 plot_data <- model_tidy_tibble %>% 
   mutate(
-    comparison = factor(as.integer(str_remove(str_extract(term, "comparison_\\d"), "comparison_")),
+    k = factor(as.integer(str_remove(str_extract(term, "comparison_\\d"), "comparison_")),
                         labels = days_since_2nd_vax)
   ) %>%
   mutate(across(model,
@@ -96,29 +131,44 @@ plot_data <- model_tidy_tibble %>%
                 labels = c("Positive COVID-19 test",
                            "COVID-19 hospital admission",
                            "COVID-19 death",
-                           "Any death")))
+                           "Any death"))) %>%
+  mutate(across(subgroup,
+                factor,
+                levels = c("02", "03-10", "11-12"),
+                labels = c("2", "3-10", "11-12")))
+
+
+if (plot %in% c("BNT162b2", "ChAdOx")) {
+  colour_var <- "subgroup"
+  title_string <- ""
+} else if (plot %in% "BNT162b2andChAdOx") {
+  colour_var <- "comparison"
+  title_string <- ""
+} else if (plot %in% "BNT162b2vsChAdOx") {
+  colour_var <- "comparison"
+  title_string <- ""
+}
+
+
+
+# set the colours corresponding to subgroups / brands
+# shapes: triangle = unadjusted, circle = adjusted
 
 plot_res <- plot_data %>%
-  ggplot(aes(x = comparison, y = estimate, colour = model)) +
-  geom_linerange(aes(ymin = lower, ymax = upper), position = position_dodge(width = 0.25)) +
-  geom_point(position = position_dodge(width = 0.25)) +
+  ggplot(aes(x = k, y = estimate, colour = !! sym(colour_var), shape = model)) +
+  geom_linerange(aes(ymin = lower, ymax = upper), position = position_dodge(width = 0.4)) +
+  geom_point(position = position_dodge(width = 0.4)) +
   geom_hline(aes(yintercept=1), colour='grey') +
   facet_wrap(~outcome, nrow=2, ncol=2) 
 
-if (comparison %in% c("BNT162b2", "ChAdOx")) {
+if (plot %in% c("BNT162b2", "ChAdOx", "BNT162b2andChAdOx")) {
   plot_res <- plot_res +
     scale_y_log10(
       breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5),
       limits = c(0.01, max(1, (plot_data$upper))),
-      oob = scales::oob_keep,
-      sec.axis = sec_axis(
-        ~(1-.),
-        name="Effectiveness (1 - HR)",
-        breaks = c(-4, -1, 0, 0.5, 0.80, 0.9, 0.95, 0.98, 0.99, 1.00),
-        labels = function(x) {formatpercent100(x, 1)}
-      )
+      oob = scales::oob_keep
     )
-} else if (comparison %in% "both") {
+} else if (plot %in% "BNT162b2vsChAdOx") {
   plot_res <- plot_res +
     scale_y_log10(
       breaks=c(0.25, 0.33, 0.5, 0.67, 0.80, 1, 1.25, 1.5, 2, 3, 4),
@@ -127,7 +177,8 @@ if (comparison %in% c("BNT162b2", "ChAdOx")) {
 }
 
 plot_res <- plot_res +
-  scale_colour_brewer(name = NULL, type="qual", palette="Set2", guide=guide_legend(ncol=1))+
+  scale_shape_discrete(name = NULL,  guide=guide_legend(ncol=1)) +
+  scale_colour_brewer(name = "JCVI group(s)", type="qual", palette="Set2", guide=guide_legend(nrow=1)) +
   labs(
     y="Hazard Ratio (HR)",
     x="days since second dose",
@@ -158,7 +209,8 @@ plot_res <- plot_res +
     plot.caption.position = "plot",
     plot.caption = element_text(hjust = 0, face= "italic"),
     
-    legend.position = "bottom"
+    legend.position = "bottom",
+    legend.box="vertical"
   ) 
 
 # save the plot
