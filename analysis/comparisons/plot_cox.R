@@ -124,8 +124,8 @@ plot_data <- model_tidy_tibble %>%
                 factor,
                 levels = as.character(0:2),
                 labels = c("Stratfied Cox model, no further adjustment", 
-                           "Stratfied Cox model, adjustment for demogrpahic variables",
-                           "Stratfied Cox model, adjustment for demogrpahic and clinical variables"))) %>%
+                           "Stratfied Cox model, adjustment for demographic variables",
+                           "Stratfied Cox model, adjustment for demographic and clinical variables"))) %>%
   mutate(across(outcome,
                 factor,
                 levels = outcomes,
