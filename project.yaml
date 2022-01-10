@@ -668,3 +668,33 @@ actions:
       moderately_sensitive:
         plot: output/images/plot_res_BNT162b2vsChAdOx.png
 
+  ## combine all incidence tables 
+
+  combine_incidence_tables:
+    run: r:latest analysis/comparisons/combine_incidence_tables.R
+    needs:
+    - design
+    - apply_model_cox_02_BNT162b2_postest
+    - apply_model_cox_02_BNT162b2_covidadmitted
+    - apply_model_cox_02_BNT162b2_coviddeath
+    - apply_model_cox_02_BNT162b2_death
+    - apply_model_cox_03-10_BNT162b2_postest
+    - apply_model_cox_03-10_BNT162b2_covidadmitted
+    - apply_model_cox_03-10_BNT162b2_coviddeath
+    - apply_model_cox_03-10_BNT162b2_death
+    - apply_model_cox_03-10_ChAdOx_postest
+    - apply_model_cox_03-10_ChAdOx_covidadmitted
+    - apply_model_cox_03-10_ChAdOx_coviddeath
+    - apply_model_cox_03-10_ChAdOx_death
+    - apply_model_cox_03-10_both_postest
+    - apply_model_cox_03-10_both_covidadmitted
+    - apply_model_cox_03-10_both_coviddeath
+    - apply_model_cox_03-10_both_death
+    - apply_model_cox_11-12_BNT162b2_postest
+    - apply_model_cox_11-12_BNT162b2_covidadmitted
+    - apply_model_cox_11-12_BNT162b2_coviddeath
+    - apply_model_cox_11-12_BNT162b2_death
+    outputs:
+      moderately_sensitive:
+        incidence_all: output/tables/incidence_all.txt
+

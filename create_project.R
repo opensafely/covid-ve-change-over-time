@@ -151,6 +151,7 @@ plot_fun <- function(
       moderately_sensitive = list(
         plot = glue("output/images/plot_res_{plot}.png"))
     )
+    
   )
   
   
@@ -397,7 +398,41 @@ actions_list <- splice(
     unlist(lapply(plots,
                   function(p)
                     plot_fun(plot = p)
-                  ), recursive = FALSE))
+                  ), recursive = FALSE)),
+  
+  comment("combine all incidence tables"),
+  action(
+    name = glue("combine_incidence_tables"),
+    run = "r:latest analysis/comparisons/combine_incidence_tables.R",
+    needs = splice("design", 
+                   # "data_2nd_vax_dates",
+                   # "data_tte_process",
+                   as.list(unlist(lapply(
+                     subgroups, # subgroups
+                     function(x) {
+                       
+                       if (x %in% c("02", "11-12")) {
+                         comparisons <- "BNT162b2"
+                       } 
+                       
+                       # over comparisons
+                       unlist(lapply(
+                         comparisons,
+                         function(y)
+                           unlist(lapply(
+                             outcomes,
+                             function(z)
+                               glue("apply_model_cox_{x}_{y}_{z}")
+                           ),
+                           recursive = FALSE)
+                       ),
+                       recursive = FALSE)
+                     }
+                     
+                   ), recursive = FALSE))),
+    moderately_sensitive = list(
+      incidence_all = glue("output/tables/incidence_all.txt"))
+  )
   
 )
 
