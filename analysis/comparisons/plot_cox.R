@@ -66,7 +66,7 @@ formatpercent100 <- function(x,accuracy){
 
 ################################################################################
 
-if (comparison %in% c("BNT162b2", "ChAdOx")) {
+if (any(comparison %in% c("BNT162b2", "ChAdOx"))) {
   plot_title <- glue("Two doses of {comparison} vs unvaccinated")
 } else if (comparison %in% "both") {
   plot_title <- "Two doses of BNT162b2 vs two doses of ChAdOx"
@@ -148,6 +148,7 @@ set2_vals <- brewer.pal(n = 4, name = "Set2")
 colour_vals <- set2_vals[c(1,4)]
 colour_name <- NULL
 position_dodge_val <- 0.2
+y_upper <- 2
 
 if (plot %in% c("BNT162b2", "ChAdOx")) {
   title_string <- glue("Two doses of {plot} vs unvaccinated")
@@ -155,6 +156,7 @@ if (plot %in% c("BNT162b2", "ChAdOx")) {
 } else if (plot %in% "BNT162b2vsChAdOx") {
   title_string <- "Two doses of BNT162b2 vs two doses of ChAdOx"
   y_axis_label <- "Hazard ratio\n<--  favours BNT162b2  |  favours ChAdOx  -->"
+  y_upper <- 10
 } else if (plot %in% "BNT162b2andChAdOx") {
   colour_var <- "comparison"
   colour_vals <- set2_vals[c(2,3)]
@@ -179,8 +181,8 @@ plot_res <- plot_data %>%
   facet_wrap(~outcome, nrow=2, ncol=2)  +
   scale_y_log10(
     name = y_axis_label,
-    breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5),
-    limits = c(0.01, max(1, (plot_data$upper))),
+    breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10),
+    limits = c(0.01, max(1, y_upper)),
     oob = scales::oob_keep
   ) +
   # guides(shape = guide_legend(order = 1), 
