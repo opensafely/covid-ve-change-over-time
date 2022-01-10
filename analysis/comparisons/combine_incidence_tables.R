@@ -22,7 +22,7 @@ process_table <- function(
     table[-c(1:3), -c(1,5)] %>%
       kable("pipe",
             col.names  = table_col_names,
-            caption = str_c(glue("---- subgroup: {subgroup}; comparison: {comparison}; outcome: {outcome} ----\nevents / person-years"),
+            caption = str_c(glue("---- JCVI groups: {subgroup}; vaccine: {comparison}; outcome: {outcome} ----\nevents / person-years"),
                             " (n_{k}, percent of n_{k-1} for vax and n_{k-2} for unvax)"))
     
 }
