@@ -115,6 +115,13 @@ ends <- seq(14, (K+1)*28, 28)
 starts <- ends + 1
 days_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
 
+if (plot %in% "BNT162b2") {
+  # remove models that did not converge due to low event counts
+  model_tidy_tibble <- model_tidy_tibble %>%
+    filter(!(subgroup %in% "11-12" & 
+               outcome %in% c("coviddeath", "death")))
+}
+
 plot_data <- model_tidy_tibble %>% 
   mutate(
     k = factor(as.integer(str_remove(str_extract(term, "comparison_\\d"), "comparison_")),
@@ -156,10 +163,6 @@ if (plot %in% c("BNT162b2", "ChAdOx")) {
     caption_string <- str_c(caption_string, 
                             " JCVI groups 11-12 did not contribute data to the period 155-182 days since second dose and are omitted from \"COVID-19 death\" and \"any death\" plots as the models did not converge due to low event counts.")
     position_dodge_val <- 0.6
-    
-    # remove models that did not converge due to low event counts
-    plot_data <- plot_data %>%
-      filter(!(subgroup %in% "11-12" & outcome %in% c("coviddeath", "death")))
     
   }
 } else if (plot %in% "BNT162b2vsChAdOx") {
