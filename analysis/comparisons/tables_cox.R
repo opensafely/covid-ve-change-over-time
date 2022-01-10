@@ -11,10 +11,12 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
+  subgroup <- "03-10"
   comparison <- "BNT162b2"
   
 } else{
-  comparison <- args[[1]]
+  subgroup <- args[[1]]
+  comparison <- args[[2]]
 }
 
 ################################################################################
@@ -31,7 +33,7 @@ outcomes <- readr::read_rds(
 # function for printing glance
 print_table <- function(outcome) {
   
-  model_glance <- readr::read_csv(here::here("output", "models", glue("{comparison}_{outcome}_modelcox_glance.csv")))
+  model_glance <- readr::read_csv(here::here("output", "models", glue("modelcox_glance_{subgroup}_{comparison}_{outcome}.csv")))
   
   model_glance %>%
     select(-outcome) %>%
@@ -51,7 +53,7 @@ print_table <- function(outcome) {
 
 capture.output(
   map(outcomes, function(x) try(print_table(outcome = x))),
-  file = here::here("output", "tables", glue("{comparison}_modelcox_glance.txt")),
+  file = here::here("output", "tables", glue("modelcox_glance_{subgroup}_{comparison}.txt")),
   append=FALSE
 )
 
@@ -61,7 +63,7 @@ capture.output(
 print_coefficients <- function(outcome) {
   
   data <- readr::read_rds(
-    here::here("output", "models", glue("{comparison}_{outcome}_modelcox_summary.rds")))
+    here::here("output", "models", glue("modelcox_summary_{subgroup}_{comparison}_{outcome}.rds")))
                
   data %>%
     filter(outcome %in% outcome) %>%
@@ -81,7 +83,7 @@ print_coefficients <- function(outcome) {
 
 capture.output(
   map(outcomes, function(x) try(print_coefficients(outcome = x))),
-  file = here::here("output", "tables", glue("{comparison}_modelcox_coefficients.txt")),
+  file = here::here("output", "tables", glue("modelcox_coefficients_{subgroup}_{comparison}.txt")),
   append=FALSE
 )
 
