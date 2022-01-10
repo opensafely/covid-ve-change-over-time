@@ -14,7 +14,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  plot <- "BNT162b2andChAdOx" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
+  plot <- "BNT162b2" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
   
 } else {
    
@@ -152,7 +152,16 @@ y_upper <- 2
 
 if (plot %in% c("BNT162b2", "ChAdOx")) {
   title_string <- glue("Two doses of {plot} vs unvaccinated")
-  if (plot %in% "BNT162b2") position_dodge_val <- 0.6
+  if (plot %in% "BNT162b2") {
+    caption_string <- str_c(caption_string, 
+                            " JCVI groups 11-12 did not contribute data to the period 155-182 days since second dose and are omitted from \"COVID-19 death\" and \"any death\" plots as the models did not converge due to low event counts.")
+    position_dodge_val <- 0.6
+    
+    # remove models that did not converge due to low event counts
+    plot_data <- plot_data %>%
+      filter(!(subgroup %in% "11-12" & outcome %in% c("coviddeath", "death")))
+    
+  }
 } else if (plot %in% "BNT162b2vsChAdOx") {
   title_string <- "Two doses of BNT162b2 vs two doses of ChAdOx"
   y_axis_label <- "Hazard ratio\n<--  favours BNT162b2  |  favours ChAdOx  -->"
@@ -162,9 +171,7 @@ if (plot %in% c("BNT162b2", "ChAdOx")) {
   colour_vals <- set2_vals[c(2,3)]
   colour_name <- "Vaccine"
   title_string <- "Two doses of vaccine vs unvaccinated"
-  caption_string <- str_wrap(
-    "Hazard ratios estimated using a stratified cox model adjusted for demographic and clinical variables (stratification variables are: JCVI group, eligibility date for first dose of vaccination, geographical region)",
-    150)
+  caption_string <- "Hazard ratios estimated using a stratified cox model adjusted for demographic and clinical variables (stratification variables are: JCVI group, eligibility date for first dose of vaccination, geographical region)"
 }
 
 
@@ -193,7 +200,7 @@ plot_res <- plot_data %>%
     x = "days since second dose",
     colour = NULL,
     title = title_string,
-    caption = caption_string
+    caption = str_wrap(caption_string,135)
   ) +
   theme_bw() +
   theme(
