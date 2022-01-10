@@ -55,109 +55,104 @@ convert_comment_actions <-function(yaml.txt){
 }
 
 ## actions that extract and process data ----
-
-  
-comparisons_fun <- function(
+apply_model_fun <- function(
   subgroup,
   comparison,
-  outcomes,
-  apply_model = TRUE,
-  report = TRUE
-  ) {
-  
-  # if (comparison == "both") outcomes <- outcomes[-which(outcomes=="coviddeath")]
-  
-  out <- list()
-  
-  if (apply_model) {
-    
-    apply_model_fun <- function(outcome) {
-      
-      splice(
-        
-        comment(glue("subgroup = {subgroup}, comparison = {comparison}, outcome = {outcome}")),
-        
-        comment(glue("apply cox model for {outcome}")),
-        action(
-          name = glue("apply_model_cox_{subgroup}_{comparison}_{outcome}"),
-          run = "r:latest analysis/comparisons/apply_model_cox.R",
-          arguments = c(subgroup, comparison, outcome),
-          needs = list(
-            "design", 
-            "data_comparisons_process", 
-            "data_tte_process"),
-          highly_sensitive = list(
-            modelnumber = glue("output/models/model*_{subgroup}_{comparison}_{outcome}.rds"),
-            model_summary_rds = glue("output/models/modelcox_summary_{subgroup}_{comparison}_{outcome}.rds")
-          ),
-          moderately_sensitive = list(
-            incidence_table_all = glue("output/tables/incidence_{subgroup}_{comparison}_{outcome}_all.txt"),
-            incidence_table_strata = glue("output/tables/incidence_{subgroup}_{comparison}_{outcome}_strata.txt"),
-            model_glance = glue("output/models/modelcox_glance_{subgroup}_{comparison}_{outcome}.csv")#,
-          )
-        )
-        
-      )
-      
-    }
-    
-    out <- splice(
-      out,
-      unlist(lapply(
-        outcomes,
-        function(x)
-          apply_model_fun(outcome = x)
+  outcome
+) {
+  splice(
+    comment(glue("subgroup = {subgroup}, comparison = {comparison}, outcome = {outcome}")),
+    action(
+      name = glue("apply_model_cox_{subgroup}_{comparison}_{outcome}"),
+      run = "r:latest analysis/comparisons/apply_model_cox.R",
+      arguments = c(subgroup, comparison, outcome),
+      needs = list(
+        "design", 
+        "data_comparisons_process", 
+        "data_tte_process"),
+      highly_sensitive = list(
+        modelnumber = glue("output/models/model*_{subgroup}_{comparison}_{outcome}.rds"),
+        model_summary_rds = glue("output/models/modelcox_summary_{subgroup}_{comparison}_{outcome}.rds")
       ),
-      recursive = FALSE
+      moderately_sensitive = list(
+        incidence_table_all = glue("output/tables/incidence_{subgroup}_{comparison}_{outcome}_all.txt"),
+        incidence_table_strata = glue("output/tables/incidence_{subgroup}_{comparison}_{outcome}_strata.txt"),
+        model_glance = glue("output/models/modelcox_glance_{subgroup}_{comparison}_{outcome}.csv")
       )
     )
     
-  }
+  )
+}
+
+table_fun <- function(
+  subgroup,
+  comparison
+) {
   
-  if (report) {
-    
-    out <- splice(
-      
-      out,
-      
-      comment(glue("plot cox model for all outcomes")),
-      action(
-        name = glue("plot_model_cox_{comparison}"),
-        run = "r:latest analysis/comparisons/plot_cox.R",
-        arguments = c(comparison),
-        needs = splice("design",
-                       "data_2nd_vax_dates",
-                       lapply(
-                         outcomes, 
-                         function(x) glue("apply_model_cox_{comparison}_{x}"))),
-        moderately_sensitive = list(
-          plot = glue("output/images/plot_res_{comparison}.png"))
-      ),
-      
-      comment(glue("tabulate cox model for all outcomes")),
-      action(
-        name = glue("tables_model_cox_{comparison}"),
-        run = "r:latest analysis/comparisons/tables_cox.R",
-        arguments = c(comparison),
-        needs = splice("design", 
-                       "data_2nd_vax_dates",
-                       lapply(
-                         outcomes, 
-                         function(x) 
-                           "data_tte_process"),
-                       lapply(
-                         outcomes, 
-                         function(x) 
-                           glue("apply_model_cox_{comparison}_{x}"))),
-        moderately_sensitive = list(
-          table_glance = glue("output/tables/{comparison}_modelcox_glance.txt"),
-          table_coefficients = glue("output/tables/{comparison}_modelcox_coefficients.txt"))
-      )
+  splice(
+    comment(glue("tabulate cox model for all outcomes")),
+    action(
+      name = glue("tables_model_cox_{subgroup}_{comparison}"),
+      run = "r:latest analysis/comparisons/tables_cox.R",
+      arguments = c(subgroup, comparison),
+      needs = splice("design", 
+                     "data_2nd_vax_dates",
+                     "data_tte_process",
+                     lapply(
+                       outcomes, 
+                       function(x) 
+                         glue("apply_model_cox_{subgroup}_{comparison}_{x}"))),
+      moderately_sensitive = list(
+        table_glance = glue("output/tables/modelcox_glance_{subgroup}_{comparison}.txt"),
+        table_coefficients = glue("output/tables/modelcox_coefficients_{subgroup}_{comparison}.txt"))
     )
-    
+  )
+  
+  
+}
+
+plot_fun <- function(
+  plot
+) {
+  
+  if (plot %in% c("BNT162b2", "ChAdOx")) {
+    comparisons <- plot
+  } else if (plot %in% "BNT162b2andChAdOx") {
+    comparisons <- c("BNT162b2", "ChAdOx")
+  } else if (plot %in% "BNT162b2vsChAdOx") {
+    comparisons <- "both"
   }
   
-  return(out)
+  if (str_detect(plot, "ChAdOx")) {
+    subgroups <- "03-10"
+  }
+  
+  splice(
+    comment(glue("plot {plot}")),
+    action(
+      name = glue("plot_model_cox_{plot}"),
+      run = "r:latest analysis/comparisons/plot_cox.R",
+      arguments = plot,
+      needs = splice("design",
+                     "data_2nd_vax_dates",
+                     as.list(unlist(lapply(
+                       subgroups,
+                       function(x)
+                         unlist(lapply(
+                           comparisons,
+                           function(y)
+                             unlist(lapply(
+                               outcomes,
+                               function(z)
+                                 glue("apply_model_cox_{x}_{y}_{z}")
+                             ), recursive = FALSE)
+                         ), recursive = FALSE)
+                     ), recursive = FALSE))),
+      moderately_sensitive = list(
+        plot = glue("output/images/plot_res_{plot}.png"))
+    )
+  )
+  
   
 }
     
@@ -169,6 +164,12 @@ defaults_list <- list(
   expectations= list(population_size=100000L)
 )
 
+
+
+outcomes <- c("postest", "covidadmitted", "coviddeath", "death")
+subgroups <- c("02", "03-10", "11-12")  
+comparisons <- c("BNT162b2", "ChAdOx", "both")
+plots <- c("BNT162b2", "ChAdOx", "BNT162b2andChAdOx", "BNT162b2vsChAdOx")
 
 ## actions ----
 actions_list <- splice(
@@ -323,7 +324,6 @@ actions_list <- splice(
   action(
     name = "data_tte_process",
     run = "r:latest analysis/comparisons/data_tte_process.R",
-    arguments = c(subgroup, comparison, outcome),
     needs = list(
       "design",
       "data_comparisons_process", 
@@ -333,38 +333,71 @@ actions_list <- splice(
     )
   ),
   
-  comment("apply models and generate reports"),
+  comment("apply models"),
   splice(
     # over subgroups
     unlist(lapply(
-      c("02", "03-10", "11-12"), # subgroups
+      subgroups, # subgroups
       function(x) {
         
         if (x %in% c("02", "11-12")) {
           comparisons <- "BNT162b2"
-        } else {
-          comparisons <- c("BNT162b2", "ChAdOx", "both")
-        }
+        } 
         
         # over comparisons
         unlist(lapply(
           comparisons,
           function(y)
-            comparisons_fun(
-              subgroup = x,
-              comparison = y, 
-              outcomes = c("postest", "covidadmitted", "coviddeath", "death"),
-              report = FALSE)
+            unlist(lapply(
+              outcomes,
+              function(z)
+              apply_model_fun(
+                subgroup = x,
+                comparison = y, 
+                outcome = z)  
+            ),
+            recursive = FALSE)
         ),
         recursive = FALSE)
       }
-        
-    ),
-    recursive = FALSE
-    )
+      
+    ), recursive = FALSE)
     #
-  )
+  ),
   
+  comment("generate tables"),
+  splice(
+    # over subgroups
+    unlist(lapply(
+      subgroups, # subgroups
+      function(x) {
+        
+        if (x %in% c("02", "11-12")) {
+          comparisons <- "BNT162b2"
+        } 
+        
+        # over comparisons
+        unlist(lapply(
+          comparisons,
+          function(y)
+                table_fun(
+                  subgroup = x,
+                  comparison = y
+                  )  
+        ),
+        recursive = FALSE)
+      }
+      
+    ), recursive = FALSE)
+    #
+  ),
+  
+  comment("generate plots"),
+  splice(
+    unlist(lapply(plots,
+                  function(p)
+                    plot_fun(plot = p)
+                  ), recursive = FALSE))
   
 )
 

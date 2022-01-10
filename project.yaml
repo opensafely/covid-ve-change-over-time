@@ -159,7 +159,7 @@ actions:
   ## process tte data 
 
   data_tte_process:
-    run: r:latest analysis/comparisons/data_tte_process.R 03-10 BNT162b2 postest
+    run: r:latest analysis/comparisons/data_tte_process.R
     needs:
     - design
     - data_comparisons_process
@@ -168,9 +168,8 @@ actions:
       highly_sensitive:
         data_tte_brand_outcome: output/data/data_tte_*.rds
 
-  ## apply models and generate reports 
+  ## apply models 
   ## subgroup = 02, comparison = BNT162b2, outcome = postest 
-  ## apply cox model for postest 
 
   apply_model_cox_02_BNT162b2_postest:
     run: r:latest analysis/comparisons/apply_model_cox.R 02 BNT162b2 postest
@@ -188,7 +187,6 @@ actions:
         model_glance: output/models/modelcox_glance_02_BNT162b2_postest.csv
 
   ## subgroup = 02, comparison = BNT162b2, outcome = covidadmitted 
-  ## apply cox model for covidadmitted 
 
   apply_model_cox_02_BNT162b2_covidadmitted:
     run: r:latest analysis/comparisons/apply_model_cox.R 02 BNT162b2 covidadmitted
@@ -206,7 +204,6 @@ actions:
         model_glance: output/models/modelcox_glance_02_BNT162b2_covidadmitted.csv
 
   ## subgroup = 02, comparison = BNT162b2, outcome = coviddeath 
-  ## apply cox model for coviddeath 
 
   apply_model_cox_02_BNT162b2_coviddeath:
     run: r:latest analysis/comparisons/apply_model_cox.R 02 BNT162b2 coviddeath
@@ -224,7 +221,6 @@ actions:
         model_glance: output/models/modelcox_glance_02_BNT162b2_coviddeath.csv
 
   ## subgroup = 02, comparison = BNT162b2, outcome = death 
-  ## apply cox model for death 
 
   apply_model_cox_02_BNT162b2_death:
     run: r:latest analysis/comparisons/apply_model_cox.R 02 BNT162b2 death
@@ -242,7 +238,6 @@ actions:
         model_glance: output/models/modelcox_glance_02_BNT162b2_death.csv
 
   ## subgroup = 03-10, comparison = BNT162b2, outcome = postest 
-  ## apply cox model for postest 
 
   apply_model_cox_03-10_BNT162b2_postest:
     run: r:latest analysis/comparisons/apply_model_cox.R 03-10 BNT162b2 postest
@@ -260,7 +255,6 @@ actions:
         model_glance: output/models/modelcox_glance_03-10_BNT162b2_postest.csv
 
   ## subgroup = 03-10, comparison = BNT162b2, outcome = covidadmitted 
-  ## apply cox model for covidadmitted 
 
   apply_model_cox_03-10_BNT162b2_covidadmitted:
     run: r:latest analysis/comparisons/apply_model_cox.R 03-10 BNT162b2 covidadmitted
@@ -278,7 +272,6 @@ actions:
         model_glance: output/models/modelcox_glance_03-10_BNT162b2_covidadmitted.csv
 
   ## subgroup = 03-10, comparison = BNT162b2, outcome = coviddeath 
-  ## apply cox model for coviddeath 
 
   apply_model_cox_03-10_BNT162b2_coviddeath:
     run: r:latest analysis/comparisons/apply_model_cox.R 03-10 BNT162b2 coviddeath
@@ -296,7 +289,6 @@ actions:
         model_glance: output/models/modelcox_glance_03-10_BNT162b2_coviddeath.csv
 
   ## subgroup = 03-10, comparison = BNT162b2, outcome = death 
-  ## apply cox model for death 
 
   apply_model_cox_03-10_BNT162b2_death:
     run: r:latest analysis/comparisons/apply_model_cox.R 03-10 BNT162b2 death
@@ -314,7 +306,6 @@ actions:
         model_glance: output/models/modelcox_glance_03-10_BNT162b2_death.csv
 
   ## subgroup = 03-10, comparison = ChAdOx, outcome = postest 
-  ## apply cox model for postest 
 
   apply_model_cox_03-10_ChAdOx_postest:
     run: r:latest analysis/comparisons/apply_model_cox.R 03-10 ChAdOx postest
@@ -332,7 +323,6 @@ actions:
         model_glance: output/models/modelcox_glance_03-10_ChAdOx_postest.csv
 
   ## subgroup = 03-10, comparison = ChAdOx, outcome = covidadmitted 
-  ## apply cox model for covidadmitted 
 
   apply_model_cox_03-10_ChAdOx_covidadmitted:
     run: r:latest analysis/comparisons/apply_model_cox.R 03-10 ChAdOx covidadmitted
@@ -350,7 +340,6 @@ actions:
         model_glance: output/models/modelcox_glance_03-10_ChAdOx_covidadmitted.csv
 
   ## subgroup = 03-10, comparison = ChAdOx, outcome = coviddeath 
-  ## apply cox model for coviddeath 
 
   apply_model_cox_03-10_ChAdOx_coviddeath:
     run: r:latest analysis/comparisons/apply_model_cox.R 03-10 ChAdOx coviddeath
@@ -368,7 +357,6 @@ actions:
         model_glance: output/models/modelcox_glance_03-10_ChAdOx_coviddeath.csv
 
   ## subgroup = 03-10, comparison = ChAdOx, outcome = death 
-  ## apply cox model for death 
 
   apply_model_cox_03-10_ChAdOx_death:
     run: r:latest analysis/comparisons/apply_model_cox.R 03-10 ChAdOx death
@@ -386,7 +374,6 @@ actions:
         model_glance: output/models/modelcox_glance_03-10_ChAdOx_death.csv
 
   ## subgroup = 03-10, comparison = both, outcome = postest 
-  ## apply cox model for postest 
 
   apply_model_cox_03-10_both_postest:
     run: r:latest analysis/comparisons/apply_model_cox.R 03-10 both postest
@@ -404,7 +391,6 @@ actions:
         model_glance: output/models/modelcox_glance_03-10_both_postest.csv
 
   ## subgroup = 03-10, comparison = both, outcome = covidadmitted 
-  ## apply cox model for covidadmitted 
 
   apply_model_cox_03-10_both_covidadmitted:
     run: r:latest analysis/comparisons/apply_model_cox.R 03-10 both covidadmitted
@@ -422,7 +408,6 @@ actions:
         model_glance: output/models/modelcox_glance_03-10_both_covidadmitted.csv
 
   ## subgroup = 03-10, comparison = both, outcome = coviddeath 
-  ## apply cox model for coviddeath 
 
   apply_model_cox_03-10_both_coviddeath:
     run: r:latest analysis/comparisons/apply_model_cox.R 03-10 both coviddeath
@@ -440,7 +425,6 @@ actions:
         model_glance: output/models/modelcox_glance_03-10_both_coviddeath.csv
 
   ## subgroup = 03-10, comparison = both, outcome = death 
-  ## apply cox model for death 
 
   apply_model_cox_03-10_both_death:
     run: r:latest analysis/comparisons/apply_model_cox.R 03-10 both death
@@ -458,7 +442,6 @@ actions:
         model_glance: output/models/modelcox_glance_03-10_both_death.csv
 
   ## subgroup = 11-12, comparison = BNT162b2, outcome = postest 
-  ## apply cox model for postest 
 
   apply_model_cox_11-12_BNT162b2_postest:
     run: r:latest analysis/comparisons/apply_model_cox.R 11-12 BNT162b2 postest
@@ -476,7 +459,6 @@ actions:
         model_glance: output/models/modelcox_glance_11-12_BNT162b2_postest.csv
 
   ## subgroup = 11-12, comparison = BNT162b2, outcome = covidadmitted 
-  ## apply cox model for covidadmitted 
 
   apply_model_cox_11-12_BNT162b2_covidadmitted:
     run: r:latest analysis/comparisons/apply_model_cox.R 11-12 BNT162b2 covidadmitted
@@ -494,7 +476,6 @@ actions:
         model_glance: output/models/modelcox_glance_11-12_BNT162b2_covidadmitted.csv
 
   ## subgroup = 11-12, comparison = BNT162b2, outcome = coviddeath 
-  ## apply cox model for coviddeath 
 
   apply_model_cox_11-12_BNT162b2_coviddeath:
     run: r:latest analysis/comparisons/apply_model_cox.R 11-12 BNT162b2 coviddeath
@@ -512,7 +493,6 @@ actions:
         model_glance: output/models/modelcox_glance_11-12_BNT162b2_coviddeath.csv
 
   ## subgroup = 11-12, comparison = BNT162b2, outcome = death 
-  ## apply cox model for death 
 
   apply_model_cox_11-12_BNT162b2_death:
     run: r:latest analysis/comparisons/apply_model_cox.R 11-12 BNT162b2 death
@@ -528,4 +508,163 @@ actions:
         incidence_table_all: output/tables/incidence_11-12_BNT162b2_death_all.txt
         incidence_table_strata: output/tables/incidence_11-12_BNT162b2_death_strata.txt
         model_glance: output/models/modelcox_glance_11-12_BNT162b2_death.csv
+
+  ## generate tables 
+  ## tabulate cox model for all outcomes 
+
+  tables_model_cox_02_BNT162b2:
+    run: r:latest analysis/comparisons/tables_cox.R 02 BNT162b2
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - data_tte_process
+    - apply_model_cox_02_BNT162b2_postest
+    - apply_model_cox_02_BNT162b2_covidadmitted
+    - apply_model_cox_02_BNT162b2_coviddeath
+    - apply_model_cox_02_BNT162b2_death
+    outputs:
+      moderately_sensitive:
+        table_glance: output/tables/modelcox_glance_02_BNT162b2.txt
+        table_coefficients: output/tables/modelcox_coefficients_02_BNT162b2.txt
+
+  ## tabulate cox model for all outcomes 
+
+  tables_model_cox_03-10_BNT162b2:
+    run: r:latest analysis/comparisons/tables_cox.R 03-10 BNT162b2
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - data_tte_process
+    - apply_model_cox_03-10_BNT162b2_postest
+    - apply_model_cox_03-10_BNT162b2_covidadmitted
+    - apply_model_cox_03-10_BNT162b2_coviddeath
+    - apply_model_cox_03-10_BNT162b2_death
+    outputs:
+      moderately_sensitive:
+        table_glance: output/tables/modelcox_glance_03-10_BNT162b2.txt
+        table_coefficients: output/tables/modelcox_coefficients_03-10_BNT162b2.txt
+
+  ## tabulate cox model for all outcomes 
+
+  tables_model_cox_03-10_ChAdOx:
+    run: r:latest analysis/comparisons/tables_cox.R 03-10 ChAdOx
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - data_tte_process
+    - apply_model_cox_03-10_ChAdOx_postest
+    - apply_model_cox_03-10_ChAdOx_covidadmitted
+    - apply_model_cox_03-10_ChAdOx_coviddeath
+    - apply_model_cox_03-10_ChAdOx_death
+    outputs:
+      moderately_sensitive:
+        table_glance: output/tables/modelcox_glance_03-10_ChAdOx.txt
+        table_coefficients: output/tables/modelcox_coefficients_03-10_ChAdOx.txt
+
+  ## tabulate cox model for all outcomes 
+
+  tables_model_cox_03-10_both:
+    run: r:latest analysis/comparisons/tables_cox.R 03-10 both
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - data_tte_process
+    - apply_model_cox_03-10_both_postest
+    - apply_model_cox_03-10_both_covidadmitted
+    - apply_model_cox_03-10_both_coviddeath
+    - apply_model_cox_03-10_both_death
+    outputs:
+      moderately_sensitive:
+        table_glance: output/tables/modelcox_glance_03-10_both.txt
+        table_coefficients: output/tables/modelcox_coefficients_03-10_both.txt
+
+  ## tabulate cox model for all outcomes 
+
+  tables_model_cox_11-12_BNT162b2:
+    run: r:latest analysis/comparisons/tables_cox.R 11-12 BNT162b2
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - data_tte_process
+    - apply_model_cox_11-12_BNT162b2_postest
+    - apply_model_cox_11-12_BNT162b2_covidadmitted
+    - apply_model_cox_11-12_BNT162b2_coviddeath
+    - apply_model_cox_11-12_BNT162b2_death
+    outputs:
+      moderately_sensitive:
+        table_glance: output/tables/modelcox_glance_11-12_BNT162b2.txt
+        table_coefficients: output/tables/modelcox_coefficients_11-12_BNT162b2.txt
+
+  ## generate plots 
+  ## plot BNT162b2 
+
+  plot_model_cox_BNT162b2:
+    run: r:latest analysis/comparisons/plot_cox.R BNT162b2
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - apply_model_cox_02_BNT162b2_postest
+    - apply_model_cox_02_BNT162b2_covidadmitted
+    - apply_model_cox_02_BNT162b2_coviddeath
+    - apply_model_cox_02_BNT162b2_death
+    - apply_model_cox_03-10_BNT162b2_postest
+    - apply_model_cox_03-10_BNT162b2_covidadmitted
+    - apply_model_cox_03-10_BNT162b2_coviddeath
+    - apply_model_cox_03-10_BNT162b2_death
+    - apply_model_cox_11-12_BNT162b2_postest
+    - apply_model_cox_11-12_BNT162b2_covidadmitted
+    - apply_model_cox_11-12_BNT162b2_coviddeath
+    - apply_model_cox_11-12_BNT162b2_death
+    outputs:
+      moderately_sensitive:
+        plot: output/images/plot_res_BNT162b2.png
+
+  ## plot ChAdOx 
+
+  plot_model_cox_ChAdOx:
+    run: r:latest analysis/comparisons/plot_cox.R ChAdOx
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - apply_model_cox_03-10_ChAdOx_postest
+    - apply_model_cox_03-10_ChAdOx_covidadmitted
+    - apply_model_cox_03-10_ChAdOx_coviddeath
+    - apply_model_cox_03-10_ChAdOx_death
+    outputs:
+      moderately_sensitive:
+        plot: output/images/plot_res_ChAdOx.png
+
+  ## plot BNT162b2andChAdOx 
+
+  plot_model_cox_BNT162b2andChAdOx:
+    run: r:latest analysis/comparisons/plot_cox.R BNT162b2andChAdOx
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - apply_model_cox_03-10_BNT162b2_postest
+    - apply_model_cox_03-10_BNT162b2_covidadmitted
+    - apply_model_cox_03-10_BNT162b2_coviddeath
+    - apply_model_cox_03-10_BNT162b2_death
+    - apply_model_cox_03-10_ChAdOx_postest
+    - apply_model_cox_03-10_ChAdOx_covidadmitted
+    - apply_model_cox_03-10_ChAdOx_coviddeath
+    - apply_model_cox_03-10_ChAdOx_death
+    outputs:
+      moderately_sensitive:
+        plot: output/images/plot_res_BNT162b2andChAdOx.png
+
+  ## plot BNT162b2vsChAdOx 
+
+  plot_model_cox_BNT162b2vsChAdOx:
+    run: r:latest analysis/comparisons/plot_cox.R BNT162b2vsChAdOx
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - apply_model_cox_03-10_both_postest
+    - apply_model_cox_03-10_both_covidadmitted
+    - apply_model_cox_03-10_both_coviddeath
+    - apply_model_cox_03-10_both_death
+    outputs:
+      moderately_sensitive:
+        plot: output/images/plot_res_BNT162b2vsChAdOx.png
 
