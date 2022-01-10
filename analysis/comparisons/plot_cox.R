@@ -6,6 +6,7 @@
 
 ################################################################################
 library(tidyverse)
+library(RColorBrewer)
 library(glue)
 
 ## import command-line arguments ----
@@ -13,7 +14,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  plot <- "BNT162b2andChAdOx" #"ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
+  plot <- "BNT162b2andChAdOx" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
   
 } else {
    
@@ -138,16 +139,32 @@ plot_data <- model_tidy_tibble %>%
                 labels = c("2", "3-10", "11-12")))
 
 
+y_axis_label <- "Hazard ratio\n<--  favours vaccine  |  favours no vaccine  -->"
+colour_var <- "model"
+shape_var <- "subgroup"
+caption_string <- "Stratification variables are: JCVI group, eligibility date for first dose of vaccination, geographical region."
+shape_vals <- c("square", "circle", "triangle")[which(c("02", "03-10", "11-12") %in% subgroups)]
+set2_vals <- brewer.pal(n = 4, name = "Set2")
+colour_vals <- set2_vals[c(1,4)]
+colour_name <- NULL
+position_dodge_val <- 0.2
+
 if (plot %in% c("BNT162b2", "ChAdOx")) {
-  colour_var <- "subgroup"
-  title_string <- ""
+  title_string <- glue("Two doses of {plot} vs unvaccinated")
+  if (plot %in% "BNT162b2") position_dodge_val <- 0.6
+} else if (plot %in% "BNT162b2vsChAdOx") {
+  title_string <- "Two doses of BNT162b2 vs two doses of ChAdOx"
+  y_axis_label <- "Hazard ratio\n<--  favours BNT162b2  |  favours ChAdOx  -->"
 } else if (plot %in% "BNT162b2andChAdOx") {
   colour_var <- "comparison"
-  title_string <- ""
-} else if (plot %in% "BNT162b2vsChAdOx") {
-  colour_var <- "comparison"
-  title_string <- ""
+  colour_vals <- set2_vals[c(2,3)]
+  colour_name <- "Vaccine"
+  title_string <- "Two doses of vaccine vs unvaccinated"
+  caption_string <- str_wrap(
+    "Hazard ratios estimated using a stratified cox model adjusted for demographic and clinical variables (stratification variables are: JCVI group, eligibility date for first dose of vaccination, geographical region)",
+    150)
 }
+
 
 
 
@@ -155,38 +172,28 @@ if (plot %in% c("BNT162b2", "ChAdOx")) {
 # shapes: triangle = unadjusted, circle = adjusted
 
 plot_res <- plot_data %>%
-  ggplot(aes(x = k, y = estimate, colour = !! sym(colour_var), shape = model)) +
-  geom_linerange(aes(ymin = lower, ymax = upper), position = position_dodge(width = 0.4)) +
-  geom_point(position = position_dodge(width = 0.4)) +
+  ggplot(aes(x = k, y = estimate, shape = !! sym(shape_var), colour = !! sym(colour_var))) +
   geom_hline(aes(yintercept=1), colour='grey') +
-  facet_wrap(~outcome, nrow=2, ncol=2) 
-
-if (plot %in% c("BNT162b2", "ChAdOx", "BNT162b2andChAdOx")) {
-  plot_res <- plot_res +
-    scale_y_log10(
-      breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5),
-      limits = c(0.01, max(1, (plot_data$upper))),
-      oob = scales::oob_keep
-    )
-} else if (plot %in% "BNT162b2vsChAdOx") {
-  plot_res <- plot_res +
-    scale_y_log10(
-      breaks=c(0.25, 0.33, 0.5, 0.67, 0.80, 1, 1.25, 1.5, 2, 3, 4),
-      sec.axis = dup_axis(name="HR in favour of\n<- ChAdOx / BNT162b2 ->", breaks = NULL)
-    ) 
-}
-
-plot_res <- plot_res +
-  scale_shape_discrete(name = NULL,  guide=guide_legend(ncol=1)) +
-  scale_colour_brewer(name = "JCVI group(s)", type="qual", palette="Set2", guide=guide_legend(nrow=1)) +
-  labs(
-    y="Hazard Ratio (HR)",
-    x="days since second dose",
-    colour=NULL,
-    title=plot_title,
-    caption="Stratification variables are: JCVI group, eligibility date for first dose of vaccination, geographical region."
+  geom_linerange(aes(ymin = lower, ymax = upper), position = position_dodge(width = position_dodge_val)) +
+  geom_point(position = position_dodge(width = position_dodge_val)) +
+  facet_wrap(~outcome, nrow=2, ncol=2)  +
+  scale_y_log10(
+    name = y_axis_label,
+    breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5),
+    limits = c(0.01, max(1, (plot_data$upper))),
+    oob = scales::oob_keep
   ) +
-  theme_bw()+
+  # guides(shape = guide_legend(order = 1), 
+  #        colour = guide_legend(order = 2)) +
+  scale_shape_manual(name = "JCVI group(s)",  guide=guide_legend(nrow=1, order = 1), values = shape_vals) +
+  scale_colour_manual(name = colour_name, guide=guide_legend(ncol=1, order = 2), values = colour_vals) +
+  labs(
+    x = "days since second dose",
+    colour = NULL,
+    title = title_string,
+    caption = caption_string
+  ) +
+  theme_bw() +
   theme(
     panel.border = element_blank(),
     axis.line.y = element_line(colour = "black"),
@@ -215,9 +222,5 @@ plot_res <- plot_res +
 
 # save the plot
 ggsave(plot = plot_res,
-       filename = here::here("output",  "images", glue("plot_res_{comparison}.png")),
+       filename = here::here("output",  "images", glue("plot_res_{plot}.png")),
        width=20, height=15, units="cm")
-
-
-
-
