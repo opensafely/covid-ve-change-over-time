@@ -58,13 +58,23 @@ data_vax_incidence <- bind_rows(
     ),
     by = "patient_id"
   ) %>%
+  left_join(
+    readr::read_rds(
+      here::here("output", "data", "data_covid_any.rds")),
+    by = "patient_id"
+  ) %>%
   mutate(
     vax_date = if_else(
       arm %in% "vax",
       covid_vax_3_date,
       covid_vax_1_date
     ),
-    end_at = pmin(vax_date, max_end_fu_date, as.Date(study_parameters$end_date), na.rm = TRUE),
+    end_at = pmin(
+      vax_date, # date of 1st of 3rd dose
+      covid_any_date, # date of any covid event
+      max_end_fu_date, # end of individual's followup
+      as.Date(study_parameters$end_date), # last date of data
+      na.rm = TRUE),
     time = as.integer(end_at - min_start_fu_date),
     status = case_when(
       is.na(vax_date) ~ 0L,
@@ -93,8 +103,8 @@ survplots <- ggsurvplot(fit,
                         conf.int = TRUE,
                         # palette = brewer.pal(n = length(subgroups), name = "Dark2"),
                         censor=TRUE, # show censor ticks on line?
-                        cumevents = FALSE, 
-                        cumcensor = FALSE, 
+                        cumevents = TRUE, 
+                        cumcensor = TRUE, 
                         # risk.table.col = "strata",
                         fun = "event",
                         # aesthetics
@@ -118,8 +128,26 @@ survplots <- ggsurvplot(fit,
                         ggtheme = theme_bw() + 
                           theme(plot.caption = element_text(hjust = 0, size=8)))
 
+################################################################################
+
 ggsave(plot = survplots$plot,
        filename = here::here("output",  "images", glue("cumulative_incidence_{brand}.png")),
        width=15, height=12, units="cm")
 
+################################################################################
+
+survtable <- survplots$data.survtable %>%
+  select(strata, time, n.risk, cum.n.event, cum.n.censor) %>%
+  # round to the nearest 10
+  mutate(across(c(n.risk, cum.n.event, cum.n.censor), 
+                ~round(.x,-1))) 
+
+capture.output(
+  survtable %>%
+    kableExtra::kable("pipe", padding = 2),
+  file = here::here("output", "tables", glue("survtable_{brand}.txt")),
+  append=FALSE
+)
+
+################################################################################
   
