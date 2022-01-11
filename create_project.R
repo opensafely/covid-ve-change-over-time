@@ -435,19 +435,23 @@ actions_list <- splice(
   ),
   
   comment("plot cumulative incidence of 1st or 3rd vacciantion"),
-  action(
-    name = "plot_cumulative_incidence_vax",
-    run = "r:latest analysis/comparisons/plot_cumulative_incidence_vax.R",
-    arguments = "BNT162b2",
-    needs = list(
-      "design",
-      "data_input_process",
-      "data_comparisons_process"),
-    moderately_sensitive = list(
-      plot_cumulative_incidence_vax = "output/images/cumulative_incidence_*.png"
-    )
-  )
-  
+  splice(unlist(lapply(
+    c("BNT162b2", "ChAdOx"),
+    function(x)
+      action(
+        name = glue("plot_cumulative_incidence_vax_{x}"),
+        run = "r:latest analysis/comparisons/plot_cumulative_incidence_vax.R",
+        arguments = x,
+        needs = list(
+          "design",
+          "data_input_process",
+          "data_comparisons_process"),
+        moderately_sensitive = list(
+          plot_cumulative_incidence_vax = glue("output/images/cumulative_incidence_{x}.png"),
+          survtable = glue("output/tables/survtable_{x}.txt")
+        )
+      )
+  ), recursive = FALSE))
 )
 
 ## combine everything ----

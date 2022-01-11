@@ -700,7 +700,7 @@ actions:
 
   ## plot cumulative incidence of 1st or 3rd vacciantion 
 
-  plot_cumulative_incidence_vax:
+  plot_cumulative_incidence_vax_BNT162b2:
     run: r:latest analysis/comparisons/plot_cumulative_incidence_vax.R BNT162b2
     needs:
     - design
@@ -708,5 +708,17 @@ actions:
     - data_comparisons_process
     outputs:
       moderately_sensitive:
-        plot_cumulative_incidence_vax: output/images/cumulative_incidence_*.png
+        plot_cumulative_incidence_vax: output/images/cumulative_incidence_BNT162b2.png
+        survtable: output/tables/survtable_BNT162b2.txt
+
+  plot_cumulative_incidence_vax_ChAdOx:
+    run: r:latest analysis/comparisons/plot_cumulative_incidence_vax.R ChAdOx
+    needs:
+    - design
+    - data_input_process
+    - data_comparisons_process
+    outputs:
+      moderately_sensitive:
+        plot_cumulative_incidence_vax: output/images/cumulative_incidence_ChAdOx.png
+        survtable: output/tables/survtable_ChAdOx.txt
 
