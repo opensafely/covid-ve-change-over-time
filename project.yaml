@@ -698,3 +698,15 @@ actions:
       moderately_sensitive:
         incidence_all: output/tables/incidence_all.txt
 
+  ## plot cumulative incidence of 1st or 3rd vacciantion 
+
+  plot_cumulative_incidence_vax:
+    run: r:latest analysis/comparisons/plot_cumulative_incidence_vax.R BNT162b2
+    needs:
+    - design
+    - data_input_process
+    - data_comparisons_process
+    outputs:
+      moderately_sensitive:
+        plot_cumulative_incidence_vax: output/images/cumulative_incidence_*.png
+
