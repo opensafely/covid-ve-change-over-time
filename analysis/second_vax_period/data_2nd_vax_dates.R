@@ -101,7 +101,11 @@ data_vax_plot <- bind_rows(
   mutate(across(brand, 
                 ~factor(brand, 
                         levels = c("az", "pfizer"),
-                        labels = c("ChAdOx", "BNT162b2")))) 
+                        labels = c("ChAdOx", "BNT162b2")))) %>%
+  rename(n_brand = n) %>%
+  group_by(jcvi_group, elig_date, region_0, dose_2) %>%
+  mutate(n = sum(n_brand)) %>%
+  ungroup()
 
 readr::write_rds(data_vax_plot,
                  here::here("output", "second_vax_period", "data", "data_vax_plot.rds"),
@@ -111,8 +115,9 @@ readr::write_rds(data_vax_plot,
 # number of days in cumulative sum
 l <- 28 
 second_vax_period_dates <- data_vax_plot %>%
+  distinct(jcvi_group, elig_date, region_0, dose_2, n) %>%
   # calculate moving 28-day total number of individuals vaccinated for each elig_date:region_0:brand
-  group_by(jcvi_group, elig_date, region_0, brand) %>%
+  group_by(jcvi_group, elig_date, region_0) %>%
   arrange(dose_2, .by_group = TRUE) %>%
   mutate(
     
@@ -138,8 +143,6 @@ second_vax_period_dates <- data_vax_plot %>%
                    min, na.rm = TRUE),
             .groups = "keep") %>%
   ungroup() %>%
-  distinct(jcvi_group, brand, elig_date, region_0, 
-           start_of_period, end_of_period, cumulative_sum) %>%
   mutate(
     # time between start of first comparison and last date of available data
     days_of_data = as.integer(as.Date(study_parameters$end_date) - start_of_period) + 14,
@@ -147,6 +150,26 @@ second_vax_period_dates <- data_vax_plot %>%
     n_comparisons = pmin(ceiling(days_of_data/28), study_parameters$max_comparisons)
     ) %>%
   select(-days_of_data)
+
+brand_counts <- second_vax_period_dates %>%
+  left_join(data_vax_plot,
+            by = c("jcvi_group", "elig_date", "region_0")) %>%
+  filter(
+    start_of_period <= dose_2,
+    dose_2 <= end_of_period
+    ) %>%
+  group_by(jcvi_group, elig_date, region_0, brand) %>%
+  summarise(n = sum(n_brand), .groups = "keep") %>%
+  ungroup() %>%
+  pivot_wider(
+    names_from = brand, values_from = n, names_prefix = "n_"
+  )
+  
+second_vax_period_dates <- second_vax_period_dates %>%
+  left_join(brand_counts,
+            by = c("jcvi_group", "elig_date", "region_0"))  %>%
+  select(jcvi_group, elig_date, region_0, n_ChAdOx, n_BNT162b2, cumulative_sum,
+         start_of_period, end_of_period, n_comparisons)
 
 # save for plotting
 readr::write_rds(

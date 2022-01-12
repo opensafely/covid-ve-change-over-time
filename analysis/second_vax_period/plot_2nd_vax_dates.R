@@ -1,9 +1,9 @@
-######################################
+################################################################################
 
 # This script:
 # - plots and saves the distribution of second vaccination dates
 
-######################################
+################################################################################
 
 library(tidyverse)
 library(glue)
@@ -23,6 +23,7 @@ second_vax_period_dates <- readr::read_rds(
 group_age_ranges <- readr::read_csv(
   here::here("output", "lib", "group_age_ranges.csv"))
 
+################################################################################
 
 plot_2nd_vax_dates_fun <- function(
   data, 
@@ -60,16 +61,10 @@ plot_2nd_vax_dates_fun <- function(
              stat = "identity", alpha = 0.5, width = 1) +
     # vertical lines to show start and end of second vax period
     geom_vline(data = data %>% filter(brand == "ChAdOx"), 
-               aes(xintercept = start_of_period, colour = "ChAdOx"),
+               aes(xintercept = start_of_period), colour = "black",
                linetype = "dashed") +
     geom_vline(data = data %>% filter(brand == "ChAdOx"), 
-               aes(xintercept = end_of_period, colour = "ChAdOx"),
-               linetype = "dashed") +
-    geom_vline(data = data %>% filter(brand == "BNT162b2"), 
-               aes(xintercept = start_of_period, colour = "BNT162b2"),
-               linetype = "dashed") +
-    geom_vline(data = data %>% filter(brand == "BNT162b2"), 
-               aes(xintercept = end_of_period, colour = "BNT162b2"),
+               aes(xintercept = end_of_period), colour = "black",
                linetype = "dashed") +
     # facet by region
     facet_wrap(~ region_0, scales = "free_y") +
@@ -77,9 +72,9 @@ plot_2nd_vax_dates_fun <- function(
                        labels = sapply(x_breaks, function(x) str_c(day(x), " ", month(x, label=TRUE)))) +
     scale_y_continuous(expand = expansion(mult = c(0,.05))) +
     scale_fill_discrete(name = "brand") +
-    scale_colour_discrete(name = "start and end of 28-day second vaccination period") +
     labs(x = "date of second vaccination", y = "number of individuals",
-         title = title_string, subtitle = subtitle_string) +
+         title = title_string, subtitle = subtitle_string,
+         caption = "Dashed vertical lines show start and end of 28-day second vaccination period.") +
     theme_bw(base_size = 10) +
     theme(legend.position = "bottom",
           legend.box="vertical",
@@ -101,11 +96,14 @@ plot_2nd_vax_dates_fun <- function(
   
 }
 
+################################################################################
+
 # generate and save plots
 lapply(
   data_vax_plot %>%
-    left_join(second_vax_period_dates, 
-              by = c("region_0", "brand", "jcvi_group", "elig_date")) %>% 
+    left_join(second_vax_period_dates %>%
+                select(jcvi_group, elig_date, region_0, start_of_period, end_of_period), 
+              by = c("region_0", "jcvi_group", "elig_date")) %>% 
     group_split(jcvi_group, elig_date),
        function(x)
          try(plot_2nd_vax_dates_fun(data = x)))
