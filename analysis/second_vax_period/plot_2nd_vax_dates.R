@@ -54,16 +54,16 @@ plot_2nd_vax_dates_fun <- function(
   plot_by_region <- ggplot(NULL, aes(x = dose_2)) +
     # overlapping histogram for each brand, binwdith = 1 day
     geom_bar(data = data %>% filter(brand == "ChAdOx"), 
-             aes(y = n, fill = "ChAdOx"),
+             aes(y = n_brand, fill = "ChAdOx"),
              stat = "identity",  alpha = 0.5, width = 1) +
     geom_bar(data = data %>% filter(brand == "BNT162b2"), 
-             aes(y = n, fill = "BNT162b2"), 
+             aes(y = n_brand, fill = "BNT162b2"), 
              stat = "identity", alpha = 0.5, width = 1) +
     # vertical lines to show start and end of second vax period
-    geom_vline(data = data %>% filter(brand == "ChAdOx"), 
+    geom_vline(data = data, 
                aes(xintercept = start_of_period), colour = "black",
                linetype = "dashed") +
-    geom_vline(data = data %>% filter(brand == "ChAdOx"), 
+    geom_vline(data = data, 
                aes(xintercept = end_of_period), colour = "black",
                linetype = "dashed") +
     # facet by region
