@@ -157,7 +157,7 @@ readr::write_rds(
 
 ################################################################################
 # outcomes ----
-outcomes <- c("postest", "covidadmitted", "coviddeath", "death")
+outcomes <- c("postest", "covidadmitted", "coviddeath", "noncoviddeath",  "death")
 
 readr::write_rds(
   outcomes,
