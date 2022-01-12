@@ -74,7 +74,16 @@ data_processed <- data_extract %>%
       #sex == "I" ~ "Inter-sex",
       #sex == "U" ~ "Unknown",
       TRUE ~ NA_character_
+    ),
+    #Subgroup
+    subgroup = fct_case_when(
+      jcvi_group %in% c("04", "06") & age_1 < 65 ~ "16-64 and clinically vulnerable",
+      18 <= age_1 & age_1 < 40 ~ "18-39",
+      40 <= age_1 & age_1 < 65 ~ "40-64",
+      65 <= age_1 ~ "65+",
+      TRUE ~ NA_character_
     )
+    
   ) %>%
   select(-ethnicity_6, -ethnicity_6_sus) %>%
   droplevels()
@@ -86,6 +95,12 @@ data_properties(
   data = data_processed,
   path = file.path("output", "tables")
 )
+
+cat("## check subgroups as desired ##\n")
+data_processed %>%
+  group_by(subgroup, jcvi_group) %>%
+  count() %>%
+  ungroup()
 
 ################################################################################
 # process vaccine data
