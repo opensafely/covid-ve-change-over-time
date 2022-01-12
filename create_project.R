@@ -279,14 +279,14 @@ actions_list <- splice(
     )
   ),
   
-  comment("apply eligiblity criteria from boxes c and d"),
+  comment("apply eligiblity criteria from boxes c, d and e"),
   action(
-    name = "data_eligible_cd",
-    run = "r:latest analysis/second_vax_period/data_eligible_cd.R",
+    name = "data_eligible_cde",
+    run = "r:latest analysis/second_vax_period/data_eligible_cde.R",
     needs = list("design", "data_input_process", "data_eligible_ab", "data_2nd_vax_dates"),
     highly_sensitive = list(
-      data_eligible_c = "output/data/data_eligible_c.rds",
-      data_eligible_d = "output/data/data_eligible_d.rds"
+      data_eligible_e_vax = "output/data/data_eligible_e_vax.rds",
+      data_eligible_e_unvax = "output/data/data_eligible_e_unvax.rds"
     )
   ),
   
@@ -302,7 +302,7 @@ actions_list <- splice(
       "design", 
       "data_input_process", 
       "data_2nd_vax_dates", 
-      "data_eligible_cd"),
+      "data_eligible_cde"),
     highly_sensitive = list(
       data_comparisons = glue("output/data/data_comparisons_*.rds")
     )
