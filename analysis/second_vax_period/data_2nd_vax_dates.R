@@ -179,6 +179,7 @@ readr::write_rds(
 # save to review and release, with cumulative sum rounded to nearest 10
 capture.output(
   second_vax_period_dates %>% 
+    arrange(jcvi_group, elig_date, region_0) %>%
     mutate(across(cumulative_sum, ~ round(.x, -1))) %>% 
     kableExtra::kable("pipe"),
   file = here::here("output", "tables", "second_vax_period_dates.txt"),
