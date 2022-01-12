@@ -678,19 +678,6 @@ study=StudyDefinition(
     #     ),
     #     return_expectations={"incidence": 0.5, },
     # ),
-
-    # # electronic frailty index
-    # # date hard-coded because there are few dates available for efi
-    # efi=patients.with_these_decision_support_values(
-    #     algorithm="electronic_frailty_index",
-    #     on_or_before="elig_date + 56 days", 
-    #     find_last_match_in_period=True,
-    #     returning="numeric_value",
-    #     return_expectations={
-    #         "float": {"distribution": "normal", "mean": 0.20, "stddev": 0.09},
-    #         "incidence": 0.99
-    #     },
-    # ),
     
     # dates of shielding codes
     shielded_0_date=patients.with_these_clinical_events(
