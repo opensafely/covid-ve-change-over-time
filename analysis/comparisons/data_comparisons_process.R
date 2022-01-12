@@ -45,15 +45,14 @@ data_covs <- readr::read_rds(
 # derive comparison arms for k comparisons ----
 # define start_fu_date & end_fu_date for each comparison
 comparison_arms <- function(
-  b, # brand: "BNT162b2", "ChAdOx"
-  a, # arm: "vax", "unvax"
+  arm, # arm: "BNT162b2", "ChAdOx" "unvax"
   K = study_parameters$max_comparisons 
 ) {
   
-  if (b=="BNT162b2") {
-    jcvi_groups_keep <- c("02","03","04","05","06","07","08","09","10", "11", "12")
+  if (arm %in% "ChAdOx") {
+    jcvi_groups_keep <- str_pad(as.character(2:10), width=2, side="left", pad="0")
   } else {
-    jcvi_groups_keep <- c("03","04","05","06","07","08","09","10")
+    jcvi_groups_keep <- str_pad(as.character(2:12), width=2, side="left", pad="0")
   }
 
   
@@ -76,11 +75,12 @@ comparison_arms <- function(
     # which split to keep for comparison k
     split_string <- if_else((k %% 2) == 0, "even", "odd") 
     
-    if (a == "vax") {
+    if (arm %in% c("BNT162b2", "ChAdOx")) {
       
       data <- data_eligible_e_vax %>% 
         # keep the given brand
-        filter(brand %in% b) %>%
+        filter(brand %in% arm) %>%
+        rename("arm" = "brand") %>%
         # start date for vax arm depends on individual's second vax date
         mutate(
           start_fu_date = covid_vax_2_date + days(d),
@@ -93,14 +93,11 @@ comparison_arms <- function(
         ) %>%
         # no third dose before start_fu_date
         filter(no_evidence_of(covid_vax_3_date, start_fu_date)) %>%
-        mutate(arm = "vax") %>%
         droplevels()
       
-    } else if (a == "unvax") {
+    } else if (arm %in% "unvax") {
       
       data <- data_eligible_e_unvax %>% 
-        # keep the given brand
-        filter(brand %in% b) %>%
         # start_fu_date for unvax arm depends on elig_date, region and brand
         mutate(
           start_fu_date = start_of_period + days(d),
@@ -116,13 +113,13 @@ comparison_arms <- function(
           # only keep 50% of unvax individuals, depending on if k odd or even
           split %in% split_string
         ) %>%
-        mutate(arm = "unvax") %>%
+        mutate(arm = arm) %>%
         select(-split) %>%
         droplevels()
       
     } else {
       
-      stop("a must be \"vax\" or \"unvax\"")
+      stop("arm must be \"unvax\", \"BNT162b2\", \"ChAdOx\"")
       
     }
     
@@ -138,7 +135,7 @@ comparison_arms <- function(
         all_of(exclude_if_evidence_of),
         all_vars(no_evidence_of(., start_fu_date))) %>%
       select(
-        patient_id, jcvi_group, elig_date, region_0, brand, arm, 
+        patient_id, jcvi_group, elig_date, region_0, arm, 
         start_fu_date, end_fu_date
       ) %>% 
       mutate(comparison = k)
@@ -251,20 +248,18 @@ process_covariates <- function(.data) {
   )
   
   # define breaks and labels for age_band
-  age_breaks_lower <- c(16, seq(30,90,10))
+  age_breaks_lower <- c(16, seq(20,95,5))
   age_breaks_upper <- as.character(lead(age_breaks_lower) - 1)
   age_breaks_upper[-length(age_breaks_upper)] <- str_c("-", age_breaks_upper[-length(age_breaks_upper)])
   age_breaks_upper[length(age_breaks_upper)] <- "+"
   age_labels <- str_c(age_breaks_lower, age_breaks_upper)
   
   out <- .data %>%
-    mutate(arm = str_c(brand, arm, sep = "_")) %>%
-    select(-brand) %>%
     # join and process covariates
     left_join(
       data_covs %>%
         select(patient_id, 
-               dob, 
+               dob, subgroup,
                all_of(demographic_vars[demographic_vars %in% names(.)]),
                all_of(ever_vars),
                all_of(clinical_vars[clinical_vars %in% names(.)]),
@@ -306,15 +301,6 @@ process_covariates <- function(.data) {
         labels = age_labels
       ),
       
-      # change age band labels from "(lower,upper]" to "lower-upper"
-      age_band = str_remove(age_band, "\\("),
-      age_band = str_remove(age_band, "\\["),
-      age_band = str_remove(age_band, "\\]"),
-      
-      age_band = str_replace(age_band, ",Inf", "+"),
-      age_band = str_replace(age_band, ",", "-"),
-      age_band = factor(age_band),
-      
       any_immunosuppression = (permanant_immunosuppression | 
                                  asplenia | 
                                  dmards | 
@@ -342,18 +328,11 @@ process_covariates <- function(.data) {
         labels=c("0", "1", "2", "3", "4+"), 
         right=FALSE)#,
       
-      # flu_vaccine = flu_vaccine == 1#,
-      
-      # efi = fct_case_when(
-      #   is.na(efi) | (efi <= 0.12) ~ "None",
-      #   efi <= 0.24 ~ "Mild",
-      #   efi <= 0.36 ~ "Moderate",
-      #   TRUE ~ "Severe"
-      # )
+      # flu_vaccine = flu_vaccine == 1
       
     ) %>%
     select(
-      patient_id, jcvi_group, elig_date, region = region_0, ethnicity, arm, 
+      patient_id, jcvi_group, elig_date, region = region_0, ethnicity, arm, subgroup,
       start_fu_date, end_fu_date, comparison,
       dob, 
       unname(unlist(model_varlist))
@@ -365,20 +344,18 @@ process_covariates <- function(.data) {
 }
 
 ################################################################################
-# need to save an unvax dataset corresponding to each brand - even though
-# these are the same individuals, the dates on which covariates are defined 
-# depend on the brand in the vax arm
-for (b in c("BNT162b2", "ChAdOx")) {
-  for (a in c("vax", "unvax")) {
-    data_comparisons <- comparison_arms(b=b, a=a) %>%
+# generate and save datasets
+
+for (arm in c("unvax", "BNT162b2", "ChAdOx")) {
+  
+    data_comparisons <- comparison_arms(arm = arm) %>%
       process_covariates()
     
     readr::write_rds(
       data_comparisons,
-      here::here("output", "data", glue("data_comparisons_{b}_{a}.rds")),
+      here::here("output", "data", glue("data_comparisons_{arm}.rds")),
       compress = "gz"
     )
     
-  }
 }
 
