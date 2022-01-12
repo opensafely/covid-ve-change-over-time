@@ -27,60 +27,57 @@ data_covs <- readr::read_rds(
 
 ################################################################################
 # process outcomes data ----
-for (b in c("BNT162b2", "ChAdOx")) {
-  for (a in c("vax", "unvax")) {
-    
-    cat(glue("----process outcomes data for {b} {a}----"), "\n")
-    
-    # read comparisons data
-    # keep only patient_id and earliest start_fu_date 
-    # (i.e. from comparison 1 for vax and odd unvax, comparison 2 for even unvax)
-    data_ids <- readr::read_rds(
-      here::here("output", "data", glue("data_comparisons_{b}_{a}.rds"))) %>%
-      arrange(patient_id, start_fu_date) %>%
-      select(patient_id, start_fu_date) %>%
-      distinct(patient_id, .keep_all = TRUE)
-    
-    ## join outcomes data
-    data_outcomes <- data_ids %>%
-      left_join(
-        data_long_postest_dates,
-        by = "patient_id"
-      ) %>%
-      left_join(
-        data_long_covidadmitted_dates,
-        by = "patient_id"
-      ) %>%
-      left_join(
-        data_covs,
-        by = "patient_id"
-      ) %>%
-      # in case coviddeath_date and death_date different dates
-      mutate(across(c(coviddeath_date, death_date),
-                    ~ if_else(
-                      !is.na(coviddeath_date) & !is.na(death_date),
-                      pmin(coviddeath_date, death_date, na.rm = TRUE),
-                      .x
-                    ))) %>%
-      # add outcome for noncoviddeath
-      mutate(
-        noncoviddeath_date = if_else(
-          !is.na(death_date) & is.na(coviddeath_date),
-          death_date, 
-          as.Date(NA_character_))
-      ) %>%
-      # discard all data before start_fu_date for each individual
-      mutate(across(c(postest_date, covidadmitted_date, coviddeath_date, death_date, noncoviddeath_date),
-                    ~ if_else(!is.na(.x) & start_fu_date < .x,
-                              .x,
-                              as.Date(NA_character_)))) 
-    
-    # save outcomes data
-    readr::write_rds(
-      data_outcomes,
-      here::here("output", "data", glue("data_outcomes_{b}_{a}.rds")),
-      compress = "gz")
-    
-    
-  }
+for (arm in c("unvax", "BNT162b2", "ChAdOx")) {
+  
+  cat(glue("----process outcomes data for arm: {arm}----"), "\n")
+  
+  # read comparisons data
+  # keep only patient_id and earliest start_fu_date 
+  # (i.e. from comparison 1 for vax and odd unvax, comparison 2 for even unvax)
+  data_ids <- readr::read_rds(
+    here::here("output", "data", glue("data_comparisons_{arm}.rds"))) %>%
+    arrange(patient_id, start_fu_date) %>%
+    select(patient_id, start_fu_date) %>%
+    distinct(patient_id, .keep_all = TRUE)
+  
+  ## join outcomes data
+  data_outcomes <- data_ids %>%
+    left_join(
+      data_long_postest_dates,
+      by = "patient_id"
+    ) %>%
+    left_join(
+      data_long_covidadmitted_dates,
+      by = "patient_id"
+    ) %>%
+    left_join(
+      data_covs,
+      by = "patient_id"
+    ) %>%
+    # in case coviddeath_date and death_date different dates
+    mutate(across(c(coviddeath_date, death_date),
+                  ~ if_else(
+                    !is.na(coviddeath_date) & !is.na(death_date),
+                    pmin(coviddeath_date, death_date, na.rm = TRUE),
+                    .x
+                  ))) %>%
+    # add outcome for noncoviddeath
+    mutate(
+      noncoviddeath_date = if_else(
+        !is.na(death_date) & is.na(coviddeath_date),
+        death_date, 
+        as.Date(NA_character_))
+    ) %>%
+    # discard all data before start_fu_date for each individual
+    mutate(across(c(postest_date, covidadmitted_date, coviddeath_date, death_date, noncoviddeath_date),
+                  ~ if_else(!is.na(.x) & start_fu_date < .x,
+                            .x,
+                            as.Date(NA_character_)))) 
+  
+  # save outcomes data
+  readr::write_rds(
+    data_outcomes,
+    here::here("output", "data", glue("data_outcomes_{arm}.rds")),
+    compress = "gz")
+  
 }
