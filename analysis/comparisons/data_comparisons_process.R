@@ -29,22 +29,16 @@ study_parameters <- readr::read_rds(
 
 # import data ----
 # individuals eligible based on box c criteria
-data_eligible_c <- readr::read_rds(
-  here::here("output", "data", "data_eligible_c.rds"))
+data_eligible_e_vax <- readr::read_rds(
+  here::here("output", "data", "data_eligible_e_vax.rds"))
 
 # individuals eligible based on box d criteria
-data_eligible_d <- readr::read_rds(
-  here::here("output", "data", "data_eligible_d.rds"))
+data_eligible_e_unvax <- readr::read_rds(
+  here::here("output", "data", "data_eligible_e_unvax.rds"))
 
 # covariate data
 data_covs <- readr::read_rds(
-  here::here("output", "data", "data_covs.rds")) %>%
-  # date of first evidence of covid
-  left_join(
-    readr::read_rds(
-      here::here("output", "data", "data_covid_any.rds")),
-    by = "patient_id"
-  )
+  here::here("output", "data", "data_covs.rds")) 
 
 ################################################################################
 
@@ -75,10 +69,6 @@ comparison_arms <- function(
     
     # exclude if evidence of these variables before index_date
     exclude_if_evidence_of <- c(
-      "covid_any_date",
-      "coviddeath_date",
-      "endoflife_date",
-      "midazolam_date",
       "death_date",
       "dereg_date"
     )
@@ -88,7 +78,7 @@ comparison_arms <- function(
     
     if (a == "vax") {
       
-      data <- data_eligible_c %>% 
+      data <- data_eligible_e_vax %>% 
         # keep the given brand
         filter(brand %in% b) %>%
         # start date for vax arm depends on individual's second vax date
@@ -108,7 +98,7 @@ comparison_arms <- function(
       
     } else if (a == "unvax") {
       
-      data <- data_eligible_d %>% 
+      data <- data_eligible_e_unvax %>% 
         # keep the given brand
         filter(brand %in% b) %>%
         # start_fu_date for unvax arm depends on elig_date, region and brand
