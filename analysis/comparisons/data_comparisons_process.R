@@ -36,9 +36,13 @@ data_eligible_e_vax <- readr::read_rds(
 data_eligible_e_unvax <- readr::read_rds(
   here::here("output", "data", "data_eligible_e_unvax.rds"))
 
-# covariate data
-data_covs <- readr::read_rds(
-  here::here("output", "data", "data_covs.rds")) 
+# processed data
+data_processed <- readr::read_rds(
+  here::here("output", "data", "data_processed.rds")) 
+
+# read outcomes
+outcomes <- readr::read_rds(
+  here::here("output", "lib", "outcomes.rds"))
 
 ################################################################################
 
@@ -66,7 +70,7 @@ comparison_arms <- function(
       is.na(cov_date) | index_date < cov_date
     }
     
-    # exclude if evidence of these variables before index_date
+    # exclude if evidence of these variables before start_fu_date
     exclude_if_evidence_of <- c(
       "death_date",
       "dereg_date"
@@ -126,7 +130,7 @@ comparison_arms <- function(
     # apply exclusions
     out_k <- data %>%
       filter(jcvi_group %in% jcvi_groups_keep) %>%
-      left_join(data_covs %>%
+      left_join(data_processed %>%
                   select(patient_id, 
                          all_of(exclude_if_evidence_of)),
                 by = "patient_id") %>%
@@ -241,11 +245,6 @@ process_covariates <- function(.data) {
     # "efi",
     "bmi"
   )
-  end_vars <- c(
-    "coviddeath_date",
-    "death_date",
-    "dereg_date"
-  )
   
   # define breaks and labels for age_band
   age_breaks_lower <- c(16, seq(20,95,5))
@@ -257,13 +256,13 @@ process_covariates <- function(.data) {
   out <- .data %>%
     # join and process covariates
     left_join(
-      data_covs %>%
+      data_processed %>%
         select(patient_id, 
                dob, subgroup,
                all_of(demographic_vars[demographic_vars %in% names(.)]),
                all_of(ever_vars),
                all_of(clinical_vars[clinical_vars %in% names(.)]),
-               all_of(end_vars)), 
+               all_of(str_c(outcomes, "_date"))), 
       by = "patient_id") %>%
     mutate(imd = factor(imd_0)) %>%
     left_join(
@@ -280,6 +279,15 @@ process_covariates <- function(.data) {
                   ~ factor(
                     if_else(is.na(.x), "Not obese", .x),
                     levels = levels(data_bmi$bmi)))) %>%
+    # only keep outcome data in the comparison period
+    mutate(across(
+      all_of(str_c(outcomes, "_date")), 
+      ~ case_when(
+        is.na(.x) ~ as.Date(NA_character_),
+        .x <= start_fu_date ~ as.Date(NA_character_),
+        .x <= end_fu_date ~ .x,
+        TRUE ~  as.Date(NA_character_)))) %>%
+    # process ever covariates
     mutate(across(
       all_of(ever_vars), 
       ~ case_when(
@@ -335,7 +343,8 @@ process_covariates <- function(.data) {
       patient_id, jcvi_group, elig_date, region = region_0, ethnicity, arm, subgroup,
       start_fu_date, end_fu_date, comparison,
       dob, 
-      unname(unlist(model_varlist))
+      unname(unlist(model_varlist)),
+      all_of(str_c(outcomes, "_date"))
     ) %>%
     droplevels()
   
@@ -353,7 +362,7 @@ for (arm in c("unvax", "BNT162b2", "ChAdOx")) {
     
     readr::write_rds(
       data_comparisons,
-      here::here("output", "data", glue("data_comparisons_{arm}.rds")),
+      here::here("output", "comparisons", "data", glue("data_comparisons_{arm}.rds")),
       compress = "gz"
     )
     
