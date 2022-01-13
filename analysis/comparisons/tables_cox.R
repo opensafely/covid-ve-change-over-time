@@ -11,29 +11,34 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  subgroup <- "03-10"
   comparison <- "BNT162b2"
+  subgroup_label <- 2
   
 } else{
-  subgroup <- args[[1]]
-  comparison <- args[[2]]
+  comparison <- args[[1]]
+  subgroup_label <- args[[2]]
 }
 
 ################################################################################
-fs::dir_create(here::here("output", "tables"))
+fs::dir_create(here::here("output", "models_cox",  "tables"))
 
 second_vax_period_dates <- readr::read_rds(
-  here::here("output", "lib", "second_vax_period_dates.rds")) 
+  here::here("output", "second_vax_period", "data", "second_vax_period_dates.rds")) 
 
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds")
+)
+
+subgroups <- readr::read_rds(
+  here::here("output", "lib", "subgroups.rds")
 )
 
 ################################################################################
 # function for printing glance
 print_table <- function(outcome) {
   
-  model_glance <- readr::read_csv(here::here("output", "models", glue("modelcox_glance_{subgroup}_{comparison}_{outcome}.csv")))
+  model_glance <- readr::read_rds(
+    here::here("output", "models_cox", "data", glue("modelcox_glance_{comparison}_{subgroup_label}_{outcome}.rds")))
   
   model_glance %>%
     select(-outcome) %>%
@@ -53,7 +58,7 @@ print_table <- function(outcome) {
 
 capture.output(
   map(outcomes, function(x) try(print_table(outcome = x))),
-  file = here::here("output", "tables", glue("modelcox_glance_{subgroup}_{comparison}.txt")),
+  file = here::here("output", "models_cox", "tables", glue("modelcox_glance_{comparison}_{subgroup_label}.txt")),
   append=FALSE
 )
 
@@ -63,7 +68,7 @@ capture.output(
 print_coefficients <- function(outcome) {
   
   data <- readr::read_rds(
-    here::here("output", "models", glue("modelcox_summary_{subgroup}_{comparison}_{outcome}.rds")))
+    here::here("output", "models_cox", "data", glue("modelcox_summary_{comparison}_{subgroup_label}_{outcome}.rds")))
                
   data %>%
     filter(outcome %in% outcome) %>%
@@ -83,7 +88,7 @@ print_coefficients <- function(outcome) {
 
 capture.output(
   map(outcomes, function(x) try(print_coefficients(outcome = x))),
-  file = here::here("output", "tables", glue("modelcox_coefficients_{subgroup}_{comparison}.txt")),
+  file = here::here("output", "models_cox", "tables", glue("modelcox_coefficients_{comparison}_{subgroup_label}.txt")),
   append=FALSE
 )
 
