@@ -56,28 +56,27 @@ convert_comment_actions <-function(yaml.txt){
 
 ## actions that extract and process data ----
 apply_model_fun <- function(
-  subgroup,
+  subgroup_label,
   comparison,
   outcome
 ) {
+  
+  subgroup <- subgroups[subgroup_label]
+  
   splice(
-    comment(glue("subgroup = {subgroup}, comparison = {comparison}, outcome = {outcome}")),
+    comment(glue("{comparison}; {subgroup}; {outcome}")),
     action(
-      name = glue("apply_model_cox_{subgroup}_{comparison}_{outcome}"),
+      name = glue("apply_model_cox_{comparison}_{subgroup_label}_{outcome}"),
       run = "r:latest analysis/comparisons/apply_model_cox.R",
-      arguments = c(subgroup, comparison, outcome),
+      arguments = c(comparison, subgroup_label, outcome),
       needs = list(
         "design", 
         "data_comparisons_process", 
         "data_tte_process"),
       highly_sensitive = list(
-        modelnumber = glue("output/models/model*_{subgroup}_{comparison}_{outcome}.rds"),
-        model_summary_rds = glue("output/models/modelcox_summary_{subgroup}_{comparison}_{outcome}.rds")
-      ),
-      moderately_sensitive = list(
-        incidence_table_all = glue("output/tables/incidence_{subgroup}_{comparison}_{outcome}_all.txt"),
-        incidence_table_strata = glue("output/tables/incidence_{subgroup}_{comparison}_{outcome}_strata.txt"),
-        model_glance = glue("output/models/modelcox_glance_{subgroup}_{comparison}_{outcome}.csv")
+        modelnumber = glue("output/models_cox/data/model*_{comparison}_{subgroup_label}_{outcome}.rds"),
+        model_summary = glue("output/models_cox/data/modelcox_summary_{comparison}_{subgroup_label}_{outcome}.rds"),
+        model_glance = glue("output/models_cox/data/modelcox_glance_{comparison}_{subgroup_label}_{outcome}.rds")
       )
     )
     
@@ -167,8 +166,9 @@ defaults_list <- list(
 
 
 
-outcomes <- c("postest", "covidadmitted", "coviddeath", "death")
-subgroups <- c("02", "03-10", "11-12")  
+outcomes <- readr::read_rds(here::here("output", "lib", "outcomes.rds"))
+subgroups <- c(readr::read_rds(here::here("output", "lib", "subgroups.rds")), "all")
+subgroup_labels <- seq_along(subgroups)
 comparisons <- c("BNT162b2", "ChAdOx", "both")
 plots <- c("BNT162b2", "ChAdOx", "BNT162b2andChAdOx", "BNT162b2vsChAdOx")
 
@@ -226,13 +226,14 @@ actions_list <- splice(
     run = "r:latest analysis/preprocess/data_input_process.R",
     needs = list("design", "dummy_data", "generate_study_population"),
     highly_sensitive = list(
-      data_covs = "output/data/data_covs.rds",
-      data_vax_dates = "output/data/data_*_vax_dates.rds",
-      data_long_dates = "output/data/data_long_*_dates.rds",
-      data_covid_any = "output/data/data_covid_any.rds"
+      data_all = "output/data/data_*.rds"
+      # data_processed = "output/data/data_processed.rds",
+      # data_vax_dates = "output/data/data_*_vax_dates.rds",
+      # data_long_dates = "output/data/data_long_*_dates.rds",
+      # data_covid_any = "output/data/data_covid_any.rds"
     ),
     moderately_sensitive = list(
-      data_properties = "output/tables/data_processed_tabulate.txt"
+      data_properties = "output/tables/data_*_tabulate.txt"
     )
   ),
   
@@ -262,10 +263,10 @@ actions_list <- splice(
     needs = list("design", "data_input_process", "data_eligible_ab"),
     highly_sensitive = list(
       data_vax_plot = "output/second_vax_period/data/data_vax_plot.rds",
-      second_vax_period_dates_rds = "output/lib/second_vax_period_dates.rds"
+      second_vax_period_dates_rds = "output/second_vax_period/data/second_vax_period_dates.rds"
     ),
     moderately_sensitive = list(
-      second_vax_period_dates_txt = "output/tables/second_vax_period_dates.txt"
+      second_vax_period_dates_txt = "output/second_vax_period/tables/second_vax_period_dates.txt"
     )
   ),
   
@@ -304,20 +305,7 @@ actions_list <- splice(
       "data_2nd_vax_dates", 
       "data_eligible_cde"),
     highly_sensitive = list(
-      data_comparisons = glue("output/data/data_comparisons_*.rds")
-    )
-  ),
-  
-  comment(glue("process outcomes data")),
-  action(
-    name = "data_outcomes_process",
-    run = "r:latest analysis/comparisons/data_outcomes_process.R",
-    needs = list(
-      "design",
-      "data_input_process",
-      "data_comparisons_process"),
-    highly_sensitive = list(
-      data_outcomes = "output/data/data_outcomes_*.rds"
+      data_comparisons = glue("output/comparisons/data/data_comparisons_*.rds")
     )
   ),
   
@@ -327,131 +315,143 @@ actions_list <- splice(
     run = "r:latest analysis/comparisons/data_tte_process.R",
     needs = list(
       "design",
-      "data_comparisons_process", 
-      "data_outcomes_process"),
+      "data_input_process",
+      "data_comparisons_process"),
     highly_sensitive = list(
-      data_tte_brand_outcome = "output/data/data_tte_*.rds"
+      data_tte_brand_outcome = "output/tte/data/data_tte_*.rds",
+      event_counts = "output/tte/tables/event_counts.rds"
     )
   ),
   
-  comment("apply models"),
-  splice(
-    # over subgroups
-    unlist(lapply(
-      subgroups, # subgroups
-      function(x) {
-        
-        if (x %in% c("02", "11-12")) {
-          comparisons <- "BNT162b2"
-        } 
-        
-        # over comparisons
-        unlist(lapply(
-          comparisons,
-          function(y)
-            unlist(lapply(
-              outcomes,
-              function(z)
-              apply_model_fun(
-                subgroup = x,
-                comparison = y, 
-                outcome = z)  
-            ),
-            recursive = FALSE)
-        ),
-        recursive = FALSE)
-      }
-      
-    ), recursive = FALSE)
-    #
-  ),
-  
-  comment("generate tables"),
-  splice(
-    # over subgroups
-    unlist(lapply(
-      subgroups, # subgroups
-      function(x) {
-        
-        if (x %in% c("02", "11-12")) {
-          comparisons <- "BNT162b2"
-        } 
-        
-        # over comparisons
-        unlist(lapply(
-          comparisons,
-          function(y)
-                table_fun(
-                  subgroup = x,
-                  comparison = y
-                  )  
-        ),
-        recursive = FALSE)
-      }
-      
-    ), recursive = FALSE)
-    #
-  ),
-  
-  comment("generate plots"),
-  splice(
-    unlist(lapply(plots,
-                  function(p)
-                    plot_fun(plot = p)
-                  ), recursive = FALSE)),
-  
-  comment("combine all incidence tables"),
+  comment(glue("process event counts tables")),
   action(
-    name = glue("combine_incidence_tables"),
-    run = "r:latest analysis/comparisons/combine_incidence_tables.R",
-    needs = splice("design", 
-                   # "data_2nd_vax_dates",
-                   # "data_tte_process",
-                   as.list(unlist(lapply(
-                     subgroups, # subgroups
-                     function(x) {
-                       
-                       if (x %in% c("02", "11-12")) {
-                         comparisons <- "BNT162b2"
-                       } 
-                       
-                       # over comparisons
-                       unlist(lapply(
-                         comparisons,
-                         function(y)
-                           unlist(lapply(
-                             outcomes,
-                             function(z)
-                               glue("apply_model_cox_{x}_{y}_{z}")
-                           ),
-                           recursive = FALSE)
-                       ),
-                       recursive = FALSE)
-                     }
-                     
-                   ), recursive = FALSE))),
+    name = "process_event_count_tables",
+    run = "r:latest analysis/comparisons/process_event_count_tables.R",
+    needs = list(
+      "design",
+      "data_tte_process"),
     moderately_sensitive = list(
-      incidence_all = glue("output/tables/incidence_all.txt"))
-  ),
+      tables_events = "output/tte/tables/events_*.csv",
+      tidy_tables_events = "output/tte/tables/tidy_events_*.txt"
+    )
+  )#,
   
-  comment("plot cumulative incidence of 1st or 3rd vacciantion"),
-  splice(unlist(lapply(
-    c("BNT162b2", "ChAdOx"),
-    function(x)
-      action(
-        name = glue("plot_cumulative_incidence_vax_{x}"),
-        run = "r:latest analysis/comparisons/plot_cumulative_incidence_vax.R",
-        arguments = x,
-        needs = list(
-          "design",
-          "data_input_process",
-          "data_comparisons_process"),
-        moderately_sensitive = list(
-          plot_cumulative_incidence_vax = glue("output/images/cumulative_incidence_{x}.png"),
-          survtable = glue("output/tables/survtable_{x}.txt")
-        )
-      )
-  ), recursive = FALSE))
+  # comment("apply models"),
+  # splice(
+  #   # over subgroups
+  #   unlist(lapply(
+  #     comparisons,
+  #     
+  #     function(x) {
+  #       if (!(x %in% "BNT162b2")) {
+  #         subgroup_labels <- subgroup_labels[-which(subgroups == "18-39")]
+  #       } 
+  #       unlist(lapply(
+  #         subgroup_labels,
+  #         
+  #         function(y)
+  #           unlist(lapply(
+  #             outcomes,
+  #             
+  #             function(z)
+  #             apply_model_fun(
+  #               comparison = x, 
+  #               subgroup_label = y,
+  #               outcome = z)  
+  #           ),
+  #           recursive = FALSE)
+  #       ),
+  #       recursive = FALSE)
+  #     }
+  #   ), recursive = FALSE)
+  # )#,
+  
+  # comment("generate tables"),
+  # splice(
+  #   # over subgroups
+  #   unlist(lapply(
+  #     subgroups, # subgroups
+  #     function(x) {
+  #       
+  #       if (x %in% c("02", "11-12")) {
+  #         comparisons <- "BNT162b2"
+  #       } 
+  #       
+  #       # over comparisons
+  #       unlist(lapply(
+  #         comparisons,
+  #         function(y)
+  #               table_fun(
+  #                 subgroup = x,
+  #                 comparison = y
+  #                 )  
+  #       ),
+  #       recursive = FALSE)
+  #     }
+  #     
+  #   ), recursive = FALSE)
+  #   #
+  # ),
+  # 
+  # comment("generate plots"),
+  # splice(
+  #   unlist(lapply(plots,
+  #                 function(p)
+  #                   plot_fun(plot = p)
+  #                 ), recursive = FALSE)),
+  # 
+  # comment("combine all incidence tables"),
+  # action(
+  #   name = glue("combine_incidence_tables"),
+  #   run = "r:latest analysis/comparisons/combine_incidence_tables.R",
+  #   needs = splice("design", 
+  #                  # "data_2nd_vax_dates",
+  #                  # "data_tte_process",
+  #                  as.list(unlist(lapply(
+  #                    subgroups, # subgroups
+  #                    function(x) {
+  #                      
+  #                      if (x %in% c("02", "11-12")) {
+  #                        comparisons <- "BNT162b2"
+  #                      } 
+  #                      
+  #                      # over comparisons
+  #                      unlist(lapply(
+  #                        comparisons,
+  #                        function(y)
+  #                          unlist(lapply(
+  #                            outcomes,
+  #                            function(z)
+  #                              glue("apply_model_cox_{x}_{y}_{z}")
+  #                          ),
+  #                          recursive = FALSE)
+  #                      ),
+  #                      recursive = FALSE)
+  #                    }
+  #                    
+  #                  ), recursive = FALSE))),
+  #   moderately_sensitive = list(
+  #     incidence_all = glue("output/tables/incidence_all.txt"))
+  # ),
+  # 
+  # comment("plot cumulative incidence of 1st or 3rd vacciantion"),
+  # splice(unlist(lapply(
+  #   c("BNT162b2", "ChAdOx"),
+  #   function(x)
+  #     action(
+  #       name = glue("plot_cumulative_incidence_vax_{x}"),
+  #       run = "r:latest analysis/comparisons/plot_cumulative_incidence_vax.R",
+  #       arguments = x,
+  #       needs = list(
+  #         "design",
+  #         "data_input_process",
+  #         "data_comparisons_process"),
+  #       moderately_sensitive = list(
+  #         plot_cumulative_incidence_vax = glue("output/images/cumulative_incidence_{x}.png"),
+  #         survtable = glue("output/tables/survtable_{x}.txt")
+  #       )
+  #     )
+  # ), recursive = FALSE))
 )
 
 ## combine everything ----
