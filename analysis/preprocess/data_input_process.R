@@ -18,8 +18,8 @@ source(here::here("analysis", "lib", "data_process_functions.R"))
 source(here::here("analysis", "lib", "data_properties.R"))
 
 ## create folders for outputs
-dir.create(here::here("output", "data"), showWarnings = FALSE, recursive=TRUE)
-dir.create(here::here("output", "tables"), showWarnings = FALSE, recursive=TRUE)
+fs::dir_create(here::here("output", "data"))
+fs::dir_create(here::here("output", "tables"))
 
 ## import study_parameters
 study_parameters <- readr::read_rds(
@@ -43,7 +43,7 @@ data_extract <-
   mutate(across(imd_0, ~as.integer(as.character(.x))))
 
 cat("#### process extracted data ####\n")
-data_processed <- data_extract %>%
+data_processed_0 <- data_extract %>%
   # derive ethnicity variable
   mutate(
     # Region
@@ -89,15 +89,15 @@ data_processed <- data_extract %>%
   droplevels()
 
 ################################################################################
-cat("#### properties of data_processed ####\n")
+cat("#### properties of data_processed_0 ####\n")
 # for checking for errors
 data_properties(
-  data = data_processed,
+  data = data_processed_0,
   path = file.path("output", "tables")
 )
 
 cat("## check subgroups as desired ##\n")
-data_processed %>%
+data_processed_0 %>%
   group_by(subgroup, jcvi_group) %>%
   count() %>%
   ungroup()
@@ -106,7 +106,7 @@ data_processed %>%
 # process vaccine data
 data_vax <- local({
   
-  data_vax_pfizer <- data_processed %>%
+  data_vax_pfizer <- data_processed_0 %>%
     select(patient_id, matches("covid\\_vax\\_pfizer\\_\\d+\\_date")) %>%
     pivot_longer(
       cols = -patient_id,
@@ -117,7 +117,7 @@ data_vax <- local({
     ) %>%
     arrange(patient_id, date)
   
-  data_vax_az <- data_processed %>%
+  data_vax_az <- data_processed_0 %>%
     select(patient_id, matches("covid\\_vax\\_az\\_\\d+\\_date")) %>%
     pivot_longer(
       cols = -patient_id,
@@ -128,7 +128,7 @@ data_vax <- local({
     ) %>%
     arrange(patient_id, date)
   
-  data_vax_moderna <- data_processed %>%
+  data_vax_moderna <- data_processed_0 %>%
     select(patient_id, matches("covid\\_vax\\_moderna\\_\\d+\\_date")) %>%
     pivot_longer(
       cols = -patient_id,
@@ -140,7 +140,7 @@ data_vax <- local({
     arrange(patient_id, date)
   
   
-  data_vax <- data_processed %>% # to get the unvaccinated
+  data_vax <- data_processed_0 %>% # to get the unvaccinated
     # filter(if_all(starts_with("covid_vax"), ~ is.na(.))) %>%
     filter_at(vars(starts_with("covid_vax")), all_vars(is.na(.))) %>%
     select(patient_id) %>% 
@@ -180,10 +180,10 @@ data_vax_wide <- data_vax %>%
   )
 
 # save long and wide datasets or vaccine variables
-readr::write_rds(
-  data_vax, 
-  here::here("output", "data", "data_long_vax_dates.rds"), 
-  compress="gz")
+# readr::write_rds(
+#   data_vax, 
+#   here::here("output", "data", "data_long_vax_dates.rds"), 
+#   compress="gz")
 
 readr::write_rds(
   data_vax_wide,
@@ -194,7 +194,7 @@ readr::write_rds(
 ## create one-row-per-event datasets for recurring variables
 
 # shielded
-data_pr_shielded <- data_processed %>%
+data_pr_shielded <- data_processed_0 %>%
   select(patient_id,
          matches("^shielded\\_\\d+\\_date")) %>%
   pivot_longer(
@@ -213,7 +213,7 @@ readr::write_rds(
 
 ###############################################################################
 # nonshielded
-data_pr_nonshielded <- data_processed %>%
+data_pr_nonshielded <- data_processed_0 %>%
   select(patient_id,
          matches("^nonshielded\\_\\d+\\_date")) %>%
   pivot_longer(
@@ -232,7 +232,7 @@ readr::write_rds(
 
 ###############################################################################
 # bmi
-data_pr_bmi <- data_processed %>%
+data_pr_bmi <- data_processed_0 %>%
   select(patient_id,
          matches("^bmi\\_\\d+")) %>%
   rename_at(vars(contains("date")),
@@ -258,7 +258,7 @@ readr::write_rds(
 
 ###############################################################################
 # suspected covid
-data_pr_suspected_covid <- data_processed %>%
+data_pr_suspected_covid <- data_processed_0 %>%
   select(patient_id,
          matches("^primary\\_care\\_suspected\\_covid\\_\\d+\\_date")) %>%
   pivot_longer(
@@ -270,14 +270,14 @@ data_pr_suspected_covid <- data_processed %>%
   ) %>%
   arrange(patient_id, date)
 
-readr::write_rds(
-  data_pr_suspected_covid, 
-  here::here("output", "data", "data_long_pr_suspected_covid_dates.rds"), 
-  compress="gz")
+# readr::write_rds(
+#   data_pr_suspected_covid, 
+#   here::here("output", "data", "data_long_pr_suspected_covid_dates.rds"), 
+#   compress="gz")
 
 ###############################################################################
 # probable covid
-data_pr_probable_covid <- data_processed %>%
+data_pr_probable_covid <- data_processed_0 %>%
   select(patient_id,
          matches("^primary\\_care\\_covid\\_case\\_\\d+\\_date")) %>%
   pivot_longer(
@@ -289,14 +289,14 @@ data_pr_probable_covid <- data_processed %>%
   ) %>%
   arrange(patient_id, date)
 
-readr::write_rds(
-  data_pr_probable_covid, 
-  here::here("output", "data", "data_long_pr_probable_covid_dates.rds"),
-  compress="gz")
+# readr::write_rds(
+#   data_pr_probable_covid, 
+#   here::here("output", "data", "data_long_pr_probable_covid_dates.rds"),
+#   compress="gz")
 
 ###############################################################################
 # covid admission
-data_covidadmitted <- data_processed %>%
+data_covidadmitted <- data_processed_0 %>%
   select(patient_id, 
          matches("^covidadmitted\\_\\d+\\_date")) %>%
   pivot_longer(
@@ -308,14 +308,14 @@ data_covidadmitted <- data_processed %>%
   ) %>%
   arrange(patient_id, date)
 
-readr::write_rds(
-  data_covidadmitted, 
-  here::here("output", "data", "data_long_covidadmitted_dates.rds"), 
-  compress="gz")
+# readr::write_rds(
+#   data_covidadmitted, 
+#   here::here("output", "data", "data_long_covidadmitted_dates.rds"), 
+#   compress="gz")
 
 ###############################################################################
 # positive test
-data_postest <- data_processed %>%
+data_postest <- data_processed_0 %>%
   select(patient_id, 
          matches("^positive\\_test\\_\\d+\\_date")) %>%
   pivot_longer(
@@ -334,7 +334,7 @@ data_covidadmitted_impute <- data_covidadmitted %>%
   rename(postest_index = covidadmitted_index)
 
 # individuals with coviddeath but not postest
-data_coviddeath_impute <- data_processed %>%
+data_coviddeath_impute <- data_processed_0 %>%
   select(patient_id, coviddeath_date) %>%
   filter(!is.na(coviddeath_date)) %>%
   anti_join(data_postest,
@@ -352,10 +352,10 @@ data_postest <- bind_rows(
   data_coviddeath_impute
 )
 
-readr::write_rds(
-  data_postest, 
-  here::here("output", "data", "data_long_postest_dates.rds"), 
-  compress="gz")
+# readr::write_rds(
+#   data_postest, 
+#   here::here("output", "data", "data_long_postest_dates.rds"), 
+#   compress="gz")
 
 ################################################################################
 # create dataset which contains the earliest date of any evidence of covid
@@ -390,26 +390,77 @@ data_covid_any <- bind_rows(
   distinct(patient_id, .keep_all = TRUE) %>%
   rename(covid_any_date = date)
 
-readr::write_rds(
-  data_covid_any, 
-  here::here("output", "data", "data_covid_any.rds"), 
-  compress="gz")
+# readr::write_rds(
+#   data_covid_any, 
+#   here::here("output", "data", "data_covid_any.rds"), 
+#   compress="gz")
+
+################################################################################
+# create dataset of outcomes data
+
+## join outcomes data
+data_outcomes <- data_processed_0 %>%
+  select(patient_id, contains("death")) %>%
+  left_join(
+    data_postest %>% select(patient_id, postest_date = date),
+    by = "patient_id"
+  ) %>%
+  left_join(
+    data_covidadmitted %>% select(patient_id, covidadmitted_date = date),
+    by = "patient_id"
+  ) %>%
+  # in case coviddeath_date and death_date different dates
+  mutate(across(c(coviddeath_date, death_date),
+                ~ if_else(
+                  !is.na(coviddeath_date) & !is.na(death_date),
+                  pmin(coviddeath_date, death_date, na.rm = TRUE),
+                  .x
+                ))) %>%
+  # add outcome for noncoviddeath
+  mutate(
+    noncoviddeath_date = if_else(
+      !is.na(death_date) & is.na(coviddeath_date),
+      death_date, 
+      as.Date(NA_character_))
+  )
+
+# # save outcomes data
+# readr::write_rds(
+#   data_outcomes,
+#   here::here("output", "data", "data_outcomes.rds"),
+#   compress = "gz")
 
 ################################################################################
 # save dataset of covariates 
 # (remove variables that are saved elsewhere)
-readr::write_rds(
-  data_processed %>%
+
+data_processed <- data_processed_0 %>%
+  # join covid_any
+  left_join(
+    data_covid_any,
+    by = "patient_id") %>%
+  select(
     # remove vaccine variables
-    select(-contains("_vax_")) %>%
+    -contains("_vax_"),
+    # remove death variables
+    -contains("death"),
     # remove recurring variables
-    select(-starts_with(c(
+    -starts_with(c(
       "shielded",
       "nonshielded",
       "bmi", 
       "primary_care_suspected_covid", 
       "primary_care_covid_case",
       "positive_test",
-      "covidadmitted"))),
-  here::here("output", "data", "data_covs.rds"), 
+      "covidadmitted"))
+  ) %>%
+  # join processed outcomes data
+  left_join(
+    data_outcomes,
+    by = "patient_id"
+  )
+
+readr::write_rds(
+  data_processed,
+  here::here("output", "data", "data_processed.rds"), 
   compress="gz")
