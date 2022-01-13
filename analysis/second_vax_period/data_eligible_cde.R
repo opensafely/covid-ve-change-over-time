@@ -30,17 +30,11 @@ data_vax_wide <- readr::read_rds(
 
 # read second vax period dates 
 second_vax_period_dates <- readr::read_rds(
-  here::here("output", "lib", "second_vax_period_dates.rds"))
+  here::here("output", "second_vax_period", "data", "second_vax_period_dates.rds"))
 
 # covariate data
-data_covs <- readr::read_rds(
-  here::here("output", "data", "data_covs.rds")) %>%
-  # date of first evidence of covid
-  left_join(
-    readr::read_rds(
-      here::here("output", "data", "data_covid_any.rds")),
-    by = "patient_id"
-  ) %>%
+data_processed <- readr::read_rds(
+  here::here("output", "data", "data_processed.rds")) %>%
   select(patient_id, endoflife_date, midazolam_date, covid_any_date)
 
 ################################################################################
@@ -104,13 +98,13 @@ exclusion_e <- function(.data) {
   }
   
   .data %>%
-    left_join(data_covs, by = "patient_id") %>%
+    left_join(data_processed, by = "patient_id") %>%
     filter(
       no_evidence_of(endoflife_date, start_of_period),
       no_evidence_of(midazolam_date, start_of_period),
       no_evidence_of(covid_any_date, start_of_period - weeks(2))
     ) %>%
-    select(-all_of(names(data_covs)[!names(data_covs) %in% "patient_id"]))
+    select(-all_of(names(data_processed)[!names(data_processed) %in% "patient_id"]))
     
 }
 
