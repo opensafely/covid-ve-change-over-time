@@ -188,7 +188,8 @@ actions_list <- splice(
       elig_dates = "output/lib/elig_dates.csv",
       regions = "output/lib/regions.csv",
       model_varlist = "output/lib/model_varlist.rds",
-      outcomes = "output/lib/outcomes.rds"
+      outcomes = "output/lib/outcomes.rds",
+      subgroups = "output/lib/subgroups.rds"
     )
   ),
   
