@@ -26,6 +26,7 @@ load_data <- function(arm) {
   readr::read_rds(
     here::here("output", "comparisons", "data", glue("data_comparisons_{arm}.rds"))) %>%
     select(patient_id, comparison, arm, subgroup, start_fu_date, end_fu_date,
+           dereg_date, death_date,
            all_of(str_c(outcomes, "_date"))) 
   
 }
@@ -86,7 +87,8 @@ derive_data_tte <- function(
   
   # derive data_tte
   data_tte <- .data %>%
-    select(patient_id, comparison, arm, subgroup, start_fu_date, end_fu_date,
+    select(patient_id, comparison, arm, subgroup, start_fu_date, end_fu_date, 
+           dereg_date, death_date, # for censoring
            matches(str_c(outcome, "_date"))) %>%
     arrange(patient_id, comparison) %>%
     group_by(patient_id) %>%
@@ -104,8 +106,7 @@ derive_data_tte <- function(
     rename_at(vars(ends_with("_date")),
               ~ str_remove(.x, "_date")) %>%
     mutate(
-      tte = pmin(!! sym(outcome), end_fu, na.rm = TRUE), # no censoring for dereg or death
-      # tte = pmin(!! sym(outcome), dereg, noncoviddeath, end_fu, na.rm = TRUE),
+      tte = pmin(!! sym(outcome), dereg, death, end_fu, na.rm = TRUE),
       status = if_else(
         !is.na(!! sym(outcome)) & !! sym(outcome) == tte,
         TRUE,
@@ -174,5 +175,5 @@ table_events <- lapply(
 
 readr::write_rds(
   table_events,
-  here::here("output", "tte", "tables", glue("event_counts.rds")),
+  here::here("output", "tte", "tables", "event_counts.rds"),
   compress = "gz")
