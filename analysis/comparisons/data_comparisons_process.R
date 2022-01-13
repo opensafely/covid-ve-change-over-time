@@ -46,6 +46,11 @@ outcomes <- readr::read_rds(
 
 ################################################################################
 
+censor_vars <- c(
+  "death_date",
+  "dereg_date"
+)
+
 # derive comparison arms for k comparisons ----
 # define start_fu_date & end_fu_date for each comparison
 comparison_arms <- function(
@@ -69,12 +74,6 @@ comparison_arms <- function(
     no_evidence_of <- function(cov_date, index_date) {
       is.na(cov_date) | index_date < cov_date
     }
-    
-    # exclude if evidence of these variables before start_fu_date
-    exclude_if_evidence_of <- c(
-      "death_date",
-      "dereg_date"
-    )
     
     # which split to keep for comparison k
     split_string <- if_else((k %% 2) == 0, "even", "odd") 
@@ -132,11 +131,11 @@ comparison_arms <- function(
       filter(jcvi_group %in% jcvi_groups_keep) %>%
       left_join(data_processed %>%
                   select(patient_id, 
-                         all_of(exclude_if_evidence_of)),
+                         all_of(censor_vars)),
                 by = "patient_id") %>%
       # exclude if evidence of xxx before start_fu_date
       filter_at(
-        all_of(exclude_if_evidence_of),
+        all_of(censor_vars),
         all_vars(no_evidence_of(., start_fu_date))) %>%
       select(
         patient_id, jcvi_group, elig_date, region_0, arm, 
@@ -258,7 +257,8 @@ process_covariates <- function(.data) {
     left_join(
       data_processed %>%
         select(patient_id, 
-               dob, subgroup,
+               dob, subgroup, 
+               all_of(censor_vars),
                all_of(demographic_vars[demographic_vars %in% names(.)]),
                all_of(ever_vars),
                all_of(clinical_vars[clinical_vars %in% names(.)]),
@@ -279,9 +279,9 @@ process_covariates <- function(.data) {
                   ~ factor(
                     if_else(is.na(.x), "Not obese", .x),
                     levels = levels(data_bmi$bmi)))) %>%
-    # only keep outcome data in the comparison period
+    # only keep outcome or censor data in the comparison period
     mutate(across(
-      all_of(str_c(outcomes, "_date")), 
+      all_of(c(censor_vars, str_c(outcomes, "_date"))), 
       ~ case_when(
         is.na(.x) ~ as.Date(NA_character_),
         .x <= start_fu_date ~ as.Date(NA_character_),
@@ -341,13 +341,13 @@ process_covariates <- function(.data) {
     ) %>%
     select(
       patient_id, jcvi_group, elig_date, region = region_0, ethnicity, arm, subgroup,
-      start_fu_date, end_fu_date, comparison,
-      dob, 
+      start_fu_date, end_fu_date, comparison, dob, 
       unname(unlist(model_varlist)),
-      all_of(str_c(outcomes, "_date"))
+      all_of(str_c(outcomes, "_date")),
+      all_of(censor_vars)
     ) %>%
     droplevels()
-  
+
   return(out)
   
 }
