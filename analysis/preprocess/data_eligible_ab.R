@@ -12,14 +12,8 @@ library(lubridate)
 library(glue)
 
 # read processed covariates data
-data_covs <- readr::read_rds(
-  here::here("output", "data", "data_covs.rds")) %>%
-  # date of first evidence of covid
-  left_join(
-    readr::read_rds(
-      here::here("output", "data", "data_covid_any.rds")),
-    by = "patient_id"
-  )
+data_processed <- readr::read_rds(
+  here::here("output", "data", "data_processed.rds")) 
 
 # read wide vaccine dates data
 data_vax_wide <- readr::read_rds(
@@ -28,13 +22,13 @@ data_vax_wide <- readr::read_rds(
 # count the number of patients in the extracted data
 eligibility_count <- tribble(
   ~description, ~n,
-  "Extracted using study_definition", n_distinct(data_covs$patient_id)
+  "Extracted using study_definition", n_distinct(data_processed$patient_id)
 )
 
 ################################################################################
 cat("#### apply exclusion criteria from box a to processed data ####\n")
 # remove dummy jcvi_group
-data_eligible_a <- data_covs %>%
+data_eligible_a <- data_processed %>%
   filter(!(jcvi_group %in% "99"))
 
 eligibility_count <- eligibility_count %>%
@@ -195,7 +189,7 @@ readr::write_csv(eligibility_count,
 
 ################################################################################
 # jcvi_group, elig_date combos ----
-fix_age <- data_covs %>%
+fix_age <- data_processed %>%
   mutate(age = if_else(
     jcvi_group %in% c("10", "11", "12"),
     age_2,
