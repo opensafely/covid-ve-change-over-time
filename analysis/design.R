@@ -163,3 +163,12 @@ readr::write_rds(
   outcomes,
   here::here("output", "lib", "outcomes.rds")
 )
+
+################################################################################
+# subgroups ----
+subgroups <- c("16-64 and clinically vulnerable", "18-39", "40-64", "65+")
+
+readr::write_rds(
+  subgroups,
+  here::here("output", "lib", "subgroups.rds")
+)
