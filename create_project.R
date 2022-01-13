@@ -72,7 +72,7 @@ apply_model_fun <- function(
       needs = list(
         "design", 
         "data_comparisons_process", 
-        "data_tte_process"),
+        glue("data_tte_process_{comparison}")),
       highly_sensitive = list(
         modelnumber = glue("output/models_cox/data/model*_{comparison}_{subgroup_label}_{outcome}.rds"),
         model_summary = glue("output/models_cox/data/modelcox_summary_{comparison}_{subgroup_label}_{outcome}.rds"),
@@ -84,26 +84,26 @@ apply_model_fun <- function(
 }
 
 table_fun <- function(
-  subgroup,
-  comparison
+  comparison,
+  subgroup_label
 ) {
   
   splice(
     comment(glue("tabulate cox model for all outcomes")),
     action(
-      name = glue("tables_model_cox_{subgroup}_{comparison}"),
+      name = glue("tables_model_cox_{comparison}_{subgroup_label}"),
       run = "r:latest analysis/comparisons/tables_cox.R",
-      arguments = c(subgroup, comparison),
+      arguments = c(comparison, subgroup_label),
       needs = splice("design", 
                      "data_2nd_vax_dates",
-                     "data_tte_process",
+                     glue("data_tte_process_{comparison}"),
                      lapply(
-                       outcomes, 
+                       outcomes_model, 
                        function(x) 
-                         glue("apply_model_cox_{subgroup}_{comparison}_{x}"))),
+                         glue("apply_model_cox_{comparison}_{subgroup_label}_{x}"))),
       moderately_sensitive = list(
-        table_glance = glue("output/tables/modelcox_glance_{subgroup}_{comparison}.txt"),
-        table_coefficients = glue("output/tables/modelcox_coefficients_{subgroup}_{comparison}.txt"))
+        table_glance = glue("output/models_cox/tables/modelcox_glance_{comparison}_{subgroup_label}.txt"),
+        table_coefficients = glue("output/models_cox/tables/modelcox_coefficients_{comparison}_{subgroup_label}.txt"))
     )
   )
   
@@ -141,7 +141,7 @@ plot_fun <- function(
                            comparisons,
                            function(y)
                              unlist(lapply(
-                               outcomes,
+                               outcomes_model,
                                function(z)
                                  glue("apply_model_cox_{x}_{y}_{z}")
                              ), recursive = FALSE)
@@ -171,6 +171,7 @@ subgroups <- c(readr::read_rds(here::here("output", "lib", "subgroups.rds")), "a
 subgroup_labels <- seq_along(subgroups)
 comparisons <- c("BNT162b2", "ChAdOx", "both")
 plots <- c("BNT162b2", "ChAdOx", "BNT162b2andChAdOx", "BNT162b2vsChAdOx")
+outcomes_model <- outcomes#[-which(outcomes=="noncoviddeath")]
 
 ## actions ----
 actions_list <- splice(
@@ -345,39 +346,44 @@ actions_list <- splice(
           tidy_tables_events = glue("output/tte/tables/tidy_events_{x}*.txt")
         )
       )
-  ), recursive = FALSE))
+  ), recursive = FALSE)),
   
-  #,
-  
-  # comment("apply models"),
-  # splice(
-  #   # over subgroups
-  #   unlist(lapply(
-  #     comparisons,
-  #     
-  #     function(x) {
-  #       if (!(x %in% "BNT162b2")) {
-  #         subgroup_labels <- subgroup_labels[-which(subgroups == "18-39")]
-  #       } 
-  #       unlist(lapply(
-  #         subgroup_labels,
-  #         
-  #         function(y)
-  #           unlist(lapply(
-  #             outcomes,
-  #             
-  #             function(z)
-  #             apply_model_fun(
-  #               comparison = x, 
-  #               subgroup_label = y,
-  #               outcome = z)  
-  #           ),
-  #           recursive = FALSE)
-  #       ),
-  #       recursive = FALSE)
-  #     }
-  #   ), recursive = FALSE)
-  # )#,
+  comment("apply models"),
+  splice(
+    # over subgroups
+    unlist(lapply(
+      comparisons,
+
+      function(x) {
+        if (!(x %in% "BNT162b2")) {
+          subgroup_labels <- subgroup_labels[-which(subgroups == "18-39")]
+        }
+        unlist(lapply(
+          subgroup_labels,
+
+          function(y)
+            splice(
+            unlist(lapply(
+              outcomes_model,
+
+              function(z)
+              apply_model_fun(
+                comparison = x,
+                subgroup_label = y,
+                outcome = z)
+            ),
+            recursive = FALSE),
+            table_fun(
+              comparison = x,
+              subgroup_label = y
+            )
+            )
+          
+        ),
+        recursive = FALSE)
+      }
+    ), recursive = FALSE)
+  )#,
   
   # comment("generate tables"),
   # splice(
@@ -394,10 +400,10 @@ actions_list <- splice(
   #       unlist(lapply(
   #         comparisons,
   #         function(y)
-  #               table_fun(
-  #                 subgroup = x,
-  #                 comparison = y
-  #                 )  
+                # table_fun(
+                #   subgroup = x,
+                #   comparison = y
+                #   )
   #       ),
   #       recursive = FALSE)
   #     }
