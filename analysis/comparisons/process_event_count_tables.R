@@ -1,9 +1,25 @@
+################################################################################
+
 library(tidyverse)
 library(glue)
 
+################################################################################
+## import command-line arguments ----
+args <- commandArgs(trailingOnly=TRUE)
+
+if(length(args)==0){
+  # use for interactive testing
+  comparison <- "BNT162b2"
+  
+} else{
+  comparison <- args[[1]]
+}
+
+################################################################################
+
 # read table_events
 table_events <- readr::read_rds(
-  here::here("output", "tte", "tables", glue("event_counts.rds")))
+  here::here("output", "tte", "tables", glue("event_counts_{comparison}.rds")))
 
 # read subgroups
 subgroups <- readr::read_rds(
@@ -14,6 +30,7 @@ subgroups <- c(subgroups, "all")
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds"))
 
+################################################################################
 
 process_tables <- function(
   .data
@@ -21,13 +38,6 @@ process_tables <- function(
   
   # bind across outcomes
   table <- bind_rows(.data)
-  
-  arms <- names(table)[2:3]
-  if ("unvax" %in% arms) {
-    comparison <- arms[1]
-  } else {
-    comparison <- "both"
-  }
   
   # define subgroup
   subgroup <- unique(table$subgroup)
@@ -65,16 +75,12 @@ process_tables <- function(
   
 }
 
+################################################################################
 
 lapply(
   seq_along(table_events),
   function(x)
-    lapply(
-      seq_along(table_events[[x]]),
-      function(y)
-        process_tables(table_events[[x]][[y]])
-    )
-    
+    process_tables(table_events[[x]])
 )
 
 

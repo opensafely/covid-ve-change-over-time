@@ -8,6 +8,18 @@
 library(tidyverse)
 library(glue)
 
+## import command-line arguments ----
+args <- commandArgs(trailingOnly=TRUE)
+
+if(length(args)==0){
+  # use for interactive testing
+  comparison <- "BNT162b2"
+  
+} else{
+  comparison <- args[[1]]
+}
+
+################################################################################
 # read outcomes
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds"))
@@ -21,48 +33,39 @@ fs::dir_create(here::here("output", "tte", "data"))
 fs::dir_create(here::here("output", "tte", "tables"))
 
 ################################################################################
-load_data <- function(arm) {
-  
-  readr::read_rds(
-    here::here("output", "comparisons", "data", glue("data_comparisons_{arm}.rds"))) %>%
-    select(patient_id, comparison, arm, subgroup, start_fu_date, end_fu_date,
-           dereg_date, death_date,
-           all_of(str_c(outcomes, "_date"))) 
-  
-}
-
-################################################################################
-# load comparisons and outcomes data
-data_BNT162b2 <- load_data("BNT162b2")
-
-data_ChAdOx <- load_data("ChAdOx")
-
-data_unvax <- load_data("unvax")
+arm1 <- if_else(comparison =="ChAdOx", "ChAdOx", "BNT162b2")
+arm2 <- if_else(comparison == "both", "ChAdOx", "unvax")
 
 ################################################################################
 
 derive_data <- function(
-  data_arm_1,
-  data_arm_2
+  arm_1,
+  arm_2
 ) {
   
-  subgroups_1 <- unique(as.character(data_arm_1$subgroup))
-  subgroups_2 <- unique(as.character(data_arm_2$subgroup))
+  data_arm1 <-  readr::read_rds(
+    here::here("output", "comparisons", "data", glue("data_comparisons_{arm1}.rds"))) %>%
+    select(patient_id, comparison, arm, subgroup, start_fu_date, end_fu_date,
+           dereg_date, death_date,
+           all_of(str_c(outcomes, "_date")))
+  
+  
+  data_arm2 <-  readr::read_rds(
+    here::here("output", "comparisons", "data", glue("data_comparisons_{arm2}.rds"))) %>%
+    select(patient_id, comparison, arm, subgroup, start_fu_date, end_fu_date,
+           dereg_date, death_date,
+           all_of(str_c(outcomes, "_date")))
+  
+  subgroups_1 <- unique(as.character(data_arm1$subgroup))
+  subgroups_2 <- unique(as.character(data_arm2$subgroup))
   subgroups <- c(intersect(subgroups_1, subgroups_2), "all")
   
-  data <- bind_rows(
-    data_arm_1,
-    data_arm_2
-  )  %>%
+  data <- bind_rows(data_arm1, data_arm2) %>%
     filter(subgroup %in% subgroups)
 
 }
 
-data_BNT162b2_unvax <- derive_data(data_BNT162b2, data_unvax)
-data_ChAdOx_unvax <- derive_data(data_ChAdOx, data_unvax)
-data_BNT162b2_ChAdOx <- derive_data(data_BNT162b2, data_ChAdOx)
-
-rm(data_BNT162b2, data_ChAdOx, data_unvax)
+data <- derive_data(arm1, anm2)
 
 ################################################################################
 # generates and saves data_tte and tabulates event counts 
@@ -71,14 +74,6 @@ derive_data_tte <- function(
   .data, 
   outcome
   ) {
-  
-  # comparison arms
-  arms <- unique(as.character(.data$arm))
-  if ("unvax" %in% arms) {
-    comparison <- arms[which(arms != "unvax")]
-  } else {
-    comparison <- "both"
-  }
   
   # subgroups in .data
   subgroup <- unique(as.character(.data$subgroup))
@@ -155,25 +150,18 @@ derive_data_tte <- function(
 ################################################################################
 # apply derive_data_tte for all comparisons, and both for all subgroups and split by subgroup
 
-table_events <- lapply(
-  list(
-    data_BNT162b2_unvax,
-    data_ChAdOx_unvax,
-    data_BNT162b2_ChAdOx
-  ),
-  function(x) 
-    lapply(
-      splice(x, as.list(x %>% group_split(subgroup))),
-      function(y)
-        lapply(
-          outcomes,
-          function(z)
-            try(y %>% derive_data_tte(outcome = z))
-        )
-    )
-)
+table_events <- 
+  lapply(
+    splice(data, as.list(data %>% group_split(subgroup))),
+    function(y)
+      lapply(
+        outcomes,
+        function(z)
+          try(y %>% derive_data_tte(outcome = z))
+      )
+  )
 
 readr::write_rds(
   table_events,
-  here::here("output", "tte", "tables", "event_counts.rds"),
+  here::here("output", "tte", "tables", glue("event_counts_{comparison}.rds")),
   compress = "gz")

@@ -311,31 +311,43 @@ actions_list <- splice(
   ),
   
   comment(glue("process tte data")),
-  action(
-    name = "data_tte_process",
-    run = "r:latest analysis/comparisons/data_tte_process.R",
-    needs = list(
-      "design",
-      "data_input_process",
-      "data_comparisons_process"),
-    highly_sensitive = list(
-      data_tte_brand_outcome = "output/tte/data/data_tte_*.rds",
-      event_counts = "output/tte/tables/event_counts.rds"
-    )
-  ),
+  splice(unlist(lapply(
+    comparisons,
+    function(x)
+      action(
+        name = glue("data_tte_process_{x}"),
+        run = "r:latest analysis/comparisons/data_tte_process.R",
+        arguments = x,
+        needs = list(
+          "design",
+          "data_input_process",
+          "data_comparisons_process"),
+        highly_sensitive = list(
+          data_tte_brand_outcome = glue("output/tte/data/data_tte_{x}*.rds"),
+          event_counts = glue("output/tte/tables/event_counts_{x}.rds")
+        )
+      )
+  ), recursive = FALSE)),
   
   comment(glue("process event counts tables")),
-  action(
-    name = "process_event_count_tables",
-    run = "r:latest analysis/comparisons/process_event_count_tables.R",
-    needs = list(
-      "design",
-      "data_tte_process"),
-    moderately_sensitive = list(
-      tables_events = "output/tte/tables/events_*.csv",
-      tidy_tables_events = "output/tte/tables/tidy_events_*.txt"
-    )
-  )#,
+  splice(unlist(lapply(
+    comparisons,
+    function(x)
+      action(
+        name = glue("process_event_count_tables_{x}"),
+        run = "r:latest analysis/comparisons/process_event_count_tables.R",
+        arguments = x,
+        needs = list(
+          "design",
+          glue("data_tte_process_{x}")),
+        moderately_sensitive = list(
+          tables_events = glue("output/tte/tables/events_{x}*.csv"),
+          tidy_tables_events = glue("output/tte/tables/tidy_events_{x}*.txt")
+        )
+      )
+  ), recursive = FALSE))
+  
+  #,
   
   # comment("apply models"),
   # splice(
