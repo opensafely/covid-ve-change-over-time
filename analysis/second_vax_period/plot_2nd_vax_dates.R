@@ -10,14 +10,13 @@ library(glue)
 library(lubridate)
 
 # create folder for plots
-images_dir <- here::here("output", "second_vax_period", "images")
-dir.create(images_dir, showWarnings = FALSE, recursive=TRUE)
+fs::dir_create(here::here("output", "second_vax_period", "images"))
 
 data_vax_plot <- readr::read_rds(
   here::here("output", "second_vax_period", "data", "data_vax_plot.rds"))
 
 second_vax_period_dates <- readr::read_rds(
-  here::here("output", "lib", "second_vax_period_dates.rds"))
+  here::here("output", "second_vax_period", "data", "second_vax_period_dates.rds"))
 
 # elig_dates info for plot titles
 group_age_ranges <- readr::read_csv(
@@ -91,7 +90,7 @@ plot_2nd_vax_dates_fun <- function(
   
   # save the plot
   ggsave(plot_by_region,
-         filename = file.path(images_dir, glue("plot_by_region_{jcvi_group}_{elig_date}.png")),
+         filename = here::here("output", "second_vax_period", "images", glue("plot_by_region_{jcvi_group}_{elig_date}.png")),
          width=20, height=14, units="cm")
   
 }
