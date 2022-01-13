@@ -15,8 +15,8 @@ library(lubridate)
 library(glue)
 
 # create folder for data
-images_dir <- here::here("output", "second_vax_period", "data")
-dir.create(images_dir, showWarnings = FALSE, recursive=TRUE)
+fs::dir_create(here::here("output", "second_vax_period", "data"))
+fs::dir_create(here::here("output", "second_vax_period", "tables"))
 
 study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
 
@@ -174,7 +174,7 @@ second_vax_period_dates <- second_vax_period_dates %>%
 # save for plotting
 readr::write_rds(
   second_vax_period_dates,
-  here::here("output", "lib", "second_vax_period_dates.rds"),
+  here::here("output", "second_vax_period", "data", "second_vax_period_dates.rds"),
   compress = "gz")
 # save to review and release, with cumulative sum rounded to nearest 10
 capture.output(
@@ -182,6 +182,6 @@ capture.output(
     arrange(jcvi_group, elig_date, region_0) %>%
     mutate(across(cumulative_sum, ~ round(.x, -1))) %>% 
     kableExtra::kable("pipe"),
-  file = here::here("output", "tables", "second_vax_period_dates.txt"),
+  file = here::here("output", "second_vax_period", "tables", "second_vax_period_dates.txt"),
   append=FALSE
 )
