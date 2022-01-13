@@ -141,16 +141,13 @@ derive_data_tte <- function(
     mutate(value = str_c(events, " / ", personyears)) %>%
     select(comparison, arm, value) %>%
     rename(k = comparison) %>%
-    pivot_wider(names_from = arm, values_from = value) 
+    pivot_wider(names_from = arm, values_from = value) %>%
+    mutate(
+      subgroup = subgroup,
+      outcome = outcome
+    )
   
   return(table_events)
-  
-  # readr::write_rds(
-  #   table_events,
-  #   here::here("output", "tte", "tables", glue("events_{comparison}_{subgroup_label}_{outcome}.rds")),
-  #   compress = "gz")
-  # 
-  # return(cat(glue("data_tte for comparison {comparison}, subgroup {subgroup} and outcome {outcome} completed"), "\n"))
   
 }
 
@@ -175,8 +172,7 @@ table_events <- lapply(
     )
 )
 
-
-
-
-
-
+readr::write_rds(
+  table_events,
+  here::here("output", "tte", "tables", glue("event_counts.rds")),
+  compress = "gz")
