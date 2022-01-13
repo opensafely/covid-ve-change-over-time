@@ -7,11 +7,15 @@
 
 library(tidyverse)
 library(glue)
-# library(fastDummies)
 
 # read outcomes
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds"))
+
+# read subgroups
+subgroups <- readr::read_rds(
+  here::here("output", "lib", "subgroups.rds"))
+subgroups <- c(subgroups, "all")
 
 fs::dir_create(here::here("output", "tte", "data"))
 fs::dir_create(here::here("output", "tte", "tables"))
@@ -20,14 +24,9 @@ fs::dir_create(here::here("output", "tte", "tables"))
 load_data <- function(arm) {
   
   readr::read_rds(
-    here::here("output", "data", glue("data_comparisons_{arm}.rds"))) %>%
-    select(patient_id, comparison, arm, subgroup, start_fu_date, end_fu_date) %>%
-    left_join(
-      readr::read_rds(
-        here::here("output", "data", glue("data_outcomes_{arm}.rds"))) %>% 
-        select(patient_id, all_of(str_c(outcomes, "_date")), 
-               dereg_date), 
-      by = "patient_id")
+    here::here("output", "comparisons", "data", glue("data_comparisons_{arm}.rds"))) %>%
+    select(patient_id, comparison, arm, subgroup, start_fu_date, end_fu_date,
+           all_of(str_c(outcomes, "_date"))) 
   
 }
 
@@ -65,7 +64,8 @@ data_BNT162b2_ChAdOx <- derive_data(data_BNT162b2, data_ChAdOx)
 rm(data_BNT162b2, data_ChAdOx, data_unvax)
 
 ################################################################################
-# generates and saves data_tte and tabulates event counts (does not return anything)
+# generates and saves data_tte and tabulates event counts 
+# returns tables of events
 derive_data_tte <- function(
   .data, 
   outcome
@@ -82,21 +82,30 @@ derive_data_tte <- function(
   # subgroups in .data
   subgroup <- unique(as.character(.data$subgroup))
   if (length(subgroup) > 1) subgroup <- "all"
+  subgroup_label <- which(subgroups == subgroup)
   
   # derive data_tte
   data_tte <- .data %>%
-    mutate(across(c(starts_with(outcome), dereg_date, noncoviddeath_date),
-                  ~ if_else(
-                    !is.na(.x) & (start_fu_date < .x) & (.x <= end_fu_date),
-                    .x,
-                    as.Date(NA_character_)
-                  ))) %>%
+    select(patient_id, comparison, arm, subgroup, start_fu_date, end_fu_date,
+           matches(str_c(outcome, "_date"))) %>%
+    arrange(patient_id, comparison) %>%
+    group_by(patient_id) %>%
+    # remove comparisons for which outcome has occurred before start_fu_date
+    mutate(
+      event_seq = cumsum(cumsum(!is.na(!! sym(str_c(outcome, "_date")))))
+      ) %>%
+    ungroup() %>%
+    filter(
+      event_seq <= 1
+    ) %>%
+    # new time-scale: time since earliest start_fu_date in data
     mutate(across(ends_with("date"),
                   ~ as.integer(.x - min(start_fu_date)))) %>%
     rename_at(vars(ends_with("_date")),
               ~ str_remove(.x, "_date")) %>%
     mutate(
-      tte = pmin(!! sym(outcome), dereg, noncoviddeath, end_fu, na.rm = TRUE),
+      tte = pmin(!! sym(outcome), end_fu, na.rm = TRUE), # no censoring for dereg or death
+      # tte = pmin(!! sym(outcome), dereg, noncoviddeath, end_fu, na.rm = TRUE),
       status = if_else(
         !is.na(!! sym(outcome)) & !! sym(outcome) == tte,
         TRUE,
@@ -112,7 +121,7 @@ derive_data_tte <- function(
   # save data_tte
   readr::write_rds(
     data_tte,
-    here::here("output", "tte", "data", glue("data_tte_{comparison}_{subgroup}_{outcome}.rds")),
+    here::here("output", "tte", "data", glue("data_tte_{comparison}_{subgroup_label}_{outcome}.rds")),
     compress = "gz")
   
   # tabulate events per comparison and save
@@ -134,19 +143,21 @@ derive_data_tte <- function(
     rename(k = comparison) %>%
     pivot_wider(names_from = arm, values_from = value) 
   
-  readr::write_rds(
-    table_events,
-    here::here("output", "tte", "tables", glue("table_events_{comparison}_{subgroup}_{outcome}.rds")),
-    compress = "gz")
+  return(table_events)
   
-  return(cat(glue("data_tte for comparison {comparison}, subgroup {subgroup} and outcome {outcome} completed"), "\n"))
+  # readr::write_rds(
+  #   table_events,
+  #   here::here("output", "tte", "tables", glue("events_{comparison}_{subgroup_label}_{outcome}.rds")),
+  #   compress = "gz")
+  # 
+  # return(cat(glue("data_tte for comparison {comparison}, subgroup {subgroup} and outcome {outcome} completed"), "\n"))
   
 }
 
 ################################################################################
 # apply derive_data_tte for all comparisons, and both for all subgroups and split by subgroup
 
-stopreturn <- lapply(
+table_events <- lapply(
   list(
     data_BNT162b2_unvax,
     data_ChAdOx_unvax,
@@ -163,6 +174,9 @@ stopreturn <- lapply(
         )
     )
 )
+
+
+
 
 
 
