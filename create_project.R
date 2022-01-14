@@ -123,7 +123,7 @@ plot_fun <- function(
   }
   
   if (str_detect(plot, "ChAdOx")) {
-    subgroups <- "03-10"
+    subgroup_labels <- subgroup_labels[-which(subgroups == "18-39")]
   }
   
   splice(
@@ -135,10 +135,10 @@ plot_fun <- function(
       needs = splice("design",
                      "data_2nd_vax_dates",
                      as.list(unlist(lapply(
-                       subgroups,
+                       comparisons,
                        function(x)
                          unlist(lapply(
-                           comparisons,
+                           subgroup_labels,
                            function(y)
                              unlist(lapply(
                                outcomes_model,
@@ -148,7 +148,7 @@ plot_fun <- function(
                          ), recursive = FALSE)
                      ), recursive = FALSE))),
       moderately_sensitive = list(
-        plot = glue("output/images/plot_res_{plot}.png"))
+        plot = glue("output/models_cox/images/plot_res_{plot}_*.png"))
     )
     
   )
@@ -383,41 +383,14 @@ actions_list <- splice(
         recursive = FALSE)
       }
     ), recursive = FALSE)
-  )#,
-  
-  # comment("generate tables"),
-  # splice(
-  #   # over subgroups
-  #   unlist(lapply(
-  #     subgroups, # subgroups
-  #     function(x) {
-  #       
-  #       if (x %in% c("02", "11-12")) {
-  #         comparisons <- "BNT162b2"
-  #       } 
-  #       
-  #       # over comparisons
-  #       unlist(lapply(
-  #         comparisons,
-  #         function(y)
-                # table_fun(
-                #   subgroup = x,
-                #   comparison = y
-                #   )
-  #       ),
-  #       recursive = FALSE)
-  #     }
-  #     
-  #   ), recursive = FALSE)
-  #   #
-  # ),
-  # 
-  # comment("generate plots"),
-  # splice(
-  #   unlist(lapply(plots,
-  #                 function(p)
-  #                   plot_fun(plot = p)
-  #                 ), recursive = FALSE)),
+  ),
+
+  comment("generate plots"),
+  splice(
+    unlist(lapply(plots,
+                  function(p)
+                    plot_fun(plot = p)
+                  ), recursive = FALSE))#,
   # 
   # comment("combine all incidence tables"),
   # action(

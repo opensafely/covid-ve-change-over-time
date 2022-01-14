@@ -76,4 +76,8 @@ apply_model_cox_both_5_covidadmitted
 apply_model_cox_both_5_coviddeath 
 apply_model_cox_both_5_noncoviddeath 
 apply_model_cox_both_5_death 
-tables_model_cox_both_5
+tables_model_cox_both_5  
+plot_model_cox_BNT162b2 
+plot_model_cox_ChAdOx 
+plot_model_cox_BNT162b2andChAdOx 
+plot_model_cox_BNT162b2vsChAdOx
