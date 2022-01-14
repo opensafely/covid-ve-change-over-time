@@ -1473,5 +1473,34 @@ actions:
       moderately_sensitive:
         plot: output/models_cox/images/plot_res_BNT162b2andChAdOx_*.png
 
+  ## plot BNT162b2vsChAdOx 
 
-  
+  plot_model_cox_BNT162b2vsChAdOx:
+    run: r:latest analysis/comparisons/plot_cox.R BNT162b2vsChAdOx
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - apply_model_cox_both_1_postest
+    - apply_model_cox_both_1_covidadmitted
+    - apply_model_cox_both_1_coviddeath
+    - apply_model_cox_both_1_noncoviddeath
+    - apply_model_cox_both_1_death
+    - apply_model_cox_both_3_postest
+    - apply_model_cox_both_3_covidadmitted
+    - apply_model_cox_both_3_coviddeath
+    - apply_model_cox_both_3_noncoviddeath
+    - apply_model_cox_both_3_death
+    - apply_model_cox_both_4_postest
+    - apply_model_cox_both_4_covidadmitted
+    - apply_model_cox_both_4_coviddeath
+    - apply_model_cox_both_4_noncoviddeath
+    - apply_model_cox_both_4_death
+    - apply_model_cox_both_5_postest
+    - apply_model_cox_both_5_covidadmitted
+    - apply_model_cox_both_5_coviddeath
+    - apply_model_cox_both_5_noncoviddeath
+    - apply_model_cox_both_5_death
+    outputs:
+      moderately_sensitive:
+        plot: output/models_cox/images/plot_res_BNT162b2vsChAdOx_*.png
+
