@@ -14,7 +14,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  plot <- "BNT162b2andChAdOx" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
+  plot <- "ChAdOx" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
   
 } else {
    
@@ -42,19 +42,20 @@ outcomes <- readr::read_rds(
 subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
 subgroups <- c(subgroups, "all")
-subgroup_labels <- seq_along(subgroups)
+subgroup_labels_full <- seq_along(subgroups)
 
 ################################################################################
 
-if (plot != "BNT162b2") {
-  subgroup_labels <- subgroup_labels[-which(subgroups == "18-39")]
-  subgroups <- subgroups[-which(subgroups == "18-39")]
-} 
+if (plot %in% "BNT162b2") {
+  subgroup_labels <- subgroup_labels_full
+} else {
+  subgroup_labels <- subgroup_labels_full[-which(subgroups == "18-39")]
+}
 
 if (plot == "BNT162b2andChAdOx") {
   comparisons <- c("BNT162b2", "ChAdOx")
 } else if (plot == "BNT162b2vsChAdOx") {
-  comparison <- "both"
+  comparisons <- "both"
 } else {
   comparisons <- plot
 }
@@ -89,8 +90,6 @@ recursive = FALSE
 model_tidy_tibble <- bind_rows(
   model_tidy_list[sapply(model_tidy_list, function(x) is_tibble(x))]
 ) 
-
-
 
 
 plot_fun <- function(
@@ -210,7 +209,7 @@ plot_fun <- function(
                              "Any death"))) %>%
     mutate(across(subgroup,
                   factor,
-                  levels = subgroup_labels,
+                  levels = subgroup_labels_full,
                   labels = sapply(subgroups, str_wrap, width=legend_width))) %>%
     mutate(across(k, 
                   factor, 
@@ -265,7 +264,6 @@ plot_fun <- function(
       legend.title = element_text(size = 10),
       legend.position = c(0.75, 0.15), # c(0,0) bottom left, c(1,1) top-right.
       legend.key.size = unit(0.8, "cm"),
-      # legend.spacing.y = unit(2, 'cm'),
       legend.box="vertical"
     ) 
   
@@ -273,40 +271,39 @@ plot_fun <- function(
   
 }
 
-if (plot %in% c("BNT162b2", "ChAdOx", "BNT162b2andChAdOx")) {
+################################################################################
+
+plot_subgroups <- as.list(subgroup_labels)
+
+if (plot %in% c("BNT162b2", "ChAdOx", "BNT162b2vsChAdOx")) {
+  plot_subgroups <- splice(
+    plot_subgroups,c(1:4)
+  )
+}
+
+for (i in seq_along(plot_subgroups)) {
   
-  plot_subgroups <- as.list(subgroup_labels)
-  
-  if (plot %in% c("BNT162b2", "ChAdOx")) {
-    plot_subgroups <- splice(
-      plot_subgroups,c(1:4)
-    )
+  if (length(plot_subgroups[[i]])==1 && plot %in% c("BNT162b2", "ChAdOx", "BNT162b2vsChAdOx")) {
+    j <- c("0", "2")
+  } else {
+    j <- "2"
   }
   
-  for (i in seq_along(plot_subgroups)) {
-    
-    if (length(plot_subgroups[[i]])==1 && plot %in% c("BNT162b2", "ChAdOx")) {
-      j <- c("0", "2")
-    } else {
-      j <- "2"
-    }
-    
-    plot_res <- plot_fun(
-      plot_subgroup = plot_subgroups[[i]],
-      plot_model = j,
-      plot_comparison = comparisons
-    )
-    
-    ic <- str_c(plot_subgroups[[i]], collapse = "")
-    jc <- str_c(j, collapse = "")
-    
-    # save the plot
-    ggsave(plot = plot_res,
-           filename = here::here("output", "models_cox", "images", glue("plot_res_{plot}_{ic}_{jc}.png")),
-           width=15, height=18, units="cm")
-    
-  }
+  plot_res <- plot_fun(
+    plot_subgroup = plot_subgroups[[i]],
+    plot_model = j,
+    plot_comparison = comparisons
+  )
+  
+  ic <- str_c(plot_subgroups[[i]], collapse = "")
+  jc <- str_c(j, collapse = "")
+  
+  # save the plot
+  ggsave(plot = plot_res,
+         filename = here::here("output", "models_cox", "images", glue("plot_res_{plot}_{ic}_{jc}.png")),
+         width=15, height=18, units="cm")
   
 }
+  
   
   
