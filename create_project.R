@@ -294,6 +294,21 @@ actions_list <- splice(
   ),
   
   comment("####################################",
+          "subsequent vaccination", 
+          "####################################"),
+  
+  comment("plot cumulative incidence of subsequent vaccination"),
+  action(
+    name = "plot_cumulative_incidence",
+    run = "r:latest analysis/subsequent_vax/plot_cumulative_incidence.R",
+    needs = list("design", "data_input_process", "data_eligible_cde"),
+    moderately_sensitive = list(
+      ci_vax = "output/subsequent_vax/images/ci_vax_*.png",
+      survtable = "output/subsequent_vax/tables/survtable_*.txt"
+    )
+  ),
+  
+  comment("####################################",
           "comparisons", 
           "####################################"),
   
