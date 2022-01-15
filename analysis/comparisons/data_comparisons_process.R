@@ -240,7 +240,7 @@ process_covariates <- function(.data) {
     "temporary_immunosuppression_date"
   )
   clinical_vars <- c(
-    # "flu_vaccine",
+    "flu_vaccine",
     # "efi",
     "bmi"
   )
@@ -334,9 +334,9 @@ process_covariates <- function(.data) {
         multimorb, 
         breaks = c(0, 1, 2, 3, 4, Inf),
         labels=c("0", "1", "2", "3", "4+"), 
-        right=FALSE)#,
+        right=FALSE),
       
-      # flu_vaccine = flu_vaccine == 1
+      flu_vaccine = flu_vaccine == 1
       
     ) %>%
     select(

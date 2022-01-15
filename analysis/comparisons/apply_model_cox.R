@@ -108,9 +108,9 @@ formula_clinical <- . ~ . +
   
   multimorb +
   
-  shielded #+
+  shielded +
   
-  # flu_vaccine 
+  flu_vaccine
 
 
 model_names = c(
