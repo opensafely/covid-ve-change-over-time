@@ -31,60 +31,79 @@ if (brand %in% "BNT162b2") {
 
 ################################################################################
 
-data_vax_incidence <- bind_rows(
+data_comparisons <- bind_rows(
   readr::read_rds(
-    here::here("output", "data", glue("data_comparisons_{brand}_vax.rds"))) %>%
-    mutate(arm = "vax"),
+    here::here("output", "comparisons", "data", "data_comparisons_BNT162b2.rds")),
   readr::read_rds(
-    here::here("output", "data", glue("data_comparisons_{brand}_unvax.rds"))) %>%
-    mutate(arm = "unvax")
-) %>%
-  mutate(subgroup = case_when(
-    jcvi_group %in% "02" ~ "02",
-    jcvi_group %in% c("11", "12") ~ "11-12",
-    TRUE ~ "03-10"
-  )) %>%
-  filter(subgroup %in% subgroups) %>%
-  group_by(patient_id, subgroup, arm) %>%
-  summarise(
-    min_start_fu_date = min(start_fu_date),
-    max_end_fu_date = max(end_fu_date),
-    .groups = "keep"
-    ) %>%
+    here::here("output", "comparisons", "data", "data_comparisons_ChAdOx.rds")),
+  readr::read_rds(
+    here::here("output", "comparisons", "data", "data_comparisons_unvax.rds"))
+) 
+
+data_wide_vax_dates <- readRDS(
+  here::here("output", "data", "data_wide_vax_dates.rds")) %>%
+  select(patient_id, covid_vax_1_date, covid_vax_3_date)
+
+data_min <- data_comparisons %>%
+  # only keep earliest date for each individual
+  group_by(patient_id) %>%
+  summarise(across(
+    c(start_fu_date,
+      postest_date,covidadmitted_date,
+      death_date, dereg_date),
+    min, na.rm = TRUE),
+    .groups = "keep") %>%
+  ungroup() 
+
+data_max <- data_comparisons %>%
+  # only keep earliest date for each individual
+  group_by(patient_id) %>%
+  summarise(across(
+    end_fu_date,
+    max, na.rm = TRUE),
+    .groups = "keep") %>%
+  ungroup() 
+
+data_tte <- data_comparisons %>%
+  distinct(patient_id, arm, subgroup) %>%
+  left_join(data_min, by = "patient_id") %>%
+  left_join(data_max, by = "patient_id") %>%
+  left_join(data_wide_vax_dates, by = "patient_id") %>%
+  mutate(vax_date = if_else(
+    arm %in% "unvax",
+    covid_vax_1_date,
+    covid_vax_3_date)) %>%
+  select(-covid_vax_1_date, -covid_vax_3_date) %>%
+  group_by(arm, subgroup) %>%
+  mutate(across(c(start_fu_date, end_fu_date, vax_date,
+                  postest_date,covidadmitted_date,
+                  death_date, dereg_date),
+                ~ as.integer(.x - min(start_fu_date)))) %>%
   ungroup() %>%
-  left_join(
-    readr::read_rds(
-      here::here("output", "data", "data_wide_vax_dates.rds")
-    ),
-    by = "patient_id"
-  ) %>%
-  left_join(
-    readr::read_rds(
-      here::here("output", "data", "data_covid_any.rds")),
-    by = "patient_id"
-  ) %>%
-  mutate(
-    vax_date = if_else(
-      arm %in% "vax",
-      covid_vax_3_date,
-      covid_vax_1_date
-    ),
-    end_at = pmin(
-      vax_date, # date of 1st of 3rd dose
-      covid_any_date, # date of any covid event
-      max_end_fu_date, # end of individual's followup
-      as.Date(study_parameters$end_date), # last date of data
-      na.rm = TRUE),
-    time = as.integer(end_at - min_start_fu_date),
-    status = case_when(
-      is.na(vax_date) ~ 0L,
-      vax_date > as.Date(end_at) ~ 0L,
-      TRUE ~ 1L
-    )
-  ) %>%
-  mutate(across(arm, ~if_else(.x %in% "vax", "vaccinated", "unvaccinated"))) %>%
-  mutate(strata = str_c(subgroup, "; ", arm)) %>%
-  select(patient_id, strata, time, status)
+  rename_at(vars(ends_with("_date")),
+            ~ str_remove(.x, "_date"))
+
+
+censor_fun <- function(.data, ...) {
+  
+  dots <- enquos(...) # get a list of quoted dots
+  
+  .data %>%
+    mutate(
+      tte = pmin(!!! dots,  # unquote-splice the list
+                 vax, dereg, death, end_fu, na.rm = TRUE),
+      status = if_else(
+        !is.na(vax) & vax == tte,
+        TRUE,
+        FALSE
+      )) %>%
+    select(patient_id, arm, subgroup, tstart = start_fu, tstop = tte, status)
+  
+}
+
+data_tte %>% censor_fun()
+data_tte %>% censor_fun(postest)
+
 
 ################################################################################
 
