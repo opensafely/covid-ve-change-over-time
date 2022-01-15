@@ -3,8 +3,6 @@
 # This script:
 # - reads the processed data
 # - applies eligibility criteria from boxes a and b of Figure 3 in protocol
-# - saves preocessed data from eligible individuals
-# - records the age range in each JCVI group and saves for later use
 
 ################################################################################
 
@@ -14,8 +12,8 @@ library(lubridate)
 library(glue)
 
 # read processed covariates data
-data_covs <- readr::read_rds(
-  here::here("output", "data", "data_covs.rds"))
+data_processed <- readr::read_rds(
+  here::here("output", "data", "data_processed.rds")) 
 
 # read wide vaccine dates data
 data_vax_wide <- readr::read_rds(
@@ -24,13 +22,13 @@ data_vax_wide <- readr::read_rds(
 # count the number of patients in the extracted data
 eligibility_count <- tribble(
   ~description, ~n,
-  "Extracted using study_definition", n_distinct(data_covs$patient_id)
+  "Extracted using study_definition", n_distinct(data_processed$patient_id)
 )
 
 ################################################################################
 cat("#### apply exclusion criteria from box a to processed data ####\n")
 # remove dummy jcvi_group
-data_eligible_a <- data_covs %>%
+data_eligible_a <- data_processed %>%
   filter(!(jcvi_group %in% "99"))
 
 eligibility_count <- eligibility_count %>%
@@ -39,13 +37,33 @@ eligibility_count <- eligibility_count %>%
     n =  n_distinct(data_eligible_a$patient_id)
   )
 
+# remove jcvi_group=01 (care homes)
+data_eligible_a <- data_eligible_a %>%
+  filter(!(jcvi_group %in% "01"))
+
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Samples with JCVI group 01 removed",
+    n =  n_distinct(data_eligible_a$patient_id)
+  )
+
+# remove if aged under 16 or over 120 (the latter to avoid probable errors)
+data_eligible_a <- data_eligible_a %>%
+  filter(age_1 >= 16, age_1 <= 120)
+
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Samples with age_1 < 16 and > 120 removed.",
+    n =  n_distinct(data_eligible_a$patient_id)
+  )
+
 # remove if any missing data for key variables
 data_eligible_a <- data_eligible_a %>%
   filter(
-    !is.na(ethnicity),
     !is.na(sex),
-    !is.na(imd_0),
-    !is.na(region_0))
+    !is.na(region_0),
+    !is.na(ethnicity),
+    !is.na(imd_0))
 
 eligibility_count <- eligibility_count %>%
   add_row(
@@ -56,8 +74,12 @@ eligibility_count <- eligibility_count %>%
 # remove if evidence of covid infection on or before elig_date + 42 days
 # COVID admission
 data_eligible_a <- data_eligible_a %>%
-  filter(is.na(covidadmitted_0_date) | 
-           elig_date + days(42) <  covidadmitted_0_date)
+  filter(
+    ! (
+      !is.na(covid_any_date) &
+        (covid_any_date <= elig_date + days(42)) &
+        covid_event %in% "covidadmitted"
+    ))
 
 eligibility_count <- eligibility_count %>%
   add_row(
@@ -67,8 +89,12 @@ eligibility_count <- eligibility_count %>%
 
 # positive COVID test
 data_eligible_a <- data_eligible_a %>%
-  filter(is.na(positive_test_0_date) | 
-           elig_date + days(42) <  positive_test_0_date)
+  filter(
+    ! (
+      !is.na(covid_any_date) &
+        (covid_any_date <= elig_date + days(42)) &
+        covid_event %in% "postest"
+    ))
 
 eligibility_count <- eligibility_count %>%
   add_row(
@@ -78,8 +104,12 @@ eligibility_count <- eligibility_count %>%
 
 # probable COVID 
 data_eligible_a <- data_eligible_a %>%
-  filter(is.na(primary_care_covid_case_0_date) | 
-           elig_date + days(42) <  primary_care_covid_case_0_date)
+  filter(
+    ! (
+      !is.na(covid_any_date) &
+        (covid_any_date <= elig_date + days(42)) &
+        covid_event %in% "probable"
+    ))
 
 eligibility_count <- eligibility_count %>%
   add_row(
@@ -89,8 +119,12 @@ eligibility_count <- eligibility_count %>%
 
 # suspected COVID 
 data_eligible_a <- data_eligible_a %>%
-  filter(is.na(primary_care_suspected_covid_0_date) | 
-           elig_date + days(42) <  primary_care_suspected_covid_0_date) 
+  filter(
+    ! (
+      !is.na(covid_any_date) &
+        (covid_any_date <= elig_date + days(42)) &
+        covid_event %in% "suspected"
+    ))
 
 eligibility_count <- eligibility_count %>%
   add_row(
@@ -155,7 +189,7 @@ readr::write_csv(eligibility_count,
 
 ################################################################################
 # jcvi_group, elig_date combos ----
-fix_age <- data_covs %>%
+fix_age <- data_processed %>%
   mutate(age = if_else(
     jcvi_group %in% c("10", "11", "12"),
     age_2,

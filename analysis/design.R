@@ -19,7 +19,7 @@ study_parameters <-
   list(
     seed = 123456L,
     n = 100000L, # number of individuals in dummy data
-    max_comparisons = 8L, # the number of comparisons for each sequence
+    max_comparisons = 6L, # the number of comparisons for each sequence
     n_threshold = integer(), # the number of individuals with a second dose in the second vaccination period for a given jcvi_group and brand to include comparison
     recur_bmi = 10L, # number of times the bmi variable recurs
     recur_shielded = 10L, # number of times the shielded and nonshieded variables recur
@@ -39,10 +39,10 @@ study_parameters <-
 # use lower thresholds if not running in the server
 if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")){
   study_parameters$n_threshold <- 100L
-  study_parameters$outcome_threshold <- 10L
+  # study_parameters$outcome_threshold <- 10L
 } else {
   study_parameters$n_threshold <- 1000L
-  study_parameters$outcome_threshold <- 100L
+  # study_parameters$outcome_threshold <- 100L
 }
 
 readr::write_rds(study_parameters, here::here("output", "lib", "study_parameters.rds"))
@@ -145,10 +145,10 @@ clinical <- c(
   "other_respiratory", "lung_cancer", "haematological_cancer",
   "cancer_excl_lung_and_haem", "any_immunosuppression",
   "dementia", "other_neuro_conditions", "ld_inc_ds_and_cp",
-  "psychosis_schiz_bipolar", "multimorb", "shielded" #, "flu_vaccine", "efi"
+  "psychosis_schiz_bipolar", "multimorb", "shielded", "flu_vaccine"
 )
 
-demographic <- c("age", "sex", "imd", "ethnicity")
+demographic <- c("age_band", "sex", "imd", "ethnicity")
 
 readr::write_rds(
   list(demographic = demographic, clinical = clinical),
@@ -157,9 +157,18 @@ readr::write_rds(
 
 ################################################################################
 # outcomes ----
-outcomes <- c("postest", "covidadmitted", "coviddeath", "death")
+outcomes <- c("postest", "covidadmitted", "coviddeath", "noncoviddeath",  "death")
 
 readr::write_rds(
   outcomes,
   here::here("output", "lib", "outcomes.rds")
+)
+
+################################################################################
+# subgroups ----
+subgroups <- c("16-64 and clinically vulnerable", "18-39", "40-64", "65+")
+
+readr::write_rds(
+  subgroups,
+  here::here("output", "lib", "subgroups.rds")
 )
