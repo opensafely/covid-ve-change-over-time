@@ -4,22 +4,16 @@ library(tidyverse)
 library(glue)
 
 ################################################################################
-## import command-line arguments ----
-args <- commandArgs(trailingOnly=TRUE)
-
-if(length(args)==0){
-  # use for interactive testing
-  comparison <- "BNT162b2"
-  
-} else{
-  comparison <- args[[1]]
-}
-
-################################################################################
 
 # read table_events
-table_events <- readr::read_rds(
-  here::here("output", "tte", "tables", glue("event_counts_{comparison}.rds")))
+table_events <- bind_rows(
+  readr::read_rds(
+    here::here("output", "tte", "tables", glue("event_counts_BNT162b2.rds"))),
+  readr::read_rds(
+    here::here("output", "tte", "tables", glue("event_counts_ChAdOx.rds"))) %>%
+    filter(!(arm %in% "unvax"))
+) %>%
+  group_split(subgroup)
 
 # read subgroups
 subgroups <- readr::read_rds(
@@ -30,48 +24,73 @@ subgroups <- c(subgroups, "all")
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds"))
 
-################################################################################
+# redaction functions
+source(here::here("analysis", "lib", "redaction_functions.R"))
 
+################################################################################
 process_tables <- function(
-  .data
+  data
 ) {
   
-  # bind across outcomes
-  table <- bind_rows(.data)
-  
   # define subgroup
-  subgroup <- unique(table$subgroup)
+  subgroup <- unique(data$subgroup)
   subgroup_label <- which(subgroups == subgroup)
   
-  # save data for generating tables for paper
-  readr::write_csv(
-    table,
-    here::here("output", "tte", "tables", glue("events_{comparison}_{subgroup_label}.csv")))
+  # define column order
+  cols_order <- lapply(
+    c("BNT162b2", "ChAdOx", "unvax"),
+    function(x)
+      sapply(c("n", outcomes[-which(outcomes == "noncoviddeath")]),
+             function(y)
+               glue("{x}_{y}"))
+  )
+  cols_order <- unname(unlist(cols_order))
   
-  # create tidy output for data checking
-  table_list <- table %>% 
-    mutate(across(outcome, factor, levels = outcomes)) %>%
-    select(-subgroup) %>%
-    group_split(outcome) %>%
-    as.list()
+  # generate table
+  table <- data %>% 
+    distinct() %>%
+    pivot_longer(cols = c(n, events)) %>%
+    # only keep n for death
+    filter((name %in% "events") | (outcome %in% "death")) %>%
+    # don't keep noncoviddeath
+    filter(!(outcome %in% "noncoviddeath")) %>%
+    mutate(col_names = glue("{arm}_{outcome}_{name}")) %>%
+    select(-arm, -outcome, -name) %>%
+    distinct() %>%
+    pivot_wider(names_from = col_names, values_from = value) %>%
+    rename_at(vars(ends_with("_n")), ~ str_remove(.x, "_death")) %>%
+    rename_at(vars(ends_with("_events")), ~ str_remove(.x, "_events")) %>%
+    select(-subgroup)  
   
-  # write tidy output to txt
+  # for subgroups in which only one vaccine used
+  cols_order <- cols_order[cols_order %in% names(table)]
+  
+  # process table col names
+  col_names_tidy <- str_replace(cols_order, "_", " ")
+  col_names_tidy <- str_replace(col_names_tidy, "postest", "C-19 +ve test")
+  col_names_tidy <- str_replace(col_names_tidy, "covidadmitted", "C-19 hosp. admission")
+  col_names_tidy <- str_replace(col_names_tidy, "\\sdeath", " Any death")
+  col_names_tidy <- str_replace(col_names_tidy, "coviddeath", "C-19 death")
+  
+  # redact low values
+  table_out <- table %>%
+    select(comparison, all_of(cols_order)) %>%
+    mutate(across(-comparison, 
+                  redactor2)) %>%
+    mutate(across(-comparison, 
+                  ~scales::comma(.x, accuracy = 1))) 
+  
+  # save
   capture.output(
-    lapply(
-      table_list,
-      function(x) {
-        outcome <-  unique(x$outcome)
-        x %>%
-          select(-outcome) %>%
-          kableExtra::kable(
-            "pipe",
-            caption = glue("subgroup = {subgroup}, outcome = {outcome}")
-          )
-      }
+    kableExtra::kable(
+      table_out,
+      format = "pipe",
+      col.names = c("k", col_names_tidy)
     ),
-    file = here::here("output", "tte", "tables", glue("tidy_events_{comparison}_{subgroup_label}.txt")),
+    file = here::here("output", "tte", "tables", glue("tidy_events_{subgroup_label}.txt")),
     append=FALSE
   )
+  
   
 }
 

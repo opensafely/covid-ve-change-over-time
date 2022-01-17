@@ -195,35 +195,15 @@ actions:
 
   ## process event counts tables 
 
-  process_event_count_tables_BNT162b2:
-    run: r:latest analysis/comparisons/process_event_count_tables.R BNT162b2
+  process_event_count_tables:
+    run: r:latest analysis/comparisons/process_event_count_tables.R
     needs:
     - design
     - data_tte_process_BNT162b2
-    outputs:
-      moderately_sensitive:
-        tables_events: output/tte/tables/events_BNT162b2*.csv
-        tidy_tables_events: output/tte/tables/tidy_events_BNT162b2*.txt
-
-  process_event_count_tables_ChAdOx:
-    run: r:latest analysis/comparisons/process_event_count_tables.R ChAdOx
-    needs:
-    - design
     - data_tte_process_ChAdOx
     outputs:
       moderately_sensitive:
-        tables_events: output/tte/tables/events_ChAdOx*.csv
-        tidy_tables_events: output/tte/tables/tidy_events_ChAdOx*.txt
-
-  process_event_count_tables_both:
-    run: r:latest analysis/comparisons/process_event_count_tables.R both
-    needs:
-    - design
-    - data_tte_process_both
-    outputs:
-      moderately_sensitive:
-        tables_events: output/tte/tables/events_both*.csv
-        tidy_tables_events: output/tte/tables/tidy_events_both*.txt
+        tidy_tables_events: output/tte/tables/tidy_events*.txt
 
   ## apply models 
   ## BNT162b2; 16-64 and clinically vulnerable; postest 
