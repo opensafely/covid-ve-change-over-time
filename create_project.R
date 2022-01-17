@@ -346,22 +346,17 @@ actions_list <- splice(
   ), recursive = FALSE)),
   
   comment(glue("process event counts tables")),
-  splice(unlist(lapply(
-    comparisons,
-    function(x)
-      action(
-        name = glue("process_event_count_tables_{x}"),
-        run = "r:latest analysis/comparisons/process_event_count_tables.R",
-        arguments = x,
-        needs = list(
-          "design",
-          glue("data_tte_process_{x}")),
-        moderately_sensitive = list(
-          tables_events = glue("output/tte/tables/events_{x}*.csv"),
-          tidy_tables_events = glue("output/tte/tables/tidy_events_{x}*.txt")
-        )
-      )
-  ), recursive = FALSE)),
+  action(
+    name = glue("process_event_count_tables"),
+    run = "r:latest analysis/comparisons/process_event_count_tables.R",
+    needs = list(
+      "design",
+      "data_tte_process_BNT162b2",
+      "data_tte_process_ChAdOx"),
+    moderately_sensitive = list(
+      tidy_tables_events = glue("output/tte/tables/tidy_events*.txt")
+    )
+  ),
   
   comment("apply models"),
   splice(
