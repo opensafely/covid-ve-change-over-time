@@ -13,7 +13,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  comparison <- "BNT162b2"
+  comparison <- "ChAdOx"
   
 } else{
   comparison <- args[[1]]
@@ -122,26 +122,15 @@ derive_data_tte <- function(
   
   # tabulate events per comparison and save
   table_events <- data_tte %>%
-    mutate(days = tstop-tstart) %>%
     group_by(comparison, arm) %>%
     summarise(
       n = n(),
-      personyears = sum(days)/365.25,
       events = sum(status),
       .groups = "keep"
     ) %>%
     ungroup() %>%
-    mutate(across(c(n, events, personyears),
-                  # round to nearest 10
-                  ~ scales::comma(round(.x, -1), accuracy = 1))) %>%
-    mutate(value = str_c(events, " / ", personyears)) %>%
-    select(comparison, arm, value) %>%
-    rename(k = comparison) %>%
-    pivot_wider(names_from = arm, values_from = value) %>%
-    mutate(
-      subgroup = subgroup,
-      outcome = outcome
-    )
+    mutate(outcome = outcome,
+           subgroup = subgroup)
   
   return(table_events)
   
@@ -149,6 +138,7 @@ derive_data_tte <- function(
 
 ################################################################################
 # apply derive_data_tte for all comparisons, and both for all subgroups and split by subgroup
+
 
 table_events <- 
   lapply(
@@ -161,7 +151,14 @@ table_events <-
       )
   )
 
+table_events <- bind_rows(
+  unlist(table_events, recursive = FALSE)
+)
+
 readr::write_rds(
   table_events,
   here::here("output", "tte", "tables", glue("event_counts_{comparison}.rds")),
   compress = "gz")
+  
+
+
