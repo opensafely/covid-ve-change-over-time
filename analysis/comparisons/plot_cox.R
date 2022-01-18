@@ -14,7 +14,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  plot <- "ChAdOx" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
+  plot <- "BNT162b2" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
   
 } else {
    
@@ -90,6 +90,19 @@ recursive = FALSE
 model_tidy_tibble <- bind_rows(
   model_tidy_list[sapply(model_tidy_list, function(x) is_tibble(x))]
 ) 
+
+
+if (str_detect(plot, "BNT162b2")) {
+  
+  # remove death outcomes in the 18-39 and 40-64 pfizer subgroups
+  # very few outcomes so massive CIs cluttering the plots
+  model_tidy_tibble <- model_tidy_tibble %>%
+    filter(!(
+      subgroup %in% c(2,3) &
+        str_detect(outcome, "death")
+    ))
+  
+}
 
 
 plot_fun <- function(
