@@ -36,31 +36,17 @@ subgroup <- subgroups[subgroup_label]
 ################################################################################
 # read data
 
-fs::dir_create(here::here("output", "models_cox", "data"))
-
 model_varlist <- readr::read_rds(
   here::here("output", "lib", "model_varlist.rds")
 )
 
-################################################################################
-
-arm1 <- if_else(comparison == "ChAdOx", "ChAdOx", "BNT162b2")
-arm2 <- if_else(comparison == "both", "ChAdOx", "unvax")
-
 data_cox <- readr::read_rds(
-  here::here("output", "tte", "data", glue("data_tte_{comparison}_{subgroup_label}_{outcome}.rds"))) %>%
-  left_join(
-    bind_rows(
-      readr::read_rds(
-        here::here("output", "comparisons", "data", glue("data_comparisons_{arm1}.rds"))),
-      readr::read_rds(
-        here::here("output", "comparisons", "data", glue("data_comparisons_{arm2}.rds")))
-    ) %>%
-      select(patient_id, comparison, jcvi_group, elig_date, region, 
-             unname(unlist(model_varlist))),
-    by = c("patient_id", "comparison")) %>% 
-  mutate(strata_var = factor(str_c(jcvi_group, elig_date, region, sep = ", "))) %>%
-  droplevels() %>%
+  here::here("output", "models_cox", "data", glue("data_cox_{comparison}_{subgroup_label}_{outcome}.rds")))
+
+################################################################################
+arm1 <- if_else(comparison == "ChAdOx", "ChAdOx", "BNT162b2")
+
+data_cox_dummy <- data_cox %>%
   dummy_cols(
     select_columns = c("comparison"),
     remove_selected_columns = TRUE
@@ -73,7 +59,7 @@ data_cox <- readr::read_rds(
 ################################################################################
 # define formulas
 
-comparisons <- data_cox %>% select(starts_with("comparison")) %>% names()
+comparisons <- data_cox_dummy %>% select(starts_with("comparison")) %>% names()
 
 formula_unadj <- as.formula(str_c(
   "Surv(tstart, tstop, status, type = \"counting\") ~ ",
@@ -156,7 +142,7 @@ cox_model <- function(
   timetofit <- system.time((
     coxmod <- coxph(
       formula = formula_cox,
-      data = data_cox,
+      data = data_cox_dummy,
       robust = TRUE,
       id = patient_id,
       na.action = "na.fail",
