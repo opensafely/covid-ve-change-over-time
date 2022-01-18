@@ -65,14 +65,31 @@ apply_model_fun <- function(
   
   splice(
     comment(glue("{comparison}; {subgroup}; {outcome}")),
+    comment("preflight checks"),
+    action(
+      name = glue("preflight_{comparison}_{subgroup_label}_{outcome}"),
+      run = "r:latest analysis/comparisons/preflight.R",
+      arguments = c(comparison, subgroup_label, outcome),
+      needs = list(
+        "design", 
+        "data_comparisons_process", 
+        glue("data_tte_process_{comparison}")
+        ),
+      highly_sensitive = list(
+        data_cox = glue("output/models_cox/data/data_cox_{comparison}_{subgroup_label}_{outcome}.rds")
+      ),
+      moderately_sensitive = list(
+        eventcheck_table = glue("output/models_cox/tables/eventcheck_{comparison}_{subgroup_label}_{outcome}.html")
+      )
+    ),
+    comment("apply cox model"),
     action(
       name = glue("apply_model_cox_{comparison}_{subgroup_label}_{outcome}"),
       run = "r:latest analysis/comparisons/apply_model_cox.R",
       arguments = c(comparison, subgroup_label, outcome),
       needs = list(
         "design", 
-        "data_comparisons_process", 
-        glue("data_tte_process_{comparison}")),
+        glue("preflight_{comparison}_{subgroup_label}_{outcome}")),
       highly_sensitive = list(
         modelnumber = glue("output/models_cox/data/model*_{comparison}_{subgroup_label}_{outcome}.rds"),
         model_summary = glue("output/models_cox/data/modelcox_summary_{comparison}_{subgroup_label}_{outcome}.rds"),
