@@ -36,6 +36,8 @@ process_tables <- function(
   subgroup <- unique(data$subgroup)
   subgroup_label <- which(subgroups == subgroup)
   
+  caption_string <- glue("Subgroup = {subgroup}")
+  
   # define column order
   cols_order <- lapply(
     c("BNT162b2", "ChAdOx", "unvax"),
@@ -85,7 +87,8 @@ process_tables <- function(
     kableExtra::kable(
       table_out,
       format = "pipe",
-      col.names = c("k", col_names_tidy)
+      col.names = c("k", col_names_tidy),
+      caption = caption_string
     ),
     file = here::here("output", "tte", "tables", glue("tidy_events_{subgroup_label}.txt")),
     append=FALSE
