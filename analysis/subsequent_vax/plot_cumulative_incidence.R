@@ -4,6 +4,7 @@ library(glue)
 library(survival)
 library(survminer)
 library(lubridate)
+library(cowplot)
 
 ################################################################################
 
@@ -19,7 +20,7 @@ study_parameters <- readr::read_rds(
 data_eligible_e_vax <- readr::read_rds(
   here::here("output", "data", "data_eligible_e_vax.rds"))  %>%
   mutate(arm = brand) %>%
-  select(patient_id, start_of_period, arm)
+  select(patient_id, covid_vax_2_date, start_of_period, arm)
 
 # individuals eligible based on box d criteria
 data_eligible_e_unvax <- readr::read_rds(
@@ -57,12 +58,16 @@ data <- bind_rows(data_eligible_e_vax, data_eligible_e_unvax) %>%
             by = "patient_id") %>%
   mutate(
     # start date of comparison 1 
-    start_fu_date = start_of_period + days(14),
+    start_fu_date = if_else(
+      arm %in% "unvax",
+      start_of_period + days(14),
+      covid_vax_2_date + days(14)
+      ),
    # end date of final comparison or end of data availability
    end_fu_date = pmin(start_fu_date + days(study_parameters$max_comparisons*28),
                       study_parameters$end_date)
     ) %>%
-  select(-start_of_period) %>%
+  select(-start_of_period, -covid_vax_2_date) %>%
   mutate(vax_date = if_else(
     arm %in% "unvax",
     covid_vax_1_date,
@@ -105,7 +110,12 @@ censor_fun <- function(.data, ...) {
     # as neither postest nor covid admitted included in tte calculation in pmin above, 
     # so no individuals removed by tte>0
     filter(tte > 0) %>%
-    select(patient_id, arm, subgroup, tte, status)
+    select(patient_id, arm, subgroup, tte, status) %>%
+    mutate(group = if_else(
+      arm == "unvax",
+      "unvaccinated",
+      "vaccinated"
+    ))
   
 }
 
@@ -114,31 +124,95 @@ censor_fun <- function(.data, ...) {
 
 plot_fun <- function(data_tte, censor_var) {
   
-  fit <- survfit(Surv(tte, status) ~ arm + subgroup, 
-                 data = data_tte)
+  data_tte_list <- data_tte %>% arrange(arm) %>% group_split(arm)
   
-  # Plot cumulative events
-  survplots <- ggsurvplot(fit,
-                          data = data_tte,
-                          break.time.by = 4,
-                          xlim = c(0, max(data_tte$tte)),
-                          conf.int = FALSE,
-                          censor=FALSE, # show censor ticks on line?
-                          cumevents = TRUE,
-                          cumcensor = TRUE,
-                          fun = "event",
-                          linetype = "arm",
-                          size = 0.5,
-                          color = "subgroup",
-                          palette = brewer.pal(length(subgroups), name = "Set2"),
-                          legend.title = "",
-                          font.x = 10,
-                          font.y = 10,
-                          font.tickslab = 10,
-                          font.title = 12,
-                          font.caption = 10,
-                          font.legenf = 10)
-
+  names_data_tte_list <- sapply(
+    data_tte_list,
+    function(x) unique(x$arm)
+  )
+  names_data_tte_list[which(names_data_tte_list=="unvax")] <- "unvaccinated"
+  
+  apply_ggsurvplot <- function(.data) {
+    
+    fit <- survfit(Surv(tte, status) ~ arm + subgroup, 
+                   data = .data)
+    
+    ggsurvplot(fit,
+               data = .data,
+               break.time.by = 4,
+               # xlim = c(0, max(.data$tte)),
+               conf.int = FALSE,
+               censor=FALSE, # show censor ticks on line?
+               cumevents = TRUE,
+               cumcensor = TRUE,
+               fun = "event",
+               size = 0.5,
+               color = "subgroup",
+               palette = brewer.pal(length(subgroups), name = "Set2"),
+               legend.title = "Subgroup",
+               font.x = 8,
+               font.y = 8,
+               font.tickslab = 10,
+               font.title = 12,
+               font.caption = 10,
+               font.legenf = 10)
+  }
+  
+  # scale for x-axis
+  K <- study_parameters$max_comparisons
+  x_breaks <- seq(0,K*4,4)
+  x_labels <- x_breaks + 2
+  
+  survplots <- lapply(data_tte_list, apply_ggsurvplot)
+  
+  max_ci_strata <- bind_rows(
+    lapply(
+      survplots,
+      function(x)
+        x$data.survplot %>% 
+        filter(time == max(time)) %>%
+        mutate(ci = 1-surv) %>%
+        select(strata, ci)
+      )
+    )
+  max_ci <- max(max_ci_strata$ci)
+  
+  plot_legend <- get_legend(
+    survplots[[1]]$plot +
+      theme(
+        legend.direction = "vertical"
+        )
+    )
+  
+  survplots_processed <- lapply(
+    survplots,
+    function(x)
+      x$plot + 
+      scale_x_continuous(
+        breaks = x_breaks,
+        labels = x_labels
+        ) +
+      lims(y = c(0,max_ci)) +
+      theme(
+        plot.title = element_text(size=10),
+        axis.text.y = element_text(size=8),
+        axis.text.x = element_text(size=8),
+        legend.position = "none"
+        )
+  )
+  
+  plot_out <- plot_grid(survplots_processed[[1]] + 
+              labs(title = glue("3rd dose in {names_data_tte_list[1]} arm"),
+                   x = "weeks since second dose\n"), 
+            survplots_processed[[2]] +
+              labs(title = glue("3rd dose in {names_data_tte_list[2]} arm"),
+                   x = "weeks since second dose\n"), 
+            survplots_processed[[3]] + 
+              labs(title = glue("1st dose in {names_data_tte_list[1]} arm"),
+                   x = "weeks since start of\nsecond vaccination period"),
+            plot_legend,
+            labels = c("A", "B", "C"))
+  
   if (censor_var == "postest") {
     censor_var_long <- "positive COVID-19 test, "
   } else if (censor_var == "covidadmitted") {
@@ -147,29 +221,29 @@ plot_fun <- function(data_tte, censor_var) {
     censor_var_long <- ""
   }
 
-  caption_string <- glue("Events are 1st dose in unvaccinated arm and 3rd dose in BNT162b2 and ChAdOx arms. Follow-up is censored at {censor_var_long}death and de-registration.")
-
-  plot_out <- survplots$plot +
-    labs(
-      title = "Cumulative incidence of 1st and 3rd vaccine doses",
-      x = "weeks since start of comparison period 1",
-      y = "cumulative event",
-      caption = str_wrap(caption_string, 80)
-    ) +
-    scale_linetype_discrete(name = NULL) +
-    theme(legend.position = "bottom",
-          legend.box = "vertical",
-          plot.caption = element_text(hjust = 0))
+  caption_string <- glue("Follow-up is censored at {censor_var_long}death and de-registration.")
+  
+  plot_out <- ggdraw(add_sub(plot_out, caption_string, x = 0, hjust = 0, size=10))
 
   ggsave(plot = plot_out,
          filename = here::here("output", "subsequent_vax", "images", glue("ci_vax_{censor_var}.png")),
          width=15, height=12, units="cm")
+  
+  survtable <- bind_rows(
+    lapply(
+      survplots,
+      function(x)
+        x$data.survtable %>% 
+        mutate(less5 = if_else(
+          n.event > 0 & n.event <=5,
+          TRUE,
+          FALSE
+        )) %>%
+        select(arm, subgroup, time, n.risk, n.event, cum.n.event, cum.n.censor, less5)
+        
+    )
+  )
 
-  survtable <- survplots$data.survtable %>%
-    select(arm, subgroup, time, n.risk, cum.n.event, cum.n.censor) %>%
-    # round to the nearest 10
-    mutate(across(c(n.risk, cum.n.event, cum.n.censor),
-                  ~round(.x,-1)))
 
   capture.output(
     survtable %>%
