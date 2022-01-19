@@ -13,9 +13,9 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  comparison <- "BNT162b2"
-  subgroup_label <- 1
-  outcome <- "postest"
+  comparison <- "both"
+  subgroup_label <- 5
+  outcome <- "noncoviddeath"
   
 } else{
   comparison <- args[[1]]
@@ -71,86 +71,105 @@ readr::write_rds(
 
 ################################################################################
 
-# split data by comparison and status
-tbl_list <- data_cox %>%
-  select(comparison, status, all_of(vars)) %>%
-  group_split(comparison, status) 
-
-# names for each element in list
-group_split_labels <- lapply(
-  tbl_list,
-  function(x) str_c(unique(x$comparison), unique(x$status))
-) %>% unlist()
-
-# summarise the number of events by level of covariates (within comparisons)
-tbltab_list <- tbl_list %>%
-  map(~.[,-c(1,2)]) %>%
-  map(
-    function(data){
-      map(data,
-          function(x) {
-            tab <- table(x)
-            tibble(.level = names(tab), 
-                   n = as.vector(tab))
-          }) %>%
-        bind_rows(.id="variable") 
-    }
+total_events <- data_cox %>% filter(status) %>% nrow()
+if (total_events == 0) {
+  
+  model_instructions <- list(
+    model = FALSE
   )
-
-# apply names
-names(tbltab_list) <- group_split_labels
-
-# prepare table
-tbltab <- bind_rows(
-  tbltab_list,
-  .id = "group"
-) %>%
-mutate(
-  comparison = str_extract(group, "\\d"),
-  status = as.logical(str_remove(group, "\\d")))  %>%
-  select(-group) %>%
-  pivot_wider(
-    names_from = status,
-    values_from = n
-  ) %>%
-  pivot_wider(
-    names_from = comparison,
-    values_from = c("FALSE", "TRUE"),
-    names_glue = "comparison{comparison}_{.value}"
+    
+  readr::write_rds(
+    model_instructions,
+    here::here("output", "lib", glue("model_instructions_{comparison}_{subgroup_label}_{outcome}.rds"))
   )
   
-# format and save table
-tbltab %>%
-  gt(
-  groupname_col="variable",
-  rowname_col = ".level"
-) %>%
-  tab_spanner_delim("_") %>%
-  tab_stubhead(label = "variable") %>%
-  opt_css(css = ".gt_stub { padding-left: 50px !important; }") %>%
-  fmt_number(
-    columns = starts_with(c("comparison")),
-    sep_mark = ",",
-    decimals = 0
-  ) %>%
-  tab_style(
-    style = list(
-      cell_fill(color = "lightcyan")
-    ),
-    locations = cells_body(
-      columns = ends_with("TRUE")
+} else {
+  
+  cat("...split data by comparison and status...\n")
+  tbl_list <- data_cox %>%
+    select(comparison, status, all_of(vars)) %>%
+    group_split(comparison, status) 
+  
+  # names for each element in list
+  group_split_labels <- lapply(
+    tbl_list,
+    function(x) str_c(unique(x$comparison), unique(x$status))
+  ) %>% unlist()
+  
+  cat("...summarise number of events...\n")
+  # summarise the number of events by level of covariates (within comparisons)
+  tbltab_list <- tbl_list %>%
+    map(~.[,-c(1,2)]) %>%
+    map(
+      function(data){
+        map(data,
+            function(x) {
+              tab <- table(x)
+              tibble(.level = names(tab), 
+                     n = as.vector(tab))
+            }) %>%
+          bind_rows(.id="variable") 
+      }
     )
+  
+  # apply names
+  names(tbltab_list) <- group_split_labels
+  
+  cat("...prepare table...\n")
+  tbltab <- bind_rows(
+    tbltab_list,
+    .id = "group"
   ) %>%
-  tab_style(
-    style = list(
-      cell_fill(color = "lightcyan")
-    ),
-    locations = cells_column_labels(
-      columns = ends_with("TRUE")
+    mutate(
+      comparison = str_extract(group, "\\d"),
+      status = as.logical(str_remove(group, "\\d")))  %>%
+    select(-group) %>%
+    pivot_wider(
+      names_from = status,
+      values_from = n
+    ) %>%
+    pivot_wider(
+      names_from = comparison,
+      values_from = c("FALSE", "TRUE"),
+      names_glue = "comparison{comparison}_{.value}"
     )
-  ) %>%
-  gtsave(
-    filename = glue("eventcheck_{comparison}_{subgroup_label}_{outcome}.html"),
-    path = here::here("output", "models_cox", "tables")
-  )
+  
+  cat("...format and save table...\n")
+  tbltab %>%
+    gt(
+      groupname_col="variable",
+      rowname_col = ".level"
+    ) %>%
+    tab_spanner_delim("_") %>%
+    tab_stubhead(label = "variable") %>%
+    opt_css(css = ".gt_stub { padding-left: 50px !important; }") %>%
+    fmt_number(
+      columns = starts_with(c("comparison")),
+      sep_mark = ",",
+      decimals = 0
+    ) %>%
+    tab_style(
+      style = list(
+        cell_fill(color = "lightcyan")
+      ),
+      locations = cells_body(
+        columns = ends_with("TRUE")
+      )
+    ) %>%
+    tab_style(
+      style = list(
+        cell_fill(color = "lightcyan")
+      ),
+      locations = cells_column_labels(
+        columns = ends_with("TRUE")
+      )
+    ) %>%
+    gtsave(
+      filename = glue("eventcheck_{comparison}_{subgroup_label}_{outcome}.html"),
+      path = here::here("output", "models_cox", "tables")
+    )
+  
+}
+
+
  
