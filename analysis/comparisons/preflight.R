@@ -72,18 +72,16 @@ readr::write_rds(
 ################################################################################
 
 total_events <- data_cox %>% filter(status) %>% nrow()
-if (total_events == 0) {
-  
-  model_instructions <- list(
-    model = FALSE
-  )
-    
-  readr::write_rds(
-    model_instructions,
-    here::here("output", "lib", glue("model_instructions_{comparison}_{subgroup_label}_{outcome}.rds"))
-  )
-  
-} else {
+model_instructions <- list(
+  model = total_events > 0
+)
+
+readr::write_rds(
+  model_instructions,
+  here::here("output", "lib", glue("model_instructions_{comparison}_{subgroup_label}_{outcome}.rds"))
+)
+
+if (model_instructions$model) {
   
   cat("...split data by comparison and status...\n")
   tbl_list <- data_cox %>%
@@ -167,6 +165,14 @@ if (total_events == 0) {
     gtsave(
       filename = glue("eventcheck_{comparison}_{subgroup_label}_{outcome}.html"),
       path = here::here("output", "models_cox", "tables")
+    )
+  
+} else {
+  
+  readr::write_file(
+    x="",
+    here::here(glue("output", "models_cox", "tables", "eventcheck_{comparison}_{subgroup_label}_{outcome}_empty.html")),
+    append = FALSE
     )
   
 }
