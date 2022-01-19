@@ -171,7 +171,7 @@ if (model_instructions$model) {
   
   readr::write_file(
     x="",
-    here::here(glue("output", "models_cox", "tables", "eventcheck_{comparison}_{subgroup_label}_{outcome}_empty.html")),
+    here::here("output", "models_cox", "tables", glue("eventcheck_{comparison}_{subgroup_label}_{outcome}.html")),
     append = FALSE
     )
   
