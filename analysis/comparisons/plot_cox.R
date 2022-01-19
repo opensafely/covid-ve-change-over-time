@@ -14,7 +14,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  plot <- "BNT162b2" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
+  plot <- "BNT162b2vsChAdOx" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
   
 } else {
    
@@ -37,12 +37,22 @@ second_vax_period_dates <- readr::read_rds(
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds")
 )
+# plot death or noncoviddeath or both?
+# plot_outcomes <- outcomes
+# death_var <- "both"
+plot_outcomes <- outcomes[-which(outcomes == "death")]
+death_var <- "noncoviddeath"
 
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
 subgroups <- c(subgroups, "all")
 subgroup_labels_full <- seq_along(subgroups)
+
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
 
 ################################################################################
 
@@ -70,7 +80,7 @@ model_tidy_list <- unlist(lapply(
       subgroup_labels,
       function(y)
         lapply(
-          outcomes,
+          plot_outcomes,
           function(z)
             try(
               readr::read_rds(
@@ -150,7 +160,7 @@ plot_fun <- function(
     outcome = character(),
     k = integer()
   )
-  for (o in outcomes) {
+  for (o in plot_outcomes) {
       expanded_data <- expanded_data %>%
         bind_rows(tibble(
           outcome = rep(o, each = K),
@@ -162,12 +172,17 @@ plot_fun <- function(
   y_axis_label <- "Hazard ratio\n<--  favours vaccine  |  favours no vaccine  -->"
   # colour palette and name for colour legend
   if (colour_var == "subgroup") {
-    set2vals <- brewer.pal(n = max(subgroup_labels), name = "Set2")[subgroup_labels]
+    palette <- brewer.pal(n = max(subgroup_labels), name = "Set2")[subgroup_labels]
     colour_name <- "Age range"
-  } else {
-    set2vals <- brewer.pal(n =  max(colour_var_length,3), name = "Set2")[1:colour_var_length]
+  } else if (colour_var == "model") {
+    palette <- brewer.pal(n =  max(colour_var_length,3), name = "Set2")[1:2]
+    colour_name <- NULL
+  } else if (colour_var == "comparison") {
+    # use ggplot palette so that this matches previous figures coloured by brand
+    palette <- gg_color_hue(2)
     colour_name <- NULL
   }
+  
   # spacing of points on plot
   position_dodge_val <- 0.6
   # upper limit for y-axis
@@ -201,7 +216,34 @@ plot_fun <- function(
     
   }
   
-  legend_width <- 40
+  if (length(plot_outcomes) == 4) {
+    plot_height <- 15
+    plot_width <- 15  
+    legend_width <- 40
+    caption_width <- 110
+    theme_legend <- function(...) {
+        theme(
+          legend.position = "bottom",
+          legend.key.size = unit(0.8, "cm"),
+          ...
+        )
+    }
+  } else if (length(plot_outcomes) == 5) {
+    plot_height <- 18
+    plot_width <- 15  
+    legend_width <- 40
+    caption_width <- 110
+    theme_legend <- function(...) {
+        theme(
+          legend.position = c(0.75, 0.15), # c(0,0) bottom left, c(1,1) top-right.
+          legend.key.size = unit(0.8, "cm"),
+          legend.direction="vertical",
+          ...
+        )
+    }
+  }
+  
+  
   
   plot_res <- expanded_data %>% 
     mutate(across(outcome, factor)) %>%
@@ -232,7 +274,7 @@ plot_fun <- function(
     geom_hline(aes(yintercept=1), colour='grey') +
     geom_linerange(aes(ymin = lower, ymax = upper), position = position_dodge(width = position_dodge_val)) +
     geom_point(position = position_dodge(width = position_dodge_val)) +
-    facet_wrap(~outcome, nrow=3, ncol=2)  +
+    facet_wrap(~outcome, ncol=2)  +
     scale_y_log10(
       name = y_axis_label,
       breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10),
@@ -241,15 +283,15 @@ plot_fun <- function(
     ) +
     scale_colour_manual(
       name = colour_name, 
-      guide=guide_legend(ncol=1), 
-      values = set2vals,
+      # guide=guide_legend(ncol=1), 
+      values = palette,
       na.translate = F) +
     labs(
       x = "weeks since second dose",
       colour = NULL,
       title = title_string,
       subtitle = subtitle_string,
-      caption = str_wrap(caption_string,110)
+      caption = str_wrap(caption_string, caption_width)
     ) +
     theme_bw() +
     theme(
@@ -274,11 +316,18 @@ plot_fun <- function(
       plot.caption.position = "plot",
       plot.caption = element_text(hjust = 0, face= "italic"),
       
-      legend.title = element_text(size = 10),
-      legend.position = c(0.75, 0.15), # c(0,0) bottom left, c(1,1) top-right.
-      legend.key.size = unit(0.8, "cm"),
-      legend.box="vertical"
-    ) 
+    ) +
+    theme_legend(
+      legend.title = element_text(size = 10)
+    )
+  
+  ic <- str_c(plot_subgroup, collapse = "")
+  jc <- str_c(plot_model, collapse = "")
+  
+  # save the plot
+  ggsave(plot = plot_res,
+         filename = here::here("output", "models_cox", "images", glue("plot_res_{plot}_{ic}_{jc}_{death_var}.png")),
+         width=plot_width, height=plot_height, units="cm")
   
   return(plot_res)
   
@@ -302,19 +351,11 @@ for (i in seq_along(plot_subgroups)) {
     j <- "2"
   }
   
-  plot_res <- plot_fun(
+  plot_fun(
     plot_subgroup = plot_subgroups[[i]],
     plot_model = j,
     plot_comparison = comparisons
   )
-  
-  ic <- str_c(plot_subgroups[[i]], collapse = "")
-  jc <- str_c(j, collapse = "")
-  
-  # save the plot
-  ggsave(plot = plot_res,
-         filename = here::here("output", "models_cox", "images", glue("plot_res_{plot}_{ic}_{jc}.png")),
-         width=15, height=18, units="cm")
   
 }
   
