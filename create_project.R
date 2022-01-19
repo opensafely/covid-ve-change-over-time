@@ -80,7 +80,7 @@ apply_model_fun <- function(
         model_instructions = glue("output/lib/model_instructions_{comparison}_{subgroup_label}_{outcome}.rds")
       ),
       moderately_sensitive = list(
-        eventcheck_table = glue("output/models_cox/tables/eventcheck_*.html")
+        eventcheck_table = glue("output/models_cox/tables/eventcheck_{comparison}_{subgroup_label}_{outcome}.html")
       )
     ),
     comment("apply cox model"),

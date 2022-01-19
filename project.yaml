@@ -220,7 +220,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_1_postest.rds
         model_instructions: output/lib/model_instructions_BNT162b2_1_postest.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_1_postest.html
 
   ## apply cox model 
 
@@ -249,7 +249,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_1_covidadmitted.rds
         model_instructions: output/lib/model_instructions_BNT162b2_1_covidadmitted.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_1_covidadmitted.html
 
   ## apply cox model 
 
@@ -278,7 +278,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_1_coviddeath.rds
         model_instructions: output/lib/model_instructions_BNT162b2_1_coviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_1_coviddeath.html
 
   ## apply cox model 
 
@@ -307,7 +307,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_1_noncoviddeath.rds
         model_instructions: output/lib/model_instructions_BNT162b2_1_noncoviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_1_noncoviddeath.html
 
   ## apply cox model 
 
@@ -336,7 +336,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_1_death.rds
         model_instructions: output/lib/model_instructions_BNT162b2_1_death.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_1_death.html
 
   ## apply cox model 
 
@@ -383,7 +383,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_2_postest.rds
         model_instructions: output/lib/model_instructions_BNT162b2_2_postest.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_2_postest.html
 
   ## apply cox model 
 
@@ -412,7 +412,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_2_covidadmitted.rds
         model_instructions: output/lib/model_instructions_BNT162b2_2_covidadmitted.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_2_covidadmitted.html
 
   ## apply cox model 
 
@@ -441,7 +441,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_2_coviddeath.rds
         model_instructions: output/lib/model_instructions_BNT162b2_2_coviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_2_coviddeath.html
 
   ## apply cox model 
 
@@ -470,7 +470,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_2_noncoviddeath.rds
         model_instructions: output/lib/model_instructions_BNT162b2_2_noncoviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_2_noncoviddeath.html
 
   ## apply cox model 
 
@@ -499,7 +499,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_2_death.rds
         model_instructions: output/lib/model_instructions_BNT162b2_2_death.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_2_death.html
 
   ## apply cox model 
 
@@ -546,7 +546,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_3_postest.rds
         model_instructions: output/lib/model_instructions_BNT162b2_3_postest.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_3_postest.html
 
   ## apply cox model 
 
@@ -575,7 +575,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_3_covidadmitted.rds
         model_instructions: output/lib/model_instructions_BNT162b2_3_covidadmitted.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_3_covidadmitted.html
 
   ## apply cox model 
 
@@ -604,7 +604,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_3_coviddeath.rds
         model_instructions: output/lib/model_instructions_BNT162b2_3_coviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_3_coviddeath.html
 
   ## apply cox model 
 
@@ -633,7 +633,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_3_noncoviddeath.rds
         model_instructions: output/lib/model_instructions_BNT162b2_3_noncoviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_3_noncoviddeath.html
 
   ## apply cox model 
 
@@ -662,7 +662,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_3_death.rds
         model_instructions: output/lib/model_instructions_BNT162b2_3_death.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_3_death.html
 
   ## apply cox model 
 
@@ -709,7 +709,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_4_postest.rds
         model_instructions: output/lib/model_instructions_BNT162b2_4_postest.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_4_postest.html
 
   ## apply cox model 
 
@@ -738,7 +738,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_4_covidadmitted.rds
         model_instructions: output/lib/model_instructions_BNT162b2_4_covidadmitted.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_4_covidadmitted.html
 
   ## apply cox model 
 
@@ -767,7 +767,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_4_coviddeath.rds
         model_instructions: output/lib/model_instructions_BNT162b2_4_coviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_4_coviddeath.html
 
   ## apply cox model 
 
@@ -796,7 +796,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_4_noncoviddeath.rds
         model_instructions: output/lib/model_instructions_BNT162b2_4_noncoviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_4_noncoviddeath.html
 
   ## apply cox model 
 
@@ -825,7 +825,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_4_death.rds
         model_instructions: output/lib/model_instructions_BNT162b2_4_death.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_4_death.html
 
   ## apply cox model 
 
@@ -872,7 +872,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_5_postest.rds
         model_instructions: output/lib/model_instructions_BNT162b2_5_postest.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_5_postest.html
 
   ## apply cox model 
 
@@ -901,7 +901,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_5_covidadmitted.rds
         model_instructions: output/lib/model_instructions_BNT162b2_5_covidadmitted.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_5_covidadmitted.html
 
   ## apply cox model 
 
@@ -930,7 +930,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_5_coviddeath.rds
         model_instructions: output/lib/model_instructions_BNT162b2_5_coviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_5_coviddeath.html
 
   ## apply cox model 
 
@@ -959,7 +959,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_5_noncoviddeath.rds
         model_instructions: output/lib/model_instructions_BNT162b2_5_noncoviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_5_noncoviddeath.html
 
   ## apply cox model 
 
@@ -988,7 +988,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_BNT162b2_5_death.rds
         model_instructions: output/lib/model_instructions_BNT162b2_5_death.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_BNT162b2_5_death.html
 
   ## apply cox model 
 
@@ -1035,7 +1035,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_1_postest.rds
         model_instructions: output/lib/model_instructions_ChAdOx_1_postest.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_1_postest.html
 
   ## apply cox model 
 
@@ -1064,7 +1064,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_1_covidadmitted.rds
         model_instructions: output/lib/model_instructions_ChAdOx_1_covidadmitted.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_1_covidadmitted.html
 
   ## apply cox model 
 
@@ -1093,7 +1093,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_1_coviddeath.rds
         model_instructions: output/lib/model_instructions_ChAdOx_1_coviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_1_coviddeath.html
 
   ## apply cox model 
 
@@ -1122,7 +1122,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_1_noncoviddeath.rds
         model_instructions: output/lib/model_instructions_ChAdOx_1_noncoviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_1_noncoviddeath.html
 
   ## apply cox model 
 
@@ -1151,7 +1151,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_1_death.rds
         model_instructions: output/lib/model_instructions_ChAdOx_1_death.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_1_death.html
 
   ## apply cox model 
 
@@ -1198,7 +1198,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_3_postest.rds
         model_instructions: output/lib/model_instructions_ChAdOx_3_postest.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_3_postest.html
 
   ## apply cox model 
 
@@ -1227,7 +1227,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_3_covidadmitted.rds
         model_instructions: output/lib/model_instructions_ChAdOx_3_covidadmitted.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_3_covidadmitted.html
 
   ## apply cox model 
 
@@ -1256,7 +1256,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_3_coviddeath.rds
         model_instructions: output/lib/model_instructions_ChAdOx_3_coviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_3_coviddeath.html
 
   ## apply cox model 
 
@@ -1285,7 +1285,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_3_noncoviddeath.rds
         model_instructions: output/lib/model_instructions_ChAdOx_3_noncoviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_3_noncoviddeath.html
 
   ## apply cox model 
 
@@ -1314,7 +1314,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_3_death.rds
         model_instructions: output/lib/model_instructions_ChAdOx_3_death.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_3_death.html
 
   ## apply cox model 
 
@@ -1361,7 +1361,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_4_postest.rds
         model_instructions: output/lib/model_instructions_ChAdOx_4_postest.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_4_postest.html
 
   ## apply cox model 
 
@@ -1390,7 +1390,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_4_covidadmitted.rds
         model_instructions: output/lib/model_instructions_ChAdOx_4_covidadmitted.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_4_covidadmitted.html
 
   ## apply cox model 
 
@@ -1419,7 +1419,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_4_coviddeath.rds
         model_instructions: output/lib/model_instructions_ChAdOx_4_coviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_4_coviddeath.html
 
   ## apply cox model 
 
@@ -1448,7 +1448,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_4_noncoviddeath.rds
         model_instructions: output/lib/model_instructions_ChAdOx_4_noncoviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_4_noncoviddeath.html
 
   ## apply cox model 
 
@@ -1477,7 +1477,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_4_death.rds
         model_instructions: output/lib/model_instructions_ChAdOx_4_death.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_4_death.html
 
   ## apply cox model 
 
@@ -1524,7 +1524,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_5_postest.rds
         model_instructions: output/lib/model_instructions_ChAdOx_5_postest.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_5_postest.html
 
   ## apply cox model 
 
@@ -1553,7 +1553,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_5_covidadmitted.rds
         model_instructions: output/lib/model_instructions_ChAdOx_5_covidadmitted.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_5_covidadmitted.html
 
   ## apply cox model 
 
@@ -1582,7 +1582,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_5_coviddeath.rds
         model_instructions: output/lib/model_instructions_ChAdOx_5_coviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_5_coviddeath.html
 
   ## apply cox model 
 
@@ -1611,7 +1611,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_5_noncoviddeath.rds
         model_instructions: output/lib/model_instructions_ChAdOx_5_noncoviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_5_noncoviddeath.html
 
   ## apply cox model 
 
@@ -1640,7 +1640,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_ChAdOx_5_death.rds
         model_instructions: output/lib/model_instructions_ChAdOx_5_death.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_ChAdOx_5_death.html
 
   ## apply cox model 
 
@@ -1687,7 +1687,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_1_postest.rds
         model_instructions: output/lib/model_instructions_both_1_postest.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_1_postest.html
 
   ## apply cox model 
 
@@ -1716,7 +1716,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_1_covidadmitted.rds
         model_instructions: output/lib/model_instructions_both_1_covidadmitted.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_1_covidadmitted.html
 
   ## apply cox model 
 
@@ -1745,7 +1745,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_1_coviddeath.rds
         model_instructions: output/lib/model_instructions_both_1_coviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_1_coviddeath.html
 
   ## apply cox model 
 
@@ -1774,7 +1774,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_1_noncoviddeath.rds
         model_instructions: output/lib/model_instructions_both_1_noncoviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_1_noncoviddeath.html
 
   ## apply cox model 
 
@@ -1803,7 +1803,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_1_death.rds
         model_instructions: output/lib/model_instructions_both_1_death.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_1_death.html
 
   ## apply cox model 
 
@@ -1850,7 +1850,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_3_postest.rds
         model_instructions: output/lib/model_instructions_both_3_postest.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_3_postest.html
 
   ## apply cox model 
 
@@ -1879,7 +1879,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_3_covidadmitted.rds
         model_instructions: output/lib/model_instructions_both_3_covidadmitted.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_3_covidadmitted.html
 
   ## apply cox model 
 
@@ -1908,7 +1908,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_3_coviddeath.rds
         model_instructions: output/lib/model_instructions_both_3_coviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_3_coviddeath.html
 
   ## apply cox model 
 
@@ -1937,7 +1937,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_3_noncoviddeath.rds
         model_instructions: output/lib/model_instructions_both_3_noncoviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_3_noncoviddeath.html
 
   ## apply cox model 
 
@@ -1966,7 +1966,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_3_death.rds
         model_instructions: output/lib/model_instructions_both_3_death.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_3_death.html
 
   ## apply cox model 
 
@@ -2013,7 +2013,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_4_postest.rds
         model_instructions: output/lib/model_instructions_both_4_postest.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_4_postest.html
 
   ## apply cox model 
 
@@ -2042,7 +2042,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_4_covidadmitted.rds
         model_instructions: output/lib/model_instructions_both_4_covidadmitted.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_4_covidadmitted.html
 
   ## apply cox model 
 
@@ -2071,7 +2071,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_4_coviddeath.rds
         model_instructions: output/lib/model_instructions_both_4_coviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_4_coviddeath.html
 
   ## apply cox model 
 
@@ -2100,7 +2100,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_4_noncoviddeath.rds
         model_instructions: output/lib/model_instructions_both_4_noncoviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_4_noncoviddeath.html
 
   ## apply cox model 
 
@@ -2129,7 +2129,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_4_death.rds
         model_instructions: output/lib/model_instructions_both_4_death.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_4_death.html
 
   ## apply cox model 
 
@@ -2176,7 +2176,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_5_postest.rds
         model_instructions: output/lib/model_instructions_both_5_postest.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_5_postest.html
 
   ## apply cox model 
 
@@ -2205,7 +2205,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_5_covidadmitted.rds
         model_instructions: output/lib/model_instructions_both_5_covidadmitted.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_5_covidadmitted.html
 
   ## apply cox model 
 
@@ -2234,7 +2234,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_5_coviddeath.rds
         model_instructions: output/lib/model_instructions_both_5_coviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_5_coviddeath.html
 
   ## apply cox model 
 
@@ -2263,7 +2263,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_5_noncoviddeath.rds
         model_instructions: output/lib/model_instructions_both_5_noncoviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_5_noncoviddeath.html
 
   ## apply cox model 
 
@@ -2292,7 +2292,7 @@ actions:
         data_cox: output/models_cox/data/data_cox_both_5_death.rds
         model_instructions: output/lib/model_instructions_both_5_death.rds
       moderately_sensitive:
-        eventcheck_table: output/models_cox/tables/eventcheck_*.html
+        eventcheck_table: output/models_cox/tables/eventcheck_both_5_death.html
 
   ## apply cox model 
 
