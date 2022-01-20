@@ -153,7 +153,16 @@ plot_fun <- function(data_tte, censor_var) {
   
   
   survtable <- ggsurvplot_res$data.survplot %>%
-    group_by(strata) %>%
+    # group by weeks (i.e. week 1 = days 1-7 etc)
+    mutate(across(time, ceiling)) %>%
+    group_by(strata, subgroup, arm, time) %>%
+    summarise(
+      n.risk = max(n.risk),
+      n.event = sum(n.event),
+      n.censor = sum(n.censor),
+      .groups = "keep"
+    ) %>%
+    ungroup(time) %>%
     # suppress small numbers
     mutate(across(c(n.event, n.censor),
                   ~ case_when(
@@ -161,8 +170,10 @@ plot_fun <- function(data_tte, censor_var) {
                     .x < 5 ~ 5,
                     TRUE ~ .x
                   ))) %>%
-    mutate(n.excluded = lag(cumsum(n.event + n.censor)),
-           n.risk_new = max(n.risk) - n.excluded) %>%
+    mutate(
+      n.excluded = lag(cumsum(n.event + n.censor)),
+      n.risk_new = max(n.risk) - n.excluded
+      ) %>%
     # recalculate n.risk now that small numbers suppressed in n.event and n.censor
     mutate(across(n.risk,
                   ~ if_else(
@@ -170,8 +181,12 @@ plot_fun <- function(data_tte, censor_var) {
                     .x,
                     n.risk_new)
     )) %>%
+    # calculate cumulative incidence
+    mutate(prob_vax = (n.risk - n.event)/n.risk,
+           cumprod_vax = cumprod(prob_vax),
+           cuminc = 1-cumprod_vax) %>%
     ungroup() %>%
-    select(arm, subgroup, time, n.risk, n.event, n.censor, surv)
+    select(arm, subgroup, time, n.risk, n.event, n.censor, cuminc)
   
   
   plot_out <- survtable %>%
@@ -182,9 +197,12 @@ plot_fun <- function(data_tte, censor_var) {
                     .x %in% "unvax" ~ "1st dose in unvaccinated arm"
                   )
                   )) %>%
-    ggplot(aes(x = time, y = 1-surv, colour = subgroup)) +
+    ggplot(aes(x = time, y = cuminc, colour = subgroup)) +
     geom_step() +
     facet_wrap(~ arm, nrow = 2) +
+    scale_x_continuous(
+      breaks = seq(0,24,4)
+    ) +
     labs(x = "weeks since second dose",
          y = "cumulative event",
          caption = str_wrap(caption_string,102),
