@@ -42,6 +42,11 @@ data_wide_vax_dates <- readRDS(
 subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
 
+# redaction functions
+source(here::here("analysis", "lib", "redaction_functions.R"))
+
+source(here::here("analysis", "lib", "data_process_functions.R"))
+
 ################################################################################
 
 # function to be applied in dplyr::filter
@@ -124,94 +129,17 @@ censor_fun <- function(.data, ...) {
 
 plot_fun <- function(data_tte, censor_var) {
   
-  data_tte_list <- data_tte %>% arrange(arm) %>% group_split(arm)
-  
-  names_data_tte_list <- sapply(
-    data_tte_list,
-    function(x) unique(x$arm)
-  )
-  names_data_tte_list[which(names_data_tte_list=="unvax")] <- "unvaccinated"
-  
-  apply_ggsurvplot <- function(.data) {
-    
-    fit <- survfit(Surv(tte, status) ~ arm + subgroup, 
-                   data = .data)
-    
-    ggsurvplot(fit,
-               data = .data,
-               break.time.by = 4,
-               # xlim = c(0, max(.data$tte)),
-               conf.int = FALSE,
-               censor=FALSE, # show censor ticks on line?
-               cumevents = TRUE,
-               cumcensor = TRUE,
-               fun = "event",
-               size = 0.5,
-               color = "subgroup",
-               palette = brewer.pal(length(subgroups), name = "Set2"),
-               legend.title = "Subgroup",
-               font.x = 8,
-               font.y = 8,
-               font.tickslab = 10,
-               font.title = 12,
-               font.caption = 10,
-               font.legenf = 10)
-  }
-  
   # scale for x-axis
   K <- study_parameters$max_comparisons
   x_breaks <- seq(0,K*4,4)
   x_labels <- x_breaks + 2
   
-  survplots <- lapply(data_tte_list, apply_ggsurvplot)
+  fit <- survfit(Surv(tte, status) ~ arm + subgroup, 
+                 data = data_tte)
   
-  max_ci_strata <- bind_rows(
-    lapply(
-      survplots,
-      function(x)
-        x$data.survplot %>% 
-        filter(time == max(time)) %>%
-        mutate(ci = 1-surv) %>%
-        select(strata, ci)
-      )
-    )
-  max_ci <- max(max_ci_strata$ci)
-  
-  plot_legend <- get_legend(
-    survplots[[1]]$plot +
-      theme(
-        legend.direction = "vertical"
-        )
-    )
-  
-  survplots_processed <- lapply(
-    survplots,
-    function(x)
-      x$plot + 
-      scale_x_continuous(
-        breaks = x_breaks,
-        labels = x_labels
-        ) +
-      lims(y = c(0,max_ci)) +
-      theme(
-        plot.title = element_text(size=10),
-        axis.text.y = element_text(size=8),
-        axis.text.x = element_text(size=8),
-        legend.position = "none"
-        )
-  )
-  
-  plot_out <- plot_grid(survplots_processed[[1]] + 
-              labs(title = glue("3rd dose in {names_data_tte_list[1]} arm"),
-                   x = "weeks since second dose\n"), 
-            survplots_processed[[2]] +
-              labs(title = glue("3rd dose in {names_data_tte_list[2]} arm"),
-                   x = "weeks since second dose\n"), 
-            survplots_processed[[3]] + 
-              labs(title = glue("1st dose in {names_data_tte_list[1]} arm"),
-                   x = "weeks since start of\nsecond vaccination period"),
-            plot_legend,
-            labels = c("A", "B", "C"))
+  ggsurvplot_res <- ggsurvplot(fit,
+                               data = data_tte,
+                               break.time.by = 4)  
   
   if (censor_var == "postest") {
     censor_var_long <- "positive COVID-19 test, "
@@ -220,33 +148,83 @@ plot_fun <- function(data_tte, censor_var) {
   } else {
     censor_var_long <- ""
   }
-
-  caption_string <- glue("Follow-up is censored at {censor_var_long}death and de-registration.")
   
-  plot_out <- ggdraw(add_sub(plot_out, caption_string, x = 0, hjust = 0, size=10))
-
+  caption_string <- glue("For the unvaccinated arm the time-scale is \"weeks since start of second vaccination period\". Follow-up for all arms is censored at {censor_var_long}death and de-registration.")
+  
+  
+  survtable <- ggsurvplot_res$data.survplot %>%
+    group_by(strata) %>%
+    # suppress small numbers
+    mutate(across(c(n.event, n.censor),
+                  ~ case_when(
+                    0 <= .x & .x < 3 ~ 0,
+                    .x < 5 ~ 5,
+                    TRUE ~ .x
+                  ))) %>%
+    mutate(n.excluded = lag(cumsum(n.event + n.censor)),
+           n.risk_new = max(n.risk) - n.excluded) %>%
+    # recalculate n.risk now that small numbers suppressed in n.event and n.censor
+    mutate(across(n.risk,
+                  ~ if_else(
+                    is.na(n.risk_new),
+                    .x,
+                    n.risk_new)
+    )) %>%
+    ungroup() %>%
+    select(arm, subgroup, time, n.risk, n.event, n.censor, surv)
+  
+  
+  plot_out <- survtable %>%
+    mutate(across(arm,
+                  ~ fct_case_when(
+                    .x %in% "BNT162b2" ~ "3rd dose in BNT162b2 arm",
+                    .x %in% "ChAdOx" ~ "3rd dose in ChAdOx arm",
+                    .x %in% "unvax" ~ "1st dose in unvaccinated arm"
+                  )
+                  )) %>%
+    ggplot(aes(x = time, y = 1-surv, colour = subgroup)) +
+    geom_step() +
+    facet_wrap(~ arm, nrow = 2) +
+    labs(x = "weeks since second dose",
+         y = "cumulative event",
+         caption = str_wrap(caption_string,102),
+         title = "Cumulative incidence of subsequent vaccination") +
+    scale_color_discrete(name = NULL) +
+    theme_bw() +
+    theme(
+      panel.border = element_blank(),
+      axis.line.y = element_line(colour = "black"),
+      
+      axis.text = element_text(size=8),
+      
+      axis.title.x = element_text(size = 10, margin = margin(t = 20, r = 0, b = 10, l = 0)),
+      axis.title.y = element_text(size = 10, margin = margin(t = 0, r = 10, b = 0, l = 0)),
+      
+      panel.grid.minor.x = element_blank(),
+      panel.grid.minor.y = element_blank(),
+      strip.background = element_blank(),
+      strip.placement = "outside",
+      strip.text.y.left = element_text(angle = 0),
+      
+      panel.spacing = unit(0.8, "lines"),
+      
+      plot.title = element_text(hjust = 0, size = 11),
+      plot.title.position = "plot",
+      plot.caption.position = "plot",
+      plot.caption = element_text(hjust = 0, face= "italic"),
+      
+      legend.position = c(0.75,0.25)
+      
+    )
+  
   ggsave(plot = plot_out,
          filename = here::here("output", "subsequent_vax", "images", glue("ci_vax_{censor_var}.png")),
          width=15, height=12, units="cm")
   
-  survtable <- bind_rows(
-    lapply(
-      survplots,
-      function(x)
-        x$data.survtable %>% 
-        mutate(less5 = if_else(
-          n.event > 0 & n.event <=5,
-          TRUE,
-          FALSE
-        )) %>%
-        select(arm, subgroup, time, n.risk, n.event, cum.n.event, cum.n.censor, less5)
-        
-    )
-  )
-
 
   capture.output(
     survtable %>%
+      select(-surv) %>%
       kableExtra::kable("pipe", padding = 2),
     file = here::here("output", "subsequent_vax", "tables", glue("survtable_{censor_var}.txt")),
     append=FALSE
