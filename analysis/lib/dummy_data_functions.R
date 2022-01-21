@@ -120,12 +120,19 @@ vars_bmi_recurrent <- function(.data, r = 10, decay = 0.2) {
 }
 
 # recurrent date variable, where var_1 is the earliest date
-var_date_recurrent <- function(.data, name_string, incidence, earliest = start_date, r = 10, decay = 0.5) {
+var_date_recurrent <- function(
+  .data, 
+  name_string,
+  incidence, 
+  earliest = start_date, 
+  r = 10, 
+  decay = 0.5,
+  start_index = 0) {
   
   out <- .data %>%
-    var_date(name = !! sym(glue("{name_string}_0_date")), incidence = incidence, earliest = earliest, keep_vars = FALSE)
+    var_date(name = !! sym(glue("{name_string}_{start_index}_date")), incidence = incidence, earliest = earliest, keep_vars = FALSE)
   
-  for (i in 1:r) {
+  for (i in (start_index+1):r) {
     out <- out %>%
       mutate(missing = sample(
         x=c(NA_real_, 1),
