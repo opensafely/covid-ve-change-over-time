@@ -732,6 +732,18 @@ study=StudyDefinition(
     ##############
     ### EVENTS ###
     ##############
+
+    # covid test
+    **covid_test_date_X(
+        name = "covid_test",
+        index_date = "elig_date + 42 days",
+        n = 10,
+        test_result="any",
+        return_expectations = {
+            "date": {"earliest": "2021-01-01",  "latest" : "2021-11-30"},
+            "rate": "exponential_increase",
+        },
+    ),
     
     # positive covid test
     positive_test_0_date=patients.with_test_result_in_sgss(
@@ -741,7 +753,7 @@ study=StudyDefinition(
         date_format="YYYY-MM-DD",
         on_or_before=f"elig_date + {112 + 14 + (max_comparisons + 1)*28} days",
         find_first_match_in_period=True,
-        restrict_to_earliest_specimen_date=False,
+        restrict_to_earliest_specimen_date=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
             "rate": "exponential_increase",

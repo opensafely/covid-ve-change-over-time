@@ -86,3 +86,24 @@ def admitted_date_X(
             return_expectations
         ))
     return variables
+
+# covid tests
+def covid_test_date_X(name, index_date, n, test_result, return_expectations):
+    
+    def var_signature(name, on_or_after, test_result, return_expectations):
+        return {
+            name: patients.with_test_result_in_sgss(
+                pathogen="SARS-CoV-2",
+                test_result=test_result,
+                on_or_after=on_or_after,
+                find_first_match_in_period=True,
+                restrict_to_earliest_specimen_date=False,
+                returning="date",
+                date_format="YYYY-MM-DD",
+                return_expectations=return_expectations
+	        ),
+        }
+    variables = var_signature(f"{name}_1_date", index_date, test_result, return_expectations)
+    for i in range(2, n+1):
+        variables.update(var_signature(f"{name}_{i}_date", f"{name}_{i-1}_date + 1 day", test_result, return_expectations))
+    return variables

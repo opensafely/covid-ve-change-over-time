@@ -219,6 +219,13 @@ dummy_data_covs <- dummy_data_vax %>%
       name_string = "nonshielded", 
       incidence = 0.1,
       r = study_parameters$recur_shielded)) %>%
+  bind_cols(
+    var_date_recurrent(
+      .data = .,
+      name_string = "covid_test", 
+      incidence = 0.1,
+      r = study_parameters$recur_covid_test,
+      start_index = 1)) %>%
   # add recurrent hospital admission vars
   # bind_cols(
   #   var_date_recurrent(

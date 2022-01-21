@@ -24,6 +24,7 @@ study_parameters <-
     recur_bmi = 10L, # number of times the bmi variable recurs
     recur_shielded = 10L, # number of times the shielded and nonshieded variables recur
     recur_admissions = 10L, # number of times the hospital admissions variables recur
+    recur_covid_test = 10L, # number of times the covid test variables recur
     ref_age_1 = "2021-03-31", # reference date for calculating age for phase 1 groups
     ref_age_2 = "2021-07-01", # reference date for calculating age for phase 2 groups
     ref_cev = "2021-01-18", # reference date for calculating eligibility for phase 1 group 4 (CEV)
