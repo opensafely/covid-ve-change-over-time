@@ -49,9 +49,9 @@ subgroups <- readr::read_rds(
 subgroups <- c(subgroups, "all")
 subgroup_labels_full <- seq_along(subgroups)
 
-gg_color_hue <- function(n) {
+gg_color_hue <- function(n, transparency = 1) {
   hues = seq(15, 375, length = n + 1)
-  hcl(h = hues, l = 65, c = 100)[1:n]
+  hcl(h = hues, l = 65, c = 100, alpha = transparency)[1:n]
 }
 
 ################################################################################
@@ -99,21 +99,23 @@ recursive = FALSE
 
 model_tidy_tibble <- bind_rows(
   model_tidy_list[sapply(model_tidy_list, function(x) is_tibble(x))]
-) 
-
-
-if (str_detect(plot, "BNT162b2")) {
-  
+) %>%
   # remove death outcomes in the 18-39 and 40-64 pfizer subgroups
   # very few outcomes so massive CIs cluttering the plots
-  model_tidy_tibble <- model_tidy_tibble %>%
-    filter(!(
-      subgroup %in% c(2,3) &
-        str_detect(outcome, "death")
-    ))
-  
-}
+  filter(!(
+    (comparisons %in% c("BNT162b2", "both")) &
+      (subgroup %in% c(2,3)) &
+      str_detect(outcome, "death")
+  )
+  )
 
+# if (plot %in% c("BNT162b2", "BNT162b2")) {
+#   model_tidy_tibble <- model_tidy_tibble %>%
+#     filter(!(
+#       subgroup %in% c(2,3) &
+#         str_detect(outcome, "death")
+#     ))
+# }
 
 plot_fun <- function(
   plot_subgroup,
@@ -175,7 +177,15 @@ plot_fun <- function(
     palette <- brewer.pal(n = max(subgroup_labels), name = "Set2")[subgroup_labels]
     colour_name <- "Age range"
   } else if (colour_var == "model") {
-    palette <- brewer.pal(n =  max(colour_var_length,3), name = "Set2")[1:2]
+    palette_unadj <- gg_color_hue(3, transparency = 0.5)
+    palette_adj <- gg_color_hue(3, transparency = 1)
+    i <- case_when(
+      plot_comparison %in% "BNT162b2" ~ 1,  # red 
+      plot_comparison %in% "both" ~ 2, # green
+      plot_comparison %in% "ChAdOx" ~ 3, # blue
+      TRUE ~ NA_real_
+    )
+    palette <- c(palette_unadj[i], palette_adj[i])
     colour_name <- NULL
   } else if (colour_var == "comparison") {
     # use ggplot palette so that this matches previous figures coloured by brand
