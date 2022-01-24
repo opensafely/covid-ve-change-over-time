@@ -242,7 +242,6 @@ plot_fun <- function(data_tte, censor_var) {
 
   capture.output(
     survtable %>%
-      select(-surv) %>%
       kableExtra::kable("pipe", padding = 2),
     file = here::here("output", "subsequent_vax", "tables", glue("survtable_{censor_var}.txt")),
     append=FALSE
