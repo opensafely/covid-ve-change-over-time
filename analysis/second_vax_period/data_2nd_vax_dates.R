@@ -4,8 +4,8 @@
 # - reads data_eligible_b.rds and data_vax_wide.rds
 # - saves data for plotting the distribution of 2nd vax dates across dates
 # - identifies the second vaccination period
-# - saves second_vax_period_dates.csv (the elig_date:region_0:brand specific dates)
-# - saves start_dates.csv and end_dates.csv (the elig_date:region_0 specific dates to pass to study_definition_covs.py)
+# - saves second_vax_period_dates.csv (the elig_date:region:brand specific dates)
+# - saves start_dates.csv and end_dates.csv (the elig_date:region specific dates to pass to study_definition_covs.py)
 
 ######################################
 
@@ -32,7 +32,7 @@ data_vax_wide <- readr::read_rds(
 # second dose and brand for eligible individuals
 data_2nd_dose <- data_eligible_b %>%
   left_join(data_vax_wide, by = "patient_id") %>%
-  select(patient_id, jcvi_group, elig_date, region_0, 
+  select(patient_id, jcvi_group, elig_date, region, 
          dose_2 = covid_vax_2_date, brand = covid_vax_2_brand) %>%
   group_split(jcvi_group, elig_date)
 
@@ -53,15 +53,15 @@ generate_plot_data <- function(.data) {
   # ensure full sequence of dates for each region:brand combo
   # so that the moving averages calculated in 'plot_2nd_vax_dates.R' include the zero counts
   expanded_data <- tibble(
-    region_0 = character(),
+    region = character(),
     brand = character(),
     dose_2 = Date()
   )
-  for (r in unique(.data$region_0)) {
+  for (r in unique(.data$region)) {
     for (v in unique(.data$brand)) {
       expanded_data <- expanded_data %>%
         bind_rows(tibble(
-          region_0 = rep(r, each = length(dates_seq)),
+          region = rep(r, each = length(dates_seq)),
           brand = rep(v, each = length(dates_seq)),
           dose_2 = dates_seq
         ))
@@ -70,13 +70,13 @@ generate_plot_data <- function(.data) {
   
   # number of patients with 2nd dose on each date
   count_data <- .data %>%
-    group_by(region_0, brand, dose_2) %>%
+    group_by(region, brand, dose_2) %>%
     count() %>%
     ungroup() 
   
   # join expanded and count data
   out <- expanded_data %>%
-    left_join(count_data, by = c("region_0", "brand", "dose_2")) %>%
+    left_join(count_data, by = c("region", "brand", "dose_2")) %>%
     mutate(across(n, ~if_else(is.na(.x), 0L, .x))) %>%
     mutate(
       jcvi_group = group,
@@ -103,7 +103,7 @@ data_vax_plot <- bind_rows(
                         levels = c("az", "pfizer"),
                         labels = c("ChAdOx", "BNT162b2")))) %>%
   rename(n_brand = n) %>%
-  group_by(jcvi_group, elig_date, region_0, dose_2) %>%
+  group_by(jcvi_group, elig_date, region, dose_2) %>%
   mutate(n = sum(n_brand)) %>%
   ungroup()
 
@@ -115,9 +115,9 @@ readr::write_rds(data_vax_plot,
 # number of days in cumulative sum
 l <- 28 
 second_vax_period_dates <- data_vax_plot %>%
-  distinct(jcvi_group, elig_date, region_0, dose_2, n) %>%
-  # calculate moving 28-day total number of individuals vaccinated for each elig_date:region_0:brand
-  group_by(jcvi_group, elig_date, region_0) %>%
+  distinct(jcvi_group, elig_date, region, dose_2, n) %>%
+  # calculate moving 28-day total number of individuals vaccinated for each elig_date:region:brand
+  group_by(jcvi_group, elig_date, region) %>%
   arrange(dose_2, .by_group = TRUE) %>%
   mutate(
     
@@ -153,12 +153,12 @@ second_vax_period_dates <- data_vax_plot %>%
 
 brand_counts <- second_vax_period_dates %>%
   left_join(data_vax_plot,
-            by = c("jcvi_group", "elig_date", "region_0")) %>%
+            by = c("jcvi_group", "elig_date", "region")) %>%
   filter(
     start_of_period <= dose_2,
     dose_2 <= end_of_period
     ) %>%
-  group_by(jcvi_group, elig_date, region_0, brand) %>%
+  group_by(jcvi_group, elig_date, region, brand) %>%
   summarise(n = sum(n_brand), .groups = "keep") %>%
   ungroup() %>%
   pivot_wider(
@@ -167,8 +167,8 @@ brand_counts <- second_vax_period_dates %>%
   
 second_vax_period_dates <- second_vax_period_dates %>%
   left_join(brand_counts,
-            by = c("jcvi_group", "elig_date", "region_0"))  %>%
-  select(jcvi_group, elig_date, region_0, n_ChAdOx, n_BNT162b2, cumulative_sum,
+            by = c("jcvi_group", "elig_date", "region"))  %>%
+  select(jcvi_group, elig_date, region, n_ChAdOx, n_BNT162b2, cumulative_sum,
          start_of_period, end_of_period, n_comparisons)
 
 # save for plotting
@@ -179,7 +179,7 @@ readr::write_rds(
 # save to review and release, with cumulative sum rounded to nearest 10
 capture.output(
   second_vax_period_dates %>% 
-    arrange(jcvi_group, elig_date, region_0) %>%
+    arrange(jcvi_group, elig_date, region) %>%
     mutate(across(cumulative_sum, ~ round(.x, -1))) %>% 
     kableExtra::kable("pipe"),
   file = here::here("output", "second_vax_period", "tables", "second_vax_period_dates.txt"),

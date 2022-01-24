@@ -31,23 +31,33 @@ regions <- readr::read_csv(
 )
 
 ################################################################################
-# inital pre-processing
+# initial pre-processing
 cat("#### extract data ####\n")
+
+
+# define breaks and labels for age_band
+age_breaks_lower <- c(16, seq(20,95,5))
+age_breaks_upper <- as.character(lead(age_breaks_lower) - 1)
+age_breaks_upper[-length(age_breaks_upper)] <- str_c("-", age_breaks_upper[-length(age_breaks_upper)])
+age_breaks_upper[length(age_breaks_upper)] <- "+"
+age_labels <- str_c(age_breaks_lower, age_breaks_upper)
+
+
 data_extract <- 
   arrow::read_feather(file = here::here("output", "input.feather")) %>%
   # because date types are not returned consistently by cohort extractor
-  mutate(across(c(contains("_date"), dob), 
+  mutate(across(c(contains("_date")), 
                 ~ floor_date(
                   as.Date(., format="%Y-%m-%d"),
                   unit = "days"))) %>%
-  mutate(across(imd_0, ~as.integer(as.character(.x))))
+  mutate(across(imd, ~as.integer(as.character(.x))))
 
 cat("#### process extracted data ####\n")
 data_processed_0 <- data_extract %>%
   # derive ethnicity variable
   mutate(
     # Region
-    region_0 = factor(region_0, levels = regions$region),
+    region = factor(region, levels = regions$region),
     # Ethnicity
     ethnicity = if_else(is.na(ethnicity_6), ethnicity_6_sus, ethnicity_6),
     ethnicity = fct_case_when(
@@ -59,12 +69,12 @@ data_processed_0 <- data_extract %>%
       TRUE ~ NA_character_
     ),
     # IMD quintile
-    imd_0 = fct_case_when(
-      imd_0 < 1 | is.na(imd_0) ~ NA_character_,
-      imd_0 < 32844*1/5 ~ "1 most deprived",
-      imd_0 < 32844*2/5 ~ "2",
-      imd_0 < 32844*3/5 ~ "3",
-      imd_0 < 32844*4/5 ~ "4",
+    imd = fct_case_when(
+      imd < 1 | is.na(imd) ~ NA_character_,
+      imd < 32844*1/5 ~ "1 most deprived",
+      imd < 32844*2/5 ~ "2",
+      imd < 32844*3/5 ~ "3",
+      imd < 32844*4/5 ~ "4",
       TRUE ~ "5 least deprived"
     ),
     # Sex
@@ -78,14 +88,39 @@ data_processed_0 <- data_extract %>%
     #Subgroup
     subgroup = fct_case_when(
       jcvi_group %in% c("04", "06") & age_1 < 65 ~ "16-64 and clinically vulnerable",
-      18 <= age_1 & age_1 < 40 ~ "18-39",
-      40 <= age_1 & age_1 < 65 ~ "40-64",
-      65 <= age_1 ~ "65+",
+      jcvi_group %in% c("11", "12") ~ "18-39",
+      jcvi_group %in% c("07", "08", "09", "10") ~ "40-64",
+      jcvi_group %in% c("02", "03", "04", "05") ~ "65+",
       TRUE ~ NA_character_
-    )
+    ),
+    
+    # Age bands
+    # use the previous definition with cut, then make missing if in phase 2
+    age_band_1 = as.character(cut(
+      age_1,
+      breaks = c(age_breaks_lower, Inf), 
+      right = FALSE,
+      include.lowest = TRUE,
+      labels = age_labels
+      )),
+    age_band_1 = case_when(
+      (jcvi_group %in% c("10", "11", "12")) ~ NA_character_, # only use age_band_1 for phase 1
+      TRUE ~ age_band_1
+    ),
+    age_band_2 = case_when(
+      !(jcvi_group %in% c("10", "11", "12")) ~ NA_character_, # only use these conditions for phase 2
+      16 <= age_2 & age_2 < 20 ~ "16-19",
+      20 <= age_2 & age_2 < 25 ~ "20-24",
+      25 <= age_2 & age_2 < 30 ~ "25-29",
+      30 <= age_2 & age_2 < 35 ~ "30-34",
+      (jcvi_group %in% "11" & 35 <= age_2) ~ "35-39", # includes those who turned 40 between ref_age_1 and ref_age_2
+      40 <= age_2 & age_2 < 45 ~ "40-44",
+      (jcvi_group %in% "10" & 45 <= age_2) ~ "45-49", # includes those who turned 50 between ref_age_1 and ref_age_2
+      TRUE ~ NA_character_),
+    age_band = factor(if_else(!is.na(age_band_1), age_band_1, age_band_2))
     
   ) %>%
-  select(-ethnicity_6, -ethnicity_6_sus) %>%
+  select(-ethnicity_6, -ethnicity_6_sus, -age_band_1, -age_band_2) %>%
   droplevels()
 
 ################################################################################

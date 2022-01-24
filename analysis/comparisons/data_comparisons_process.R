@@ -138,7 +138,7 @@ comparison_arms <- function(
         all_of(censor_vars),
         all_vars(no_evidence_of(., start_fu_date))) %>%
       select(
-        patient_id, jcvi_group, elig_date, region_0, arm, 
+        patient_id, jcvi_group, elig_date, region, arm, 
         start_fu_date, end_fu_date
       ) %>% 
       mutate(comparison = k)

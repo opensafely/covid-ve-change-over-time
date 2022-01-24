@@ -48,15 +48,15 @@ data_eligible_c <- data_eligible_b %>%
                            covid_vax_2_brand %in% "az" ~ "ChAdOx",
                            TRUE ~ NA_character_)) %>%
   select(-ends_with("_brand")) %>%
-  # right join to keep only the jcvi_group:elig_date:region_0:brands
+  # right join to keep only the jcvi_group:elig_date:region:brands
   # with > n_threshold individuals vaccinated during the period
   right_join(second_vax_period_dates, 
-            by = c("jcvi_group", "elig_date", "region_0")) %>%
+            by = c("jcvi_group", "elig_date", "region")) %>%
   filter(
     # second dose during second vax period
     start_of_period <= covid_vax_2_date,
     covid_vax_2_date <= end_of_period) %>%
-  select(patient_id, jcvi_group, elig_date, region_0, ethnicity, 
+  select(patient_id, jcvi_group, elig_date, region, ethnicity, 
          covid_vax_2_date, covid_vax_3_date, brand, 
          start_of_period, end_of_period) %>%
   droplevels()
@@ -78,12 +78,12 @@ data_eligible_d <- data_eligible_a %>%
               select(-ends_with("_brand")),
             by = "patient_id") %>%
   left_join(second_vax_period_dates, 
-             by = c("jcvi_group", "elig_date", "region_0")) %>%
+             by = c("jcvi_group", "elig_date", "region")) %>%
   # remove individuals who had received any vaccination before the start of the second vax period
   filter(
     is.na(covid_vax_1_date) | covid_vax_1_date >= start_of_period
   ) %>%
-  select(patient_id, jcvi_group, elig_date, region_0, ethnicity, 
+  select(patient_id, jcvi_group, elig_date, region, ethnicity, 
          covid_vax_1_date, start_of_period, end_of_period, split) %>%
   droplevels()
 

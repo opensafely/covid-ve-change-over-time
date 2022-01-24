@@ -51,7 +51,7 @@ process_covariates <- function(.data) {
   
   # add clinical and demographic covariates to data_comparison_arms ----
   strata_vars <- c("region", "elig_date", "comparison")
-  demographic_vars <- c("age", "sex", "ethnicity", "imd_0")
+  demographic_vars <- c("age_band", "sex", "ethnicity", "imd")
   ever_vars <- c(
     "longres_date",
     "asplenia_date", 
@@ -81,30 +81,21 @@ process_covariates <- function(.data) {
   )
   clinical_vars <- c(
     "flu_vaccine",
-    # "efi",
     "bmi"
   )
-  
-  # define breaks and labels for age_band
-  age_breaks_lower <- c(16, seq(20,95,5))
-  age_breaks_upper <- as.character(lead(age_breaks_lower) - 1)
-  age_breaks_upper[-length(age_breaks_upper)] <- str_c("-", age_breaks_upper[-length(age_breaks_upper)])
-  age_breaks_upper[length(age_breaks_upper)] <- "+"
-  age_labels <- str_c(age_breaks_lower, age_breaks_upper)
   
   out <- .data %>%
     # join and process covariates
     left_join(
       data_processed %>%
-        select(patient_id, 
-               dob, subgroup, 
+        select(patient_id, subgroup, 
                all_of(censor_vars),
                all_of(demographic_vars[demographic_vars %in% names(.)]),
                all_of(ever_vars),
                all_of(clinical_vars[clinical_vars %in% names(.)]),
                all_of(str_c(outcomes, "_date"))), 
       by = "patient_id") %>%
-    mutate(imd = factor(imd_0)) %>%
+    mutate(imd = factor(imd)) %>%
     left_join(
       data_shielded, 
       by = c("patient_id", "comparison")) %>%
@@ -140,15 +131,6 @@ process_covariates <- function(.data) {
     ) %>%
     mutate(
       
-      # 10-year age bands (apart from lowest, which is 14-year)
-      age = floor(as.numeric(start_fu_date - dob)/365.25),
-      age_band = cut(
-        age,
-        breaks = c(age_breaks_lower, Inf),
-        include.lowest = TRUE,
-        labels = age_labels
-      ),
-      
       any_immunosuppression = (permanant_immunosuppression | 
                                  asplenia | 
                                  dmards | 
@@ -180,8 +162,8 @@ process_covariates <- function(.data) {
       
     ) %>%
     select(
-      patient_id, jcvi_group, elig_date, region = region_0, ethnicity, arm, subgroup,
-      start_fu_date, end_fu_date, comparison, dob, 
+      patient_id, jcvi_group, elig_date, region, ethnicity, arm, subgroup,
+      start_fu_date, end_fu_date, comparison,
       unname(unlist(model_varlist)),
       all_of(str_c(outcomes, "_date")),
       all_of(censor_vars)

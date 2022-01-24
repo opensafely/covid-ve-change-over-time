@@ -433,7 +433,7 @@ jcvi_variables = dict(
     ),
 
     # region - NHS England 9 regions
-    region_0=patients.registered_practice_as_of(
+    region=patients.registered_practice_as_of(
         "elig_date + 42 days",
         returning="nuts1_region_name",
         return_expectations={

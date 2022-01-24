@@ -214,14 +214,6 @@ study=StudyDefinition(
     ### DEMOGRAPHIC VARIABLES ###
     #############################
 
-    # DOB
-    dob=patients.date_of_birth(
-        date_format="YYYY-MM",
-        return_expectations={
-            "incidence": 1
-        }
-    ),
-
     # ETHNICITY IN 6 CATEGORIES
     # ethnicity
     ethnicity_6=patients.with_these_clinical_events(
@@ -260,7 +252,7 @@ study=StudyDefinition(
     ),
 
     # IMD
-    imd_0=patients.address_as_of(
+    imd=patients.address_as_of(
                     "elig_date + 56 days",
                     returning="index_of_multiple_deprivation",
                     round_to_nearest=100,

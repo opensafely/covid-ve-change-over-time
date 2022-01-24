@@ -73,7 +73,7 @@ elig_date_patterns <- readr::read_csv(here::here("output", "lib", "elig_dates.cs
 dummy_data_elig <- tibble(patient_id = 1:n) %>%
   mutate(age_1 = as.integer(runif(nrow(.), 16, 90), 0),
          age_2 = age_1,
-         imd_0 = sample(
+         imd = sample(
            x = seq(100L,32100L,100L),
            size = n,
            replace = TRUE)) %>%
@@ -84,7 +84,7 @@ dummy_data_elig <- tibble(patient_id = 1:n) %>%
   var_category(ethnicity_6_sus, 
                categories = c(as.character(1:5), NA_character_),
                ratios = c(rep(0.99/5,5), 0.01)) %>%
-  var_category(region_0, categories = regions$region, ratios = regions$ratio) %>%
+  var_category(region, categories = regions$region, ratios = regions$ratio) %>%
   # binary vars for exclusion criteria
   mutate(hscworker = rbernoulli(n = nrow(.), p=0.01)) %>%
   # jcvi_group
@@ -238,23 +238,17 @@ dummy_data_covs <- dummy_data_vax %>%
   #     .data = ., 
   #     name_string = "admitted_unplanned_infectious", 
   #     incidence = 0.1,
-  #     r = study_parameters$recur_admissions)) %>%
-  # add dob
-  mutate(
-    dob = as.POSIXct(
-      # floor_date as all 1st of the month as dob YYYY-MM in OpenSAFELY
-      # then add days(31) to make sure no ages are below 16 because of floor_date
-      floor_date(as.Date(study_parameters$ref_age_2) - years(age_2) + days(31), unit = "months"))
-       ) %>%
-  # add efi
+  #     r = study_parameters$recur_admissions)) %>% 
+  # # add dob
   # mutate(
-  #   efi = if_else(
-  #     rbernoulli(n = nrow(.), p = 0.99),
-  #     rnorm(n = nrow(.), mean = 0.2, sd = 0.09),
-  #     NA_real_)) %>%
+  #   dob = as.POSIXct(
+  #     # floor_date as all 1st of the month as dob YYYY-MM in OpenSAFELY
+  #     # then add days(31) to make sure no ages are below 16 because of floor_date
+  #     floor_date(as.Date(study_parameters$ref_age_2) - years(age_2) + days(31), unit = "months"))
+  #      ) %>%
   mutate(across(contains("_date"), as.POSIXct)) %>%
   mutate(across(ends_with("date"), as.POSIXct)) %>%
-  mutate(across(c(ethnicity_6, ethnicity_6_sus, jcvi_group, region_0, sex),
+  mutate(across(c(ethnicity_6, ethnicity_6_sus, jcvi_group, region, sex),
                 as.factor)) %>%
   droplevels()
 

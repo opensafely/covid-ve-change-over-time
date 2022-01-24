@@ -61,9 +61,9 @@ eligibility_count <- eligibility_count %>%
 data_eligible_a <- data_eligible_a %>%
   filter(
     !is.na(sex),
-    !is.na(region_0),
+    !is.na(region),
     !is.na(ethnicity),
-    !is.na(imd_0))
+    !is.na(imd))
 
 eligibility_count <- eligibility_count %>%
   add_row(
@@ -133,7 +133,7 @@ eligibility_count <- eligibility_count %>%
   )
 
 readr::write_rds(data_eligible_a %>%
-                   select(patient_id, jcvi_group, elig_date, region_0, ethnicity) %>%
+                   select(patient_id, jcvi_group, elig_date, region, ethnicity) %>%
                    droplevels(),
                  here::here("output", "data", "data_eligible_a.rds"),
                  compress="gz")
@@ -164,7 +164,7 @@ data_eligible_b <- data_eligible_a %>%
     # flagged as hcw
     !hscworker
   ) %>%
-  select(patient_id, jcvi_group, elig_date, region_0, ethnicity) %>%
+  select(patient_id, jcvi_group, elig_date, region, ethnicity) %>%
   droplevels()
 
 eligibility_count <- eligibility_count %>%

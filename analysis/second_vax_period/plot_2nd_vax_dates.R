@@ -66,7 +66,7 @@ plot_2nd_vax_dates_fun <- function(
                aes(xintercept = end_of_period), colour = "black",
                linetype = "dashed") +
     # facet by region
-    facet_wrap(~ region_0, scales = "free_y") +
+    facet_wrap(~ region, scales = "free_y") +
     scale_x_continuous(breaks = x_breaks,
                        labels = sapply(x_breaks, function(x) str_c(day(x), " ", month(x, label=TRUE)))) +
     scale_y_continuous(expand = expansion(mult = c(0,.05))) +
@@ -101,8 +101,8 @@ plot_2nd_vax_dates_fun <- function(
 lapply(
   data_vax_plot %>%
     left_join(second_vax_period_dates %>%
-                select(jcvi_group, elig_date, region_0, start_of_period, end_of_period), 
-              by = c("region_0", "jcvi_group", "elig_date")) %>% 
+                select(jcvi_group, elig_date, region, start_of_period, end_of_period), 
+              by = c("region", "jcvi_group", "elig_date")) %>% 
     group_split(jcvi_group, elig_date),
        function(x)
          try(plot_2nd_vax_dates_fun(data = x)))
