@@ -74,6 +74,117 @@ data_all <- readr::read_rds(
 # )
 
 ################################################################################
+# tabulate events per level
+
+# check there are >0 events
+total_events <- data_all %>% filter(status) %>% nrow()
+model_instructions <- list(
+  model = total_events > 0
+)
+
+readr::write_rds(
+  model_instructions,
+  here::here("output", "lib", glue("model_instructions_{comparison}_{subgroup_label}_{outcome}.rds"))
+)
+
+# if (model_instructions$model) {
+#   
+#   cat("...split data by comparison and status...\n")
+#   tbl_list <- data_cox %>%
+#     select(comparison, status, all_of(vars)) %>%
+#     group_split(comparison, status) 
+#   
+#   # names for each element in list
+#   group_split_labels <- lapply(
+#     tbl_list,
+#     function(x) str_c(unique(x$comparison), unique(x$status))
+#   ) %>% unlist()
+#   
+#   cat("...summarise number of events...\n")
+#   # summarise the number of events by level of covariates (within comparisons)
+#   tbltab_list <- tbl_list %>%
+#     map(~.[,-c(1,2)]) %>%
+#     map(
+#       function(data){
+#         map(data,
+#             function(x) {
+#               tab <- table(x)
+#               tibble(.level = names(tab), 
+#                      n = as.vector(tab))
+#             }) %>%
+#           bind_rows(.id="variable") 
+#       }
+#     )
+#   
+#   # apply names
+#   names(tbltab_list) <- group_split_labels
+#   
+#   cat("...prepare table...\n")
+#   tbltab <- bind_rows(
+#     tbltab_list,
+#     .id = "group"
+#   ) %>%
+#     mutate(
+#       comparison = str_extract(group, "\\d"),
+#       status = as.logical(str_remove(group, "\\d")))  %>%
+#     select(-group) %>%
+#     pivot_wider(
+#       names_from = status,
+#       values_from = n
+#     ) %>%
+#     pivot_wider(
+#       names_from = comparison,
+#       values_from = c("FALSE", "TRUE"),
+#       names_glue = "comparison{comparison}_{.value}"
+#     )
+#   
+#   cat("...format and save table...\n")
+#   tbltab %>%
+#     gt(
+#       groupname_col="variable",
+#       rowname_col = ".level"
+#     ) %>%
+#     tab_spanner_delim("_") %>%
+#     tab_stubhead(label = "variable") %>%
+#     opt_css(css = ".gt_stub { padding-left: 50px !important; }") %>%
+#     fmt_number(
+#       columns = starts_with(c("comparison")),
+#       sep_mark = ",",
+#       decimals = 0
+#     ) %>%
+#     tab_style(
+#       style = list(
+#         cell_fill(color = "lightcyan")
+#       ),
+#       locations = cells_body(
+#         columns = ends_with("TRUE")
+#       )
+#     ) %>%
+#     tab_style(
+#       style = list(
+#         cell_fill(color = "lightcyan")
+#       ),
+#       locations = cells_column_labels(
+#         columns = ends_with("TRUE")
+#       )
+#     ) %>%
+#     gtsave(
+#       filename = glue("eventcheck_{comparison}_{subgroup_label}_{outcome}.html"),
+#       path = here::here("output", "models_cox", "tables")
+#     )
+#   
+# } else {
+#   
+#   readr::write_file(
+#     x="",
+#     here::here("output", "models_cox", "tables", glue("eventcheck_{comparison}_{subgroup_label}_{outcome}.html")),
+#     append = FALSE
+#     )
+#   
+# }
+
+
+################################################################################
 events_threshold <- 5
 
 # get rid of comparisons with <= 5 events
@@ -119,7 +230,7 @@ drop_vars <- events_per_level %>%
     # remove if one level or binary and one level with < threshold events
     n_levels ==1 | (n_levels == 2  & n_keep == 1) 
   ) %>% 
-  select(variable)
+  select(variable, level)
 
 # for ordinal variables, try combining levels 
 oridinal_var_list <- events_per_level %>%
@@ -230,119 +341,15 @@ for (i in seq_along(new_level_key)) {
 }
 
 
-data_comp %>%
+dropped_vars <- bind_rows(
+  drop_vars,
+  new_level_key
+)
+
+data_cox <- data_comp %>%
   select(-all_of(drop_vars$variable))
 
 
 
 
 ################################################################################
-# check there are >0 events
-total_events <- data_cox %>% filter(status) %>% nrow()
-model_instructions <- list(
-  model = total_events > 0
-)
-
-readr::write_rds(
-  model_instructions,
-  here::here("output", "lib", glue("model_instructions_{comparison}_{subgroup_label}_{outcome}.rds"))
-)
-
-if (model_instructions$model) {
-  
-  cat("...split data by comparison and status...\n")
-  tbl_list <- data_cox %>%
-    select(comparison, status, all_of(vars)) %>%
-    group_split(comparison, status) 
-  
-  # names for each element in list
-  group_split_labels <- lapply(
-    tbl_list,
-    function(x) str_c(unique(x$comparison), unique(x$status))
-  ) %>% unlist()
-  
-  cat("...summarise number of events...\n")
-  # summarise the number of events by level of covariates (within comparisons)
-  tbltab_list <- tbl_list %>%
-    map(~.[,-c(1,2)]) %>%
-    map(
-      function(data){
-        map(data,
-            function(x) {
-              tab <- table(x)
-              tibble(.level = names(tab), 
-                     n = as.vector(tab))
-            }) %>%
-          bind_rows(.id="variable") 
-      }
-    )
-  
-  # apply names
-  names(tbltab_list) <- group_split_labels
-  
-  cat("...prepare table...\n")
-  tbltab <- bind_rows(
-    tbltab_list,
-    .id = "group"
-  ) %>%
-    mutate(
-      comparison = str_extract(group, "\\d"),
-      status = as.logical(str_remove(group, "\\d")))  %>%
-    select(-group) %>%
-    pivot_wider(
-      names_from = status,
-      values_from = n
-    ) %>%
-    pivot_wider(
-      names_from = comparison,
-      values_from = c("FALSE", "TRUE"),
-      names_glue = "comparison{comparison}_{.value}"
-    )
-  
-  cat("...format and save table...\n")
-  tbltab %>%
-    gt(
-      groupname_col="variable",
-      rowname_col = ".level"
-    ) %>%
-    tab_spanner_delim("_") %>%
-    tab_stubhead(label = "variable") %>%
-    opt_css(css = ".gt_stub { padding-left: 50px !important; }") %>%
-    fmt_number(
-      columns = starts_with(c("comparison")),
-      sep_mark = ",",
-      decimals = 0
-    ) %>%
-    tab_style(
-      style = list(
-        cell_fill(color = "lightcyan")
-      ),
-      locations = cells_body(
-        columns = ends_with("TRUE")
-      )
-    ) %>%
-    tab_style(
-      style = list(
-        cell_fill(color = "lightcyan")
-      ),
-      locations = cells_column_labels(
-        columns = ends_with("TRUE")
-      )
-    ) %>%
-    gtsave(
-      filename = glue("eventcheck_{comparison}_{subgroup_label}_{outcome}.html"),
-      path = here::here("output", "models_cox", "tables")
-    )
-  
-} else {
-  
-  readr::write_file(
-    x="",
-    here::here("output", "models_cox", "tables", glue("eventcheck_{comparison}_{subgroup_label}_{outcome}.html")),
-    append = FALSE
-    )
-  
-}
-
-
- 
