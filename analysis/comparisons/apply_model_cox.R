@@ -44,60 +44,7 @@ data_cox <- readr::read_rds(
   here::here("output", "models_cox", "data", glue("data_cox_{comparison}_{subgroup_label}_{outcome}.rds")))
 
 ################################################################################
-arm1 <- if_else(comparison == "ChAdOx", "ChAdOx", "BNT162b2")
-
-data_cox_dummy <- data_cox %>%
-  dummy_cols(
-    select_columns = c("comparison"),
-    remove_selected_columns = TRUE
-  ) %>%
-  mutate(across(starts_with("comparison"),
-                ~ if_else(arm %in% arm1,
-                          .x, 0L))) %>%
-  rename_at(vars(starts_with("comparison")), ~str_c(.x, "_", arm1))
-
-################################################################################
 # define formulas
-
-comparisons <- data_cox_dummy %>% select(starts_with("comparison")) %>% names()
-
-formula_unadj <- as.formula(str_c(
-  "Surv(tstart, tstop, status, type = \"counting\") ~ ",
-  str_c(comparisons, collapse = " + "),
-  " + strata(strata_var)"))
-formula_demog <- . ~ . + age_band + sex + imd + ethnicity
-formula_clinical <- . ~ . +
-  
-  bmi +
-  heart_failure +
-  other_heart_disease +
-  
-  dialysis +
-  diabetes +
-  chronic_liver_disease +
-  
-  current_copd +
-  #cystic_fibrosis +
-  other_respiratory +
-  
-  lung_cancer +
-  haematological_cancer +
-  cancer_excl_lung_and_haem +
-  
-  any_immunosuppression +
-  
-  dementia +
-  other_neuro_conditions +
-  
-  ld_inc_ds_and_cp +
-  psychosis_schiz_bipolar +
-  
-  multimorb +
-  
-  shielded +
-  
-  flu_vaccine
-
 
 model_names = c(
   "0" = "Unadjusted",
