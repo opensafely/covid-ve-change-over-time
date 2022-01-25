@@ -399,11 +399,10 @@ if (total_events > 0) {
   preflight_report <- function(
     dropped_comparisons,
     dropped_variables,
-    merged_variables
+    merged_variables,
+    subgroup_string = subgroup
   ) {
-    cat(glue("Comparison = {comparison}"), "\n")
-    cat(glue("Subgroup = {subgroup}"), "\n")
-    cat(glue("Outcome = {outcome}"), "\n")
+    cat(glue("Comparison = {comparison}; Subgroup = {subgroup_string}; Outcome = {outcome}"), "\n")
     cat("---\n")
     if (is_empty(drop_comparisons)) {
       dropped_comparisons <- "none"
@@ -415,7 +414,7 @@ if (total_events > 0) {
     if (is_empty(dropped_variables)) {
       dropped_comparisons <- "none"
     } else {
-      dropped_comparisons <- str_c(dropped_variables, collapse = ", ")
+      dropped_variables <- str_c(dropped_variables, collapse = ", ")
     }
     cat(glue("Dropped variables: {dropped_variables}"), "\n")
     cat("---\n")
