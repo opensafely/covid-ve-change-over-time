@@ -211,3 +211,6 @@ for (i in 2:study_parameters$max_comparisons) {
 # save for passing to study_definition_tests.py
 readr::write_csv(avg_start_dates,
                  here::here("output", "lib", "avg_start_dates.csv"))
+# save in analysis/lib just for testing
+readr::write_csv(avg_start_dates,
+                 here::here("analysis", "lib", "avg_start_dates.csv"))

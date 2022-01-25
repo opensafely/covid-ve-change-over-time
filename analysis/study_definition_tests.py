@@ -29,7 +29,7 @@ np.random.seed(study_parameters["seed"])
 # function for creating the comparison start dates for each elig_group
 # avg_start_dates
 avg_start_dates = pd.read_csv(
-    filepath_or_buffer=f"./output/lib/avg_start_dates.csv",
+    filepath_or_buffer=f"./analysis/lib/avg_start_dates.csv", # update to output when merge
     dtype=str
     )
 # avg_start_dates for 2 ... K
