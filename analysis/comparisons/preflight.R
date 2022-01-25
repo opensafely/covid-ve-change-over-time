@@ -6,6 +6,7 @@
 ################################################################################
 library(tidyverse)
 library(glue)
+library(fastDummies)
 library(gt)
 
 ## import command-line arguments ----
@@ -23,6 +24,12 @@ if(length(args)==0){
   outcome <- args[[3]]
 }
 
+################################################################################
+# create output directories
+fs::dir_create(here::here("output", "preflight", "data"))
+fs::dir_create(here::here("output", "preflight", "tables"))
+
+################################################################################
 # read study parameters
 study_parameters <- readr::read_rds(
   here::here("output", "lib", "study_parameters.rds"))
@@ -33,16 +40,21 @@ subgroups <- readr::read_rds(
 subgroups <- c(subgroups, "all")
 subgroup <- subgroups[subgroup_label]
 
+# model covariates
+model_varlist <- readr::read_rds(
+  here::here("output", "lib", "model_varlist.rds")
+)
+vars <- unname(unlist(model_varlist))
+
+
 ################################################################################
 # read data
 
 fs::dir_create(here::here("output", "models_cox", "data"))
 fs::dir_create(here::here("output", "models_cox", "tables"))
 
-model_varlist <- readr::read_rds(
-  here::here("output", "lib", "model_varlist.rds")
-)
-vars <- unname(unlist(model_varlist))
+################################################################################
+# read functions
 
 # redaction functions
 source(here::here("analysis", "lib", "redaction_functions.R"))
@@ -51,7 +63,7 @@ source(here::here("analysis", "lib", "redaction_functions.R"))
 arm1 <- if_else(comparison == "ChAdOx", "ChAdOx", "BNT162b2")
 arm2 <- if_else(comparison == "both", "ChAdOx", "unvax")
 
-data_all <- readr::read_rds(
+data_0 <- readr::read_rds(
   here::here("output", "tte", "data", glue("data_tte_{comparison}_{subgroup_label}_{outcome}.rds"))) %>%
   left_join(
     bind_rows(
@@ -66,129 +78,116 @@ data_all <- readr::read_rds(
   mutate(strata_var = factor(str_c(jcvi_group, elig_date, region, sep = ", "))) %>%
   droplevels()
 
-
-# readr::write_rds(
-#   data_cox,
-#   here::here("output", "models_cox", "data", glue("data_cox_{comparison}_{subgroup_label}_{outcome}.rds")),
-#   compress = "gz"
-# )
-
 ################################################################################
 # tabulate events per level
 
-# check there are >0 events
-total_events <- data_all %>% filter(status) %>% nrow()
-model_instructions <- list(
-  model = total_events > 0
-)
+# check there are > 0 events
+total_events <- data_0 %>% filter(status) %>% nrow()
 
-readr::write_rds(
-  model_instructions,
-  here::here("output", "lib", glue("model_instructions_{comparison}_{subgroup_label}_{outcome}.rds"))
-)
+if (total_events > 0) {
 
-# if (model_instructions$model) {
-#   
-#   cat("...split data by comparison and status...\n")
-#   tbl_list <- data_cox %>%
-#     select(comparison, status, all_of(vars)) %>%
-#     group_split(comparison, status) 
-#   
-#   # names for each element in list
-#   group_split_labels <- lapply(
-#     tbl_list,
-#     function(x) str_c(unique(x$comparison), unique(x$status))
-#   ) %>% unlist()
-#   
-#   cat("...summarise number of events...\n")
-#   # summarise the number of events by level of covariates (within comparisons)
-#   tbltab_list <- tbl_list %>%
-#     map(~.[,-c(1,2)]) %>%
-#     map(
-#       function(data){
-#         map(data,
-#             function(x) {
-#               tab <- table(x)
-#               tibble(.level = names(tab), 
-#                      n = as.vector(tab))
-#             }) %>%
-#           bind_rows(.id="variable") 
-#       }
-#     )
-#   
-#   # apply names
-#   names(tbltab_list) <- group_split_labels
-#   
-#   cat("...prepare table...\n")
-#   tbltab <- bind_rows(
-#     tbltab_list,
-#     .id = "group"
-#   ) %>%
-#     mutate(
-#       comparison = str_extract(group, "\\d"),
-#       status = as.logical(str_remove(group, "\\d")))  %>%
-#     select(-group) %>%
-#     pivot_wider(
-#       names_from = status,
-#       values_from = n
-#     ) %>%
-#     pivot_wider(
-#       names_from = comparison,
-#       values_from = c("FALSE", "TRUE"),
-#       names_glue = "comparison{comparison}_{.value}"
-#     )
-#   
-#   cat("...format and save table...\n")
-#   tbltab %>%
-#     gt(
-#       groupname_col="variable",
-#       rowname_col = ".level"
-#     ) %>%
-#     tab_spanner_delim("_") %>%
-#     tab_stubhead(label = "variable") %>%
-#     opt_css(css = ".gt_stub { padding-left: 50px !important; }") %>%
-#     fmt_number(
-#       columns = starts_with(c("comparison")),
-#       sep_mark = ",",
-#       decimals = 0
-#     ) %>%
-#     tab_style(
-#       style = list(
-#         cell_fill(color = "lightcyan")
-#       ),
-#       locations = cells_body(
-#         columns = ends_with("TRUE")
-#       )
-#     ) %>%
-#     tab_style(
-#       style = list(
-#         cell_fill(color = "lightcyan")
-#       ),
-#       locations = cells_column_labels(
-#         columns = ends_with("TRUE")
-#       )
-#     ) %>%
-#     gtsave(
-#       filename = glue("eventcheck_{comparison}_{subgroup_label}_{outcome}.html"),
-#       path = here::here("output", "models_cox", "tables")
-#     )
-#   
-# } else {
-#   
-#   readr::write_file(
-#     x="",
-#     here::here("output", "models_cox", "tables", glue("eventcheck_{comparison}_{subgroup_label}_{outcome}.html")),
-#     append = FALSE
-#     )
-#   
-# }
+  cat("...split data by comparison and status...\n")
+  tbl_list <- data_0 %>%
+    select(comparison, status, all_of(vars)) %>%
+    group_split(comparison, status)
+
+  # names for each element in list
+  group_split_labels <- lapply(
+    tbl_list,
+    function(x) str_c(unique(x$comparison), unique(x$status))
+  ) %>% 
+    unlist()
+
+  cat("...summarise number of events...\n")
+  # summarise the number of events by level of covariates (within comparisons)
+  tbltab_list <- tbl_list %>%
+    map(~.[,-c(1,2)]) %>%
+    map(
+      function(data){
+        map(data,
+            function(x) {
+              tab <- table(x)
+              tibble(.level = names(tab),
+                     n = as.vector(tab))
+            }) %>%
+          bind_rows(.id="variable")
+      }
+    )
+
+  # apply names
+  names(tbltab_list) <- group_split_labels
+
+  cat("...prepare table...\n")
+  tbltab <- bind_rows(
+    tbltab_list,
+    .id = "group"
+  ) %>%
+    mutate(
+      comparison = str_extract(group, "\\d"),
+      status = as.logical(str_remove(group, "\\d")))  %>%
+    select(-group) %>%
+    pivot_wider(
+      names_from = status,
+      values_from = n
+    ) %>%
+    pivot_wider(
+      names_from = comparison,
+      values_from = c("FALSE", "TRUE"),
+      names_glue = "comparison{comparison}_{.value}"
+    ) %>%
+    group_by(variable) %>%
+    mutate(across(starts_with("comparison"), redactor2)) %>% 
+    mutate(across(starts_with("comparison"), 
+                  ~ if_else(is.na(.x), "-", scales::comma(.x, accuracy = 1)))) %>% 
+    ungroup()
+
+  cat("...format and save table...\n")
+  tbltab %>%
+    gt(
+      groupname_col="variable",
+      rowname_col = ".level"
+    ) %>%
+    tab_spanner_delim("_") %>%
+    tab_stubhead(label = "variable") %>%
+    opt_css(css = ".gt_stub { padding-left: 50px !important; }") %>%
+    tab_style(
+      style = list(
+        cell_fill(color = "lightcyan")
+      ),
+      locations = cells_body(
+        columns = ends_with("TRUE")
+      )
+    ) %>%
+    tab_style(
+      style = list(
+        cell_fill(color = "lightcyan")
+      ),
+      locations = cells_column_labels(
+        columns = ends_with("TRUE")
+      )
+    ) %>%
+    gtsave(
+      filename = glue("eventcheck_{comparison}_{subgroup_label}_{outcome}_REDACTED.html"),
+      path = here::here("output", "preflight", "tables")
+    )
+
+} else {
+
+  readr::write_file(
+    x="",
+    here::here("output", "preflight", "tables", glue("eventcheck_{comparison}_{subgroup_label}_{outcome}.html")),
+    append = FALSE
+    )
+
+}
 
 
 ################################################################################
+# remove comparisons with <= 5 events
 events_threshold <- 5
 
-# get rid of comparisons with <= 5 events
-events_per_comparison <- data_all %>%
+# check events per comparison
+events_per_comparison <- data_0 %>%
   group_by(comparison) %>%
   summarise(events = sum(status)) %>%
   ungroup() %>%
@@ -197,18 +196,19 @@ events_per_comparison <- data_all %>%
 keep_comparisons <- as.integer(events_per_comparison$comparison[events_per_comparison$keep])
 drop_comparisons <- as.integer(events_per_comparison$comparison[!events_per_comparison$keep])
 
-data_comp <- data_all %>%
+data_1 <- data_0 %>%
   filter(comparison %in% keep_comparisons) %>%
   droplevels()
 
-# check levels 
+################################################################################
+# check levels per covariate
 n_levels <- sapply(
-  data_comp %>% select(all_of(vars)) %>% mutate(across(everything(), as.factor)),
+  data_1 %>% select(all_of(vars)) %>% mutate(across(everything(), as.factor)),
   function(x) length(levels(x))
 )
 
 # calculate events per level
-events_per_level <- data_comp %>%
+events_per_level <- data_1 %>%
   filter(status) %>%
   select(all_of(vars)) %>%
   map(function(x) {
@@ -227,7 +227,7 @@ events_per_level <- data_comp %>%
 
 drop_vars <- events_per_level %>%
   filter(
-    # remove if one level or binary and one level with < threshold events
+    # remove if one level or binary and one level with too few events
     n_levels ==1 | (n_levels == 2  & n_keep == 1) 
   ) %>% 
   select(variable, level)
@@ -266,24 +266,32 @@ merge_levs_fun <- function(data, threshold=10) {
       
       data_old <- data_in %>% 
         group_by(new_level) %>%
-        mutate(new_n = sum(n),
-               min_index = min(index)) %>%
+        mutate(
+          # number of events per new level
+          new_n = sum(n),
+          # index for new level
+          min_index = min(index)
+          ) %>%
         ungroup() %>%
-        mutate(keep = new_n>threshold)
+        # update keep
+        mutate(keep = new_n > threshold)
       
-      # first index with <= 5 events
+      # first min_index with <= 5 events
       first_false <- min(data_old$min_index[!data_old$keep])
+      # unique values of min_index
       unique_min_index <- unique(data_old$min_index)
-      # merge up unless last level, in which case merge down
+      # merge up unless first_false is the top level, in which case merge down
       if (first_false < max(unique_min_index)) {
-        merge_levs <- c(first_false,  unique_min_index[c(which(unique_min_index == first_false)+1)])
+        # merge up
+        merge_levs <- c(first_false, unique_min_index[c(which(unique_min_index == first_false)+1)])
       } else {
-        merge_levs <- c( unique_min_index[c(which(unique_min_index == first_false)-1)], first_false)
+        # merge down
+        merge_levs <- c(unique_min_index[c(which(unique_min_index == first_false)-1)], first_false)
       }
       # merge the labels
       merged_lev <- str_c(data_old$new_level[merge_levs], collapse = " & ")
       
-      # merge levels and apply labels
+      # merge levels and add labels
       data_new <- data_old %>%
         mutate(across(new_level, 
                       ~if_else(min_index %in% merge_levs, merged_lev, .x))) %>%
@@ -311,12 +319,12 @@ merge_levs_fun <- function(data, threshold=10) {
   
 }
 
-
-
+# apply the merge function
 new_level_key <- oridinal_var_list %>%
   map(~merge_levs_fun(., threshold = 10)) 
 
-# use the new merged levels to recode the variables in the original data
+# use the new merged levels to re-code the variables in the original data
+data_2 <- data_1
 for (i in seq_along(new_level_key)) {
   
   if (!is_empty(new_level_key[[i]])) {
@@ -327,7 +335,7 @@ for (i in seq_along(new_level_key)) {
     join_by <- "level"
     names(join_by) <- var
     
-    data_comp <- data_comp %>%
+    data_2 <- data_2 %>%
       mutate(across(all_of(var), as.character)) %>%
       left_join(
         new_level_key[[i]] %>% select(-variable),
@@ -340,16 +348,113 @@ for (i in seq_along(new_level_key)) {
   
 }
 
-
-dropped_vars <- bind_rows(
-  drop_vars,
-  new_level_key
+# if merge resulted in 1 level, drop the variable
+drop_merged_var <- sapply(
+  new_level_key,
+  function(x) {
+    if (is_empty(x)) {
+      return(NA_character_)
+    } else {
+      drop <- n_distinct(x$new_level) == 1
+      if (drop) return(unique(x$vairable)) else return(NA_character_)
+    }
+  }
 )
 
-data_cox <- data_comp %>%
-  select(-all_of(drop_vars$variable))
+drop_merged_var <- drop_merged_var[!is.na(drop_merged_var)]
 
-
-
+data_3 <- data_2 %>%
+  select(-all_of(c(drop_vars$variable, drop_merged_var))) %>%
+  droplevels()
 
 ################################################################################
+# create comparison dummy variables
+arm1 <- if_else(comparison == "ChAdOx", "ChAdOx", "BNT162b2")
+
+data_4 <- data_3 %>%
+  dummy_cols(
+    select_columns = c("comparison"),
+    remove_selected_columns = TRUE
+  ) %>%
+  mutate(across(starts_with("comparison"),
+                ~ if_else(arm %in% arm1,
+                          .x, 0L))) %>%
+  rename_at(vars(starts_with("comparison")), ~str_c(.x, "_", arm1))
+
+################################################################################
+# define formulas
+
+comparisons <- data_4 %>% select(starts_with("comparison")) %>% names()
+
+formula_unadj <- as.formula(str_c(
+  "Surv(tstart, tstop, status, type = \"counting\") ~ ",
+  str_c(comparisons, collapse = " + "),
+  " + strata(strata_var)"))
+
+demog_vars <- model_varlist$demographic[which(model_varlist$demographic %in% names(data_4))]
+formula_demog <- as.formula(str_c(c(". ~ . ", demog_vars), collapse = " + "))
+
+clinical_vars <- model_varlist$clinical[which(model_varlist$clinical %in% names(data_4))]
+formula_clinical <- as.formula(str_c(c(". ~ . ", clinical_vars), collapse = " + "))
+
+################################################################################
+
+model_input <- list(
+  data = data_4,
+  formulas = list(
+    "unadjusted" = formula_unadj, 
+    "demographic" = formula_demog, 
+    "clinical" = formula_clinical)
+)
+
+readr::write_rds(
+  model_input,
+  here::here("output", "preflight", "data", glue("model_input_{comparison}_{subgroup_label}_{outcome}.rds"))
+)
+
+################################################################################
+
+preflight_report <- function(
+  dropped_comparisons,
+  dropped_variables,
+  merged_variables
+) {
+  cat(glue("Comparison = {comparison}"), "\n")
+  cat(glue("Subgroup = {subgroup}"), "\n")
+  cat(glue("Outcome = {outcome}"), "\n")
+  cat("---\n")
+  if (is_empty(drop_comparisons)) {
+    dropped_comparisons <- "none"
+  } else {
+    dropped_comparisons <- str_c(dropped_comparisons, collapse = ", ")
+  }
+  cat(glue("Dropped comparisons: {dropped_comparisons}"), "\n")
+  cat("---\n")
+  if (is_empty(dropped_variables)) {
+    dropped_comparisons <- "none"
+  } else {
+    dropped_comparisons <- str_c(dropped_variables, collapse = ", ")
+  }
+  cat(glue("Dropped variables: {dropped_variables}"), "\n")
+  cat("---\n")
+  if (is_empty(merged_variables)) {
+    cat("No levels merged.", "\n")
+  } else {
+    
+    merged_variables %>%
+      kableExtra::kable("pipe",
+                        caption = "Merged levels:")
+  }
+  
+  
+}
+
+capture.output(
+  preflight_report(
+    dropped_comparisons = drop_comparisons,
+    dropped_variables = c(drop_vars$variable,drop_merged_var),
+    merged_variables = bind_rows(new_level_key)
+  ),
+  file = here::here("output", "preflight", "tables", glue("preflight_report_{comparison}_{subgroup_label}_{outcome}.txt")),
+  append = FALSE
+)
