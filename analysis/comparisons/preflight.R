@@ -16,7 +16,7 @@ if(length(args)==0){
   # use for interactive testing
   comparison <- "BNT162b2"
   subgroup_label <- 1
-  outcome <- "postest"
+  outcome <- "noncoviddeath"
   
 } else{
   comparison <- args[[1]]
@@ -45,13 +45,6 @@ model_varlist <- readr::read_rds(
   here::here("output", "lib", "model_varlist.rds")
 )
 vars <- unname(unlist(model_varlist))
-
-
-################################################################################
-# read data
-
-fs::dir_create(here::here("output", "models_cox", "data"))
-fs::dir_create(here::here("output", "models_cox", "tables"))
 
 ################################################################################
 # read functions
@@ -85,19 +78,19 @@ data_0 <- readr::read_rds(
 total_events <- data_0 %>% filter(status) %>% nrow()
 
 if (total_events > 0) {
-
+  
   cat("...split data by comparison and status...\n")
   tbl_list <- data_0 %>%
     select(comparison, status, all_of(vars)) %>%
     group_split(comparison, status)
-
+  
   # names for each element in list
   group_split_labels <- lapply(
     tbl_list,
     function(x) str_c(unique(x$comparison), unique(x$status))
   ) %>% 
     unlist()
-
+  
   cat("...summarise number of events...\n")
   # summarise the number of events by level of covariates (within comparisons)
   tbltab_list <- tbl_list %>%
@@ -113,10 +106,10 @@ if (total_events > 0) {
           bind_rows(.id="variable")
       }
     )
-
+  
   # apply names
   names(tbltab_list) <- group_split_labels
-
+  
   cat("...prepare table...\n")
   tbltab <- bind_rows(
     tbltab_list,
@@ -135,12 +128,14 @@ if (total_events > 0) {
       values_from = c("FALSE", "TRUE"),
       names_glue = "comparison{comparison}_{.value}"
     ) %>%
+    mutate(across(starts_with("comparison"), 
+                  ~ if_else(is.na(.x), 0L, .x))) %>% 
     group_by(variable) %>%
     mutate(across(starts_with("comparison"), redactor2)) %>% 
     mutate(across(starts_with("comparison"), 
                   ~ if_else(is.na(.x), "-", scales::comma(.x, accuracy = 1)))) %>% 
     ungroup()
-
+  
   cat("...format and save table...\n")
   tbltab %>%
     gt(
@@ -170,291 +165,300 @@ if (total_events > 0) {
       filename = glue("eventcheck_{comparison}_{subgroup_label}_{outcome}_REDACTED.html"),
       path = here::here("output", "preflight", "tables")
     )
-
+  
+  ################################################################################
+  # remove comparisons with <= 5 events
+  events_threshold <- 5
+  
+  # check events per comparison
+  events_per_comparison <- data_0 %>%
+    group_by(comparison) %>%
+    summarise(events = sum(status), .groups="keep") %>%
+    ungroup() %>%
+    mutate(keep = events > events_threshold)
+  
+  keep_comparisons <- as.integer(events_per_comparison$comparison[events_per_comparison$keep])
+  drop_comparisons <- as.integer(events_per_comparison$comparison[!events_per_comparison$keep])
+  
+  data_1 <- data_0 %>%
+    filter(comparison %in% keep_comparisons) %>%
+    droplevels()
+  
+  ################################################################################
+  # check levels per covariate
+  n_levels <- sapply(
+    data_1 %>% select(all_of(vars)) %>% mutate(across(everything(), as.factor)),
+    function(x) length(levels(x))
+  )
+  
+  # calculate events per level
+  events_per_level <- data_1 %>%
+    filter(status) %>%
+    select(all_of(vars)) %>%
+    map(function(x) {
+      tab <- table(x)
+      tibble(level = names(tab), 
+             n = as.vector(tab))
+    }) %>%
+    bind_rows(.id="variable") %>%
+    mutate(keep = n > events_threshold) %>%
+    group_by(variable) %>%
+    mutate(
+      n_levels = n(),
+      n_keep = sum(keep)
+    ) %>%
+    ungroup()
+  
+  drop_vars <- events_per_level %>%
+    filter(
+      # remove if one level or binary and one level with too few events
+      n_levels ==1 | (n_levels == 2  & n_keep == 1) 
+    ) %>% 
+    select(variable, level)
+  
+  # for ordinal variables, try combining levels 
+  oridinal_var_list <- events_per_level %>%
+    filter(n_levels > 2) %>%
+    group_split(variable)
+  
+  
+  # merge levels for ordinal variables with > 2 levels, in which some levels have low numbers
+  merge_levs_fun <- function(data, threshold=10) {
+    
+    # flag n that are less than threshold
+    data <- data %>% mutate(keep = n > threshold)
+    
+    if (all(data$keep)) {
+      
+      # return empty tibble if all less that threshold
+      return(tibble())
+      
+    } else {
+      
+      merge_levs_i <- function(data_in) {
+        
+        if (all(data_in$keep)) stop(glue("All levels have greater than {threshold} events."))
+        
+        # only applied in first loop
+        if (!"new_level" %in% names(data_in)) {
+          data_in <- data_in %>% 
+            mutate(
+              new_level = level,
+              index = row_number()
+            )
+        }
+        
+        data_old <- data_in %>% 
+          group_by(new_level) %>%
+          mutate(
+            # number of events per new level
+            new_n = sum(n),
+            # index for new level
+            min_index = min(index)
+          ) %>%
+          ungroup() %>%
+          # update keep
+          mutate(keep = new_n > threshold)
+        
+        # first min_index with <= 5 events
+        first_false <- min(data_old$min_index[!data_old$keep])
+        # unique values of min_index
+        unique_min_index <- unique(data_old$min_index)
+        # merge up unless first_false is the top level, in which case merge down
+        if (first_false < max(unique_min_index)) {
+          # merge up
+          merge_levs <- c(first_false, unique_min_index[c(which(unique_min_index == first_false)+1)])
+        } else {
+          # merge down
+          merge_levs <- c(unique_min_index[c(which(unique_min_index == first_false)-1)], first_false)
+        }
+        # merge the labels
+        merged_lev <- str_c(data_old$new_level[merge_levs], collapse = " & ")
+        
+        # merge levels and add labels
+        data_new <- data_old %>%
+          mutate(across(new_level, 
+                        ~if_else(min_index %in% merge_levs, merged_lev, .x))) %>%
+          group_by(new_level) %>%
+          mutate(new_n = sum(n)) %>%
+          ungroup() %>%
+          mutate(keep = new_n>threshold) %>%
+          select(-new_n)
+        
+        return(data_new)
+        
+      }
+      
+      for (i in 1:(length(data$level)-1)) { # max number of possible merges 
+        
+        if (!all(data$keep)) {
+          data <- merge_levs_i(data)
+        } 
+        
+      }
+      
+      return(data %>% select(variable, level, new_level))
+      
+    }
+    
+  }
+  
+  # apply the merge function
+  new_level_key <- oridinal_var_list %>%
+    map(~merge_levs_fun(., threshold = 10)) 
+  
+  # use the new merged levels to re-code the variables in the original data
+  data_2 <- data_1
+  for (i in seq_along(new_level_key)) {
+    
+    if (!is_empty(new_level_key[[i]])) {
+      
+      var <- unique(new_level_key[[i]]$variable)
+      levs <- unique(new_level_key[[i]]$new_level)
+      
+      join_by <- "level"
+      names(join_by) <- var
+      
+      data_2 <- data_2 %>%
+        mutate(across(all_of(var), as.character)) %>%
+        left_join(
+          new_level_key[[i]] %>% select(-variable),
+          by = join_by
+        ) %>%
+        mutate(!! sym(var) := factor(new_level, levels = levs)) %>%
+        select(-new_level)
+      
+    } 
+    
+  }
+  
+  # if merge resulted in 1 level, drop the variable
+  drop_merged_var <- sapply(
+    new_level_key,
+    function(x) {
+      if (is_empty(x)) {
+        return(NA_character_)
+      } else {
+        drop <- n_distinct(x$new_level) == 1
+        if (drop) return(unique(x$vairable)) else return(NA_character_)
+      }
+    }
+  )
+  
+  drop_merged_var <- drop_merged_var[!is.na(drop_merged_var)]
+  
+  data_3 <- data_2 %>%
+    select(-all_of(c(drop_vars$variable, drop_merged_var))) %>%
+    droplevels()
+  
+  ################################################################################
+  # create comparison dummy variables
+  data_4 <- data_3 %>%
+    dummy_cols(
+      select_columns = c("comparison"),
+      remove_selected_columns = TRUE
+    ) %>%
+    mutate(across(starts_with("comparison"),
+                  ~ if_else(arm %in% arm1,
+                            .x, 0L))) %>%
+    rename_at(vars(starts_with("comparison")), ~str_c(.x, "_", arm1))
+  
+  ################################################################################
+  # define formulas
+  
+  comparisons <- data_4 %>% select(starts_with("comparison")) %>% names()
+  
+  formula_unadj <- as.formula(str_c(
+    "Surv(tstart, tstop, status, type = \"counting\") ~ ",
+    str_c(comparisons, collapse = " + "),
+    " + strata(strata_var)"))
+  
+  demog_vars <- model_varlist$demographic[which(model_varlist$demographic %in% names(data_4))]
+  formula_demog <- as.formula(str_c(c(". ~ . ", demog_vars), collapse = " + "))
+  
+  clinical_vars <- model_varlist$clinical[which(model_varlist$clinical %in% names(data_4))]
+  formula_clinical <- as.formula(str_c(c(". ~ . ", clinical_vars), collapse = " + "))
+  
+  ################################################################################
+  
+  model_input <- list(
+    data = data_4,
+    formulas = list(
+      "unadjusted" = formula_unadj, 
+      "demographic" = formula_demog, 
+      "clinical" = formula_clinical)
+  )
+  
+  readr::write_rds(
+    model_input,
+    here::here("output", "preflight", "data", glue("model_input_{comparison}_{subgroup_label}_{outcome}.rds"))
+  )
+  
+  ################################################################################
+  
+  preflight_report <- function(
+    dropped_comparisons,
+    dropped_variables,
+    merged_variables
+  ) {
+    cat(glue("Comparison = {comparison}"), "\n")
+    cat(glue("Subgroup = {subgroup}"), "\n")
+    cat(glue("Outcome = {outcome}"), "\n")
+    cat("---\n")
+    if (is_empty(drop_comparisons)) {
+      dropped_comparisons <- "none"
+    } else {
+      dropped_comparisons <- str_c(dropped_comparisons, collapse = ", ")
+    }
+    cat(glue("Dropped comparisons: {dropped_comparisons}"), "\n")
+    cat("---\n")
+    if (is_empty(dropped_variables)) {
+      dropped_comparisons <- "none"
+    } else {
+      dropped_comparisons <- str_c(dropped_variables, collapse = ", ")
+    }
+    cat(glue("Dropped variables: {dropped_variables}"), "\n")
+    cat("---\n")
+    if (is_empty(merged_variables)) {
+      cat("No levels merged.", "\n")
+    } else {
+      
+      merged_variables %>%
+        kableExtra::kable("pipe",
+                          caption = "Merged levels:")
+    }
+    
+    
+  }
+  
+  capture.output(
+    preflight_report(
+      dropped_comparisons = drop_comparisons,
+      dropped_variables = c(drop_vars$variable,drop_merged_var),
+      merged_variables = bind_rows(new_level_key)
+    ),
+    file = here::here("output", "preflight", "tables", glue("preflight_report_{comparison}_{subgroup_label}_{outcome}.txt")),
+    append = FALSE
+  )
+  
 } else {
-
+  # empty outputs to avid errors
+  
   readr::write_file(
     x="",
-    here::here("output", "preflight", "tables", glue("eventcheck_{comparison}_{subgroup_label}_{outcome}.html")),
+    here::here("output", "preflight", "tables", glue("eventcheck_{comparison}_{subgroup_label}_{outcome}_EMPTY.html")),
     append = FALSE
-    )
-
-}
-
-
-################################################################################
-# remove comparisons with <= 5 events
-events_threshold <- 5
-
-# check events per comparison
-events_per_comparison <- data_0 %>%
-  group_by(comparison) %>%
-  summarise(events = sum(status)) %>%
-  ungroup() %>%
-  mutate(keep = events > events_threshold)
-
-keep_comparisons <- as.integer(events_per_comparison$comparison[events_per_comparison$keep])
-drop_comparisons <- as.integer(events_per_comparison$comparison[!events_per_comparison$keep])
-
-data_1 <- data_0 %>%
-  filter(comparison %in% keep_comparisons) %>%
-  droplevels()
-
-################################################################################
-# check levels per covariate
-n_levels <- sapply(
-  data_1 %>% select(all_of(vars)) %>% mutate(across(everything(), as.factor)),
-  function(x) length(levels(x))
-)
-
-# calculate events per level
-events_per_level <- data_1 %>%
-  filter(status) %>%
-  select(all_of(vars)) %>%
-  map(function(x) {
-        tab <- table(x)
-        tibble(level = names(tab), 
-               n = as.vector(tab))
-      }) %>%
-  bind_rows(.id="variable") %>%
-  mutate(keep = n > events_threshold) %>%
-  group_by(variable) %>%
-  mutate(
-    n_levels = n(),
-    n_keep = sum(keep)
-    ) %>%
-  ungroup()
-
-drop_vars <- events_per_level %>%
-  filter(
-    # remove if one level or binary and one level with too few events
-    n_levels ==1 | (n_levels == 2  & n_keep == 1) 
-  ) %>% 
-  select(variable, level)
-
-# for ordinal variables, try combining levels 
-oridinal_var_list <- events_per_level %>%
-  filter(n_levels > 2) %>%
-  group_split(variable)
-
-
-# merge levels for ordinal variables with > 2 levels, in which some levels have low numbers
-merge_levs_fun <- function(data, threshold=10) {
+  )
   
-  # flag n that are less than threshold
-  data <- data %>% mutate(keep = n > threshold)
+  readr::write_rds(
+    tibble(),
+    here::here("output", "preflight", "data", glue("model_input_{comparison}_{subgroup_label}_{outcome}.rds"))
+  )
   
-  if (all(data$keep)) {
-    
-    # return empty tibble if all less that threshold
-    return(tibble())
-    
-  } else {
-    
-    merge_levs_i <- function(data_in) {
-      
-      if (all(data_in$keep)) stop(glue("All levels have greater than {threshold} events."))
-      
-      # only applied in first loop
-      if (!"new_level" %in% names(data_in)) {
-        data_in <- data_in %>% 
-          mutate(
-            new_level = level,
-            index = row_number()
-          )
-      }
-      
-      data_old <- data_in %>% 
-        group_by(new_level) %>%
-        mutate(
-          # number of events per new level
-          new_n = sum(n),
-          # index for new level
-          min_index = min(index)
-          ) %>%
-        ungroup() %>%
-        # update keep
-        mutate(keep = new_n > threshold)
-      
-      # first min_index with <= 5 events
-      first_false <- min(data_old$min_index[!data_old$keep])
-      # unique values of min_index
-      unique_min_index <- unique(data_old$min_index)
-      # merge up unless first_false is the top level, in which case merge down
-      if (first_false < max(unique_min_index)) {
-        # merge up
-        merge_levs <- c(first_false, unique_min_index[c(which(unique_min_index == first_false)+1)])
-      } else {
-        # merge down
-        merge_levs <- c(unique_min_index[c(which(unique_min_index == first_false)-1)], first_false)
-      }
-      # merge the labels
-      merged_lev <- str_c(data_old$new_level[merge_levs], collapse = " & ")
-      
-      # merge levels and add labels
-      data_new <- data_old %>%
-        mutate(across(new_level, 
-                      ~if_else(min_index %in% merge_levs, merged_lev, .x))) %>%
-        group_by(new_level) %>%
-        mutate(new_n = sum(n)) %>%
-        ungroup() %>%
-        mutate(keep = new_n>threshold) %>%
-        select(-new_n)
-      
-      return(data_new)
-      
-    }
-    
-    for (i in 1:(length(data$level)-1)) { # max number of possible merges 
-      
-      if (!all(data$keep)) {
-        data <- merge_levs_i(data)
-      } 
-      
-    }
-    
-    return(data %>% select(variable, level, new_level))
-    
-  }
+  capture.output(
+    print("No events"),
+    file = here::here("output", "preflight", "tables", glue("preflight_report_{comparison}_{subgroup_label}_{outcome}.txt")),
+    append = FALSE
+  )
   
 }
-
-# apply the merge function
-new_level_key <- oridinal_var_list %>%
-  map(~merge_levs_fun(., threshold = 10)) 
-
-# use the new merged levels to re-code the variables in the original data
-data_2 <- data_1
-for (i in seq_along(new_level_key)) {
-  
-  if (!is_empty(new_level_key[[i]])) {
-    
-    var <- unique(new_level_key[[i]]$variable)
-    levs <- unique(new_level_key[[i]]$new_level)
-    
-    join_by <- "level"
-    names(join_by) <- var
-    
-    data_2 <- data_2 %>%
-      mutate(across(all_of(var), as.character)) %>%
-      left_join(
-        new_level_key[[i]] %>% select(-variable),
-        by = join_by
-      ) %>%
-      mutate(!! sym(var) := factor(new_level, levels = levs)) %>%
-      select(-new_level)
-    
-  } 
-  
-}
-
-# if merge resulted in 1 level, drop the variable
-drop_merged_var <- sapply(
-  new_level_key,
-  function(x) {
-    if (is_empty(x)) {
-      return(NA_character_)
-    } else {
-      drop <- n_distinct(x$new_level) == 1
-      if (drop) return(unique(x$vairable)) else return(NA_character_)
-    }
-  }
-)
-
-drop_merged_var <- drop_merged_var[!is.na(drop_merged_var)]
-
-data_3 <- data_2 %>%
-  select(-all_of(c(drop_vars$variable, drop_merged_var))) %>%
-  droplevels()
-
-################################################################################
-# create comparison dummy variables
-arm1 <- if_else(comparison == "ChAdOx", "ChAdOx", "BNT162b2")
-
-data_4 <- data_3 %>%
-  dummy_cols(
-    select_columns = c("comparison"),
-    remove_selected_columns = TRUE
-  ) %>%
-  mutate(across(starts_with("comparison"),
-                ~ if_else(arm %in% arm1,
-                          .x, 0L))) %>%
-  rename_at(vars(starts_with("comparison")), ~str_c(.x, "_", arm1))
-
-################################################################################
-# define formulas
-
-comparisons <- data_4 %>% select(starts_with("comparison")) %>% names()
-
-formula_unadj <- as.formula(str_c(
-  "Surv(tstart, tstop, status, type = \"counting\") ~ ",
-  str_c(comparisons, collapse = " + "),
-  " + strata(strata_var)"))
-
-demog_vars <- model_varlist$demographic[which(model_varlist$demographic %in% names(data_4))]
-formula_demog <- as.formula(str_c(c(". ~ . ", demog_vars), collapse = " + "))
-
-clinical_vars <- model_varlist$clinical[which(model_varlist$clinical %in% names(data_4))]
-formula_clinical <- as.formula(str_c(c(". ~ . ", clinical_vars), collapse = " + "))
-
-################################################################################
-
-model_input <- list(
-  data = data_4,
-  formulas = list(
-    "unadjusted" = formula_unadj, 
-    "demographic" = formula_demog, 
-    "clinical" = formula_clinical)
-)
-
-readr::write_rds(
-  model_input,
-  here::here("output", "preflight", "data", glue("model_input_{comparison}_{subgroup_label}_{outcome}.rds"))
-)
-
-################################################################################
-
-preflight_report <- function(
-  dropped_comparisons,
-  dropped_variables,
-  merged_variables
-) {
-  cat(glue("Comparison = {comparison}"), "\n")
-  cat(glue("Subgroup = {subgroup}"), "\n")
-  cat(glue("Outcome = {outcome}"), "\n")
-  cat("---\n")
-  if (is_empty(drop_comparisons)) {
-    dropped_comparisons <- "none"
-  } else {
-    dropped_comparisons <- str_c(dropped_comparisons, collapse = ", ")
-  }
-  cat(glue("Dropped comparisons: {dropped_comparisons}"), "\n")
-  cat("---\n")
-  if (is_empty(dropped_variables)) {
-    dropped_comparisons <- "none"
-  } else {
-    dropped_comparisons <- str_c(dropped_variables, collapse = ", ")
-  }
-  cat(glue("Dropped variables: {dropped_variables}"), "\n")
-  cat("---\n")
-  if (is_empty(merged_variables)) {
-    cat("No levels merged.", "\n")
-  } else {
-    
-    merged_variables %>%
-      kableExtra::kable("pipe",
-                        caption = "Merged levels:")
-  }
-  
-  
-}
-
-capture.output(
-  preflight_report(
-    dropped_comparisons = drop_comparisons,
-    dropped_variables = c(drop_vars$variable,drop_merged_var),
-    merged_variables = bind_rows(new_level_key)
-  ),
-  file = here::here("output", "preflight", "tables", glue("preflight_report_{comparison}_{subgroup_label}_{outcome}.txt")),
-  append = FALSE
-)
