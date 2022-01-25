@@ -79,7 +79,7 @@ apply_model_fun <- function(
         model_input = glue("output/preflight/data/model_input_{comparison}_{subgroup_label}_{outcome}.rds")
       ),
       moderately_sensitive = list(
-        eventcheck_table = glue("output/preflight/tables/eventcheck_{comparison}_{subgroup_label}_{outcome}_REDACTED.html"),
+        eventcheck_table = glue("output/preflight/tables/eventcheck_{comparison}_{subgroup_label}_{outcome}_*.html"),
         preflight_report = glue("output/preflight/tables/preflight_report_{comparison}_{subgroup_label}_{outcome}.txt")
       )
     ),

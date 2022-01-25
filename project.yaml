@@ -219,7 +219,7 @@ actions:
       highly_sensitive:
         model_input: output/preflight/data/model_input_BNT162b2_1_postest.rds
       moderately_sensitive:
-        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_postest_REDACTED.html
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_postest_*.html
         preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_postest.txt
 
 
@@ -236,7 +236,7 @@ actions:
       highly_sensitive:
         model_input: output/preflight/data/model_input_BNT162b2_1_covidadmitted.rds
       moderately_sensitive:
-        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_covidadmitted_REDACTED.html
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_covidadmitted_*.html
         preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_covidadmitted.txt
 
 
@@ -253,7 +253,7 @@ actions:
       highly_sensitive:
         model_input: output/preflight/data/model_input_BNT162b2_1_coviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_coviddeath_REDACTED.html
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_coviddeath_*.html
         preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_coviddeath.txt
 
   
@@ -271,7 +271,7 @@ actions:
       highly_sensitive:
         model_input: output/preflight/data/model_input_BNT162b2_1_noncoviddeath.rds
       moderately_sensitive:
-        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_noncoviddeath_REDACTED.html
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_noncoviddeath_*.html
         preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_noncoviddeath.txt
 
   
