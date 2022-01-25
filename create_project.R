@@ -76,11 +76,11 @@ apply_model_fun <- function(
         glue("data_tte_process_{comparison}")
         ),
       highly_sensitive = list(
-        data_cox = glue("output/models_cox/data/data_cox_{comparison}_{subgroup_label}_{outcome}.rds"),
-        model_instructions = glue("output/lib/model_instructions_{comparison}_{subgroup_label}_{outcome}.rds")
+        model_input = glue("output/preflight/data/model_input_{comparison}_{subgroup_label}_{outcome}.rds")
       ),
       moderately_sensitive = list(
-        eventcheck_table = glue("output/models_cox/tables/eventcheck_{comparison}_{subgroup_label}_{outcome}.html")
+        eventcheck_table = glue("output/preflight/tables/eventcheck_{comparison}_{subgroup_label}_{outcome}_REDACTED.html"),
+        preflight_report = glue("output/preflight/tables/preflight_report_{comparison}_{subgroup_label}_{outcome}.txt")
       )
     ),
     comment("apply cox model"),
