@@ -201,7 +201,7 @@ plot_fun <- function(
   caption_string <- if_else(
     colour_var == "model",
     "Stratification variables are: JCVI group, eligibility date for first dose of vaccination, geographical region.",
-    "Hazard ratios estimated using a stratified cox model adjusted for demographic and clinical variables (stratification variables are: JCVI group, eligibility date for first dose of vaccination, geographical region)"
+    "Hazard ratios estimated using a stratified Cox model adjusted for demographic and clinical variables (stratification variables are: JCVI group, eligibility date for first dose of vaccination, geographical region)"
   )
   
   if (colour_var == "subgroup") {
