@@ -32,7 +32,7 @@ avg_start_dates = pd.read_csv(
     filepath_or_buffer=f"./analysis/lib/avg_start_dates.csv", # update to output when merge
     dtype=str
     )
-# avg_start_dates for 2 ... K
+# avg_start_dates for 1 ... K
 def avg_start_k_date(K):
     
     def var_signature(k):
@@ -43,6 +43,7 @@ def avg_start_k_date(K):
                         "category":{
                             "ratios": { avg_start_dates[f"avg_start_{k}_date"][i] : 1/len(avg_start_dates.index) for i in avg_start_dates.index }
                         },
+                        "incidence": 1,
                     },
             ),
         }
@@ -133,23 +134,23 @@ study=StudyDefinition(
     # comparison start dates averaged over regions
     **avg_start_k_date(max_comparisons),
 
-    # number of covid tests in each comparison period
-    **covid_test_k_n(
-        K=max_comparisons,
-        test_result="any",
-        return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
-    ),
-    # number of positive covid tests in each comparison period
-    **covid_test_k_n(
-        K=max_comparisons,
-        test_result="positive",
-        return_expectations={"int" : {"distribution": "poisson", "mean": 0.5}, "incidence" : 0.6}
-    ),
-    # first covid test in each comparison period
-    **covid_test_k_date(
-        K=max_comparisons,
-        test_result="any",
-        return_expectations={"date": {"earliest": start_date, "latest": end_date}}
-    )
+    # # number of covid tests in each comparison period
+    # **covid_test_k_n(
+    #     K=max_comparisons,
+    #     test_result="any",
+    #     return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
+    # ),
+    # # number of positive covid tests in each comparison period
+    # **covid_test_k_n(
+    #     K=max_comparisons,
+    #     test_result="positive",
+    #     return_expectations={"int" : {"distribution": "poisson", "mean": 0.5}, "incidence" : 0.6}
+    # ),
+    # # first covid test in each comparison period
+    # **covid_test_k_date(
+    #     K=max_comparisons,
+    #     test_result="any",
+    #     return_expectations={"date": {"earliest": start_date, "latest": end_date}}
+    # )
 
 )
