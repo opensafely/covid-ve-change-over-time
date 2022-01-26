@@ -130,26 +130,26 @@ study=StudyDefinition(
         ),
     ),
 
-    # # comparison start dates averaged over regions
-    # **avg_start_k_date(max_comparisons),
+    # comparison start dates averaged over regions
+    **avg_start_k_date(max_comparisons),
 
-    # # number of covid tests in each comparison period
-    # **covid_test_k_n(
-    #     K=max_comparisons,
-    #     test_result="any",
-    #     return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
-    # ),
-    # # number of positive covid tests in each comparison period
-    # **covid_test_k_n(
-    #     K=max_comparisons,
-    #     test_result="positive",
-    #     return_expectations={"int" : {"distribution": "poisson", "mean": 0.5}, "incidence" : 0.6}
-    # ),
-    # # first covid test in each comparison period
-    # **covid_test_k_date(
-    #     K=max_comparisons,
-    #     test_result="any",
-    #     return_expectations={"date": {"earliest": start_date, "latest": end_date}}
-    # )
+    # number of covid tests in each comparison period
+    **covid_test_k_n(
+        K=max_comparisons,
+        test_result="any",
+        return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
+    ),
+    # number of positive covid tests in each comparison period
+    **covid_test_k_n(
+        K=max_comparisons,
+        test_result="positive",
+        return_expectations={"int" : {"distribution": "poisson", "mean": 0.5}, "incidence" : 0.6}
+    ),
+    # first covid test in each comparison period
+    **covid_test_k_date(
+        K=max_comparisons,
+        test_result="any",
+        return_expectations={"date": {"earliest": start_date, "latest": end_date}}
+    )
 
 )
