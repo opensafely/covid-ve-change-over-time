@@ -35,7 +35,7 @@ second_vax_period_dates <- readr::read_rds(
 # covariate data
 data_processed <- readr::read_rds(
   here::here("output", "data", "data_processed.rds")) %>%
-  select(patient_id, endoflife_date, midazolam_date, covid_any_date)
+  select(patient_id, endoflife_date, midazolam_date, covid_any_date, longres_date)
 
 ################################################################################
 # apply eligibility criteria in box c ----
@@ -100,9 +100,10 @@ exclusion_e <- function(.data) {
   .data %>%
     left_join(data_processed, by = "patient_id") %>%
     filter(
+      no_evidence_of(covid_any_date, start_of_period - weeks(2)),
+      no_evidence_of(longres_date, start_of_period),
       no_evidence_of(endoflife_date, start_of_period),
-      no_evidence_of(midazolam_date, start_of_period),
-      no_evidence_of(covid_any_date, start_of_period - weeks(2))
+      no_evidence_of(midazolam_date, start_of_period)
     ) %>%
     select(-all_of(names(data_processed)[!names(data_processed) %in% "patient_id"]))
     

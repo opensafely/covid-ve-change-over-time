@@ -146,7 +146,8 @@ clinical <- c(
   "other_respiratory", "lung_cancer", "haematological_cancer",
   "cancer_excl_lung_and_haem", "any_immunosuppression",
   "dementia", "other_neuro_conditions", "ld_inc_ds_and_cp",
-  "psychosis_schiz_bipolar", "multimorb", "shielded", "flu_vaccine"
+  "psychosis_schiz_bipolar", "multimorb", "shielded", "flu_vaccine",
+  "longres"
 )
 
 demographic <- c("age_band", "sex", "imd", "ethnicity")
