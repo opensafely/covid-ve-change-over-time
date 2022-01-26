@@ -188,6 +188,8 @@ capture.output(
 
 # average start dates for test positivity
 avg_start_dates <- second_vax_period_dates %>%
+  # remove the following line!!
+  mutate(across(elig_date, ~if_else(as.Date("2021-04-01") < .x & .x < as.Date("2021-12-01"), .x + days(1), .x))) %>%
   group_by(jcvi_group, elig_date) %>%
   summarise(avg_start_1_date = mean(start_of_period) + days(14), .groups = "keep") %>%
   ungroup() %>%
