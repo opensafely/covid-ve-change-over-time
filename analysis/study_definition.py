@@ -620,7 +620,7 @@ study=StudyDefinition(
         eol_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"elig_date + {112 + 14 + (max_comparisons + 1)*28} days",
+        on_or_before="elig_date + 84 days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -634,7 +634,7 @@ study=StudyDefinition(
         midazolam_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"elig_date + {112 + 14 + (max_comparisons + 1)*28} days",
+        on_or_before="elig_date + 84 days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
