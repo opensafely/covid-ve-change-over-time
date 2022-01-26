@@ -192,9 +192,19 @@ avg_start_dates <- second_vax_period_dates %>%
   mutate(across(elig_date, ~if_else(as.Date("2021-04-01") < .x & .x < as.Date("2021-12-01"), .x + days(1), .x))) %>%
   group_by(jcvi_group, elig_date) %>%
   summarise(avg_start_1_date = mean(start_of_period) + days(14), .groups = "keep") %>%
+  ungroup(elig_date) %>%
+  mutate(n_jcvi = n()) %>%
+  ungroup() %>%
+  group_by(elig_date) %>%
+  mutate(n_elig = n()) %>%
   ungroup() %>%
   mutate(
-    condition = as.character(glue("(jcvi_group = '{jcvi_group}' AND elig_date = {elig_date})"))
+    condition = case_when(
+      n_jcvi > 1 & n_elig > 1 ~ as.character(glue("(jcvi_group = '{jcvi_group}' AND elig_date = {elig_date})")),
+      n_jcvi == 1 ~ as.character(glue("(jcvi_group = '{jcvi_group}')")),
+      n_elig == 1 ~ as.character(glue("(elig_date = {elig_date})")),
+      TRUE ~ NA_character_
+      )
   ) %>%
   arrange(avg_start_1_date) %>%
   group_by(avg_start_1_date) %>%
