@@ -35,76 +35,55 @@ avg_start_dates = pd.read_csv(
 avg_start_dict={ avg_start_dates["avg_start_1_date"][i] : avg_start_dates["condition"][i] for i in avg_start_dates.index }
 avg_start_ratio={ avg_start_dates["avg_start_1_date"][i] : 1/len(avg_start_dates.index) for i in avg_start_dates.index }
 
-# # avg_start_dates for 1 ... K
-# def avg_start_k_date(K):
+# count tests in each of the K periods
+def covid_test_k_n(K, test_result, return_expectations):
     
-#     def var_signature(k):
-#         return {
-#              f"avg_start_{k}_date": patients.categorised_as(
-#                     { avg_start_dates[f"avg_start_{k}_date"][i] : avg_start_dates['condition'][i] for i in avg_start_dates.index },
-#                     return_expectations={
-#                         "category":{
-#                             "ratios": { avg_start_dates[f"avg_start_{k}_date"][i] : 1/len(avg_start_dates.index) for i in avg_start_dates.index }
-#                         },
-#                         "incidence": 1,
-#                     },
-#             ),
-#         }
-#     variables=dict()
-#     for k in range(1, K+1):
-#         variables.update(var_signature(k))
-#     return variables
+    def var_signature(name, lower, upper, test_result, return_expectations):
+        return {
+            name: patients.with_test_result_in_sgss(
+                pathogen="SARS-CoV-2",
+                test_result=test_result,
+                between=[lower, upper],
+                restrict_to_earliest_specimen_date=False,
+                returning="number_of_matches_in_period",
+                return_expectations=return_expectations
+	        ),
+        }
+    variables = dict()
+    for i in range(1, K+1):
+        variables.update(var_signature(
+            f"{test_result}_test_{i}_n", 
+            f"avg_start_1_date + {(i-1)*28 + 1} days", 
+            f"avg_start_1_date + {i*28} days", 
+            test_result, 
+            return_expectations))
+    return variables
 
-
-# # count tests in each of the K periods
-# def covid_test_k_n(K, test_result, return_expectations):
+# date of first test in each of the K periods
+def covid_test_k_date(K, test_result, return_expectations):
     
-#     def var_signature(name, lower, upper, test_result, return_expectations):
-#         return {
-#             name: patients.with_test_result_in_sgss(
-#                 pathogen="SARS-CoV-2",
-#                 test_result=test_result,
-#                 between=[lower, upper],
-#                 restrict_to_earliest_specimen_date=False,
-#                 returning="number_of_matches_in_period",
-#                 return_expectations=return_expectations
-# 	        ),
-#         }
-#     variables = dict()
-#     for i in range(1, K+1):
-#         variables.update(var_signature(
-#             f"{test_result}_test_{i}_n", 
-#             f"avg_start_{i}_date + {(i-1)*28 + 1} days", 
-#             f"avg_start_{i}_date + {i*28} days", 
-#             test_result, 
-#             return_expectations))
-#     return variables
-
-# # date of first test in each of the K periods
-# def covid_test_k_date(K, test_result, return_expectations):
-    
-#     def var_signature(name, lower, upper, test_result, return_expectations):
-#         return {
-#             name: patients.with_test_result_in_sgss(
-#                 pathogen="SARS-CoV-2",
-#                 test_result=test_result,
-#                 between=[lower, upper],
-#                 restrict_to_earliest_specimen_date=False,
-#                 find_first_match_in_period=True,
-#                 returning="date",
-#                 date_format = "YYYY-MM-DD",
-#                 return_expectations=return_expectations
-# 	        ),
-#         }
-#     variables = dict()
-#     for i in range(1, K+1):
-#         variables.update(var_signature(
-#             f"{test_result}_test_{i}_date", 
-#             f"avg_start_{i}_date + {(i-1)*28 + 1} days", 
-#             f"avg_start_{i}_date + {i*28} days", 
-#             test_result, 
-#             return_expectations))
-#     return variables
+    def var_signature(name, lower, upper, test_result, return_expectations):
+        return {
+            name: patients.with_test_result_in_sgss(
+                pathogen="SARS-CoV-2",
+                test_result=test_result,
+                between=[lower, upper],
+                restrict_to_earliest_specimen_date=False,
+                find_first_match_in_period=True,
+                returning="date",
+                date_format = "YYYY-MM-DD",
+                return_expectations=return_expectations
+	        ),
+        }
+    variables = dict()
+    for i in range(1, K+1):
+        variables.update(var_signature(
+            f"{test_result}_test_{i}_date", 
+            f"avg_start_1_date + {(i-1)*28 + 1} days", 
+            f"avg_start_1_date + {i*28} days", 
+            test_result, 
+            return_expectations))
+    return variables
 
 ###
 study=StudyDefinition(
@@ -144,25 +123,24 @@ study=StudyDefinition(
                         "incidence": 1,
                     },
             ),
-    # **avg_start_k_date(1),
 
-    # # number of covid tests in each comparison period
-    # **covid_test_k_n(
-    #     K=max_comparisons,
-    #     test_result="any",
-    #     return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
-    # ),
-    # # number of positive covid tests in each comparison period
-    # **covid_test_k_n(
-    #     K=max_comparisons,
-    #     test_result="positive",
-    #     return_expectations={"int" : {"distribution": "poisson", "mean": 0.5}, "incidence" : 0.6}
-    # ),
-    # # first covid test in each comparison period
-    # **covid_test_k_date(
-    #     K=max_comparisons,
-    #     test_result="any",
-    #     return_expectations={"date": {"earliest": start_date, "latest": end_date}}
-    # )
+    # number of covid tests in each comparison period
+    **covid_test_k_n(
+        K=max_comparisons,
+        test_result="any",
+        return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
+    ),
+    # number of positive covid tests in each comparison period
+    **covid_test_k_n(
+        K=max_comparisons,
+        test_result="positive",
+        return_expectations={"int" : {"distribution": "poisson", "mean": 0.5}, "incidence" : 0.6}
+    ),
+    # first covid test in each comparison period
+    **covid_test_k_date(
+        K=max_comparisons,
+        test_result="any",
+        return_expectations={"date": {"earliest": start_date, "latest": end_date}}
+    )
 
 )
