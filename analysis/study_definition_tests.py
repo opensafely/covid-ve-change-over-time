@@ -132,7 +132,7 @@ study=StudyDefinition(
     ),
 
     # comparison start dates averaged over regions
-    **avg_start_k_date(max_comparisons),
+    **avg_start_k_date(1),
 
     # # number of covid tests in each comparison period
     # **covid_test_k_n(
