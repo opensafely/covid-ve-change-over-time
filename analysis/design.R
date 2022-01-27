@@ -116,7 +116,8 @@ tribble(
     # "2021-06-16", "age_2 >= 21 AND age_2 < 23", "12",
     # "2021-06-18", "age_2 >= 18 AND age_2 < 21", "12",
     "2100-12-31", "DEFAULT", "NA",
-)
+) %>%
+  mutate(elig_group = toupper(letters[1:nrow(.)]))
 
 readr::write_csv(elig_dates, here::here("output", "lib", "elig_dates.csv"))
 

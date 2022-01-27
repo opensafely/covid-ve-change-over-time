@@ -120,7 +120,7 @@ data_processed_0 <- data_extract %>%
     age_band = factor(if_else(!is.na(age_band_1), age_band_1, age_band_2))
     
   ) %>%
-  select(-ethnicity_6, -ethnicity_6_sus, -age_band_1, -age_band_2) %>%
+  select(-ethnicity_6, -ethnicity_6_sus, -age_band_1, -age_band_2, -elig_group) %>%
   droplevels()
 
 ################################################################################

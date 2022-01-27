@@ -20,6 +20,8 @@ fs::dir_create(here::here("output", "second_vax_period", "tables"))
 
 study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
 
+elig_dates <- readr::read_csv(here::here("output", "lib", "elig_dates.csv"))
+
 # individuals who are eligible based on criteria in box b of Figure 3 on protocol
 data_eligible_b <- readr::read_rds(
   here::here("output", "data", "data_eligible_b.rds")
@@ -189,20 +191,22 @@ capture.output(
 # average start dates for test positivity
 avg_start_dates <- second_vax_period_dates %>%
   # remove the following line!!
-  mutate(across(elig_date, ~if_else(as.Date("2021-04-01") < .x & .x < as.Date("2021-12-01"), .x + days(1), .x))) %>%
-  group_by(jcvi_group, elig_date) %>%
+  # mutate(across(elig_date, ~if_else(as.Date("2021-04-01") < .x & .x < as.Date("2021-12-01"), .x + days(1), .x))) %>%
+  left_join(elig_dates %>% select(elig_date = date, elig_group), 
+            by = c("elig_date")) %>%
+  group_by(jcvi_group, elig_group) %>%
   summarise(avg_start_1_date = mean(start_of_period) + days(14), .groups = "keep") %>%
-  ungroup(elig_date) %>%
+  ungroup(elig_group) %>%
   mutate(n_jcvi = n()) %>%
   ungroup() %>%
-  group_by(elig_date) %>%
+  group_by(elig_group) %>%
   mutate(n_elig = n()) %>%
   ungroup() %>%
   mutate(
     condition = case_when(
-      n_jcvi > 1 & n_elig > 1 ~ as.character(glue("(jcvi_group = \"{jcvi_group}\" AND elig_date = {elig_date})")),
+      n_jcvi > 1 & n_elig > 1 ~ as.character(glue("(jcvi_group = \"{jcvi_group}\" AND elig_group = \"{elig_group}\")")),
       n_jcvi == 1 ~ as.character(glue("(jcvi_group = \"{jcvi_group}\")")),
-      n_elig == 1 ~ as.character(glue("(elig_date = {elig_date})")),
+      n_elig == 1 ~ as.character(glue("(elig_group = \"{elig_group}\")")),
       TRUE ~ NA_character_
       )
   ) %>%

@@ -29,6 +29,7 @@ elig_dates = pd.read_csv(
 )
 dict_elig = { elig_dates['date'][i] : elig_dates['description'][i] for i in elig_dates.index }
 ratio_elig = { elig_dates['date'][i] : 1/len(elig_dates.index) for i in elig_dates.index }
+dict_elig_group = { elig_dates['elig_group'][i] : elig_dates['description'][i] for i in elig_dates.index }
 
 # regions
 regions = pd.read_csv(
@@ -424,6 +425,16 @@ jcvi_variables = dict(
     # vaccine eligibility dates
     elig_date=patients.categorised_as(
        dict_elig,
+        return_expectations={
+            "category": {"ratios": 
+            ratio_elig
+            },
+            "incidence": 1,
+        },
+    ),
+    # non-date indicator for using in categorised_as 
+    elig_group=patients.categorised_as(
+       dict_elig_group,
         return_expectations={
             "category": {"ratios": 
             ratio_elig
