@@ -200,8 +200,8 @@ avg_start_dates <- second_vax_period_dates %>%
   ungroup() %>%
   mutate(
     condition = case_when(
-      n_jcvi > 1 & n_elig > 1 ~ as.character(glue("(jcvi_group = '{jcvi_group}' AND elig_date = {elig_date})")),
-      n_jcvi == 1 ~ as.character(glue("(jcvi_group = '{jcvi_group}')")),
+      n_jcvi > 1 & n_elig > 1 ~ as.character(glue("(jcvi_group = \"{jcvi_group}\" AND elig_date = {elig_date})")),
+      n_jcvi == 1 ~ as.character(glue("(jcvi_group = \"{jcvi_group}\")")),
       n_elig == 1 ~ as.character(glue("(elig_date = {elig_date})")),
       TRUE ~ NA_character_
       )
@@ -212,13 +212,13 @@ avg_start_dates <- second_vax_period_dates %>%
   ungroup() %>%
   add_row(avg_start_1_date = as.Date("2100-01-01"), condition = "DEFAULT")
 
-for (i in 2:study_parameters$max_comparisons) {
-  name_before <- glue("avg_start_{i-1}_date")
-  name <- glue("avg_start_{i}_date")
-  avg_start_dates <- avg_start_dates %>%
-    mutate(!! sym(name) := !! sym(name_before) + days(28))
-  
-}
+# for (i in 2:study_parameters$max_comparisons) {
+#   name_before <- glue("avg_start_{i-1}_date")
+#   name <- glue("avg_start_{i}_date")
+#   avg_start_dates <- avg_start_dates %>%
+#     mutate(!! sym(name) := !! sym(name_before) + days(28))
+#   
+# }
 
 # save for passing to study_definition_tests.py
 readr::write_csv(avg_start_dates,
