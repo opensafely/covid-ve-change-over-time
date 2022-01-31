@@ -28,62 +28,62 @@ np.random.seed(study_parameters["seed"])
 
 # function for creating the comparison start dates for each elig_group
 # avg_start_dates
-avg_start_dates = pd.read_csv(
-    filepath_or_buffer=f"./analysis/lib/avg_start_dates.csv", # update to output when merge
-    dtype=str
-    )
-avg_start_dict={ avg_start_dates["avg_start_1_date"][i] : avg_start_dates["condition"][i] for i in avg_start_dates.index }
-avg_start_ratio={ avg_start_dates["avg_start_1_date"][i] : 1/len(avg_start_dates.index) for i in avg_start_dates.index }
+# avg_start_dates = pd.read_csv(
+#     filepath_or_buffer=f"./analysis/lib/avg_start_dates.csv", # update to output when merge
+#     dtype=str
+#     )
+# avg_start_dict={ avg_start_dates["avg_start_1_date"][i] : avg_start_dates["condition"][i] for i in avg_start_dates.index }
+# avg_start_ratio={ avg_start_dates["avg_start_1_date"][i] : 1/len(avg_start_dates.index) for i in avg_start_dates.index }
 
 # count tests in each of the K 28-day periods
-def covid_test_k_n(K, test_result, return_expectations):
+# def covid_test_k_n(K, test_result, return_expectations):
     
-    def var_signature(name, lower, upper, test_result, return_expectations):
-        return {
-            name: patients.with_test_result_in_sgss(
-                pathogen="SARS-CoV-2",
-                test_result=test_result,
-                between=[lower, upper],
-                restrict_to_earliest_specimen_date=False,
-                returning="number_of_matches_in_period",
-                return_expectations=return_expectations
-	        ),
-        }
-    variables = dict()
-    for i in range(1, K+1):
-        variables.update(var_signature(
-            f"{test_result}_test_{i}_n", 
-            f"avg_start_1_date + {i*28 + 1} days", 
-            f"avg_start_1_date + {(i+1)*28} days", 
-            test_result, 
-            return_expectations))
-    return variables
+#     def var_signature(name, lower, upper, test_result, return_expectations):
+#         return {
+#             name: patients.with_test_result_in_sgss(
+#                 pathogen="SARS-CoV-2",
+#                 test_result=test_result,
+#                 between=[lower, upper],
+#                 restrict_to_earliest_specimen_date=False,
+#                 returning="number_of_matches_in_period",
+#                 return_expectations=return_expectations
+# 	        ),
+#         }
+#     variables = dict()
+#     for i in range(1, K+1):
+#         variables.update(var_signature(
+#             f"{test_result}_test_{i}_n", 
+#             f"avg_start_1_date + {i*28 + 1} days", 
+#             f"avg_start_1_date + {(i+1)*28} days", 
+#             test_result, 
+#             return_expectations))
+#     return variables
 
-# date of first test in each of the K 28-day periods
-def covid_test_k_date(K, test_result, return_expectations):
+# # date of first test in each of the K 28-day periods
+# def covid_test_k_date(K, test_result, return_expectations):
     
-    def var_signature(name, lower, upper, test_result, return_expectations):
-        return {
-            name: patients.with_test_result_in_sgss(
-                pathogen="SARS-CoV-2",
-                test_result=test_result,
-                between=[lower, upper],
-                restrict_to_earliest_specimen_date=False,
-                find_first_match_in_period=True,
-                returning="date",
-                date_format = "YYYY-MM-DD",
-                return_expectations=return_expectations
-	        ),
-        }
-    variables = dict()
-    for i in range(1, K+1):
-        variables.update(var_signature(
-            f"{test_result}_test_{i}_date", 
-            f"avg_start_1_date + {i*28 + 1} days", 
-            f"avg_start_1_date + {(i+1)*28} days", 
-            test_result, 
-            return_expectations))
-    return variables
+#     def var_signature(name, lower, upper, test_result, return_expectations):
+#         return {
+#             name: patients.with_test_result_in_sgss(
+#                 pathogen="SARS-CoV-2",
+#                 test_result=test_result,
+#                 between=[lower, upper],
+#                 restrict_to_earliest_specimen_date=False,
+#                 find_first_match_in_period=True,
+#                 returning="date",
+#                 date_format = "YYYY-MM-DD",
+#                 return_expectations=return_expectations
+# 	        ),
+#         }
+#     variables = dict()
+#     for i in range(1, K+1):
+#         variables.update(var_signature(
+#             f"{test_result}_test_{i}_date", 
+#             f"avg_start_1_date + {i*28 + 1} days", 
+#             f"avg_start_1_date + {(i+1)*28} days", 
+#             test_result, 
+#             return_expectations))
+#     return variables
 
 ###
 study=StudyDefinition(
@@ -113,55 +113,99 @@ study=StudyDefinition(
         ),
     ),
 
-    # comparison start dates averaged over regions
-    avg_start_1_date=patients.categorised_as(
-                    avg_start_dict,
-                    return_expectations={
-                        "category": {
-                            "ratios": avg_start_ratio
-                        },
-                        "incidence": 1,
-                    },
-            ),
+    start_1_date=patients.with_value_from_file(
+        f_path='output/data/data_eligible_e.csv', 
+        returning='start_1_date', 
+        returning_type='date',
+        date_format='YYYY-MM-DD'
+        )
 
-    ### covid tests as covariates
-    # during unvaccinated time (from when tests widely availabe to elig_date)
-    covid_test_pre_elig_n = patients.with_test_result_in_sgss(
-                pathogen="SARS-CoV-2",
-                test_result="any",
-                between=["2020-05-18", "elig_date"],
-                restrict_to_earliest_specimen_date=False,
-                returning="number_of_matches_in_period",
-                return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
-	        ),
-    # during first dose time (elig date + 1 to elig_date + 6 weeks)
-    covid_test_post_elig_n = patients.with_test_result_in_sgss(
-                pathogen="SARS-CoV-2",
-                test_result="any",
-                between=["elig_date + 1 day", "elig_date + 42 days"],
-                restrict_to_earliest_specimen_date=False,
-                returning="number_of_matches_in_period",
-                return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
-	        ),
+
+
+    # ## any covid vaccination, identified by target disease
+    # # 1st dose
+    # covid_vax_disease_1_date = patients.with_tpp_vaccination_record(
+    #     target_disease_matches="SARS-2 CORONAVIRUS",
+    #     on_or_after=start_date,
+    #     find_first_match_in_period=True,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     return_expectations={
+    #         "date": {
+    #             "earliest": start_date,  
+    #             "latest": end_date,
+    #         }
+    #     },
+    # ),
+    # # 2nd dose
+    # covid_vax_disease_2_date=patients.with_tpp_vaccination_record(
+    #     target_disease_matches="SARS-2 CORONAVIRUS",
+    #     between=["covid_vax_disease_1_date + 42 days","covid_vax_disease_1_date + 98 days"], # window in which we're looking for second vacciantions [+6weeks,+14weeks]
+    #     find_first_match_in_period=True,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     return_expectations={
+    #         "date": {
+    #             "earliest": start_date,
+    #             "latest": end_date,
+    #         }
+    #     },
+    # ),
+    #      # comparison start dates averaged over regions (for unvaccinated start dates)
+    # avg_start_1_date=patients.categorised_as(
+    #     avg_start_dict,
+    #     return_expectations={
+    #         "category": {
+    #             "ratios": avg_start_ratio
+    #             },
+    #             "incidence": 1,
+    #         },
+    # ),
+
+
+    # start_1_date=patients.maximum_of(
+    #     "avg_start_1_date",
+    #     "covid_vax_disease_2_date"
+    # ),
+
+    # ### covid tests as covariates
+    # # during unvaccinated time (from when tests widely availabe to elig_date)
+    # covid_test_pre_elig_n = patients.with_test_result_in_sgss(
+    #             pathogen="SARS-CoV-2",
+    #             test_result="any",
+    #             between=["2020-05-18", "elig_date"],
+    #             restrict_to_earliest_specimen_date=False,
+    #             returning="number_of_matches_in_period",
+    #             return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
+	#         ),
+    # # during first dose time (elig date + 1 to elig_date + 6 weeks)
+    # covid_test_post_elig_n = patients.with_test_result_in_sgss(
+    #             pathogen="SARS-CoV-2",
+    #             test_result="any",
+    #             between=["elig_date + 1 day", "elig_date + 42 days"],
+    #             restrict_to_earliest_specimen_date=False,
+    #             returning="number_of_matches_in_period",
+    #             return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
+	#         ),
     
-    ### covid tests as outcomes
-    # number of covid tests in each 28-day period
-    **covid_test_k_n(
-        K=max_comparisons,
-        test_result="any",
-        return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
-    ),
-    # number of positive covid tests in each 28-day period
-    **covid_test_k_n(
-        K=max_comparisons,
-        test_result="positive",
-        return_expectations={"int" : {"distribution": "poisson", "mean": 0.5}, "incidence" : 0.6}
-    ),
-    # first covid test in each 28-day period
-    **covid_test_k_date(
-        K=max_comparisons,
-        test_result="any",
-        return_expectations={"date": {"earliest": start_date, "latest": end_date}}
-    )
+    # ### covid tests as outcomes
+    # # number of covid tests in each 28-day period
+    # **covid_test_k_n(
+    #     K=max_comparisons,
+    #     test_result="any",
+    #     return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
+    # ),
+    # # number of positive covid tests in each 28-day period
+    # **covid_test_k_n(
+    #     K=max_comparisons,
+    #     test_result="positive",
+    #     return_expectations={"int" : {"distribution": "poisson", "mean": 0.5}, "incidence" : 0.6}
+    # ),
+    # # first covid test in each 28-day period
+    # **covid_test_k_date(
+    #     K=max_comparisons,
+    #     test_result="any",
+    #     return_expectations={"date": {"earliest": start_date, "latest": end_date}}
+    # )
 
 )
