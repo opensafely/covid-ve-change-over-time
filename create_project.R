@@ -307,7 +307,43 @@ actions_list <- splice(
     needs = list("design", "data_input_process", "data_eligible_ab", "data_2nd_vax_dates"),
     highly_sensitive = list(
       data_eligible_e_vax = "output/data/data_eligible_e_vax.rds",
-      data_eligible_e_unvax = "output/data/data_eligible_e_unvax.rds"
+      data_eligible_e_unvax = "output/data/data_eligible_e_unvax.rds",
+      data_eligible_e = "output/data/data_eligible_e.csv"
+    )
+  ),
+  
+  comment("####################################", 
+          "study definition tests",
+          "####################################"),
+  # comment("generate dummy data for study_definition_tests"),
+  # action(
+  #   name = "dummy_data",
+  #   run = "r:latest analysis/dummy_data.R",
+  #   needs = list("design"),
+  #   moderately_sensitive = list(
+  #     dummy_data = "analysis/dummy_data.feather"
+  #   )
+  # ),
+  
+  comment("study definition tests"),
+  action(
+    name = "generate_covid_tests_data",
+    run = "cohortextractor:latest generate_cohort --study-definition study_definition_tests --output-format feather",
+    # dummy_data_file = "analysis/dummy_data.feather",
+    needs = list("design", "data_eligible_cde"),
+    highly_sensitive = list(
+      cohort = "output/input_tests.feather"
+    )
+  ),
+  
+  comment("check the tests data as expected"),
+  action(
+    name = "check_tests",
+    run = "r:latest analysis/tests/check_tests.R",
+    needs = list("design", "generate_covid_tests_data"),
+    moderately_sensitive = list(
+      covariate_distribution = "output/tests/images/covariate_distribution.png",
+      data_tests_tabulate = "output/tests/tables/data_tests_tabulate.txt"
     )
   ),
   

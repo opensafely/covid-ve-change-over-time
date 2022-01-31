@@ -125,155 +125,31 @@ actions:
       highly_sensitive:
         data_eligible_e_vax: output/data/data_eligible_e_vax.rds
         data_eligible_e_unvax: output/data/data_eligible_e_unvax.rds
+        data_eligible_e: output/data/data_eligible_e.csv
 
   ## #################################### 
-  ## subsequent vaccination 
+  ## study definition tests 
   ## #################################### 
-  ## plot cumulative incidence of subsequent vaccination 
+  ## study definition tests 
 
-  plot_cumulative_incidence:
-    run: r:latest analysis/subsequent_vax/plot_cumulative_incidence.R
+  generate_covid_tests_data:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_tests
+      --output-format feather
     needs:
     - design
-    - data_input_process
-    - data_eligible_cde
-    outputs:
-      moderately_sensitive:
-        ci_vax: output/subsequent_vax/images/ci_vax_*.png
-        survtable: output/subsequent_vax/tables/survtable_*.txt
-
-  ## #################################### 
-  ## comparisons 
-  ## #################################### 
-  ## process comparisons data 
-
-  data_comparisons_process:
-    run: r:latest analysis/comparisons/data_comparisons_process.R
-    needs:
-    - design
-    - data_input_process
-    - data_2nd_vax_dates
     - data_eligible_cde
     outputs:
       highly_sensitive:
-        data_comparisons: output/comparisons/data/data_comparisons_*.rds
+        cohort: output/input_tests.feather
 
-  ## process tte data 
+  ## check the tests data as expected 
 
-  data_tte_process_BNT162b2:
-    run: r:latest analysis/comparisons/data_tte_process.R BNT162b2
+  check_tests:
+    run: r:latest analysis/tests/check_tests.R
     needs:
     - design
-    - data_input_process
-    - data_comparisons_process
-    outputs:
-      highly_sensitive:
-        data_tte_brand_outcome: output/tte/data/data_tte_BNT162b2*.rds
-        event_counts: output/tte/tables/event_counts_BNT162b2.rds
-
-  data_tte_process_ChAdOx:
-    run: r:latest analysis/comparisons/data_tte_process.R ChAdOx
-    needs:
-    - design
-    - data_input_process
-    - data_comparisons_process
-    outputs:
-      highly_sensitive:
-        data_tte_brand_outcome: output/tte/data/data_tte_ChAdOx*.rds
-        event_counts: output/tte/tables/event_counts_ChAdOx.rds
-
-  data_tte_process_both:
-    run: r:latest analysis/comparisons/data_tte_process.R both
-    needs:
-    - design
-    - data_input_process
-    - data_comparisons_process
-    outputs:
-      highly_sensitive:
-        data_tte_brand_outcome: output/tte/data/data_tte_both*.rds
-        event_counts: output/tte/tables/event_counts_both.rds
-
-  ## process event counts tables 
-
-  process_event_count_tables:
-    run: r:latest analysis/comparisons/process_event_count_tables.R
-    needs:
-    - design
-    - data_tte_process_BNT162b2
-    - data_tte_process_ChAdOx
+    - generate_covid_tests_data
     outputs:
       moderately_sensitive:
-        tidy_tables_events: output/tte/tables/tidy_events*.txt
-
-  ## apply models 
-  ## BNT162b2; 16-64 and clinically vulnerable; postest 
-  ## preflight checks 
-
-  preflight_BNT162b2_1_postest:
-    run: r:latest analysis/comparisons/preflight.R BNT162b2 1 postest
-    needs:
-    - design
-    - data_comparisons_process
-    - data_tte_process_BNT162b2
-    outputs:
-      highly_sensitive:
-        model_input: output/preflight/data/model_input_BNT162b2_1_postest.rds
-      moderately_sensitive:
-        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_postest_*.html
-        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_postest.txt
-
-
-  ## BNT162b2; 16-64 and clinically vulnerable; covidadmitted 
-  ## preflight checks 
-
-  preflight_BNT162b2_1_covidadmitted:
-    run: r:latest analysis/comparisons/preflight.R BNT162b2 1 covidadmitted
-    needs:
-    - design
-    - data_comparisons_process
-    - data_tte_process_BNT162b2
-    outputs:
-      highly_sensitive:
-        model_input: output/preflight/data/model_input_BNT162b2_1_covidadmitted.rds
-      moderately_sensitive:
-        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_covidadmitted_*.html
-        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_covidadmitted.txt
-
-
-  ## BNT162b2; 16-64 and clinically vulnerable; coviddeath 
-  ## preflight checks 
-
-  preflight_BNT162b2_1_coviddeath:
-    run: r:latest analysis/comparisons/preflight.R BNT162b2 1 coviddeath
-    needs:
-    - design
-    - data_comparisons_process
-    - data_tte_process_BNT162b2
-    outputs:
-      highly_sensitive:
-        model_input: output/preflight/data/model_input_BNT162b2_1_coviddeath.rds
-      moderately_sensitive:
-        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_coviddeath_*.html
-        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_coviddeath.txt
-
-  
-
-  ## BNT162b2; 16-64 and clinically vulnerable; noncoviddeath 
-  ## preflight checks 
-
-  preflight_BNT162b2_1_noncoviddeath:
-    run: r:latest analysis/comparisons/preflight.R BNT162b2 1 noncoviddeath
-    needs:
-    - design
-    - data_comparisons_process
-    - data_tte_process_BNT162b2
-    outputs:
-      highly_sensitive:
-        model_input: output/preflight/data/model_input_BNT162b2_1_noncoviddeath.rds
-      moderately_sensitive:
-        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_noncoviddeath_*.html
-        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_noncoviddeath.txt
-
-  
-
-  
+        covariate_distribution: output/tests/images/covariate_distribution.png
+        data_tests_tabulate: output/tests/tables/data_tests_tabulate.txt

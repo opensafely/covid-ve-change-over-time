@@ -77,7 +77,7 @@ data_eligible_a <- data_eligible_a %>%
   filter(
     ! (
       !is.na(covid_any_date) &
-        (covid_any_date <= elig_date + days(42)) &
+        (covid_any_date <= elig_date + days(28)) &
         covid_event %in% "covidadmitted"
     ))
 
@@ -92,7 +92,7 @@ data_eligible_a <- data_eligible_a %>%
   filter(
     ! (
       !is.na(covid_any_date) &
-        (covid_any_date <= elig_date + days(42)) &
+        (covid_any_date <= elig_date + days(28)) &
         covid_event %in% "postest"
     ))
 
@@ -107,7 +107,7 @@ data_eligible_a <- data_eligible_a %>%
   filter(
     ! (
       !is.na(covid_any_date) &
-        (covid_any_date <= elig_date + days(42)) &
+        (covid_any_date <= elig_date + days(28)) &
         covid_event %in% "probable"
     ))
 
@@ -122,13 +122,27 @@ data_eligible_a <- data_eligible_a %>%
   filter(
     ! (
       !is.na(covid_any_date) &
-        (covid_any_date <= elig_date + days(42)) &
+        (covid_any_date <= elig_date + days(28)) &
         covid_event %in% "suspected"
     ))
 
 eligibility_count <- eligibility_count %>%
   add_row(
     description = "Samples with prior suspected COVID removed.",
+    n =  n_distinct(data_eligible_a$patient_id)
+  )
+
+# carehome
+data_eligible_a <- data_eligible_a %>%
+  filter(
+    ! (
+      !is.na(longres_date) &
+        (longres_date <= elig_date + days(42))
+    ))
+
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Samples with record of being in care home removed.",
     n =  n_distinct(data_eligible_a$patient_id)
   )
 

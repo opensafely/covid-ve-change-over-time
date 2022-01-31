@@ -20,6 +20,8 @@ fs::dir_create(here::here("output", "second_vax_period", "tables"))
 
 study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
 
+elig_dates <- readr::read_csv(here::here("output", "lib", "elig_dates.csv"))
+
 # individuals who are eligible based on criteria in box b of Figure 3 on protocol
 data_eligible_b <- readr::read_rds(
   here::here("output", "data", "data_eligible_b.rds")

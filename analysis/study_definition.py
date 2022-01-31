@@ -220,7 +220,7 @@ study=StudyDefinition(
         eth2001_primis,
         returning="category",
         find_last_match_in_period=True,
-        on_or_before="elig_date + 56 days",
+        on_or_before="elig_date + 42 days",
         return_expectations={
             "category": {"ratios": {"1": 0.2, "2": 0.2, "3": 0.2, "4": 0.2, "5": 0.2}},
             "incidence": 0.75,
@@ -242,7 +242,7 @@ study=StudyDefinition(
         longres_primis,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_after="elig_date + 56 days",
+        on_or_after=start_date,
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -253,7 +253,7 @@ study=StudyDefinition(
 
     # IMD
     imd=patients.address_as_of(
-                    "elig_date + 56 days",
+                    "elig_date + 42 days",
                     returning="index_of_multiple_deprivation",
                     round_to_nearest=100,
                     return_expectations={
@@ -620,7 +620,7 @@ study=StudyDefinition(
         eol_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"elig_date + {112 + 14 + (max_comparisons + 1)*28} days",
+        on_or_before="elig_date + 84 days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},
@@ -634,7 +634,7 @@ study=StudyDefinition(
         midazolam_codes,
         returning="date",
         date_format="YYYY-MM-DD",
-        on_or_before=f"elig_date + {112 + 14 + (max_comparisons + 1)*28} days",
+        on_or_before="elig_date + 84 days",
         find_first_match_in_period=True,
         return_expectations={
             "date": {"earliest": start_date, "latest": end_date},

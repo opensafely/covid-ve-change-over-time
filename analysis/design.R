@@ -116,7 +116,7 @@ tribble(
     # "2021-06-16", "age_2 >= 21 AND age_2 < 23", "12",
     # "2021-06-18", "age_2 >= 18 AND age_2 < 21", "12",
     "2100-12-31", "DEFAULT", "NA",
-)
+) 
 
 readr::write_csv(elig_dates, here::here("output", "lib", "elig_dates.csv"))
 
@@ -146,7 +146,8 @@ clinical <- c(
   "other_respiratory", "lung_cancer", "haematological_cancer",
   "cancer_excl_lung_and_haem", "any_immunosuppression",
   "dementia", "other_neuro_conditions", "ld_inc_ds_and_cp",
-  "psychosis_schiz_bipolar", "multimorb", "shielded", "flu_vaccine"
+  "psychosis_schiz_bipolar", "multimorb", "shielded", "flu_vaccine",
+  "longres"
 )
 
 demographic <- c("age_band", "sex", "imd", "ethnicity")

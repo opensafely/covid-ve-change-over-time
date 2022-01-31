@@ -412,7 +412,7 @@ jcvi_variables = dict(
             },
     ),
 
-    # Patients in long-stay nursing and residential care
+    # Patients in long-stay nursing and residential care before start of phase 1
     longres_group=patients.with_these_clinical_events(
         longres_primis,
         returning="binary_flag",

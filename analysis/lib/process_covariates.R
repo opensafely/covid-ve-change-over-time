@@ -13,6 +13,13 @@ data_long_bmi_dates <- readr::read_rds(
   here::here("output", "data", "data_long_bmi_dates.rds")) %>%
   select(patient_id, date, bmi)
 
+data_tests <- arrow::read_feather(
+  file = here::here("output", "input_tests.feather")) %>%
+  transmute(
+    patient_id, 
+    covid_test_n = covid_test_pre_elig_n + covid_test_post_elig_n
+    )
+
 process_covariates <- function(.data) {
   
   # shielded (index is time_zero)
@@ -81,7 +88,8 @@ process_covariates <- function(.data) {
   )
   clinical_vars <- c(
     "flu_vaccine",
-    "bmi"
+    "bmi",
+    "covid_test_n"
   )
   
   out <- .data %>%
