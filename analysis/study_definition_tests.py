@@ -124,6 +124,27 @@ study=StudyDefinition(
                     },
             ),
 
+    ### covid tests as covariates
+    # during unvaccinated time (from when tests widely availabe to elig_date)
+    covid_test_pre_elig_n = patients.with_test_result_in_sgss(
+                pathogen="SARS-CoV-2",
+                test_result="any",
+                between=["2020-05-18", "elig_date"],
+                restrict_to_earliest_specimen_date=False,
+                returning="number_of_matches_in_period",
+                return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
+	        ),
+    # during first dose time (elig date + 1 to elig_date + 6 weeks)
+    covid_test_post_elig_n = patients.with_test_result_in_sgss(
+                pathogen="SARS-CoV-2",
+                test_result="any",
+                between=["elig_date + 1 day", "elig_date + 42 days"],
+                restrict_to_earliest_specimen_date=False,
+                returning="number_of_matches_in_period",
+                return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
+	        ),
+    
+    ### covid tests as outcomes
     # number of covid tests in each comparison period
     **covid_test_k_n(
         K=max_comparisons,
