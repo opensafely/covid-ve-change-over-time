@@ -307,7 +307,8 @@ actions_list <- splice(
     needs = list("design", "data_input_process", "data_eligible_ab", "data_2nd_vax_dates"),
     highly_sensitive = list(
       data_eligible_e_vax = "output/data/data_eligible_e_vax.rds",
-      data_eligible_e_unvax = "output/data/data_eligible_e_unvax.rds"
+      data_eligible_e_unvax = "output/data/data_eligible_e_unvax.rds",
+      data_eligible_e = "output/data/data_eligible_e.csv"
     )
   ),
   
@@ -329,7 +330,7 @@ actions_list <- splice(
     name = "generate_covid_tests_data",
     run = "cohortextractor:latest generate_cohort --study-definition study_definition_tests --output-format feather",
     # dummy_data_file = "analysis/dummy_data.feather",
-    needs = list("design", "data_2nd_vax_dates"),
+    needs = list("design", "data_eligible_cde"),
     highly_sensitive = list(
       cohort = "output/input_tests.feather"
     )

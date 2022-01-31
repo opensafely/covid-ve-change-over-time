@@ -133,14 +133,13 @@ actions:
   ## study definition tests 
 
   generate_covid_tests_data:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_tests --output-format
-      feather
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_tests
+      --output-format feather
     needs:
     - design
-    # - data_2nd_vax_dates
     - data_eligible_cde
     outputs:
       highly_sensitive:
         cohort: output/input_tests.feather
 
-  
+ 
