@@ -142,4 +142,14 @@ actions:
       highly_sensitive:
         cohort: output/input_tests.feather
 
- 
+  ## check the tests data as expected 
+
+  check_tests:
+    run: r:latest analysis/tests/check_tests.R
+    needs:
+    - design
+    - generate_covid_tests_data
+    outputs:
+      moderately_sensitive:
+        covariate_distribution: output/tests/images/covariate_distribution.png
+        data_tests_tabulate: output/tests/tables/data_tests_tabulate.txt

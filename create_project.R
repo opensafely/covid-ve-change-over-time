@@ -336,6 +336,17 @@ actions_list <- splice(
     )
   ),
   
+  comment("check the tests data as expected"),
+  action(
+    name = "check_tests",
+    run = "r:latest analysis/tests/check_tests.R",
+    needs = list("design", "generate_covid_tests_data"),
+    moderately_sensitive = list(
+      covariate_distribution = "output/tests/images/covariate_distribution.png",
+      data_tests_tabulate = "output/tests/tables/data_tests_tabulate.txt"
+    )
+  ),
+  
   comment("####################################",
           "subsequent vaccination", 
           "####################################"),

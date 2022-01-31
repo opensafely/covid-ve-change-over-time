@@ -1,4 +1,4 @@
-   design     dummy_data  generate_study_population     data_input_process  data_eligible_ab      data_2nd_vax_dates  plot_2nd_vax_dates  data_eligible_cde     generate_covid_tests_data     plot_cumulative_incidence     data_comparisons_process  data_tte_process_BNT162b2 data_tte_process_ChAdOx data_tte_process_both  process_event_count_tables    preflight_BNT162b2_1_postest 
+   design     dummy_data  generate_study_population     data_input_process  data_eligible_ab      data_2nd_vax_dates  plot_2nd_vax_dates  data_eligible_cde     generate_covid_tests_data  check_tests     plot_cumulative_incidence     data_comparisons_process  data_tte_process_BNT162b2 data_tte_process_ChAdOx data_tte_process_both  process_event_count_tables    preflight_BNT162b2_1_postest 
 apply_model_cox_BNT162b2_1_postest   preflight_BNT162b2_1_covidadmitted 
 apply_model_cox_BNT162b2_1_covidadmitted   preflight_BNT162b2_1_coviddeath 
 apply_model_cox_BNT162b2_1_coviddeath   preflight_BNT162b2_1_noncoviddeath 
