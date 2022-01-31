@@ -147,7 +147,7 @@ clinical <- c(
   "cancer_excl_lung_and_haem", "any_immunosuppression",
   "dementia", "other_neuro_conditions", "ld_inc_ds_and_cp",
   "psychosis_schiz_bipolar", "multimorb", "shielded", "flu_vaccine",
-  "longres"
+  "longres", "covid_test_n"
 )
 
 demographic <- c("age_band", "sex", "imd", "ethnicity")
@@ -159,7 +159,7 @@ readr::write_rds(
 
 ################################################################################
 # outcomes ----
-outcomes <- c("postest", "covidadmitted", "coviddeath", "noncoviddeath",  "death")
+outcomes <- c("anytest", "postest", "covidadmitted", "coviddeath", "noncoviddeath")
 
 readr::write_rds(
   outcomes,
