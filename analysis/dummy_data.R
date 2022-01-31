@@ -1,7 +1,7 @@
 ######################################
 
 # This script:
-# - creates dummy data for study_definition_vax.py
+# - creates dummy data for study_definition.py
 
 ######################################
 
@@ -10,10 +10,6 @@ library(lubridate)
 library(glue)
 
 source(here::here("analysis", "lib", "dummy_data_functions.R"))
-
-# input_vax <- arrow::read_feather(
-#   here::here("output", "input_vax.feather")
-# )
 
 set.seed(5476)
 
