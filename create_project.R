@@ -311,6 +311,30 @@ actions_list <- splice(
     )
   ),
   
+  comment("####################################", 
+          "study definition tests",
+          "####################################"),
+  # comment("generate dummy data for study_definition_tests"),
+  # action(
+  #   name = "dummy_data",
+  #   run = "r:latest analysis/dummy_data.R",
+  #   needs = list("design"),
+  #   moderately_sensitive = list(
+  #     dummy_data = "analysis/dummy_data.feather"
+  #   )
+  # ),
+  
+  comment("study definition tests"),
+  action(
+    name = "generate_covid_tests_data",
+    run = "cohortextractor:latest generate_cohort --study-definition study_definition_tests --output-format feather",
+    # dummy_data_file = "analysis/dummy_data.feather",
+    needs = list("design", "data_2nd_vax_dates"),
+    highly_sensitive = list(
+      cohort = "output/input_tests.feather"
+    )
+  ),
+  
   comment("####################################",
           "subsequent vaccination", 
           "####################################"),

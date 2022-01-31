@@ -26,17 +26,119 @@ actions:
   ## #################################### 
   ## study definition 
   ## #################################### 
- 
+  ## generate dummy data for study_definition 
 
-  ## study definition 
-
-  generate_study_population_tests:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_tests
-      --output-format csv
+  dummy_data:
+    run: r:latest analysis/dummy_data.R
     needs:
     - design
     outputs:
-      highly_sensitive:
-        cohort: output/input_tests.csv
+      moderately_sensitive:
+        dummy_data: analysis/dummy_data.feather
 
- 
+  ## study definition 
+
+  generate_study_population:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition
+      --output-format feather
+    dummy_data_file: analysis/dummy_data.feather
+    needs:
+    - design
+    - dummy_data
+    outputs:
+      highly_sensitive:
+        cohort: output/input.feather
+
+  ## #################################### 
+  ## preprocessing 
+  ## #################################### 
+  ## process data from study_definition 
+
+  data_input_process:
+    run: r:latest analysis/preprocess/data_input_process.R
+    needs:
+    - design
+    - dummy_data
+    - generate_study_population
+    outputs:
+      highly_sensitive:
+        data_all: output/data/data_*.rds
+      moderately_sensitive:
+        data_properties: output/tables/data_*_tabulate.txt
+
+  ## apply eligiblity criteria from boxes a and b 
+
+  data_eligible_ab:
+    run: r:latest analysis/preprocess/data_eligible_ab.R
+    needs:
+    - design
+    - data_input_process
+    outputs:
+      highly_sensitive:
+        data_eligible_a: output/data/data_eligible_a.rds
+        data_eligible_b: output/data/data_eligible_b.rds
+      moderately_sensitive:
+        eligibility_count: output/lib/eligibility_count_ab.csv
+        group_age_ranges: output/lib/group_age_ranges.csv
+
+  ## #################################### 
+  ## second_vax_period 
+  ## #################################### 
+  ## identify second vaccination time periods 
+  ## create dataset for identifying second vaccination time periods 
+
+  data_2nd_vax_dates:
+    run: r:latest analysis/second_vax_period/data_2nd_vax_dates.R
+    needs:
+    - design
+    - data_input_process
+    - data_eligible_ab
+    outputs:
+      highly_sensitive:
+        data_vax_plot: output/second_vax_period/data/data_vax_plot.rds
+        second_vax_period_dates_rds: output/second_vax_period/data/second_vax_period_dates.rds
+      moderately_sensitive:
+        second_vax_period_dates_txt: output/second_vax_period/tables/second_vax_period_dates.txt
+
+  ## plot second vaccination time periods 
+
+  plot_2nd_vax_dates:
+    run: r:latest analysis/second_vax_period/plot_2nd_vax_dates.R
+    needs:
+    - design
+    - data_eligible_ab
+    - data_2nd_vax_dates
+    outputs:
+      moderately_sensitive:
+        plots_by_region: output/second_vax_period/images/plot_by_region_*.png
+
+  ## apply eligiblity criteria from boxes c, d and e 
+
+  data_eligible_cde:
+    run: r:latest analysis/second_vax_period/data_eligible_cde.R
+    needs:
+    - design
+    - data_input_process
+    - data_eligible_ab
+    - data_2nd_vax_dates
+    outputs:
+      highly_sensitive:
+        data_eligible_e_vax: output/data/data_eligible_e_vax.rds
+        data_eligible_e_unvax: output/data/data_eligible_e_unvax.rds
+
+  ## #################################### 
+  ## study definition tests 
+  ## #################################### 
+  ## study definition tests 
+
+  generate_covid_tests_data:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_tests --output-format
+      feather
+    needs:
+    - design
+    - data_2nd_vax_dates
+    outputs:
+      highly_sensitive:
+        cohort: output/input_tests.feather
+
+  
