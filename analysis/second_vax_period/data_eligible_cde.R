@@ -124,11 +124,18 @@ readr::write_rds(
 
 
 data_eligible_e <- bind_rows(
-  data_eligible_e_vax %>% select(patient_id, start_1_date = covid_vax_2_date),
-  data_eligible_e_unvax %>% select(patient_id, start_1_date = start_of_period)
+  data_eligible_e_vax %>% 
+    transmute(patient_id, 
+              elig_date, 
+              start_1_date = covid_vax_2_date + days(14),
+              arm = "vax"),
+  data_eligible_e_unvax %>% 
+    transmute(patient_id, 
+              elig_date, 
+              start_1_date = start_of_period + days(14),
+              arm = "vax") 
 ) %>%
-  mutate(across(start_1_date,
-                ~ as.POSIXct(.x + days(14))))
+  mutate(across(ends_with("_date"), as.POSIXct))
 
 readr::write_csv(
   data_eligible_e,
