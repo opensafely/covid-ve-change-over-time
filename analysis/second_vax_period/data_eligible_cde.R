@@ -121,3 +121,17 @@ readr::write_rds(
   data_eligible_e_unvax,
   here::here("output", "data", "data_eligible_e_unvax.rds"),
   compress = "gz")
+
+
+data_eligible_e <- bind_rows(
+  data_eligible_e_vax %>% select(patient_id, start_1_date = covid_vax_2_date),
+  data_eligible_e_unvax %>% select(patient_id, start_1_date = start_of_period)
+) %>%
+  mutate(across(start_1_date,
+                ~ as.POSIXct(.x + days(14))))
+
+readr::write_csv(
+  data_eligible_e,
+  here::here("output", "data", "data_eligible_e.csv")
+)
+
