@@ -97,7 +97,13 @@ dummy_data_elig <- tibble(patient_id = 1:n) %>%
   var_category(
     name = elig_date,
     categories = elig_date_patterns$date,
-    conditions = elig_date_patterns$description)
+    conditions = elig_date_patterns$description) %>%
+  left_join(
+    readr::read_csv(here::here("output", "lib", "elig_dates.csv")) %>%
+      select(date, elig_group) %>%
+      mutate(across(date, as.character)),
+    by = c("elig_date" = "date")
+  )
   
 
 # fix vaccine dates so that they have roughly correct distribution
