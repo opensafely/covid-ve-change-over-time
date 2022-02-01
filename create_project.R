@@ -345,8 +345,8 @@ actions_list <- splice(
       data_tests = "output/data/data_tests.rds"
     ),
     moderately_sensitive = list(
-      covariate_distribution = "output/tests/images/covariate_distribution.png",
-      data_tests_tabulate = "output/tests/tables/data_tests_tabulate.txt"
+      covariate_distribution = "output/tests/images/covariate_distribution.png"#,
+      # data_tests_tabulate = "output/tests/tables/data_tests_tabulate.txt"
     )
   ),
   
