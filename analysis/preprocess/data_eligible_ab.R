@@ -197,9 +197,12 @@ eligibility_count <- eligibility_count %>%
   mutate(across(n, ~round(.x, -1))) %>%
   mutate(n_removed = lag(n) - n)
 
-readr::write_csv(eligibility_count,
-                 here::here("output", "lib", "eligibility_count_ab.csv"))
-
+capture.output(
+  eligibility_count %>% 
+    mutate(across(c(n, n_removed), ~scales::comma(.x, accuracy=1))) %>%
+    here::here("output", "tables", "eligibility_count_ab.txt"),
+  append = FALSE
+)
 
 ################################################################################
 # jcvi_group, elig_date combos ----
