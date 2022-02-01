@@ -12,7 +12,7 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   comparison <- "BNT162b2"
-  subgroup_label <- 2
+  subgroup_label <- 1
   
 } else{
   comparison <- args[[1]]
