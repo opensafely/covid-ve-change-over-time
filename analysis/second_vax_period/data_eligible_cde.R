@@ -133,7 +133,7 @@ data_eligible_e <- bind_rows(
     transmute(patient_id, 
               elig_date, 
               start_1_date = start_of_period + days(14),
-              arm = "vax") 
+              arm = "unvax") 
 ) %>%
   mutate(across(ends_with("_date"), as.POSIXct))
 
