@@ -5,7 +5,7 @@ library(lubridate)
 
 ################################################################################
 ## source functions
-source(here::here("analysis", "lib", "data_properties.R"))
+# source(here::here("analysis", "lib", "data_properties.R"))
 
 ################################################################################
 ## create folders for outputs
@@ -13,14 +13,19 @@ fs::dir_create(here::here("output", "tests", "images"))
 fs::dir_create(here::here("output", "tests", "tables"))
 
 ################################################################################
-data_tests <- arrow::read_feather(
-  file = here::here("output", "input_tests.feather")) %>%
-  mutate(across(c(contains("_date")), 
+cat("--- read input_tests.feather ----")
+data_tests_0 <- arrow::read_feather(
+  file = here::here("output", "input_tests.feather")) 
+
+cat("--- process input_tests.feather ----")
+data_tests <- data_tests_0 %>%
+  mutate(across(contains("_date"), 
                 ~ floor_date(
-                  as.Date(., format="%Y-%m-%d"),
+                  as.Date(.x, format="%Y-%m-%d"),
                   unit = "days"))) %>%
   select(-elig_date)
 
+cat("--- save data_tests.rds ----")
 readr::write_rds(
   data_tests,
   here::here("output", "data", "data_tests.rds"),
@@ -37,6 +42,7 @@ readr::write_rds(
 
 ################################################################################
 # plot distibution of coviariates
+cat("--- plot covariates ----")
 data_tests %>%
   select(patient_id, 
          pre=covid_test_pre_elig_n,
@@ -49,6 +55,7 @@ data_tests %>%
   facet_wrap(~ name, scales = "free") +
   scale_y_log10() +
   theme(legend.position = "bottom")
+cat("--- save plot ----")
 ggsave(
   filename = here::here("output", "tests", "images", "covariate_distribution.png"),
   width=20, height=15, units="cm")
