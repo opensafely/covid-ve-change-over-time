@@ -167,9 +167,10 @@ actions:
     needs:
     - design
     - data_input_process
+    - data_eligible_cde
     - generate_covid_tests_data
     outputs:
       highly_sensitive:
         data_tests: output/data/data_tests.rds
 
- 
+  

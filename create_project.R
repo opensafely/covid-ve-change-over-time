@@ -340,7 +340,7 @@ actions_list <- splice(
   action(
     name = "process_tests",
     run = "r:latest analysis/tests/process_tests.R",
-    needs = list("design", "data_input_process", "generate_covid_tests_data"),
+    needs = list("design", "data_input_process", "data_eligible_cde", "generate_covid_tests_data"),
     highly_sensitive = list(
       data_tests = "output/data/data_tests.rds"
     )#,
