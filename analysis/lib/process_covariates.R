@@ -184,7 +184,7 @@ process_covariates <- function(.data) {
     select(
       patient_id, jcvi_group, elig_date, region, ethnicity, arm, subgroup,
       start_fu_date, end_fu_date, comparison,
-      unname(unlist(model_varlist)),
+      unname(unlist(model_varlist))[unname(unlist(model_varlist)) != "anytest_date"],
       all_of(str_c(outcomes, "_date")),
       all_of(censor_vars)
     ) %>%
