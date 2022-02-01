@@ -28,7 +28,7 @@ data_tests <- data_tests_0 %>%
     ) %>%
   mutate(across(starts_with("covid_test"),
                 ~ cut(.x, 
-                      breaks = quantile(.x),
+                      breaks = unique(quantile(.x)),
                       right = FALSE,
                       include.lowest = TRUE))) %>%
   select(-elig_date)
