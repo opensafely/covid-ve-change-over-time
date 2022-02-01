@@ -40,8 +40,12 @@ model_varlist <- readr::read_rds(
   here::here("output", "lib", "model_varlist.rds")
 )
 
-data_cox <- readr::read_rds(
-  here::here("output", "models_cox", "data", glue("data_cox_{comparison}_{subgroup_label}_{outcome}.rds")))
+model_input <-  readr::read_rds(
+  here::here("output", "preflight", "data", glue("model_input_{comparison}_{subgroup_label}_{outcome}.rds"))
+)
+
+data_cox <- model_input$data
+formulas <- model_input$formulas
 
 ################################################################################
 # define formulas
@@ -52,9 +56,12 @@ model_names = c(
   "2" = "Adjusting for demographics + clinical"
 )
 
-formula_cox_0 <- formula_unadj
-formula_cox_1 <- formula_unadj %>% update(formula_demog)
-formula_cox_2 <- formula_unadj %>% update(formula_demog) %>% update(formula_clinical)
+formula_cox_0 <- formulas$unadjusted
+formula_cox_1 <- formulas$unadjusted %>% 
+  update(formulas$demographic)
+formula_cox_2 <- formulas$unadjusted %>% 
+  update(formulas$demographic) %>% 
+  update(formulas$clinical)
 
 ################################################################################
 # define model
@@ -89,7 +96,7 @@ cox_model <- function(
   timetofit <- system.time((
     coxmod <- coxph(
       formula = formula_cox,
-      data = data_cox_dummy,
+      data = data_cox,
       robust = TRUE,
       id = patient_id,
       na.action = "na.fail",
