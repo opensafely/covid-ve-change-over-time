@@ -246,11 +246,11 @@ actions_list <- splice(
     run = "r:latest analysis/preprocess/data_input_process.R",
     needs = list("design", "dummy_data", "generate_study_population"),
     highly_sensitive = list(
-      data_all = "output/data/data_*.rds"
-      # data_processed = "output/data/data_processed.rds",
-      # data_vax_dates = "output/data/data_*_vax_dates.rds",
-      # data_long_dates = "output/data/data_long_*_dates.rds",
-      # data_covid_any = "output/data/data_covid_any.rds"
+      data_wide_vax_dates = "output/data/data_wide_vax_dates.rds",
+      data_long_shielded_dates = "output/data/data_long_shielded_dates.rds",
+      data_long_nonshielded_dates = "output/data/data_long_nonshielded_dates.rds",
+      data_long_bmi_dates = "output/data/data_long_bmi_dates.rds",
+      data_processed = "output/data/data_processed.rds"
     ),
     moderately_sensitive = list(
       data_properties = "output/tables/data_*_tabulate.txt"
@@ -315,22 +315,22 @@ actions_list <- splice(
   comment("####################################", 
           "study definition tests",
           "####################################"),
-  # comment("generate dummy data for study_definition_tests"),
-  # action(
-  #   name = "dummy_data",
-  #   run = "r:latest analysis/dummy_data.R",
-  #   needs = list("design"),
-  #   moderately_sensitive = list(
-  #     dummy_data = "analysis/dummy_data.feather"
-  #   )
-  # ),
+  comment("generate dummy data for study_definition_tests"),
+  action(
+    name = "dummy_data_tests",
+    run = "r:latest analysis/dummy_data_tests.R",
+    needs = list("design", "dummy_data", "data_eligible_cde"),
+    moderately_sensitive = list(
+      dummy_data_tests = "analysis/dummy_data_tests.feather"
+    )
+  ),
   
   comment("study definition tests"),
   action(
     name = "generate_covid_tests_data",
     run = "cohortextractor:latest generate_cohort --study-definition study_definition_tests --output-format feather",
-    # dummy_data_file = "analysis/dummy_data.feather",
-    needs = list("design", "data_eligible_cde"),
+    dummy_data_file = "analysis/dummy_data_tests.feather",
+    needs = list("design", "data_eligible_cde", "dummy_data_tests"),
     highly_sensitive = list(
       cohort = "output/input_tests.feather"
     )
