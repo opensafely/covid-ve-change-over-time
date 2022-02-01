@@ -43,6 +43,7 @@ data_processed <- readr::read_rds(
 # read outcomes
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds"))
+outcomes <- outcomes[outcomes != "anytest"]
 
 ################################################################################
 
