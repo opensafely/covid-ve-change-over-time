@@ -198,7 +198,7 @@ dummy_data_covs <- dummy_data_vax %>%
                 ~if_else(
                   !is.na(coviddeath_date), 
                   coviddeath_date,
-                  NA_Date_))) %>%
+                  .x))) %>%
   # add recurrent bmi vars
   bind_cols(vars_bmi_recurrent(.data = ., r = study_parameters$recur_bmi)) %>%
   # add recurrent shielded vars
