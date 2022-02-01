@@ -343,11 +343,11 @@ actions_list <- splice(
     needs = list("design", "data_input_process", "generate_covid_tests_data"),
     highly_sensitive = list(
       data_tests = "output/data/data_tests.rds"
-    ),
-    moderately_sensitive = list(
-      covariate_distribution = "output/tests/images/covariate_distribution.png"#,
-      # data_tests_tabulate = "output/tests/tables/data_tests_tabulate.txt"
-    )
+    )#,
+    # moderately_sensitive = list(
+    #   covariate_distribution = "output/tests/images/covariate_distribution.png",
+    #   data_tests_tabulate = "output/tests/tables/data_tests_tabulate.txt"
+    # )
   ),
   
   comment("####################################",
