@@ -267,7 +267,7 @@ actions_list <- splice(
       data_eligible_b = "output/data/data_eligible_b.rds"
     ),
     moderately_sensitive = list(
-      eligibility_count = "output/lib/eligibility_count_ab.csv",
+      eligibility_count = "output/tables/eligibility_count_ab.txt",
       group_age_ranges = "output/lib/group_age_ranges.csv"
     )
   ),
@@ -377,7 +377,8 @@ actions_list <- splice(
       "design", 
       "data_input_process", 
       "data_2nd_vax_dates", 
-      "data_eligible_cde"),
+      "data_eligible_cde",
+      "process_tests"),
     highly_sensitive = list(
       data_comparisons = glue("output/comparisons/data/data_comparisons_*.rds")
     )
@@ -394,7 +395,8 @@ actions_list <- splice(
         needs = list(
           "design",
           "data_input_process",
-          "data_comparisons_process"),
+          "data_comparisons_process",
+          "process_tests"),
         highly_sensitive = list(
           data_tte_brand_outcome = glue("output/tte/data/data_tte_{x}*.rds"),
           event_counts = glue("output/tte/tables/event_counts_{x}.rds")
