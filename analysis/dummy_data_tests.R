@@ -25,7 +25,9 @@ dummy_data <- arrow::read_feather(
   file = here::here("analysis", "dummy_data.feather")) %>%
   select(patient_id, elig_date) %>%
   right_join(data_eligible_e %>% select(patient_id, start_1_date), 
-            by = "patient_id") 
+            by = "patient_id") %>%
+  mutate(across(patient_id, as.integer)) %>%
+  mutate(across(ends_with("_date"), as.Date))
 
 nrows <- nrow(dummy_data)
 
@@ -33,29 +35,46 @@ dates_seq <- seq(as.Date("2021-01-01"), as.Date("2021-11-30"), 1)
 
 K <- study_parameters$max_comparisons
 
-# function for any_test_k_date
-test_k_n <- function(k, test_result = "any") {
+# function for result_test_k_date
+test_k_date <- function(k, test_result = "any") {
   
   name <- glue("{test_result}_test_{k}_date")
   
   date <- sample(dates_seq, size = nrows, replace = TRUE)
   
   dummy_data %>%
-    mutate(!! sym(name) := as.POSIXct(date)) %>%
+    mutate(!! sym(name) := date) %>%
     mutate(across(!! sym(name),
                   ~ case_when(
                     start_1_date + days((k-1)*28) <  .x & .x <= start_1_date + days(k*28) ~ .x,
-                    TRUE ~ NA_POSIXct_
+                    TRUE ~ as.Date(NA_character_)
                   ))) %>%
     select(!! sym(name))
   
 }
 
 
+# function for result_test_k_date so that any_test_k_n >= positive_test_k_n
+test_k_n <- function(k) {
+  
+  name_any <- glue("any_test_{k}_n")
+  name_positive <- glue("positive_test_{k}_n")
+  
+  dummy_data %>%
+    mutate(!! sym(name_positive) := rpois(n = nrow(.), lambda = 0.25)) %>%
+    mutate(!! sym(name_any) := !! sym(name_positive) + rpois(n = nrow(.), lambda = 1)) %>%
+    select(!! sym(name_any), !! sym(name_positive))
+  
+}
 
-dummy_data %>%
-  bind_cols(lapply(1:(K+1), test_k_n))
+
+dummy_data_tests <- dummy_data %>%
+  bind_cols(lapply(1:(K+1), test_k_date)) %>%
+  bind_cols(lapply(1:(K+1), test_k_n)) %>%
+  mutate(covid_test_pre_elig_n = rpois(n = nrow(.), lambda = 3),
+         covid_test_post_elig_n = rpois(n = nrow(.), lambda = 3)) %>%
+  mutate(across(ends_with("date"), as.POSIXct))
 
 
-
+arrow::write_feather(dummy_data_tests, here::here("analysis", "dummy_data_tests.feather"))
   
