@@ -34,7 +34,7 @@ study_parameters <-
     start_date_pfizer = "2020-12-08",
     start_date_az = "2021-01-04",
     start_date_moderna = "2021-03-04",
-    end_date = "2021-11-30" # need to make sure that vaccine and outcome data are available up until this date
+    end_date = "2021-11-14" # last date of available data
   ) 
 
 # use lower thresholds if not running in the server
@@ -147,7 +147,7 @@ clinical <- c(
   "cancer_excl_lung_and_haem", "any_immunosuppression",
   "dementia", "other_neuro_conditions", "ld_inc_ds_and_cp",
   "psychosis_schiz_bipolar", "multimorb", "shielded", "flu_vaccine",
-  "longres", "covid_test_n"
+  "longres", "covid_test_pre_elig_n"
 )
 
 demographic <- c("age_band", "sex", "imd", "ethnicity")
