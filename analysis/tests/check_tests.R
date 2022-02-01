@@ -12,7 +12,11 @@ fs::dir_create(here::here("output", "tests", "tables"))
 
 
 data_tests <- arrow::read_feather(
-  file = here::here("output", "input_tests.feather")) 
+  file = here::here("output", "input_tests.feather")) %>%
+  mutate(across(c(contains("_date")), 
+                ~ floor_date(
+                  as.Date(., format="%Y-%m-%d"),
+                  unit = "days")))
 
 # tabulate all vars
 data_properties(
