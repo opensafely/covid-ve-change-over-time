@@ -14,19 +14,10 @@ data_long_bmi_dates <- readr::read_rds(
   select(patient_id, date, bmi)
 
 # number of covid tests up to elig_dat + 6 weeks
-data_tests <- arrow::read_feather(
-  file = here::here("output", "input_tests.feather")) %>%
-  transmute(
-    patient_id, 
-    covid_test_n = covid_test_pre_elig_n + covid_test_post_elig_n
-    ) %>%
-  mutate(across(covid_test_n,
-                ~ factor(
-                  case_when(
-                    .x %in% 0 ~ "0",
-                    .x %in% 1 ~ "1",
-                    TRUE ~ "2+"
-                  ))))
+# read data_tests
+data_tests <- readr::read_rds(
+  here::here("output", "data", "data_tests.rds")) %>%
+  select(patient_id, covid_test_n = covid_test_both_elig_n)
 
 process_covariates <- function(.data) {
   
@@ -184,8 +175,8 @@ process_covariates <- function(.data) {
     select(
       patient_id, jcvi_group, elig_date, region, ethnicity, arm, subgroup,
       start_fu_date, end_fu_date, comparison,
-      unname(unlist(model_varlist))[unname(unlist(model_varlist)) != "anytest_date"],
-      all_of(str_c(outcomes, "_date")),
+      all_of(unname(unlist(model_varlist))),
+      all_of(str_c(outcomes[outcomes!="anytest"], "_date")),
       all_of(censor_vars)
     ) %>%
     droplevels()
