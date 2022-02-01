@@ -82,7 +82,7 @@ actions:
         data_eligible_a: output/data/data_eligible_a.rds
         data_eligible_b: output/data/data_eligible_b.rds
       moderately_sensitive:
-        eligibility_count: output/lib/eligibility_count_ab.csv
+        eligibility_count: output/tables/eligibility_count_ab.txt
         group_age_ranges: output/lib/group_age_ranges.csv
 
   ## #################################### 
