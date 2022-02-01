@@ -340,7 +340,7 @@ if (total_events > 0) {
         return(NA_character_)
       } else {
         drop <- n_distinct(x$new_level) == 1
-        if (drop) return(unique(x$vairable)) else return(NA_character_)
+        if (drop) return(unique(x$variable)) else return(NA_character_)
       }
     }
   )
