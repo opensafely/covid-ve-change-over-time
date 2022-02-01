@@ -28,11 +28,12 @@ readr::write_rds(
 )
 
 ################################################################################
-# tabulate all vars
-data_properties(
-  data = data_tests,
-  path = file.path("output", "tests", "tables")
-)
+# tabulate all vars 
+# this is causing R to abort session- investigate
+# data_properties(
+#   data = data_tests,
+#   path = file.path("output", "tests", "tables")
+# )
 
 ################################################################################
 # plot distibution of coviariates
@@ -42,9 +43,11 @@ data_tests %>%
          post=covid_test_post_elig_n) %>%
   mutate(both = pre + post) %>%
   pivot_longer(cols = -patient_id) %>%
+  mutate(across(value, ~if_else(.x > 30, 30L, .x))) %>%
   ggplot(aes(x = value)) +
   geom_bar() +
   facet_wrap(~ name, scales = "free") +
+  scale_y_log10() +
   theme(legend.position = "bottom")
 ggsave(
   filename = here::here("output", "tests", "images", "covariate_distribution.png"),
