@@ -37,11 +37,7 @@ second_vax_period_dates <- readr::read_rds(
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds")
 )
-# plot death or noncoviddeath or both?
-# plot_outcomes <- outcomes
-# death_var <- "both"
-plot_outcomes <- outcomes[-which(outcomes == "death")]
-death_var <- "noncoviddeath"
+plot_outcomes <- outcomes
 
 # read subgroups
 subgroups <- readr::read_rds(
