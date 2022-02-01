@@ -199,7 +199,7 @@ eligibility_count <- eligibility_count %>%
 
 capture.output(
   eligibility_count %>% 
-    mutate(across(c(n, n_removed), ~scales::comma(.x, accuracy=1))) %>%
+    mutate(across(c(n, n_removed), ~scales::comma(.x, accuracy=1))),
     here::here("output", "tables", "eligibility_count_ab.txt"),
   append = FALSE
 )
