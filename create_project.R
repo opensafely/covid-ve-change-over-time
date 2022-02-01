@@ -189,7 +189,7 @@ subgroups <- c(readr::read_rds(here::here("output", "lib", "subgroups.rds")), "a
 subgroup_labels <- seq_along(subgroups)
 comparisons <- c("BNT162b2", "ChAdOx", "both")
 plots <- c("BNT162b2", "ChAdOx", "BNT162b2andChAdOx", "BNT162b2vsChAdOx")
-outcomes_model <- outcomes#[-which(outcomes=="noncoviddeath")]
+outcomes_model <- outcomes
 
 ## actions ----
 actions_list <- splice(
@@ -336,11 +336,14 @@ actions_list <- splice(
     )
   ),
   
-  comment("check the tests data as expected"),
+  comment("check the tests data as expected and save processed data"),
   action(
-    name = "check_tests",
+    name = "process_tests",
     run = "r:latest analysis/tests/check_tests.R",
     needs = list("design", "generate_covid_tests_data"),
+    highly_sensitive = list(
+      data_tests = "output/data/data_tests.rds"
+    ),
     moderately_sensitive = list(
       covariate_distribution = "output/tests/images/covariate_distribution.png",
       data_tests_tabulate = "output/tests/tables/data_tests_tabulate.txt"
