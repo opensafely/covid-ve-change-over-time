@@ -100,7 +100,7 @@ exclusion_e <- function(.data) {
   .data %>%
     left_join(data_processed, by = "patient_id") %>%
     filter(
-      no_evidence_of(covid_any_date, start_of_period - weeks(2)),
+      no_evidence_of(covid_any_date, start_of_period + weeks(2)),
       no_evidence_of(longres_date, start_of_period),
       no_evidence_of(endoflife_date, start_of_period),
       no_evidence_of(midazolam_date, start_of_period)
@@ -122,7 +122,7 @@ readr::write_rds(
   here::here("output", "data", "data_eligible_e_unvax.rds"),
   compress = "gz")
 
-
+# for reading into study_definition_tests
 data_eligible_e <- bind_rows(
   data_eligible_e_vax %>% 
     transmute(patient_id, 
