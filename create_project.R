@@ -339,8 +339,8 @@ actions_list <- splice(
   comment("check the tests data as expected and save processed data"),
   action(
     name = "process_tests",
-    run = "r:latest analysis/tests/check_tests.R",
-    needs = list("design", "generate_covid_tests_data"),
+    run = "r:latest analysis/tests/process_tests.R",
+    needs = list("design", "data_input_process", "generate_covid_tests_data"),
     highly_sensitive = list(
       data_tests = "output/data/data_tests.rds"
     ),

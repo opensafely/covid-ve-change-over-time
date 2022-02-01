@@ -163,14 +163,13 @@ actions:
   ## check the tests data as expected and save processed data 
 
   process_tests:
-    run: r:latest analysis/tests/check_tests.R
+    run: r:latest analysis/tests/process_tests.R
     needs:
     - design
+    - data_input_process
     - generate_covid_tests_data
     outputs:
       highly_sensitive:
         data_tests: output/data/data_tests.rds
       moderately_sensitive:
         covariate_distribution: output/tests/images/covariate_distribution.png
-
- 
