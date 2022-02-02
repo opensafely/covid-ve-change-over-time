@@ -161,7 +161,8 @@ clinical <- c(
   "Shielding criteria met" = "shielded", 
   "Flu vaccine in previous 5 years" = "flu_vaccine",
   "Resident in long-term residential home" = "longres", 
-  "Number of SARS-CoV-2 tests between 18 May 2020 and date of eligibility for 1st dose" = "covid_test_pre_elig_n"
+  "Number of SARS-CoV-2 tests between 2020-05-18 and min_elig_date" = "test_hist_1_n",
+  "Pregnancy" = "pregnancy"
 )
 
 demographic <- c(
