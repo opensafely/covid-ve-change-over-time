@@ -17,7 +17,7 @@ data_long_bmi_dates <- readr::read_rds(
 # read data_tests
 data_tests <- readr::read_rds(
   here::here("output", "data", "data_tests.rds")) %>%
-  select(patient_id, covid_test_n = covid_test_both_elig_n)
+  select(patient_id, covid_test_pre_elig_n)
 
 process_covariates <- function(.data) {
   
@@ -176,7 +176,7 @@ process_covariates <- function(.data) {
       patient_id, jcvi_group, elig_date, region, ethnicity, arm, subgroup,
       start_fu_date, end_fu_date, comparison,
       all_of(unname(unlist(model_varlist))),
-      all_of(str_c(outcomes[outcomes!="anytest"], "_date")),
+      all_of(str_c(outcomes, "_date")),
       all_of(censor_vars)
     ) %>%
     droplevels()
