@@ -80,7 +80,7 @@ data_comparison_1 <- bind_rows(
   ungroup() %>%
   select(patient_id, jcvi_group, elig_date, region, arm,
          start_fu_date, end_fu_date) %>%
-  mutate(comparison = 1) 
+  mutate(comparison = factor(1, levels = 1:study_parameters$max_comparisons))
 
 ################################################################################
 
@@ -88,7 +88,6 @@ data_tables <- data_comparison_1 %>%
   process_covariates() %>%
   select(patient_id, arm, region, jcvi_group, subgroup,
          all_of(unname(unlist(model_varlist)))) %>% 
-  mutate(across(covid_test_pre_elig_n, as.factor)) %>%
   group_split(subgroup)
 
 ################################################################################
@@ -97,7 +96,7 @@ for (i in c(0, seq_along(data_tables))) {
   cat(glue("---- loop {i} ----"), "\n")
   cat("---- define obejcts ----\n")
   variables <- c(unname(strata_vars), unname(unlist(model_varlist)))
-  vars_ordered_levs <- c("region", "jcvi_group", "age_band", "sex", "imd", "ethnicity", "bmi", "multimorb", "covid_test_pre_elig_n")
+  vars_ordered_levs <- c("region", "jcvi_group", "age_band", "sex", "imd", "ethnicity", "bmi", "multimorb", "test_hist_1_n")
   
   # tibble for assigning tidy variable names
   var_labels <- tibble(
@@ -120,6 +119,8 @@ for (i in c(0, seq_along(data_tables))) {
       add_row(variable = "subgroup", variable_label = "Subgroup",
               .before=TRUE)
     
+    min_elig_date <- "2020-12-08"
+    
   } else {
     
     data <- data_tables[[i]] %>%
@@ -127,6 +128,11 @@ for (i in c(0, seq_along(data_tables))) {
     
     subgroup <- unique(data$subgroup)
     subgroup_label <- which(subgroups == subgroup)
+    
+    min_elig_date <- data_processed %>%
+      filter(subgroup %in% subgroup) %>%
+      summarise(min_elig_date = min(elig_date))
+    min_elig_date <- min_elig_date$min_elig_date
     
   }
   
@@ -206,6 +212,7 @@ for (i in c(0, seq_along(data_tables))) {
                   ~ if_else(variable %in% history_of_vars, variable_label, .x))) %>%
     mutate(across(variable_label,
                   ~ if_else(variable %in% history_of_vars, "Hisotry of", .x))) %>%
+    mutate(across(variable_label, ~ str_replace(.x, "min_elig_date", as.character(min_elig_date)))) %>%
     rename(Variable = variable_label, Characteristic = category, Unvaccinated = unvax) %>%
     select(-variable) %>%
     select(Variable, Characteristic, everything()) %>%
