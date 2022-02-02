@@ -92,7 +92,7 @@ ggplot(NULL, aes(x = value)) +
     geom_bar(data = plot_data %>% filter(arm == "unvaccinated"),
              aes(fill = arm, y = ..count../sum(..count..)), alpha = 0.5, width = 1) +
   scale_y_continuous(labels=scales::percent) +
-  facet_wrap(~ name, scales = "free") +
+  facet_wrap(~ name) +
   labs(y = "percent", x = "number of SARS-CoV-2 tests",
        caption = str_c(glue("x-axis truncated at {x_trunc}, y-axis truncated at "), signif(100*min_y$p,1), "% to mask bars corresponding to < 5 individuals")) +
   coord_cartesian(xlim = c(0,x_trunc), ylim = c(min_y$p, NA)) +
