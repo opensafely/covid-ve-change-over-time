@@ -173,6 +173,7 @@ actions:
     outputs:
       highly_sensitive:
         data_tests: output/data/data_tests.rds
+        data_pregnancy: output/data/data_pregnancy.rds
       moderately_sensitive:
         covariate_distribution: output/tests/images/covariate_distribution.png
 
