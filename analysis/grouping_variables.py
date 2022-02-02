@@ -108,15 +108,13 @@ jcvi_variables = dict(
                 }
         },
 
-    ### NEED TO DISCUSS CONDITIONS FOR PREGNANCY (FEMALE AND <50)
-    ### WAS ADDED INITIALLY TO AVOID CODING ERRORS, BUT NOT VERY INCLUSIVE SO CONSIDER REVISING
     #### Pregnancy or Delivery codes recorded (for deriving JCVI group)
-    # # date of last pregnancy code in 36 weeks before ref_cev
     preg_group=patients.satisfying(
         """
         (preg_36wks_date AND sex = 'F' AND age_1 < 50) AND
         (pregdel_pre_date <= preg_36wks_date OR NOT pregdel_pre_date)
         """,
+        # date of last pregnancy code in 36 weeks before ref_cev
         preg_36wks_date=patients.with_these_clinical_events(
             preg_primis,
             returning="date",
