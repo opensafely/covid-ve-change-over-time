@@ -175,4 +175,37 @@ actions:
       moderately_sensitive:
         covariate_distribution: output/tests/images/covariate_distribution.png
 
+  ## #################################### 
+  ## subsequent vaccination 
+  ## #################################### 
+  ## plot cumulative incidence of subsequent vaccination 
+
+  plot_cumulative_incidence:
+    run: r:latest analysis/subsequent_vax/plot_cumulative_incidence.R
+    needs:
+    - design
+    - data_input_process
+    - data_eligible_cde
+    outputs:
+      moderately_sensitive:
+        ci_vax: output/subsequent_vax/images/ci_vax_*.png
+        survtable: output/subsequent_vax/tables/survtable_*.txt
+
+  ## #################################### 
+  ## table 1 for report 
+  ## #################################### 
+  ## create table 1 for all and for each subgroup 
+
+  table1:
+    run: r:latest analysis/report/table1.R
+    needs:
+    - design
+    - data_input_process
+    - data_eligible_cde
+    - process_tests
+    outputs:
+      moderately_sensitive:
+        table_csv: output/report/tables/table1_*_REDACTED.csv
+        table_html: output/report/tables/table1_*_REDACTED.html
+
   

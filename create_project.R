@@ -343,11 +343,11 @@ actions_list <- splice(
     needs = list("design", "data_input_process", "data_eligible_cde", "generate_covid_tests_data"),
     highly_sensitive = list(
       data_tests = "output/data/data_tests.rds"
-    )#,
-    # moderately_sensitive = list(
-    #   covariate_distribution = "output/tests/images/covariate_distribution.png",
-    #   data_tests_tabulate = "output/tests/tables/data_tests_tabulate.txt"
-    # )
+    ),
+    moderately_sensitive = list(
+      covariate_distribution = "output/tests/images/covariate_distribution.png"#,
+      # data_tests_tabulate = "output/tests/tables/data_tests_tabulate.txt"
+    )
   ),
   
   comment("####################################",
@@ -362,6 +362,20 @@ actions_list <- splice(
     moderately_sensitive = list(
       ci_vax = "output/subsequent_vax/images/ci_vax_*.png",
       survtable = "output/subsequent_vax/tables/survtable_*.txt"
+    )
+  ),
+  
+  comment("####################################",
+          "table 1 for report", 
+          "####################################"),
+  comment("create table 1 for all and for each subgroup"),
+  action(
+    name = "table1",
+    run = "r:latest analysis/report/table1.R",
+    needs = list("design", "data_input_process", "data_eligible_cde", "process_tests"),
+    moderately_sensitive = list(
+      table_csv = "output/report/tables/table1_*_REDACTED.csv",
+      table_html = "output/report/tables/table1_*_REDACTED.html"
     )
   ),
   
