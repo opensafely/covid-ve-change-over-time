@@ -24,7 +24,7 @@ set.seed(5476)
 dummy_data <- arrow::read_feather(
   file = here::here("analysis", "dummy_data.feather")) %>%
   select(patient_id, elig_date) %>%
-  right_join(data_eligible_e %>% select(patient_id, start_1_date), 
+  right_join(data_eligible_e %>% select(patient_id, start_1_date, min_elig_date), 
             by = "patient_id") %>%
   mutate(across(patient_id, as.integer)) %>%
   mutate(across(ends_with("_date"), as.Date))
@@ -67,12 +67,41 @@ test_k_n <- function(k) {
   
 }
 
+# pregnancy dates
+preg_k_date <- function(k, type = "pregnancy") {
+  
+  if (type == "pregnancy") {
+    name <- glue("preg_36wks_{k}_date")
+  } else {
+    name <- glue("pregdel_pre_{k}_date")
+  }
+  
+  date <- sample(dates_seq, size = nrows, replace = TRUE)
+  
+  dummy_data %>%
+    transmute(!! sym(name) := date) 
+  
+}
+# pregnancy indicators
+preg_k <- function(k) {
+  
+  name <- glue("preg_{k}")
+  
+  dummy_data %>%
+    transmute(!! sym(name) := as.integer(rbernoulli(n = nrow(.), p=0.01)))
+  
+}
+
 
 dummy_data_tests <- dummy_data %>%
   bind_cols(lapply(1:(K+1), test_k_date)) %>%
   bind_cols(lapply(1:(K+1), test_k_n)) %>%
-  mutate(covid_test_pre_elig_n = rpois(n = nrow(.), lambda = 3),
-         covid_test_post_elig_n = rpois(n = nrow(.), lambda = 3)) %>%
+  bind_cols(lapply(1:K, preg_k_date)) %>%
+  bind_cols(lapply(1:K, function(x) preg_k_date(k=x, type = "delivery"))) %>%
+  bind_cols(lapply(1:K, preg_k)) %>%
+  mutate(test_hist_1_n = rpois(n = nrow(.), lambda = 3),
+         test_hist_2_n = rpois(n = nrow(.), lambda = 3),
+         test_hist_3_n = rpois(n = nrow(.), lambda = 3)) %>%
   mutate(across(ends_with("date"), as.POSIXct))
 
 
