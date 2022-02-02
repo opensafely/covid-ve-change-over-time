@@ -293,17 +293,17 @@ readr::write_rds(
 
 ###############################################################################
 # suspected covid
-data_pr_suspected_covid <- data_processed_0 %>%
-  select(patient_id,
-         matches("^primary\\_care\\_suspected\\_covid\\_\\d+\\_date")) %>%
-  pivot_longer(
-    cols = -patient_id,
-    names_to = c(NA, "suspected_index"),
-    names_pattern = "^(.*)_(\\d+)_date",
-    values_to = "date",
-    values_drop_na = TRUE
-  ) %>%
-  arrange(patient_id, date)
+# data_pr_suspected_covid <- data_processed_0 %>%
+#   select(patient_id,
+#          matches("^primary\\_care\\_suspected\\_covid\\_\\d+\\_date")) %>%
+#   pivot_longer(
+#     cols = -patient_id,
+#     names_to = c(NA, "suspected_index"),
+#     names_pattern = "^(.*)_(\\d+)_date",
+#     values_to = "date",
+#     values_drop_na = TRUE
+#   ) %>%
+#   arrange(patient_id, date)
 
 # readr::write_rds(
 #   data_pr_suspected_covid, 
@@ -396,7 +396,7 @@ data_postest <- bind_rows(
 # create dataset which contains the earliest date of any evidence of covid
 # (not including covid death, as only applied to alive individuals)
 data_covid_any <- list(
-  data_pr_suspected_covid,
+  # data_pr_suspected_covid,
   data_pr_probable_covid,
   data_covidadmitted,
   data_postest
@@ -417,8 +417,8 @@ data_covid_any <- bind_rows(
                 levels = c(
                   "covidadmitted",
                   "postest",
-                  "probable",
-                  "suspected"
+                  "probable"#,
+                  # "suspected"
                 ))) %>%
   arrange(patient_id, date, covid_event) %>%
   # keep the first event to occur
