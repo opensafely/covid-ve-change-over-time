@@ -17,7 +17,10 @@ data_long_bmi_dates <- readr::read_rds(
 # read data_tests
 data_tests <- readr::read_rds(
   here::here("output", "data", "data_tests.rds")) %>%
-  select(patient_id, covid_test_pre_elig_n)
+  select(patient_id, test_hist_1_n)
+
+data_pregnancy <- readr::read_rds(
+  here::here("output", "data", "data_pregnancy.rds"))
 
 process_covariates <- function(.data) {
   
@@ -107,6 +110,16 @@ process_covariates <- function(.data) {
       data_tests,
       by = "patient_id"
       ) %>%
+    left_join(
+      data_pregnancy, 
+      by = c("patient_id", "comparison")
+    ) %>%
+  mutate(across(
+    pregnancy,
+    ~as.logical(if_else(
+      sex %in% "F" & age_band %in% c("16-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54"),
+      .x,
+      0L)))) %>%
     left_join(
       data_shielded, 
       by = c("patient_id", "comparison")) %>%
