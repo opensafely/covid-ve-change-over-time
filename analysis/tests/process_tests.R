@@ -22,31 +22,11 @@ data_eligible_e <- readr::read_csv(
   here::here("output", "data", "data_eligible_e.csv"))
 
 cat("--- process input_tests.feather ----")
-data_tests <- data_tests_0 %>%
+data_tests_1 <- data_tests_0 %>%
   mutate(across(contains("_date"), 
                 ~ floor_date(
                   as.Date(.x, format="%Y-%m-%d"),
-                  unit = "days"))) #%>%
-  # mutate(
-  #   covid_test_both_elig_n = covid_test_pre_elig_n + covid_test_post_elig_n
-  #   ) %>%
-  # mutate(across(starts_with("covid_test"),
-  #               ~ cut(.x, 
-  #                     breaks = c(-Inf, 0, 4, Inf),
-  #                     labels = c("0", "1-4", "5+"),
-  #                     right = TRUE,
-  #                     include.lowest = TRUE))) %>%
-  # select(-elig_date)
-
-# cat("--- check categorised variables ----")
-# data_tests %>% select(starts_with("covid_test")) %>% summary()
-
-cat("--- save data_tests.rds ----")
-readr::write_rds(
-  data_tests,
-  here::here("output", "data", "data_tests.rds"),
-  compress = "gz"
-)
+                  unit = "days"))) 
 
 ################################################################################
 # tabulate all vars 
@@ -59,7 +39,7 @@ readr::write_rds(
 ################################################################################
 # plot distibution of coviariates
 cat("--- plot covariates ----")
-plot_data <- data_tests %>%
+plot_data <- data_tests_1 %>%
   select(patient_id,
          covid_test_pre_elig_n,
          covid_test_post_elig_n) %>%
@@ -91,6 +71,7 @@ ggplot(NULL, aes(x = value)) +
            aes(fill = arm, y = ..count../sum(..count..)), alpha = 0.5, width = 1) +
     geom_bar(data = plot_data %>% filter(arm == "unvaccinated"),
              aes(fill = arm, y = ..count../sum(..count..)), alpha = 0.5, width = 1) +
+  scale_x_continuous(breaks = seq(1,10,1)) +
   scale_y_continuous(labels=scales::percent) +
   facet_wrap(~ name) +
   labs(y = "percent", x = "number of SARS-CoV-2 tests",
@@ -103,3 +84,23 @@ cat("--- save plot ----")
 ggsave(
   filename = here::here("output", "tests", "images", "covariate_distribution.png"),
   width=15, height=20, units="cm")
+
+################################################################################
+# bin based on dist
+
+data_tests_2 <- data_tests_1 %>%
+  mutate(across(starts_with("covid_test"),
+                ~ factor(case_when(
+                  is.na(.x) ~ NA_character_,
+                  .x < 1 ~ "0",
+                  .x < 3 ~ "1-2",
+                  TRUE ~ "3+"
+                )))) %>%
+  select(-elig_date)
+
+cat("--- save data_tests.rds ----")
+readr::write_rds(
+  data_tests_2,
+  here::here("output", "data", "data_tests.rds"),
+  compress = "gz"
+)
