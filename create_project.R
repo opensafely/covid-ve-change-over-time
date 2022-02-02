@@ -208,6 +208,7 @@ actions_list <- splice(
       regions = "output/lib/regions.csv",
       model_varlist = "output/lib/model_varlist.rds",
       outcomes = "output/lib/outcomes.rds",
+      strata_vars  = "output/lib/strata_vars.rds",
       subgroups = "output/lib/subgroups.rds"
     )
   ),
