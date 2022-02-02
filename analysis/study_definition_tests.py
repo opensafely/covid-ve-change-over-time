@@ -73,6 +73,61 @@ def covid_test_k_date(K, test_result, return_expectations):
             return_expectations))
     return variables
 
+### pregnancy variables (derived in this script rather than study_definition.py as needed start_1_date)
+# date of last pregnancy code in 36 weeks before start of comparison follow-up
+def preg_36wks_k_date(K):
+
+    def var_signature(name, lower, upper):
+        return {
+            name: patients.with_these_clinical_events(
+                preg_primis,
+                returning="date",
+                find_last_match_in_period=True,
+                between=[lower, upper],
+                date_format="YYYY-MM-DD"),
+        }
+    variables = dict()
+    for i in range(1, K+1): 
+        variables.update(var_signature(
+            name=f"preg_36wks_{i}_date",
+            lower=f"start_1_date - {252 - (i-1)*28} days", 
+            upper=f"start_1_date + {(i-1)*28} days"))
+    return variables
+
+# date of last delivery code recorded in 36 weeks before start of comparison follow-up
+def pregdel_pre_k_date(K):
+
+    def var_signature(name, lower, upper):
+        return {
+            name: patients.with_these_clinical_events(
+            pregdel_primis,
+            returning="date",
+            find_last_match_in_period=True,
+            between=[lower, upper],
+            date_format="YYYY-MM-DD"),
+        }
+    variables = dict()
+    for i in range(1, K+1): 
+        variables.update(var_signature(
+            name=f"pregdel_pre_{i}_date",
+            lower=f"start_1_date - {252 - (i-1)*28} days", 
+            upper=f"start_1_date + {(i-1)*28} days"))
+    return variables
+
+# pregnancy vairable that updates at start of each comparison
+def preg_k(K):
+
+    def var_signature(name, condition):
+        return {
+            name: patients.satisfying(condition),
+        }
+    variables = dict()
+    for i in range(1, K+1): 
+        variables.update(var_signature(
+            name=f"preg_{i}", 
+            condition=f"(preg_36wks_{i}_date) AND (pregdel_pre_{i}_date <= preg_36wks_{i}_date OR NOT pregdel_pre_{i}_date)"))
+    return variables
+
 ###
 study=StudyDefinition(
 
@@ -90,6 +145,13 @@ study=StudyDefinition(
         returning_type='date',
         date_format='YYYY-MM-DD'
         ),
+    # min elig date within subgroup
+    min_elig_date=patients.with_value_from_file(
+        f_path='output/data/data_eligible_e.csv', 
+        returning='min_elig_date', 
+        returning_type='date',
+        date_format='YYYY-MM-DD'
+        ),
 
     start_1_date=patients.with_value_from_file(
         f_path='output/data/data_eligible_e.csv', 
@@ -100,16 +162,24 @@ study=StudyDefinition(
 
     ### covid tests as covariates
     # during unvaccinated time (from when tests widely availabe to elig_date)
-    covid_test_pre_elig_n = patients.with_test_result_in_sgss(
+    test_hist_1_n=patients.with_test_result_in_sgss(
                 pathogen="SARS-CoV-2",
                 test_result="any",
-                between=["2020-05-18", "elig_date"],
+                between=["2020-05-18", "min_elig_date - 1 day"], # day before 1st vaccine eligibility date
+                restrict_to_earliest_specimen_date=False,
+                returning="number_of_matches_in_period",
+                return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
+	        ),
+    test_hist_2_n=patients.with_test_result_in_sgss(
+                pathogen="SARS-CoV-2",
+                test_result="any",
+                between=["min_elig_date", "elig_date"],
                 restrict_to_earliest_specimen_date=False,
                 returning="number_of_matches_in_period",
                 return_expectations={"int" : {"distribution": "poisson", "mean": 2}, "incidence" : 0.6}
 	        ),
     # during first dose time (elig date + 1 to elig_date + 6 weeks)
-    covid_test_post_elig_n = patients.with_test_result_in_sgss(
+    test_hist_3_n=patients.with_test_result_in_sgss(
                 pathogen="SARS-CoV-2",
                 test_result="any",
                 between=["elig_date + 1 day", "elig_date + 42 days"],
@@ -136,6 +206,11 @@ study=StudyDefinition(
         K=max_comparisons,
         test_result="any",
         return_expectations={"date": {"earliest": start_date, "latest": end_date}}
-    )
+    ),
+
+    # indicator for pregnancy at start of follow-up for comparison k
+    **preg_36wks_k_date(K=max_comparisons),
+    **pregdel_pre_k_date(K=max_comparisons),
+    **preg_k(K=max_comparisons)
 
 )
