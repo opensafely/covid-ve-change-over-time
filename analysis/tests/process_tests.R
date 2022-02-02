@@ -81,7 +81,7 @@ min_y <- plot_data %>%
   count() %>%
   ungroup() %>%
   mutate(p = 5/n) %>%
-  summarise(p = min(p))
+  summarise(p = max(p))
 
 ggplot(NULL, aes(x = value)) +
   geom_bar(data = plot_data %>% filter(arm == "vaccinated"),
