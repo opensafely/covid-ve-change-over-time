@@ -83,6 +83,8 @@ min_y <- plot_data %>%
   mutate(p = 5/n) %>%
   summarise(p = max(p))
 
+x_trunc <- 10
+
 ggplot(NULL, aes(x = value)) +
   geom_bar(data = plot_data %>% filter(arm == "vaccinated"),
            aes(fill = arm, y = ..count../sum(..count..)), alpha = 0.5, width = 1) +
@@ -91,8 +93,8 @@ ggplot(NULL, aes(x = value)) +
   scale_y_continuous(labels=scales::percent) +
   facet_wrap(~ name, scales = "free") +
   labs(y = "percent", x = "number of SARS-CoV-2 tests",
-       caption = str_c("x-axis truncated at 20, y-axis truncated at ", signif(100*min_y$p,3), "% to mask bars corresponding to < 5 individuals")) +
-  coord_cartesian(xlim = c(0,20), ylim = c(min_y$p, NA)) +
+       caption = str_c(glue("x-axis truncated at {x_trunc}, y-axis truncated at "), signif(100*min_y$p,1), "% to mask bars corresponding to < 5 individuals")) +
+  coord_cartesian(xlim = c(0,x_trunc), ylim = c(min_y$p, NA)) +
   scale_fill_discrete(name=NULL) +
   theme(legend.position = "bottom")
   
