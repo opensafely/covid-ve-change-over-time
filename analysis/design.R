@@ -211,5 +211,3 @@ readr::write_rds(
   subgroups,
   here::here("output", "lib", "subgroups.rds")
 )
-
-
