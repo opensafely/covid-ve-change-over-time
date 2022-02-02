@@ -16,13 +16,35 @@ fs::dir_create(here::here("output", "tests", "tables"))
 ################################################################################
 cat("--- read input_tests.feather ----")
 data_tests_0 <- arrow::read_feather(
-  file = here::here("output", "input_tests.feather")) 
+  file = here::here("output", "input_tests.feather")) %>%
+  select(-starts_with(c("preg_36", "pregdel"))) %>%
+  mutate(across(patient_id, as.integer))
 
 data_eligible_e <- readr::read_csv(
   here::here("output", "data", "data_eligible_e.csv"))
 
+################################################################################
+# process pregnancy data
 cat("--- process input_tests.feather ----")
+data_pregnancy <- data_tests_0 %>%
+  select(patient_id, starts_with("preg")) %>%
+  pivot_longer(
+    cols = -patient_id,
+    names_patter = "preg_(\\d)",
+    names_to = "comparison",
+    values_to = "pregnancy"
+  ) %>%
+  mutate(across(c(comparison), factor))  
+
+readr::write_rds(
+  data_pregnancy,
+  here::here("output", "data", "data_pregnancy.rds"),
+  compress = "gz"
+)
+
+cat("--- process data_tests_1 ----")
 data_tests_1 <- data_tests_0 %>%
+  select(-starts_with("preg")) %>%
   mutate(across(contains("_date"), 
                 ~ floor_date(
                   as.Date(.x, format="%Y-%m-%d"),
@@ -40,9 +62,10 @@ data_tests_1 <- data_tests_0 %>%
 # plot distibution of coviariates
 cat("--- plot covariates ----")
 plot_data <- data_tests_1 %>%
-  select(patient_id,
-         covid_test_pre_elig_n,
-         covid_test_post_elig_n) %>%
+  transmute(patient_id,
+         test_hist_1_n, 
+         test_hist_2_n = test_hist_1_n + test_hist_2_n,
+         test_hist_3_n) %>%
   pivot_longer(cols = -patient_id) %>%
   left_join(data_eligible_e, by = "patient_id") %>%
   mutate(across(arm, 
@@ -51,10 +74,7 @@ plot_data <- data_tests_1 %>%
                 labels = c("unvaccinated", "vaccinated"))) %>%
   mutate(across(name,
                 factor,
-                levels = c("covid_test_pre_elig_n",
-                           "covid_test_post_elig_n"),
-                labels = c("pre 1st dose eligibility",
-                           "6 weeks post 1st dose eligibility")))
+                labels = str_wrap(c("pre min(elig_date) in subtype", "pre elig_date", "elig_date to elig_date + 6 wks"), 25)))
 
 # min for y axis 
 min_y <- plot_data %>% 
@@ -89,11 +109,12 @@ ggsave(
 # bin based on dist
 
 data_tests_2 <- data_tests_1 %>%
-  mutate(across(starts_with("covid_test"),
+  mutate(across(starts_with("test_hist"),
                 ~ factor(case_when(
                   is.na(.x) ~ NA_character_,
                   .x < 1 ~ "0",
-                  .x < 3 ~ "1-2",
+                  .x < 2 ~ "1",
+                  .x < 3 ~ "2",
                   TRUE ~ "3+"
                 )))) %>%
   select(-elig_date)
