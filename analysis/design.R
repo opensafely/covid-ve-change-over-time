@@ -141,16 +141,35 @@ readr::write_csv(regions, here::here("output", "lib", "regions.csv"))
 # varlists for cox models
 
 clinical <- c(
-  "bmi", "heart_failure", "other_heart_disease", "dialysis",
-  "diabetes", "chronic_liver_disease", "current_copd",
-  "other_respiratory", "lung_cancer", "haematological_cancer",
-  "cancer_excl_lung_and_haem", "any_immunosuppression",
-  "dementia", "other_neuro_conditions", "ld_inc_ds_and_cp",
-  "psychosis_schiz_bipolar", "multimorb", "shielded", "flu_vaccine",
-  "longres", "covid_test_pre_elig_n"
+  "BMI" = "bmi",
+  "Heart failure" = "heart_failure", 
+  "Other heart disease" = "other_heart_disease", 
+  "Dialysis" = "dialysis",
+  "Diabetes" = "diabetes",
+  "Chronic liver disease" = "chronic_liver_disease", 
+  "COPD" = "current_copd",
+  "Other respiratory disease" = "other_respiratory", 
+  "Lung cancer" = "lung_cancer",
+  "Haematological cancer" = "haematological_cancer",
+  "Cancer excl. lung, haemo" = "cancer_excl_lung_and_haem",
+  "Immunosuppressed" = "any_immunosuppression",
+  "Dementia"  = "dementia", 
+  "Other neurological conditions" = "other_neuro_conditions",
+  "Learning disabilities" = "ld_inc_ds_and_cp",
+  "Serious mental illness" = "psychosis_schiz_bipolar",
+  "Morbidity count" = "multimorb",
+  "Shielding criteria met" = "shielded", 
+  "Flu vaccine in previous 5 years" = "flu_vaccine",
+  "Resident in long-term residential home" = "longres", 
+  "Number of SARS-CoV-2 tests between 18 May 2020 and date of eligibility for 1st dose" = "covid_test_pre_elig_n"
 )
 
-demographic <- c("age_band", "sex", "imd", "ethnicity")
+demographic <- c(
+  "Age band" = "age_band",
+  "Sex" = "sex",
+  "IMD" = "imd",
+  "Ethnicity" = "ethnicity"
+  )
 
 readr::write_rds(
   list(demographic = demographic, clinical = clinical),
@@ -158,8 +177,26 @@ readr::write_rds(
 )
 
 ################################################################################
+# strata vars for cox model ----
+strata_vars <- c(
+  "Region" = "region",
+  "JCVI group" = "jcvi_group",
+  "Date of eligibility for 1st dose" = "elig_date"
+)
+
+readr::write_rds(
+  strata_vars,
+  here::here("output", "lib", "strata_vars.rds")
+)
+
+################################################################################
 # outcomes ----
-outcomes <- c("anytest", "postest", "covidadmitted", "coviddeath", "noncoviddeath")
+outcomes <- c(
+  "Any SARS-CoV-2 test" = "anytest", 
+  "Positive SARS-CoV-2 test" = "postest", 
+  "COVID-19 hospital admission" = "covidadmitted",
+  "COVID-19 death" = "coviddeath", 
+  "non-COVID-19 death" = "noncoviddeath")
 
 readr::write_rds(
   outcomes,
@@ -174,3 +211,5 @@ readr::write_rds(
   subgroups,
   here::here("output", "lib", "subgroups.rds")
 )
+
+
