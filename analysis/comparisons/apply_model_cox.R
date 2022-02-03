@@ -27,6 +27,12 @@ if(length(args)==0){
   outcome <- args[[3]]
 }
 
+################################################################################
+# create directories
+fs::dir_create(here::here("output", "models_cox", "data"))
+fs::dir_create(here::here("output", "models_cox", "tables"))
+
+################################################################################
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
