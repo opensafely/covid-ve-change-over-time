@@ -38,7 +38,7 @@ data_pregnancy <- data_tests_0 %>%
 
 cat("--- check data_pregnancy ----")
 data_pregnancy %>% 
-  group_by(compatison, pregnancy) %>%
+  group_by(comparison, pregnancy) %>%
   count() %>%
   ungroup()
 
