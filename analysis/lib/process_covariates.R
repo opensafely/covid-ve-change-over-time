@@ -93,7 +93,7 @@ process_covariates <- function(.data) {
     "bmi"
   )
   
-  out <- .data %>%
+  out <- data_comparison_1 %>%
     # join and process covariates
     left_join(
       data_processed %>%
@@ -116,10 +116,10 @@ process_covariates <- function(.data) {
     ) %>%
   mutate(across(
     pregnancy,
-    ~as.logical(if_else(
+    ~ if_else(
       sex %in% "F" & age_band %in% c("16-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54"),
-      .x,
-      0L)))) %>%
+      as.logical(.x),
+      FALSE))) %>%
     left_join(
       data_shielded, 
       by = c("patient_id", "comparison")) %>%
