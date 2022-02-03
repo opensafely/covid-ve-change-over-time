@@ -7,6 +7,7 @@ library(gt)
 
 fs::dir_create(here::here("output", "report", "tables"))
 
+################################################################################
 ## import study_parameters
 study_parameters <- readr::read_rds(
   here::here("output", "lib", "study_parameters.rds"))
@@ -219,13 +220,26 @@ for (i in c(0, seq_along(data_tables))) {
     mutate(across(c(BNT162b2, ChAdOx, Unvaccinated), 
                   ~ if_else(is.na(.x), "0 (0%)", .x))) 
   
+  table1_tidy_n <- data %>% 
+    group_by(arm) %>% 
+    count() %>% 
+    ungroup() %>% 
+    pivot_wider(names_from = arm, values_from = n) %>% 
+    rename(Unvaccinated = unvax) %>%
+    mutate(Variable = "", Characteristic = "N") %>%
+    mutate(across(c(BNT162b2, ChAdOx, Unvaccinated), 
+                  ~ scales::comma(.x, accuracy = 1))) %>%
+    bind_rows(
+      table1_tidy
+    )
+  
   cat("---- save table1.csv ----\n")
   # save table1_tidy
   readr::write_csv(table1_tidy,
                    here::here("output", "report", "tables", glue("table1_{subgroup_label}_REDACTED.csv")))
   
   cat("---- save table1.html ----\n")
-  table1_tidy %>%
+  table1_tidy_n %>%
     gt(
       groupname_col="Variable",
       rowname_col = "Characteristic"
