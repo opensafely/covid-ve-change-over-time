@@ -36,11 +36,11 @@ data_pregnancy <- data_tests_0 %>%
   ) %>%
   mutate(across(comparison, factor))  
 
-cat("--- check data_pregnancy ----")
-data_pregnancy %>% 
-  group_by(comparison, pregnancy) %>%
-  count() %>%
-  ungroup()
+# cat("--- check data_pregnancy ----")
+# data_pregnancy %>% 
+#   group_by(comparison, pregnancy) %>%
+#   count() %>%
+#   ungroup()
 
 cat("--- save data_pregnancy ----")
 readr::write_rds(
