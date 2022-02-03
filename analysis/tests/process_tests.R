@@ -25,7 +25,7 @@ data_eligible_e <- readr::read_csv(
 
 ################################################################################
 # process pregnancy data
-cat("--- process input_tests.feather ----")
+cat("--- process data_pregnancy ----")
 data_pregnancy <- data_tests_0 %>%
   select(patient_id, starts_with("preg")) %>%
   pivot_longer(
@@ -36,12 +36,20 @@ data_pregnancy <- data_tests_0 %>%
   ) %>%
   mutate(across(comparison, factor))  
 
+cat("--- check data_pregnancy ----")
+data_pregnancy %>% 
+  group_by(compatison, pregnancy) %>%
+  count() %>%
+  ungroup()
+
+cat("--- save data_pregnancy ----")
 readr::write_rds(
   data_pregnancy,
   here::here("output", "data", "data_pregnancy.rds"),
   compress = "gz"
 )
 
+################################################################################
 cat("--- process data_tests_1 ----")
 data_tests_1 <- data_tests_0 %>%
   select(-starts_with("preg")) %>%
