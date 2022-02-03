@@ -24,7 +24,8 @@ set.seed(5476)
 dummy_data <- arrow::read_feather(
   file = here::here("analysis", "dummy_data.feather")) %>%
   select(patient_id, elig_date) %>%
-  right_join(data_eligible_e %>% select(patient_id, start_1_date, min_elig_date), 
+  right_join(data_eligible_e %>% 
+               select(patient_id, start_1_date, end_1_date, min_elig_date), 
             by = "patient_id") %>%
   mutate(across(patient_id, as.integer)) %>%
   mutate(across(ends_with("_date"), as.Date))
@@ -94,8 +95,8 @@ preg_k <- function(k) {
 
 
 dummy_data_tests <- dummy_data %>%
-  bind_cols(lapply(1:(K+1), test_k_date)) %>%
-  bind_cols(lapply(1:(K+1), test_k_n)) %>%
+  bind_cols(lapply(1:(K), test_k_date)) %>%
+  bind_cols(lapply(1:(K), test_k_n)) %>%
   bind_cols(lapply(1:K, preg_k_date)) %>%
   bind_cols(lapply(1:K, function(x) preg_k_date(k=x, type = "delivery"))) %>%
   bind_cols(lapply(1:K, preg_k)) %>%
