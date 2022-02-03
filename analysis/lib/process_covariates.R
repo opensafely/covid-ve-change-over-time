@@ -185,6 +185,9 @@ process_covariates <- function(.data) {
       flu_vaccine = flu_vaccine == 1
       
     ) %>%
+    mutate(across(jcvi_group,
+                  factor,
+                  levels = str_pad(as.character(2:12), width = 2, side = "left", pad = "0"))) %>%
     select(
       patient_id, jcvi_group, elig_date, region, ethnicity, arm, subgroup,
       start_fu_date, end_fu_date, comparison,
