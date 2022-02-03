@@ -212,7 +212,7 @@ for (i in c(0, seq_along(data_tables))) {
     mutate(across(category,
                   ~ if_else(variable %in% history_of_vars, variable_label, .x))) %>%
     mutate(across(variable_label,
-                  ~ if_else(variable %in% history_of_vars, "Hisotry of", .x))) %>%
+                  ~ if_else(variable %in% history_of_vars, "History of", .x))) %>%
     mutate(across(variable_label, ~ str_replace(.x, "min_elig_date", as.character(min_elig_date)))) %>%
     rename(Variable = variable_label, Characteristic = category, Unvaccinated = unvax) %>%
     select(-variable) %>%
