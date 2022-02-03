@@ -184,8 +184,9 @@ defaults_list <- list(
 
 
 
-outcomes <- readr::read_rds(here::here("output", "lib", "outcomes.rds"))
-subgroups <- c(readr::read_rds(here::here("output", "lib", "subgroups.rds")), "all")
+outcomes <- readr::read_rds(here::here("output", "lib", "outcomes.rds")) %>% unname()
+subgroups <- readr::read_rds(here::here("output", "lib", "subgroups.rds"))
+# subgroups <- c(readr::read_rds(here::here("output", "lib", "subgroups.rds")), "all")
 subgroup_labels <- seq_along(subgroups)
 comparisons <- c("BNT162b2", "ChAdOx", "both")
 plots <- c("BNT162b2", "ChAdOx", "BNT162b2andChAdOx", "BNT162b2vsChAdOx")
@@ -469,14 +470,14 @@ actions_list <- splice(
         recursive = FALSE)
       }
     ), recursive = FALSE)
-  ),
+  )#,
 
-  comment("generate plots"),
-  splice(
-    unlist(lapply(plots,
-                  function(p)
-                    plot_fun(plot = p)
-                  ), recursive = FALSE))#,
+  # comment("generate plots"),
+  # splice(
+  #   unlist(lapply(plots,
+  #                 function(p)
+  #                   plot_fun(plot = p)
+  #                 ), recursive = FALSE))#,
   # 
   # comment("combine all incidence tables"),
   # action(
