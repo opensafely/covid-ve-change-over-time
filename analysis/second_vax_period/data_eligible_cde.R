@@ -128,11 +128,13 @@ data_eligible_e <- bind_rows(
     transmute(patient_id, 
               elig_date, 
               start_1_date = covid_vax_2_date + days(14),
+              end_1_date = start_1_date + days(28),
               arm = "vax"),
   data_eligible_e_unvax %>% 
     transmute(patient_id, 
               elig_date, 
               start_1_date = start_of_period + days(14),
+              end_1_date = start_1_date + days(56),
               arm = "unvax") 
 ) %>%
   mutate(across(ends_with("_date"), as.POSIXct)) %>%
