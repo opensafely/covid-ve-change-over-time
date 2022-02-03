@@ -34,7 +34,7 @@ data_pregnancy <- data_tests_0 %>%
     names_to = "comparison",
     values_to = "pregnancy"
   ) %>%
-  mutate(across(c(comparison), factor))  
+  mutate(across(comparison, factor))  
 
 readr::write_rds(
   data_pregnancy,
