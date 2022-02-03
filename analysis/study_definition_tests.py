@@ -23,7 +23,7 @@ import numpy as np
 np.random.seed(study_parameters["seed"])
 
 # recurrent var functions
-# count tests in K 28-day periods
+# count tests in K comparison periods
 def covid_test_k_n(K, test_result, return_expectations):
     
     def var_signature(name, lower, upper, test_result, return_expectations):
@@ -38,16 +38,16 @@ def covid_test_k_n(K, test_result, return_expectations):
 	        ),
         }
     variables = dict()
-    for i in range(1, K+2): # last one won't be used for the vax arm
+    for i in range(1, K+1): 
         variables.update(var_signature(
             f"{test_result}_test_{i}_n", 
             f"start_1_date + {(i-1)*28 + 1} days", 
-            f"start_1_date + {i*28} days", 
+            f"end_1_date + {(i-1)*28} days", 
             test_result, 
             return_expectations))
     return variables
 
-# date of first test in K 28-day periods
+# date of first test in K comparison periods
 def covid_test_k_date(K, test_result, return_expectations):
     
     def var_signature(name, lower, upper, test_result, return_expectations):
@@ -64,11 +64,11 @@ def covid_test_k_date(K, test_result, return_expectations):
 	        ),
         }
     variables = dict()
-    for i in range(1, K+2): # last one won't be used for the vax arm
+    for i in range(1, K+1): 
         variables.update(var_signature(
             f"{test_result}_test_{i}_date", 
             f"start_1_date + {(i-1)*28 + 1} days", 
-            f"start_1_date + {i*28} days", 
+            f"end_1_date + {(i-1)*28} days", 
             test_result, 
             return_expectations))
     return variables
@@ -152,10 +152,17 @@ study=StudyDefinition(
         returning_type='date',
         date_format='YYYY-MM-DD'
         ),
-
+    # start date of first comparison
     start_1_date=patients.with_value_from_file(
         f_path='output/data/data_eligible_e.csv', 
         returning='start_1_date', 
+        returning_type='date',
+        date_format='YYYY-MM-DD'
+        ),
+    # end date fo first comparison (start +28 days for vax, +56 days for unvax)
+    end_1_date=patients.with_value_from_file(
+        f_path='output/data/data_eligible_e.csv', 
+        returning='end_1_date', 
         returning_type='date',
         date_format='YYYY-MM-DD'
         ),
