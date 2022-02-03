@@ -175,23 +175,8 @@ actions:
         data_tests: output/data/data_tests.rds
         data_pregnancy: output/data/data_pregnancy.rds
       moderately_sensitive:
-        covariate_distribution: output/tests/images/covariate_distribution.png
+        pos_rate_distribution: output/tests/images/pos_rate_distribution.png
 
-  ## #################################### 
-  ## subsequent vaccination 
-  ## #################################### 
-  ## plot cumulative incidence of subsequent vaccination 
-
-  plot_cumulative_incidence:
-    run: r:latest analysis/subsequent_vax/plot_cumulative_incidence.R
-    needs:
-    - design
-    - data_input_process
-    - data_eligible_cde
-    outputs:
-      moderately_sensitive:
-        ci_vax: output/subsequent_vax/images/ci_vax_*.png
-        survtable: output/subsequent_vax/tables/survtable_*.txt
 
   ## #################################### 
   ## table 1 for report 
