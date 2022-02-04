@@ -206,7 +206,7 @@ readr::write_rds(
 
 ################################################################################
 # subgroups ----
-subgroups <- c("16-64 and clinically vulnerable", "18-39", "40-64", "65+")
+subgroups <- c("16-64 years and clinically vulnerable", "18-39 years", "40-64 years", "65+ years")
 
 readr::write_rds(
   subgroups,
