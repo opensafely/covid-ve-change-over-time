@@ -14,7 +14,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  plot <- "BNT162b2vsChAdOx" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
+  plot <- "ChAdOx" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
   
 } else {
    
@@ -37,12 +37,16 @@ second_vax_period_dates <- readr::read_rds(
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds")
 )
-plot_outcomes <- outcomes
+outcomes_order <- c(which(outcomes == "covidadmitted"),
+                    which(outcomes == "coviddeath"),
+                    which(outcomes == "postest"),
+                    which(outcomes == "noncoviddeath"))
+plot_outcomes <- outcomes[outcomes_order]
 
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
-subgroups <- c(subgroups, "all")
+# subgroups <- c(subgroups, "all")
 subgroup_labels_full <- seq_along(subgroups)
 
 gg_color_hue <- function(n, transparency = 1) {
@@ -76,7 +80,7 @@ model_tidy_list <- unlist(lapply(
       subgroup_labels,
       function(y)
         lapply(
-          plot_outcomes,
+          unname(plot_outcomes),
           function(z)
             try(
               readr::read_rds(
@@ -96,14 +100,15 @@ recursive = FALSE
 model_tidy_tibble <- bind_rows(
   model_tidy_list[sapply(model_tidy_list, function(x) is_tibble(x))]
 ) %>%
+  mutate(across(outcome, factor, levels = plot_outcomes, labels = names(plot_outcomes)))
   # remove death outcomes in the 18-39 and 40-64 pfizer subgroups
   # very few outcomes so massive CIs cluttering the plots
-  filter(!(
-    (comparisons %in% c("BNT162b2", "both")) &
-      (subgroup %in% c(2,3)) &
-      str_detect(outcome, "death")
-  )
-  )
+  # filter(!(
+  #   (comparisons %in% c("BNT162b2", "both")) &
+  #     (subgroup %in% c(2,3)) &
+  #     str_detect(outcome, "death")
+  # )
+  # )
 
 # if (plot %in% c("BNT162b2", "BNT162b2")) {
 #   model_tidy_tibble <- model_tidy_tibble %>%
@@ -158,7 +163,7 @@ plot_fun <- function(
     outcome = character(),
     k = integer()
   )
-  for (o in plot_outcomes) {
+  for (o in names(plot_outcomes)) {
       expanded_data <- expanded_data %>%
         bind_rows(tibble(
           outcome = rep(o, each = K),
@@ -173,14 +178,24 @@ plot_fun <- function(
     palette <- brewer.pal(n = max(subgroup_labels), name = "Set2")[subgroup_labels]
     colour_name <- "Age range"
   } else if (colour_var == "model") {
-    palette_unadj <- gg_color_hue(3, transparency = 0.5)
-    palette_adj <- gg_color_hue(3, transparency = 1)
-    i <- case_when(
-      plot_comparison %in% "BNT162b2" ~ 1,  # red 
-      plot_comparison %in% "both" ~ 2, # green
-      plot_comparison %in% "ChAdOx" ~ 3, # blue
-      TRUE ~ NA_real_
-    )
+    if (plot_comparison == "both") {
+      
+      palette_unadj <- gg_color_hue(3, transparency = 0.5)
+      palette_adj <- gg_color_hue(3, transparency = 1)
+      i <- 2 # green
+      
+    } else {
+      
+      palette_unadj <- gg_color_hue(2, transparency = 0.5)
+      palette_adj <- gg_color_hue(2, transparency = 1)
+      i <- case_when(
+        plot_comparison %in% "BNT162b2" ~ 1,  # red 
+        plot_comparison %in% "ChAdOx" ~ 2, # blue
+        TRUE ~ NA_real_
+      )
+      
+    }
+    
     palette <- c(palette_unadj[i], palette_adj[i])
     colour_name <- NULL
   } else if (colour_var == "comparison") {
@@ -252,7 +267,7 @@ plot_fun <- function(
   
   
   plot_res <- expanded_data %>% 
-    mutate(across(outcome, factor)) %>%
+    mutate(across(outcome, factor, levels = names(plot_outcomes))) %>%
     left_join(plot_data, by = c("outcome", "k")) %>%
     mutate(across(model,
                   factor,
@@ -260,14 +275,6 @@ plot_fun <- function(
                   labels = sapply(c("Stratfied Cox model, no further adjustment", 
                                     "Stratfied Cox model, adjustment for demographic and clinical variables"),
                                   str_wrap, width=legend_width))) %>%
-    mutate(across(outcome,
-                  factor,
-                  levels = outcomes,
-                  labels = c("Positive COVID-19 test",
-                             "COVID-19 hospital admission",
-                             "COVID-19 death",
-                             "non-COVID-19 death",
-                             "Any death"))) %>%
     mutate(across(subgroup,
                   factor,
                   levels = subgroup_labels_full,
@@ -289,7 +296,6 @@ plot_fun <- function(
     ) +
     scale_colour_manual(
       name = colour_name, 
-      # guide=guide_legend(ncol=1), 
       values = palette,
       na.translate = F) +
     labs(
@@ -332,7 +338,7 @@ plot_fun <- function(
   
   # save the plot
   ggsave(plot = plot_res,
-         filename = here::here("output", "models_cox", "images", glue("plot_res_{plot}_{ic}_{jc}_{death_var}.png")),
+         filename = here::here("output", "models_cox", "images", glue("hr_{plot}_{ic}_{jc}.png")),
          width=plot_width, height=plot_height, units="cm")
   
   return(plot_res)
@@ -345,7 +351,7 @@ plot_subgroups <- as.list(subgroup_labels)
 
 if (plot %in% c("BNT162b2", "ChAdOx", "BNT162b2vsChAdOx")) {
   plot_subgroups <- splice(
-    plot_subgroups,c(1:4)
+    plot_subgroups#,c(1:4)
   )
 }
 
