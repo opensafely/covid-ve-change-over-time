@@ -14,7 +14,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  plot <- "BNT162b2andChAdOx" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
+  plot <- "BNT162b2" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
   
 } else {
    
@@ -173,6 +173,7 @@ plot_fun <- function(
   
   # y-axis label
   y_axis_label <- "Hazard ratio\n<--  favours vaccine  |  favours no vaccine  -->"
+  alpha_unadj <- 0.3
   # colour palette and name for colour legend
   if (colour_var == "subgroup") {
     palette <- brewer.pal(n = max(subgroup_labels), name = "Set2")[subgroup_labels]
@@ -180,13 +181,13 @@ plot_fun <- function(
   } else if (colour_var == "model") {
     if (plot_comparison == "both") {
       
-      palette_unadj <- gg_color_hue(3, transparency = 0.5)
+      palette_unadj <- gg_color_hue(3, transparency = alpha_unadj)
       palette_adj <- gg_color_hue(3, transparency = 1)
       i <- 2 # green
       
     } else {
       
-      palette_unadj <- gg_color_hue(2, transparency = 0.5)
+      palette_unadj <- gg_color_hue(2, transparency = alpha_unadj)
       palette_adj <- gg_color_hue(2, transparency = 1)
       i <- case_when(
         plot_comparison %in% "BNT162b2" ~ 1,  # red 

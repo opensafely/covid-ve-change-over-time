@@ -152,17 +152,18 @@ plot_fun <- function(
   
   # y-axis label
   y_axis_label <- "Hazard ratio\n<--  more testing in unvaccinated  |  more testing in vaccinated  -->"
+  alpha_unadj <- 0.3
   # colour palette and name for colour legend
   if (colour_var == "model") {
     if (plot_comparison == "both") {
       
-      palette_unadj <- gg_color_hue(3, transparency = 0.5)
+      palette_unadj <- gg_color_hue(3, transparency = alpha_unadj)
       palette_adj <- gg_color_hue(3, transparency = 1)
       i <- 2 # green
       
     } else {
       
-      palette_unadj <- gg_color_hue(2, transparency = 0.5)
+      palette_unadj <- gg_color_hue(2, transparency = alpha_unadj)
       palette_adj <- gg_color_hue(2, transparency = 1)
       i <- case_when(
         plot_comparison %in% "BNT162b2" ~ 1,  # red 
