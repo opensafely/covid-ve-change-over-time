@@ -141,13 +141,36 @@ plot_fun <- function(
   }
   
   if (str_detect(plot, "ChAdOx")) {
-    subgroup_labels <- subgroup_labels[-which(subgroups == "18-39")]
+    subgroup_labels <- subgroup_labels[-which(subgroups == "18-39 years")]
   }
   
   splice(
-    comment(glue("plot {plot}")),
+    comment(glue("plot anytest {plot}")),
     action(
-      name = glue("plot_model_cox_{plot}"),
+      name = glue("plot_hr_anytest_{plot}"),
+      run = "r:latest analysis/comparisons/plot_cox_anytest.R",
+      arguments = plot,
+      needs = splice("design",
+                     "data_2nd_vax_dates",
+                     as.list(unlist(lapply(
+                       comparisons,
+                       function(x)
+                         unlist(lapply(
+                           subgroup_labels,
+                           function(y)
+                             unlist(lapply(
+                               c("anytest"),
+                               function(z)
+                                 glue("apply_model_cox_{x}_{y}_{z}")
+                             ), recursive = FALSE)
+                         ), recursive = FALSE)
+                     ), recursive = FALSE))),
+      moderately_sensitive = list(
+        plot = glue("output/models_cox/images/hr_anytest_{plot}_*.png"))
+    ),
+    comment(glue("plot other outcomes {plot}")),
+    action(
+      name = glue("plot_hr_{plot}"),
       run = "r:latest analysis/comparisons/plot_cox.R",
       arguments = plot,
       needs = splice("design",
@@ -159,7 +182,7 @@ plot_fun <- function(
                            subgroup_labels,
                            function(y)
                              unlist(lapply(
-                               outcomes_model,
+                               outcomes_model[outcomes_model != "anytest"],
                                function(z)
                                  glue("apply_model_cox_{x}_{y}_{z}")
                              ), recursive = FALSE)
@@ -443,7 +466,7 @@ actions_list <- splice(
 
       function(x) {
         if (!(x %in% "BNT162b2")) {
-          subgroup_labels <- subgroup_labels[-which(subgroups == "18-39")]
+          subgroup_labels <- subgroup_labels[-which(subgroups == "18-39 years")]
         }
         unlist(lapply(
           subgroup_labels,
