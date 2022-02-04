@@ -14,7 +14,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  plot <- "BNT162b2vsChAdOx" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
+  plot <- "BNT162b2" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
   
 } else {
   
@@ -184,6 +184,7 @@ plot_fun <- function(
   position_dodge_val <- 0.6
   # upper limit for y-axis
   y_upper <- 10
+  y_lower <- 0.1
   # plot caption
   caption_string <- if_else(
     colour_var == "model",
@@ -191,7 +192,7 @@ plot_fun <- function(
     "Hazard ratios estimated using a stratified Cox model adjusted for demographic and clinical variables (stratification variables are: JCVI group, eligibility date for first dose of vaccination, geographical region)"
   )
   
-  subtitle_string <- str_c("Outcome: ", names(plot_outcomes),"; panels: subgroups")
+  subtitle_string <- str_c("Outcome: ", names(plot_outcomes),"\n ")
   
   if (plot %in% c("BNT162b2", "ChAdOx")) {
     
@@ -200,8 +201,7 @@ plot_fun <- function(
   } else if (plot %in% "BNT162b2vsChAdOx") {
     
     title_string <- "Two doses of BNT162b2 vs two doses of ChAdOx"
-    y_axis_label <- "Hazard ratio\n<--  favours BNT162b2  |  favours ChAdOx  -->"
-    y_upper <- 10
+    y_axis_label <- "Hazard ratio\n<--  more testing in ChAdOx  |  more testing in BNT162b2  -->"
     
   } else if (plot %in% "BNT162b2andChAdOx") {
     
@@ -249,7 +249,7 @@ plot_fun <- function(
     scale_y_log10(
       name = y_axis_label,
       breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10),
-      limits = c(0.01, max(1, y_upper)),
+      limits = c(y_lower, y_upper),
       oob = scales::oob_keep
     ) +
     scale_colour_manual(
