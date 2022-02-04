@@ -59,7 +59,7 @@ gg_color_hue <- function(n, transparency = 1) {
 if (plot %in% "BNT162b2") {
   subgroup_labels <- subgroup_labels_full
 } else {
-  subgroup_labels <- subgroup_labels_full[-which(subgroups == "18-39")]
+  subgroup_labels <- subgroup_labels_full[-which(subgroups == "18-39 years")]
 }
 
 if (plot == "BNT162b2andChAdOx") {
