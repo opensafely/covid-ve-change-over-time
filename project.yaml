@@ -1908,3 +1908,128 @@ actions:
         table_glance: output/models_cox/tables/modelcox_glance_both_4.txt
         table_coefficients: output/models_cox/tables/modelcox_coefficients_both_4.txt
 
+  ## generate plots 
+  ## plot BNT162b2 
+
+  plot_model_cox_BNT162b2:
+    run: r:latest analysis/comparisons/plot_cox.R BNT162b2
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - apply_model_cox_BNT162b2_1_anytest
+    - apply_model_cox_BNT162b2_1_postest
+    - apply_model_cox_BNT162b2_1_covidadmitted
+    - apply_model_cox_BNT162b2_1_coviddeath
+    - apply_model_cox_BNT162b2_1_noncoviddeath
+    - apply_model_cox_BNT162b2_2_anytest
+    - apply_model_cox_BNT162b2_2_postest
+    - apply_model_cox_BNT162b2_2_covidadmitted
+    - apply_model_cox_BNT162b2_2_coviddeath
+    - apply_model_cox_BNT162b2_2_noncoviddeath
+    - apply_model_cox_BNT162b2_3_anytest
+    - apply_model_cox_BNT162b2_3_postest
+    - apply_model_cox_BNT162b2_3_covidadmitted
+    - apply_model_cox_BNT162b2_3_coviddeath
+    - apply_model_cox_BNT162b2_3_noncoviddeath
+    - apply_model_cox_BNT162b2_4_anytest
+    - apply_model_cox_BNT162b2_4_postest
+    - apply_model_cox_BNT162b2_4_covidadmitted
+    - apply_model_cox_BNT162b2_4_coviddeath
+    - apply_model_cox_BNT162b2_4_noncoviddeath
+    outputs:
+      moderately_sensitive:
+        plot: output/models_cox/images/hr_BNT162b2_*.png
+
+  ## plot ChAdOx 
+
+  plot_model_cox_ChAdOx:
+    run: r:latest analysis/comparisons/plot_cox.R ChAdOx
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - apply_model_cox_ChAdOx_1_anytest
+    - apply_model_cox_ChAdOx_1_postest
+    - apply_model_cox_ChAdOx_1_covidadmitted
+    - apply_model_cox_ChAdOx_1_coviddeath
+    - apply_model_cox_ChAdOx_1_noncoviddeath
+    - apply_model_cox_ChAdOx_3_anytest
+    - apply_model_cox_ChAdOx_3_postest
+    - apply_model_cox_ChAdOx_3_covidadmitted
+    - apply_model_cox_ChAdOx_3_coviddeath
+    - apply_model_cox_ChAdOx_3_noncoviddeath
+    - apply_model_cox_ChAdOx_4_anytest
+    - apply_model_cox_ChAdOx_4_postest
+    - apply_model_cox_ChAdOx_4_covidadmitted
+    - apply_model_cox_ChAdOx_4_coviddeath
+    - apply_model_cox_ChAdOx_4_noncoviddeath
+    outputs:
+      moderately_sensitive:
+        plot: output/models_cox/images/hr_ChAdOx_*.png
+
+  ## plot BNT162b2andChAdOx 
+
+  plot_model_cox_BNT162b2andChAdOx:
+    run: r:latest analysis/comparisons/plot_cox.R BNT162b2andChAdOx
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - apply_model_cox_BNT162b2_1_anytest
+    - apply_model_cox_BNT162b2_1_postest
+    - apply_model_cox_BNT162b2_1_covidadmitted
+    - apply_model_cox_BNT162b2_1_coviddeath
+    - apply_model_cox_BNT162b2_1_noncoviddeath
+    - apply_model_cox_BNT162b2_3_anytest
+    - apply_model_cox_BNT162b2_3_postest
+    - apply_model_cox_BNT162b2_3_covidadmitted
+    - apply_model_cox_BNT162b2_3_coviddeath
+    - apply_model_cox_BNT162b2_3_noncoviddeath
+    - apply_model_cox_BNT162b2_4_anytest
+    - apply_model_cox_BNT162b2_4_postest
+    - apply_model_cox_BNT162b2_4_covidadmitted
+    - apply_model_cox_BNT162b2_4_coviddeath
+    - apply_model_cox_BNT162b2_4_noncoviddeath
+    - apply_model_cox_ChAdOx_1_anytest
+    - apply_model_cox_ChAdOx_1_postest
+    - apply_model_cox_ChAdOx_1_covidadmitted
+    - apply_model_cox_ChAdOx_1_coviddeath
+    - apply_model_cox_ChAdOx_1_noncoviddeath
+    - apply_model_cox_ChAdOx_3_anytest
+    - apply_model_cox_ChAdOx_3_postest
+    - apply_model_cox_ChAdOx_3_covidadmitted
+    - apply_model_cox_ChAdOx_3_coviddeath
+    - apply_model_cox_ChAdOx_3_noncoviddeath
+    - apply_model_cox_ChAdOx_4_anytest
+    - apply_model_cox_ChAdOx_4_postest
+    - apply_model_cox_ChAdOx_4_covidadmitted
+    - apply_model_cox_ChAdOx_4_coviddeath
+    - apply_model_cox_ChAdOx_4_noncoviddeath
+    outputs:
+      moderately_sensitive:
+        plot: output/models_cox/images/hr_BNT162b2andChAdOx_*.png
+
+  ## plot BNT162b2vsChAdOx 
+
+  plot_model_cox_BNT162b2vsChAdOx:
+    run: r:latest analysis/comparisons/plot_cox.R BNT162b2vsChAdOx
+    needs:
+    - design
+    - data_2nd_vax_dates
+    - apply_model_cox_both_1_anytest
+    - apply_model_cox_both_1_postest
+    - apply_model_cox_both_1_covidadmitted
+    - apply_model_cox_both_1_coviddeath
+    - apply_model_cox_both_1_noncoviddeath
+    - apply_model_cox_both_3_anytest
+    - apply_model_cox_both_3_postest
+    - apply_model_cox_both_3_covidadmitted
+    - apply_model_cox_both_3_coviddeath
+    - apply_model_cox_both_3_noncoviddeath
+    - apply_model_cox_both_4_anytest
+    - apply_model_cox_both_4_postest
+    - apply_model_cox_both_4_covidadmitted
+    - apply_model_cox_both_4_coviddeath
+    - apply_model_cox_both_4_noncoviddeath
+    outputs:
+      moderately_sensitive:
+        plot: output/models_cox/images/hr_BNT162b2vsChAdOx_*.png
+

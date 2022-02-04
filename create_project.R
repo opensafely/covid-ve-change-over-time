@@ -166,7 +166,7 @@ plot_fun <- function(
                          ), recursive = FALSE)
                      ), recursive = FALSE))),
       moderately_sensitive = list(
-        plot = glue("output/models_cox/images/plot_res_{plot}_*.png"))
+        plot = glue("output/models_cox/images/hr_{plot}_*.png"))
     )
     
   )
@@ -470,14 +470,14 @@ actions_list <- splice(
         recursive = FALSE)
       }
     ), recursive = FALSE)
-  )#,
+  ),
 
-  # comment("generate plots"),
-  # splice(
-  #   unlist(lapply(plots,
-  #                 function(p)
-  #                   plot_fun(plot = p)
-  #                 ), recursive = FALSE))#,
+  comment("generate plots"),
+  splice(
+    unlist(lapply(plots,
+                  function(p)
+                    plot_fun(plot = p)
+                  ), recursive = FALSE))#,
   # 
   # comment("combine all incidence tables"),
   # action(

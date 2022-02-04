@@ -58,4 +58,8 @@ apply_model_cox_both_4_postest   preflight_both_4_covidadmitted
 apply_model_cox_both_4_covidadmitted   preflight_both_4_coviddeath 
 apply_model_cox_both_4_coviddeath   preflight_both_4_noncoviddeath 
 apply_model_cox_both_4_noncoviddeath 
-tables_model_cox_both_4
+tables_model_cox_both_4  
+plot_model_cox_BNT162b2 
+plot_model_cox_ChAdOx 
+plot_model_cox_BNT162b2andChAdOx 
+plot_model_cox_BNT162b2vsChAdOx
