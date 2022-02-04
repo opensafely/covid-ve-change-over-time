@@ -14,7 +14,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  plot <- "BNT162b2" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
+  plot <- "BNT162b2vsChAdOx" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
   
 } else {
   
@@ -55,7 +55,7 @@ gg_color_hue <- function(n, transparency = 1) {
 if (plot %in% "BNT162b2") {
   subgroup_labels <- subgroup_labels_full
 } else {
-  subgroup_labels <- subgroup_labels_full[-which(subgroups == "18-39")]
+  subgroup_labels <- subgroup_labels_full[-which(subgroups == "18-39 years")]
 }
 
 if (plot == "BNT162b2andChAdOx") {
