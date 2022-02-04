@@ -183,7 +183,7 @@ plot_fun <- function(
   # spacing of points on plot
   position_dodge_val <- 0.6
   # upper limit for y-axis
-  y_upper <- 2
+  y_upper <- 10
   # plot caption
   caption_string <- if_else(
     colour_var == "model",
