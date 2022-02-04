@@ -214,7 +214,7 @@ if (total_events > 0) {
       # remove if one level or binary and one level with too few events
       n_levels ==1 | (n_levels == 2  & n_keep == 1) 
     ) %>% 
-    select(variable, level)
+    distinct(variable)
   
   # for ordinal variables, try combining levels 
   oridinal_var_list <- events_per_level %>%
@@ -414,9 +414,9 @@ if (total_events > 0) {
     if (is_empty(dropped_variables)) {
       dropped_comparisons <- "none"
     } else {
-      dropped_variables <- str_c(dropped_variables, collapse = ", ")
+      dropped_variables <- str_c(str_c("- ", dropped_variables), collapse = "\n")
     }
-    cat(glue("Dropped variables: {dropped_variables}"), "\n")
+    cat(glue("Dropped variables:\n{dropped_variables}"), "\n")
     cat("---\n")
     if (is_empty(merged_variables)) {
       cat("No levels merged.", "\n")
