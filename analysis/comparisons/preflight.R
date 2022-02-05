@@ -167,8 +167,8 @@ if (total_events > 0) {
     )
   
   ################################################################################
-  # remove comparisons with <= 5 events
-  events_threshold <- 5
+  # remove comparisons with <= 10 events
+  events_threshold <- 10
   
   # check events per comparison
   events_per_comparison <- data_0 %>%
