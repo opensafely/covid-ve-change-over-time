@@ -106,6 +106,16 @@ table_fun <- function(
   subgroup_label
 ) {
   
+  if (
+    (comparison %in% "BNT162b2" & subgroup_label %in% 2) |
+    (comparison %in% "both" & subgroup_label %in% 3)
+    ) {
+    table_outcomes <- outcomes_model[outcomes_model != "coviddeath"]
+  } else {
+    table_outcomes <- outcomes_model
+  }
+  
+  
   splice(
     comment(glue("tabulate cox model for all outcomes")),
     action(
@@ -116,7 +126,7 @@ table_fun <- function(
                      "data_2nd_vax_dates",
                      glue("data_tte_process_{comparison}"),
                      lapply(
-                       outcomes_model, 
+                       table_outcomes, 
                        function(x) 
                          glue("apply_model_cox_{comparison}_{subgroup_label}_{x}"))),
       moderately_sensitive = list(
@@ -143,6 +153,8 @@ plot_fun <- function(
   if (str_detect(plot, "ChAdOx")) {
     subgroup_labels <- subgroup_labels[-which(subgroups == "18-39 years")]
   }
+  
+  
   
   splice(
     comment(glue("plot anytest {plot}")),
@@ -180,12 +192,23 @@ plot_fun <- function(
                        function(x)
                          unlist(lapply(
                            subgroup_labels,
-                           function(y)
+                           function(y) {
+                             
+                             if (
+                               (x %in% "BNT162b2" & y %in% 2) |
+                               (x %in% "both" & y %in% 3)
+                             ) {
+                               plot_outcomes <- outcomes_model[outcomes_model != "coviddeath"]
+                             } else {
+                               plot_outcomes <- outcomes_model
+                             }
+                             
                              unlist(lapply(
-                               outcomes_model[outcomes_model != "anytest"],
+                               plot_outcomes[plot_outcomes != "anytest"],
                                function(z)
                                  glue("apply_model_cox_{x}_{y}_{z}")
                              ), recursive = FALSE)
+                           }
                          ), recursive = FALSE)
                      ), recursive = FALSE))),
       moderately_sensitive = list(

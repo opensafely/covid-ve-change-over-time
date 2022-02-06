@@ -597,7 +597,6 @@ actions:
     - apply_model_cox_BNT162b2_2_anytest
     - apply_model_cox_BNT162b2_2_postest
     - apply_model_cox_BNT162b2_2_covidadmitted
-    - apply_model_cox_BNT162b2_2_coviddeath
     - apply_model_cox_BNT162b2_2_noncoviddeath
     outputs:
       moderately_sensitive:
@@ -1738,7 +1737,6 @@ actions:
     - apply_model_cox_both_3_anytest
     - apply_model_cox_both_3_postest
     - apply_model_cox_both_3_covidadmitted
-    - apply_model_cox_both_3_coviddeath
     - apply_model_cox_both_3_noncoviddeath
     outputs:
       moderately_sensitive:
@@ -1937,7 +1935,6 @@ actions:
     - apply_model_cox_BNT162b2_1_noncoviddeath
     - apply_model_cox_BNT162b2_2_postest
     - apply_model_cox_BNT162b2_2_covidadmitted
-    - apply_model_cox_BNT162b2_2_coviddeath
     - apply_model_cox_BNT162b2_2_noncoviddeath
     - apply_model_cox_BNT162b2_3_postest
     - apply_model_cox_BNT162b2_3_covidadmitted
@@ -2067,7 +2064,6 @@ actions:
     - apply_model_cox_both_1_noncoviddeath
     - apply_model_cox_both_3_postest
     - apply_model_cox_both_3_covidadmitted
-    - apply_model_cox_both_3_coviddeath
     - apply_model_cox_both_3_noncoviddeath
     - apply_model_cox_both_4_postest
     - apply_model_cox_both_4_covidadmitted
