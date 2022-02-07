@@ -14,9 +14,9 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  comparison <- "both"
+  comparison <- "ChAdOx"
   subgroup_label <- 1
-  outcome <- "postest"
+  outcome <- "noncoviddeath"
   
 } else{
   comparison <- args[[1]]
@@ -45,6 +45,7 @@ model_varlist <- readr::read_rds(
   here::here("output", "lib", "model_varlist.rds")
 )
 vars <- unname(unlist(model_varlist))
+# vars <- vars[vars!="age"]
 
 ################################################################################
 # read functions
@@ -65,8 +66,7 @@ data_0 <- readr::read_rds(
       readr::read_rds(
         here::here("output", "comparisons", "data", glue("data_comparisons_{arm2}.rds")))
     ) %>%
-      select(patient_id, comparison, jcvi_group, elig_date, region, 
-             unname(unlist(model_varlist))),
+      select(patient_id, comparison, jcvi_group, elig_date, region, all_of(vars)),
     by = c("patient_id", "comparison")) %>% 
   mutate(strata_var = factor(str_c(jcvi_group, elig_date, region, sep = ", "))) %>%
   droplevels()
@@ -188,7 +188,10 @@ if (total_events > 0) {
   ################################################################################
   # check levels per covariate
   n_levels <- sapply(
-    data_1 %>% select(all_of(vars)) %>% mutate(across(everything(), as.factor)),
+    data_1 %>% 
+      select(all_of(vars)) %>% 
+      select(-age) %>%
+      mutate(across(everything(), as.factor)),
     function(x) length(levels(x))
   )
   
@@ -196,6 +199,7 @@ if (total_events > 0) {
   events_per_level <- data_1 %>%
     filter(status) %>%
     select(all_of(vars)) %>%
+    select(-age) %>%
     map(function(x) {
       tab <- table(x)
       tibble(level = names(tab), 
