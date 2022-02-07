@@ -15,7 +15,7 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   comparison <- "both"
-  subgroup_label <- 1
+  subgroup_label <- 3
   outcome <- "postest"
   
 } else{
@@ -171,6 +171,7 @@ if (total_events > 0) {
   if (subgroup_label != 1) {
     
     model_varlist$demographic <- model_varlist$demographic[model_varlist$demographic != "age_band"]
+    vars <- unname(unlist(model_varlist))
     
     data_0 <- data_0 %>% select(-age_band)
     
