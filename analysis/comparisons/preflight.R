@@ -15,7 +15,7 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   comparison <- "both"
-  subgroup_label <- 4
+  subgroup_label <- 1
   outcome <- "postest"
   
 } else{
@@ -372,7 +372,7 @@ if (total_events > 0) {
     data_5 <- data_4 %>%
       mutate(
         age_1 = age,
-        age_1_squared = age^2
+        age_1_squared = age * age
         ) %>%
       select(-age)
     
