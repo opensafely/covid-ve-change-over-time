@@ -23,7 +23,7 @@ set.seed(5476)
 
 dummy_data <- arrow::read_feather(
   file = here::here("analysis", "dummy_data.feather")) %>%
-  select(patient_id, elig_date) %>%
+  select(patient_id, elig_date, age = age_1) %>%
   right_join(data_eligible_e %>% 
                select(patient_id, start_1_date, end_1_date, min_elig_date), 
             by = "patient_id") %>%
