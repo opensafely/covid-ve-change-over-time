@@ -97,7 +97,8 @@ for (i in c(0, seq_along(data_tables))) {
   cat(glue("---- loop {i} ----"), "\n")
   cat("---- define obejcts ----\n")
   variables <- c(unname(strata_vars), unname(unlist(model_varlist)))
-  vars_ordered_levs <- c("region", "jcvi_group", "age_band", "sex", "imd", "ethnicity", "bmi", "multimorb", "test_hist_1_n")
+  variables <- variables[variables != "age"]
+  vars_ordered_levs <- c("region", "jcvi_group", "sex", "imd", "ethnicity", "bmi", "multimorb", "test_hist_1_n")
   
   # tibble for assigning tidy variable names
   var_labels <- tibble(
@@ -220,15 +221,26 @@ for (i in c(0, seq_along(data_tables))) {
     mutate(across(c(BNT162b2, ChAdOx, Unvaccinated), 
                   ~ if_else(is.na(.x), "0 (0%)", .x))) 
   
+  # age summary
+  age_summary <- data %>%
+    group_by(arm) %>%
+    summarise(median = median(age), iqr = IQR(age)) %>% 
+    ungroup() %>%
+    transmute(arm, value = glue("{median} ({iqr})")) %>%
+    pivot_wider(names_from = "arm", values_from = "value") %>%
+    mutate(Variable = "Age", Characteristic = "Median (IQR)") 
+    
+  
   table1_tidy_n <- data %>% 
     group_by(arm) %>% 
     count() %>% 
     ungroup() %>% 
     pivot_wider(names_from = arm, values_from = n) %>% 
-    rename(Unvaccinated = unvax) %>%
     mutate(Variable = "", Characteristic = "N") %>%
-    mutate(across(c(BNT162b2, ChAdOx, Unvaccinated), 
+    mutate(across(c(BNT162b2, ChAdOx, unvax), 
                   ~ scales::comma(.x, accuracy = 1))) %>%
+    bind_rows(age_summary) %>%
+    rename(Unvaccinated = unvax) %>%
     bind_rows(
       table1_tidy
     )
