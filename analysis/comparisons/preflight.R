@@ -82,6 +82,7 @@ if (total_events > 0) {
   cat("...split data by comparison and status...\n")
   tbl_list <- data_0 %>%
     select(comparison, status, all_of(vars)) %>%
+    select(-age) %>%
     group_split(comparison, status)
   
   # names for each element in list
@@ -167,17 +168,6 @@ if (total_events > 0) {
     )
   
   ################################################################################
-  # remove age_band apart from for subgroup 16-64 and clinically vulnerable
-  if (subgroup_label != 1) {
-    
-    model_varlist$demographic <- model_varlist$demographic[model_varlist$demographic != "age_band"]
-    vars <- unname(unlist(model_varlist))
-    
-    data_0 <- data_0 %>% select(-age_band)
-    
-  }
-  
-  
   # remove comparisons with <= 10 events
   events_threshold <- 10
   
@@ -375,19 +365,64 @@ if (total_events > 0) {
     rename_at(vars(starts_with("comparison")), ~str_c(.x, "_", arm1))
   
   ################################################################################
+  # create age variables
+  if (subgroup_label == 1) {
+    
+    # age and age^2 for subgroup 16-64 and vulnerable
+    data_5 <- data_4 %>%
+      mutate(
+        age_1 = age,
+        age_1_squared = age^2
+        ) %>%
+      select(-age)
+    
+  } else {
+    
+    data_4_list <- data_4 %>%
+      group_split(jcvi_group, elig_date) %>%
+      as.list()
+    
+    for (i in seq_along(data_4_list)) {
+      
+      data_4_list[[i]] <- data_4_list[[i]] %>%
+        mutate(!! sym(glue("age_{i}")) := age) %>%
+        select(-age)
+      
+      # add an age^2 term for jcvi group 2 (80+)
+      if (unique(data_4_list[[i]]$jcvi_group) == "02") {
+        
+        data_4_list[[i]] <- data_4_list[[i]] %>%
+          mutate(!! sym(glue("age_{i}_squared")) := sym(glue("age_{i}"))^2)
+        
+      }
+      
+    }
+    
+    data_5 <- bind_rows(
+      data_4_list
+    ) %>%
+      mutate(across(starts_with("age"),
+                    ~ if_else(is.na(.x),
+                              0,
+                              as.double(.x))))
+    
+  }
+  
+  ################################################################################
   # define formulas
   
-  comparisons <- data_4 %>% select(starts_with("comparison")) %>% names()
+  comparisons <- data_5 %>% select(starts_with("comparison")) %>% names()
   
   formula_unadj <- as.formula(str_c(
     "Surv(tstart, tstop, status, type = \"counting\") ~ ",
     str_c(comparisons, collapse = " + "),
     " + strata(strata_var)"))
   
-  demog_vars <- model_varlist$demographic[which(model_varlist$demographic %in% names(data_4))]
+  demog_vars <- c(names(data_5)[str_detect(names(data_5), "^age_")],
+                  unname(model_varlist$demographic[which(model_varlist$demographic %in% names(data_5))]))
   formula_demog <- as.formula(str_c(c(". ~ . ", demog_vars), collapse = " + "))
   
-  clinical_vars <- model_varlist$clinical[which(model_varlist$clinical %in% names(data_4))]
+  clinical_vars <- unname(model_varlist$clinical[which(model_varlist$clinical %in% names(data_5))])
   formula_clinical <- as.formula(str_c(c(". ~ . ", clinical_vars), collapse = " + "))
   
   ################################################################################
@@ -398,7 +433,7 @@ if (total_events > 0) {
     "clinical" = formula_clinical)
   
   model_input <- list(
-    data = data_4,
+    data = data_5,
     formulas = formulas_list
   )
   
