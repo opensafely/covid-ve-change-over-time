@@ -167,6 +167,9 @@ study=StudyDefinition(
         date_format='YYYY-MM-DD'
         ),
 
+    # age on start date
+    age=patients.age_as_of("start_1_date"),
+
     ### covid tests as covariates
     # during unvaccinated time (from when tests widely availabe to elig_date)
     test_hist_1_n=patients.with_test_result_in_sgss(
