@@ -92,35 +92,11 @@ data_processed_0 <- data_extract %>%
       jcvi_group %in% c("07", "08", "09", "10") ~ "40-64 years",
       jcvi_group %in% c("02", "03", "04", "05") ~ "65+ years",
       TRUE ~ NA_character_
-    ),
-    
-    # Age bands
-    # use the previous definition with cut, then make missing if in phase 2
-    age_band_1 = as.character(cut(
-      age_1,
-      breaks = c(age_breaks_lower, Inf), 
-      right = FALSE,
-      include.lowest = TRUE,
-      labels = age_labels
-      )),
-    age_band_1 = case_when(
-      (jcvi_group %in% c("10", "11", "12")) ~ NA_character_, # only use age_band_1 for phase 1
-      TRUE ~ age_band_1
-    ),
-    age_band_2 = case_when(
-      !(jcvi_group %in% c("10", "11", "12")) ~ NA_character_, # only use these conditions for phase 2
-      16 <= age_2 & age_2 < 20 ~ "16-19",
-      20 <= age_2 & age_2 < 25 ~ "20-24",
-      25 <= age_2 & age_2 < 30 ~ "25-29",
-      30 <= age_2 & age_2 < 35 ~ "30-34",
-      (jcvi_group %in% "11" & 35 <= age_2) ~ "35-39", # includes those who turned 40 between ref_age_1 and ref_age_2
-      40 <= age_2 & age_2 < 45 ~ "40-44",
-      (jcvi_group %in% "10" & 45 <= age_2) ~ "45-49", # includes those who turned 50 between ref_age_1 and ref_age_2
-      TRUE ~ NA_character_),
-    age_band = factor(if_else(!is.na(age_band_1), age_band_1, age_band_2))
+    )
     
   ) %>%
-  select(-ethnicity_6, -ethnicity_6_sus, -age_band_1, -age_band_2) %>%
+  # select(-ethnicity_6, -ethnicity_6_sus, -age_band_1, -age_band_2) %>%
+  select(-ethnicity_6, -ethnicity_6_sus) %>%
   droplevels()
 
 ################################################################################
