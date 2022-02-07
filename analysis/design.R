@@ -166,7 +166,7 @@ clinical <- c(
 )
 
 demographic <- c(
-  "Age band" = "age_band",
+  "Age" = "age",
   "Sex" = "sex",
   "IMD" = "imd",
   "Ethnicity" = "ethnicity"
