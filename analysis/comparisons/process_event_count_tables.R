@@ -23,6 +23,7 @@ subgroups <- c(subgroups, "all")
 # read outcomes
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds"))
+outcomes <- unname(outcomes)
 
 # redaction functions
 source(here::here("analysis", "lib", "redaction_functions.R"))
@@ -42,7 +43,7 @@ process_tables <- function(
   cols_order <- lapply(
     c("BNT162b2", "ChAdOx", "unvax"),
     function(x)
-      sapply(c("n", outcomes[-which(outcomes == "noncoviddeath")]),
+      sapply(c("n", outcomes),
              function(y)
                glue("{x}_{y}"))
   )
@@ -52,15 +53,12 @@ process_tables <- function(
   table <- data %>% 
     distinct() %>%
     pivot_longer(cols = c(n, events)) %>%
-    # only keep n for death
-    filter((name %in% "events") | (outcome %in% "death")) %>%
-    # don't keep noncoviddeath
-    filter(!(outcome %in% "noncoviddeath")) %>%
     mutate(col_names = glue("{arm}_{outcome}_{name}")) %>%
     select(-arm, -outcome, -name) %>%
     distinct() %>%
     pivot_wider(names_from = col_names, values_from = value) %>%
-    rename_at(vars(ends_with("_n")), ~ str_remove(.x, "_death")) %>%
+    rename_at(vars(matches(".+_noncoviddeath_n")), ~ str_remove(.x, "_noncoviddeath")) %>%
+    select(-matches(".+_.+_n")) %>%
     rename_at(vars(ends_with("_events")), ~ str_remove(.x, "_events")) %>%
     select(-subgroup)  
   
@@ -69,18 +67,19 @@ process_tables <- function(
   
   # process table col names
   col_names_tidy <- str_replace(cols_order, "_", " ")
-  col_names_tidy <- str_replace(col_names_tidy, "postest", "C-19 +ve test")
+  col_names_tidy <- str_replace(col_names_tidy, "anytest", "any test")
+  col_names_tidy <- str_replace(col_names_tidy, "postest", "+ve test")
   col_names_tidy <- str_replace(col_names_tidy, "covidadmitted", "C-19 hosp. admission")
-  col_names_tidy <- str_replace(col_names_tidy, "\\sdeath", " Any death")
+  col_names_tidy <- str_replace(col_names_tidy, "noncoviddeath", "Non-C-19 death")
   col_names_tidy <- str_replace(col_names_tidy, "coviddeath", "C-19 death")
   
   # redact low values
   table_out <- table %>%
     select(comparison, all_of(cols_order)) %>%
     mutate(across(-comparison, 
-                  redactor2)) %>%
-    mutate(across(-comparison, 
-                  ~scales::comma(.x, accuracy = 1))) 
+                  ~ if_else(.x <= 5,
+                            "-",
+                            scales::comma(.x, accuracy = 1)))) 
   
   # save
   capture.output(
