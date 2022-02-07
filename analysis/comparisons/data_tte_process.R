@@ -94,56 +94,43 @@ derive_data_tte <- function(
   outcome
   ) {
   
-  # unless outcome is anytest, 
-  # remove comparisons for which outcome has occurred before first comparison
-  if (outcome == "anytest") {
-    
-    data_inc <- .data %>%
-      distinct(patient_id)
-    
-  } else {
-    
-    data_inc <- .data %>%
-      filter(
-        # allow for the fact that the first comparison for the even unvax arm is 2
-        (!(arm %in% "unvax") & comparison %in% "1") |
-          (arm %in% "unvax" & comparison %in% c("1", "2"))  
-      ) %>%
-      filter(
-        # remove people who have experienced the outcome before first comparison
-        is.na(!! sym(glue("prior_{outcome}_date"))) |
-          start_fu_date < !! sym(glue("prior_{outcome}_date"))
-      ) %>%
-      select(patient_id)
-    
-  }
+  # remove comparisons for which outcome has occurred before the patient's first comparison
+  # (if outcome is anytest, only exclude if previous postest)
+  outcome_exclude <- if_else(
+    outcome == "anytest",
+    "postest",
+    outcome)
+  
+  data_inc <- .data %>%
+    filter(
+      # allow for the fact that the first comparison for the even unvax arm is 2
+      (!(arm %in% "unvax") & comparison %in% "1") |
+        (arm %in% "unvax" & comparison %in% c("1", "2"))  
+    ) %>%
+    filter(
+      # remove people who have experienced the outcome before first comparison
+      is.na(!! sym(glue("prior_{outcome_exclude}_date"))) |
+        start_fu_date < !! sym(glue("prior_{outcome_exclude}_date"))
+    ) %>%
+    select(patient_id)
   
   # keep the selected patients from .data
   data_tte_0 <- data_inc %>%
     left_join(.data, by = "patient_id") %>%
     select(patient_id, comparison, arm, subgroup, start_fu_date, end_fu_date, 
            dereg_date, death_date, # for censoring
-           all_of(glue("{outcome}_date"))) %>%
+           # when outcome is anytest, keep postest too
+           all_of(glue("{unique(c(outcome, outcome_exclude))}_date"))) %>%
     arrange(patient_id, comparison) 
   
-  # unless outcome is anytest, 
-  # remove comparisons for which outcome has occurred before start_fu_date of comparison k
-  if (outcome == "anytest") {
-    
-    data_tte_1 <- data_tte_0
-    
-  } else {
-    
-    data_tte_1 <- data_tte_0 %>%
-      group_by(patient_id) %>%
-      # remove comparisons for which outcome has occurred before start_fu_date
-      mutate(
-        event_seq = cumsum(cumsum(!is.na(!! sym(glue("{outcome}_date")))))
-      ) %>%
-      ungroup() %>%
-      filter(event_seq <= 1)
-    
-  }
+  data_tte_1 <- data_tte_0 %>%
+    group_by(patient_id) %>%
+    # remove comparisons for which outcome_exclude has occurred before start_fu_date
+    mutate(
+      event_seq = cumsum(cumsum(!is.na(!! sym(glue("{outcome_exclude}_date")))))
+    ) %>%
+    ungroup() %>%
+    filter(event_seq <= 1)
   
   data_tte_2 <- data_tte_1 %>%
     # new time-scale: time since earliest start_fu_date in data
