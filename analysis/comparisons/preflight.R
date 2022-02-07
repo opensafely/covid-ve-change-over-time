@@ -15,7 +15,7 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   comparison <- "both"
-  subgroup_label <- 3
+  subgroup_label <- 4
   outcome <- "postest"
   
 } else{
@@ -392,7 +392,7 @@ if (total_events > 0) {
       if (unique(data_4_list[[i]]$jcvi_group) == "02") {
         
         data_4_list[[i]] <- data_4_list[[i]] %>%
-          mutate(!! sym(glue("age_{i}_squared")) := sym(glue("age_{i}"))^2)
+          mutate(!! sym(glue("age_{i}_squared")) := !! sym(glue("age_{i}")) * !! sym(glue("age_{i}")))
         
       }
       
