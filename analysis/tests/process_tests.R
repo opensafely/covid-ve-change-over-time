@@ -28,6 +28,18 @@ data_eligible_e <- readr::read_csv(
   here::here("output", "data", "data_eligible_e.csv"))
 
 ################################################################################
+# age data
+cat("--- process data_age ----")
+data_age <- data_tests_0 %>%
+  select(patient_id, age)
+
+readr::write_rds(
+  data_age,
+  here::here("output", "data", "data_age.rds"),
+  compress = "gz"
+)
+
+################################################################################
 # process pregnancy data
 cat("--- process data_pregnancy ----")
 data_pregnancy <- data_tests_0 %>%
