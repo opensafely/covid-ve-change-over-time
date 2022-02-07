@@ -34,7 +34,7 @@ study_parameters <-
     start_date_pfizer = "2020-12-08",
     start_date_az = "2021-01-04",
     start_date_moderna = "2021-03-04",
-    end_date = "2021-11-14" # last date of available data
+    end_date = "2021-12-31" # last date of available data
   ) 
 
 # use lower thresholds if not running in the server
