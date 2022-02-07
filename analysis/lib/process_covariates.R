@@ -22,6 +22,9 @@ data_tests <- readr::read_rds(
 data_pregnancy <- readr::read_rds(
   here::here("output", "data", "data_pregnancy.rds"))
 
+data_age <- readr::read_rds(
+  here::here("output", "data", "data_age.rds"))
+
 process_covariates <- function(.data) {
   
   # shielded (index is time_zero)
@@ -60,7 +63,7 @@ process_covariates <- function(.data) {
   
   # add clinical and demographic covariates to data_comparison_arms ----
   strata_vars <- c("region", "elig_date", "comparison")
-  demographic_vars <- c("age_band", "sex", "ethnicity", "imd")
+  demographic_vars <- c("age", "sex", "ethnicity", "imd")
   ever_vars <- c(
     "longres_date",
     "asplenia_date", 
@@ -105,6 +108,10 @@ process_covariates <- function(.data) {
                all_of(str_c(outcomes, "_date"))), 
       by = "patient_id") %>%
     mutate(imd = factor(imd)) %>%
+    left_join(
+      data_age,
+      by = "patient_id"
+    ) %>%
     # number of Sars-CoV-2 tests up to elig_date + 6 weeks
     left_join(
       data_tests,
@@ -117,7 +124,7 @@ process_covariates <- function(.data) {
   mutate(across(
     pregnancy,
     ~ if_else(
-      sex %in% "Female" & age_band %in% c("16-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54"),
+      sex %in% "Female" & age<50,
       as.logical(.x),
       FALSE))) %>%
     left_join(
