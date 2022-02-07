@@ -14,9 +14,9 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  comparison <- "BNT162b2"
+  comparison <- "both"
   subgroup_label <- 1
-  outcome <- "noncoviddeath"
+  outcome <- "postest"
   
 } else{
   comparison <- args[[1]]
@@ -167,6 +167,16 @@ if (total_events > 0) {
     )
   
   ################################################################################
+  # remove age_band apart from for subgroup 16-64 and clinically vulnerable
+  if (subgroup_label != 1) {
+    
+    model_varlist$demographic <- model_varlist$demographic[model_varlist$demographic != "age_band"]
+    
+    data_0 <- data_0 %>% select(-age_band)
+    
+  }
+  
+  
   # remove comparisons with <= 10 events
   events_threshold <- 10
   
@@ -381,12 +391,14 @@ if (total_events > 0) {
   
   ################################################################################
   
+  formulas_list <-  list(
+    "unadjusted" = formula_unadj, 
+    "demographic" = formula_demog, 
+    "clinical" = formula_clinical)
+  
   model_input <- list(
     data = data_4,
-    formulas = list(
-      "unadjusted" = formula_unadj, 
-      "demographic" = formula_demog, 
-      "clinical" = formula_clinical)
+    formulas = formulas_list
   )
   
   readr::write_rds(
@@ -402,6 +414,7 @@ if (total_events > 0) {
     merged_variables,
     subgroup_string = subgroup
   ) {
+    ####
     cat(glue("Comparison = {comparison}; Subgroup = {subgroup_string}; Outcome = {outcome}"), "\n")
     cat("---\n")
     if (is_empty(drop_comparisons)) {
@@ -410,6 +423,7 @@ if (total_events > 0) {
       dropped_comparisons <- str_c(dropped_comparisons, collapse = ", ")
     }
     cat(glue("Dropped comparisons: {dropped_comparisons}"), "\n")
+    ####
     cat("---\n")
     if (is_empty(dropped_variables)) {
       dropped_comparisons <- "none"
@@ -417,6 +431,7 @@ if (total_events > 0) {
       dropped_variables <- str_c(str_c("- ", dropped_variables), collapse = "\n")
     }
     cat(glue("Dropped variables:\n{dropped_variables}"), "\n")
+    ####
     cat("---\n")
     if (is_empty(merged_variables)) {
       cat("No levels merged.", "\n")
@@ -424,9 +439,14 @@ if (total_events > 0) {
       
       merged_variables %>%
         kableExtra::kable("pipe",
-                          caption = "Merged levels:")
+                          caption = "Merged levels:") %>%
+        print()
     }
-    
+    ####
+    cat("\n")
+    cat("---\n")
+    cat(glue("Formulas:"), "\n")
+    print(formulas_list)
     
   }
   
