@@ -404,29 +404,31 @@ if (total_events > 0) {
     
     data_5 <- bind_rows(
       data_4_list
-    ) %>%
-      mutate(across(starts_with("age"),
-                    ~ if_else(is.na(.x),
-                              0,
-                              as.double(.x))))
+    ) 
     
   }
+  
+  data_6 <- data_5 %>%
+    mutate(across(starts_with("age"),
+                  ~ if_else(is.na(.x),
+                            0,
+                            as.double(.x))))
   
   ################################################################################
   # define formulas
   
-  comparisons <- data_5 %>% select(starts_with("comparison")) %>% names()
+  comparisons <- data_6 %>% select(starts_with("comparison")) %>% names()
   
   formula_unadj <- as.formula(str_c(
     "Surv(tstart, tstop, status, type = \"counting\") ~ ",
     str_c(comparisons, collapse = " + "),
     " + strata(strata_var)"))
   
-  demog_vars <- c(names(data_5)[str_detect(names(data_5), "^age_")],
-                  unname(model_varlist$demographic[which(model_varlist$demographic %in% names(data_5))]))
+  demog_vars <- c(names(data_6)[str_detect(names(data_6), "^age_")],
+                  unname(model_varlist$demographic[which(model_varlist$demographic %in% names(data_6))]))
   formula_demog <- as.formula(str_c(c(". ~ . ", demog_vars), collapse = " + "))
   
-  clinical_vars <- unname(model_varlist$clinical[which(model_varlist$clinical %in% names(data_5))])
+  clinical_vars <- unname(model_varlist$clinical[which(model_varlist$clinical %in% names(data_6))])
   formula_clinical <- as.formula(str_c(c(". ~ . ", clinical_vars), collapse = " + "))
   
   ################################################################################
@@ -437,7 +439,7 @@ if (total_events > 0) {
     "clinical" = formula_clinical)
   
   model_input <- list(
-    data = data_5,
+    data = data_6,
     formulas = formulas_list
   )
   
