@@ -202,8 +202,21 @@ process_covariates <- function(.data) {
       all_of(str_c(outcomes, "_date")),
       all_of(censor_vars)
     ) %>%
-    droplevels()
+    droplevels
   
-  return(out)
+  cat("----\n")
+  cat("Individuals with missing age removed:\n")
+  cat("----\n")
+  out %>% 
+    filter(is.na(age)) %>%
+    group_by(subgroup, arm) %>%
+    count() %>%
+    ungroup() %>%
+    print(n=100)
+  
+  out_narm <- out %>%
+    filter(!is.na(age))
+  
+  return(out_narm)
   
 }
