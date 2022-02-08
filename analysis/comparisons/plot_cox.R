@@ -208,7 +208,7 @@ plot_fun <- function(
   # spacing of points on plot
   position_dodge_val <- 0.6
   # upper limit for y-axis
-  y_upper <- 2
+  y_upper <- 5
   y_lower <- 0.01
   # plot caption
   caption_string <- if_else(
