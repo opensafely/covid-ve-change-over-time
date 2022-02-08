@@ -224,11 +224,24 @@ for (i in c(0, seq_along(data_tables))) {
   # age summary
   age_summary <- data %>%
     group_by(arm) %>%
-    summarise(median = median(age), iqr = IQR(age)) %>% 
+    summarise(
+      median = median(age, na.rm=TRUE),
+      iqr = IQR(age, na.rm = TRUE),
+      .groups = "keep") %>% 
     ungroup() %>%
     transmute(arm, value = glue("{median} ({iqr})")) %>%
     pivot_wider(names_from = "arm", values_from = "value") %>%
     mutate(Variable = "Age", Characteristic = "Median (IQR)") 
+  
+  age_missing <- data %>% 
+    group_by(arm) %>%
+    summarise(
+      missing = sum(is.na(age)), 
+      .groups = "keep") %>%
+    ungroup() %>%
+    transmute(arm, value = scales::comma(missing, accuracy = 1)) %>%
+    pivot_wider(names_from = "arm", values_from = "value") %>%
+    mutate(Variable = "Age", Characteristic = "Missing") 
     
   
   table1_tidy_n <- data %>% 
@@ -239,7 +252,10 @@ for (i in c(0, seq_along(data_tables))) {
     mutate(Variable = "", Characteristic = "N") %>%
     mutate(across(c(BNT162b2, ChAdOx, unvax), 
                   ~ scales::comma(.x, accuracy = 1))) %>%
-    bind_rows(age_summary) %>%
+    bind_rows(
+      age_summary,
+      age_missing
+      ) %>%
     rename(Unvaccinated = unvax) %>%
     bind_rows(
       table1_tidy
