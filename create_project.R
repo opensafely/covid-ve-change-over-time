@@ -165,6 +165,7 @@ plot_fun <- function(
       needs = splice("design",
                      "data_2nd_vax_dates",
                      "process_tests",
+                     "data_comparisons_process",
                      as.list(unlist(lapply(
                        comparisons,
                        function(x)
