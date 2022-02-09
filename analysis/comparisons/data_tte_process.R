@@ -56,10 +56,7 @@ arm2 <- if_else(comparison == "both", "ChAdOx", "unvax")
 
 ################################################################################
 
-derive_data <- function(
-  arm_1,
-  arm_2
-) {
+data_comparisons <- local({
   
   data_arm1 <-  readr::read_rds(
     here::here("output", "comparisons", "data", glue("data_comparisons_{arm1}.rds"))) %>%
@@ -77,12 +74,12 @@ derive_data <- function(
   subgroups_2 <- unique(as.character(data_arm2$subgroup))
   subgroups <- c(intersect(subgroups_1, subgroups_2), "all")
   
-  data <- bind_rows(data_arm1, data_arm2) %>%
+  bind_rows(data_arm1, data_arm2) %>%
     filter(subgroup %in% subgroups)
 
-}
+})
 
-data <- derive_data(arm1, arm_2) %>%
+data <- data_comparisons %>%
   left_join(data_prior_outcomes, by = "patient_id") %>%
   left_join(data_tests, by = c("patient_id", "comparison"))
 
