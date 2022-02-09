@@ -191,6 +191,7 @@ plot_fun <- function(
       arguments = plot,
       needs = splice("design",
                      "data_2nd_vax_dates",
+                     "data_comparisons_process",
                      as.list(unlist(lapply(
                        comparisons,
                        function(x)
@@ -497,7 +498,8 @@ actions_list <- splice(
       "data_eligible_cde",
       "process_tests"),
     highly_sensitive = list(
-      data_comparisons = glue("output/comparisons/data/data_comparisons_*.rds")
+      data_comparisons = "output/comparisons/data/data_comparisons_*.rds",
+      min_and_max_fu_dates = "output/lib/min_and_max_fu_dates.rds"
     )
   ),
   

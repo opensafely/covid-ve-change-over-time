@@ -227,6 +227,7 @@ actions:
     outputs:
       highly_sensitive:
         data_comparisons: output/comparisons/data/data_comparisons_*.rds
+        min_and_max_fu_dates: output/lib/min_and_max_fu_dates.rds
 
   ## process tte data 
 
@@ -1933,6 +1934,7 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - data_comparisons_process
     - apply_model_cox_BNT162b2_1_postest
     - apply_model_cox_BNT162b2_1_covidadmitted
     - apply_model_cox_BNT162b2_1_coviddeath
@@ -1976,6 +1978,7 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - data_comparisons_process
     - apply_model_cox_ChAdOx_1_postest
     - apply_model_cox_ChAdOx_1_covidadmitted
     - apply_model_cox_ChAdOx_1_coviddeath
@@ -2019,6 +2022,7 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - data_comparisons_process
     - apply_model_cox_BNT162b2_1_postest
     - apply_model_cox_BNT162b2_1_covidadmitted
     - apply_model_cox_BNT162b2_1_coviddeath
@@ -2071,6 +2075,7 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - data_comparisons_process
     - apply_model_cox_both_1_postest
     - apply_model_cox_both_1_covidadmitted
     - apply_model_cox_both_1_coviddeath
