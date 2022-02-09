@@ -19,6 +19,9 @@ if(length(args)==0){
 }
 
 ################################################################################
+fs::dir_create(here::here("output", "models_cox", "images"))
+
+################################################################################
 # read outcomes
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds"))
