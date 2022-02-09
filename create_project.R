@@ -178,7 +178,9 @@ plot_fun <- function(
                          ), recursive = FALSE)
                      ), recursive = FALSE))),
       moderately_sensitive = list(
-        plot = glue("output/models_cox/images/hr_anytest_{plot}_*.png"))
+        plot_anytest = glue("output/models_cox/images/hr_anytest_{plot}_*.png"),
+        plot_posrate = glue("output/models_cox/images/posrate_{plot}_*.png")
+        )
     ),
     comment(glue("plot other outcomes {plot}")),
     action(

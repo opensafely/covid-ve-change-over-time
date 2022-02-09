@@ -1921,7 +1921,8 @@ actions:
     - apply_model_cox_BNT162b2_4_anytest
     outputs:
       moderately_sensitive:
-        plot: output/models_cox/images/hr_anytest_BNT162b2_*.png
+        plot_anytest: output/models_cox/images/hr_anytest_BNT162b2_*.png
+        plot_posrate: output/models_cox/images/posrate_BNT162b2_*.png
 
   ## plot other outcomes BNT162b2 
 
@@ -1961,7 +1962,8 @@ actions:
     - apply_model_cox_ChAdOx_4_anytest
     outputs:
       moderately_sensitive:
-        plot: output/models_cox/images/hr_anytest_ChAdOx_*.png
+        plot_anytest: output/models_cox/images/hr_anytest_ChAdOx_*.png
+        plot_posrate: output/models_cox/images/posrate_ChAdOx_*.png
 
   ## plot other outcomes ChAdOx 
 
@@ -2001,7 +2003,8 @@ actions:
     - apply_model_cox_ChAdOx_4_anytest
     outputs:
       moderately_sensitive:
-        plot: output/models_cox/images/hr_anytest_BNT162b2andChAdOx_*.png
+        plot_anytest: output/models_cox/images/hr_anytest_BNT162b2andChAdOx_*.png
+        plot_posrate: output/models_cox/images/posrate_BNT162b2andChAdOx_*.png
 
   ## plot other outcomes BNT162b2andChAdOx 
 
@@ -2050,7 +2053,8 @@ actions:
     - apply_model_cox_both_4_anytest
     outputs:
       moderately_sensitive:
-        plot: output/models_cox/images/hr_anytest_BNT162b2vsChAdOx_*.png
+        plot_anytest: output/models_cox/images/hr_anytest_BNT162b2vsChAdOx_*.png
+        plot_posrate: output/models_cox/images/posrate_BNT162b2vsChAdOx_*.png
 
   ## plot other outcomes BNT162b2vsChAdOx 
 
