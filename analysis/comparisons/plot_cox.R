@@ -24,9 +24,6 @@ if(length(args)==0){
 
 
 ################################################################################
-
-fs::dir_create(here::here("output", "models_cox", "images"))
-
 # read study parameters
 study_parameters <- readr::read_rds(
   here::here("output", "lib", "study_parameters.rds"))

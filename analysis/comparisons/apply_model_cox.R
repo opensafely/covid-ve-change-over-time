@@ -31,6 +31,7 @@ if(length(args)==0){
 # create directories
 fs::dir_create(here::here("output", "models_cox", "data"))
 fs::dir_create(here::here("output", "models_cox", "tables"))
+fs::dir_create(here::here("output", "models_cox", "images"))
 
 ################################################################################
 # read subgroups
