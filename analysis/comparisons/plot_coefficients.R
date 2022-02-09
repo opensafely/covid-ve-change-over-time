@@ -1,0 +1,115 @@
+################################################################################
+
+# This script:
+
+
+################################################################################
+library(tidyverse)
+library(glue)
+
+## import command-line arguments ----
+args <- commandArgs(trailingOnly=TRUE)
+
+if(length(args)==0){
+  # use for interactive testing
+  comparison <- "BNT162b2"
+  
+} else{
+  comparison <- args[[1]]
+}
+
+################################################################################
+# read outcomes
+outcomes <- readr::read_rds(
+  here::here("output", "lib", "outcomes.rds"))
+
+# read subgroups
+subgroups <- readr::read_rds(
+  here::here("output", "lib", "subgroups.rds"))
+subgroup_labels <- seq_along(subgroups)
+if (comparison != "BNT162b2") {
+  subgroup_labels <- subgroup_labels[subgroups != "18-39 years"]
+}
+
+################################################################################
+for (i in subgroup_labels) {
+  
+  title_string <- glue("Subgroup: {subgroups[i]}")
+  
+  if (comparison %in% "BNT162b2" & i %in% 2) {
+    plot_outcomes <- outcomes[outcomes != "coviddeath"]
+  } else {
+    plot_outcomes <- outcomes
+  }
+  
+  
+  # read summary data
+  modelcox_summary <- lapply(
+    unname(plot_outcomes),
+    function(x)
+      readr::read_rds(
+        here::here("output", "models_cox", "data", glue("modelcox_summary_{comparison}_{i}_{x}.rds"))
+      ) %>% 
+      mutate(outcome = x)
+  )
+  
+  # create plot data
+  plot_data <- bind_rows(
+    modelcox_summary
+  ) %>% 
+    filter(!str_detect(term, "^comparison")) %>%
+    mutate(
+      var_group = factor(case_when(
+        str_detect(term, "^age") ~ "demographic",
+        str_detect(term, "^imd") ~ "demographic",
+        str_detect(term, "^sex") ~ "demographic",
+        str_detect(term, "^ethnicity") ~ "demographic",
+        TRUE ~ "clinical"
+      ),
+      levels = c("demographic", "clinical"))) %>%
+    mutate(across(outcome, factor, levels = unname(outcomes), labels = str_wrap(names(outcomes),18))) %>%
+    arrange(var_group, term) 
+  
+  # define order of variables for plot
+  order <- plot_data %>%
+    distinct(var_group, term) %>%
+    mutate(
+      short_term = term,
+      order = row_number()
+    ) %>%
+    mutate(across(short_term, ~str_remove(.x, " least deprived"))) %>%
+    mutate(across(short_term, ~str_remove(.x, "ethnicity"))) %>%
+    mutate(across(short_term, ~str_remove(.x, "bmi"))) %>%
+    mutate(across(short_term, ~str_remove(.x, "TRUE"))) %>%
+    mutate(across(short_term, ~str_trunc(.x, width = 15, side = "center"))) 
+  
+  # plot
+  order %>%
+    left_join(plot_data, by = c("term", "var_group")) %>%
+    ggplot(aes(x = reorder(term,-order), y = estimate, colour = var_group)) +
+    geom_hline(yintercept = 1, colour = "grey") +
+    geom_point() +
+    geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
+    facet_wrap(~ outcome, nrow=1) +
+    scale_x_discrete(breaks = order$term, labels = order$short_term) +
+    scale_y_log10(
+      name = "hazard ratio",
+      breaks = c(0.1, 1, 10),
+      labels = c("0.1", "1", "10"),
+      limits = c(0.1, 10),
+      oob = scales::oob_keep
+    ) +
+    scale_color_discrete(guide = "none") +
+    labs(
+      subtitle = title_string,
+      x = NULL
+      ) +
+    coord_flip() +
+    theme_bw() +
+    theme(
+      axis.text.x = element_text(angle = 45)
+    )
+  ggsave(filename = here::here("output", "models_cox", "images", glue("coefs_{comparison}_{i}.png")),
+         width=20, height=15, units="cm")
+  
+}
