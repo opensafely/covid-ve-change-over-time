@@ -15,7 +15,7 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   comparison <- "ChAdOx"
-  subgroup_label <- 1
+  subgroup_label <- 3
   outcome <- "noncoviddeath"
   
 } else{
@@ -388,15 +388,29 @@ if (total_events > 0) {
     
     for (i in seq_along(data_4_list)) {
       
-      data_4_list[[i]] <- data_4_list[[i]] %>%
-        mutate(!! sym(glue("age_{i}")) := age) %>%
-        select(-age)
+      g <- unique(data_4_list[[i]]$jcvi_group)
+      j <- unique(data_4_list[[i]]$elig_date)
       
-      # add an age^2 term for jcvi group 2 (80+)
-      if (unique(data_4_list[[i]]$jcvi_group) == "02") {
+      if (g == "07" && j == as.Date("2021-03-01")) {
         
         data_4_list[[i]] <- data_4_list[[i]] %>%
-          mutate(!! sym(glue("age_{i}_squared")) := !! sym(glue("age_{i}")) * !! sym(glue("age_{i}")))
+          select(-age)
+        
+      } else {
+        
+        data_4_list[[i]] <- data_4_list[[i]] %>%
+          mutate(!! sym(glue("age_{i}")) := age) %>%
+          select(-age)
+        
+      }
+      
+      # add an age^2 term for jcvi group 2 (80+)
+      if (g == "02") {
+        
+        data_4_list[[i]] <- data_4_list[[i]] %>%
+          mutate(
+            !! sym(glue("age_{i}_squared")) := !! sym(glue("age_{i}")) * !! sym(glue("age_{i}"))
+            )
         
       }
       
