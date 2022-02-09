@@ -86,6 +86,9 @@ for (i in subgroup_labels) {
     mutate(across(short_term, ~str_remove(.x, "TRUE"))) %>%
     mutate(across(short_term, ~str_trunc(.x, width = 15, side = "center"))) 
   
+  # y_min <- min(plot_data$lower)
+  # y_max <- max(plot_data$upper)
+  
   # plot
   order %>%
     left_join(plot_data, by = c("term", "var_group")) %>%
@@ -93,13 +96,13 @@ for (i in subgroup_labels) {
     geom_hline(yintercept = 1, colour = "grey") +
     geom_point() +
     geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
-    facet_wrap(~ outcome, nrow=1) +
+    facet_wrap(~ outcome, nrow=1, scales = "free_x") +
     scale_x_discrete(breaks = order$term, labels = order$short_term) +
     scale_y_log10(
       name = "hazard ratio",
-      breaks = c(0.1, 1, 10),
-      labels = c("0.1", "1", "10"),
-      limits = c(0.1, 10),
+      breaks = c(0.1, 0.2, 0.5, 1, 2, 5, 10),
+      labels = c("0.1", "0.2", "0.5", "1", "2", "5", "10"),
+      # limits = c(min(0.1, y_min), max(10, y_max)),
       oob = scales::oob_keep
     ) +
     scale_color_discrete(guide = "none") +
@@ -110,7 +113,8 @@ for (i in subgroup_labels) {
     coord_flip() +
     theme_bw() +
     theme(
-      axis.text.x = element_text(angle = 45)
+      axis.text.x = element_text(angle = 45, size = 8),
+      axis.text.y = element_text(size = 6)
     )
   ggsave(filename = here::here("output", "models_cox", "images", glue("coefs_{comparison}_{i}.png")),
          width=20, height=15, units="cm")
