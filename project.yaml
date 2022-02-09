@@ -1915,6 +1915,7 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - process_tests
     - apply_model_cox_BNT162b2_1_anytest
     - apply_model_cox_BNT162b2_2_anytest
     - apply_model_cox_BNT162b2_3_anytest
@@ -1957,6 +1958,7 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - process_tests
     - apply_model_cox_ChAdOx_1_anytest
     - apply_model_cox_ChAdOx_3_anytest
     - apply_model_cox_ChAdOx_4_anytest
@@ -1995,6 +1997,7 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - process_tests
     - apply_model_cox_BNT162b2_1_anytest
     - apply_model_cox_BNT162b2_3_anytest
     - apply_model_cox_BNT162b2_4_anytest
@@ -2048,6 +2051,7 @@ actions:
     needs:
     - design
     - data_2nd_vax_dates
+    - process_tests
     - apply_model_cox_both_1_anytest
     - apply_model_cox_both_3_anytest
     - apply_model_cox_both_4_anytest
