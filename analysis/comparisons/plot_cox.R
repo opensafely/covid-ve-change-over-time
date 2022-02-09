@@ -47,6 +47,10 @@ subgroups <- readr::read_rds(
 # subgroups <- c(subgroups, "all")
 subgroup_labels_full <- seq_along(subgroups)
 
+# min and max follow-up dates per subgroup
+min_and_max_fu_dates <- readr::read_rds(
+  here::here("output", "lib", glue("min_and_max_fu_dates.rds")))
+
 gg_color_hue <- function(n, transparency = 1) {
   hues = seq(15, 375, length = n + 1)
   hcl(h = hues, l = 65, c = 100, alpha = transparency)[1:n]
@@ -139,6 +143,10 @@ plot_fun <- function(
   
   colour_var <- str_remove(args[lengths > 1], "plot_")
   colour_var_length <- lengths[lengths > 1]
+  
+  # min and max follow_up dates
+  min_and_max_fu_dates_subgroup <- min_and_max_fu_dates %>%
+    filter(subgroup %in% subgroups[plot_subgroup])
   
   # scale for x-axis
   K <- study_parameters$max_comparisons
@@ -267,9 +275,23 @@ plot_fun <- function(
   
   
   
-  plot_res <- expanded_data %>% 
+  plot_data2 <- expanded_data %>% 
     mutate(across(outcome, factor, levels = names(plot_outcomes))) %>%
     left_join(plot_data, by = c("outcome", "k")) %>%
+    mutate(order = k) %>%
+    mutate(across(k, 
+                  factor, 
+                  levels = 1:K,
+                  labels = weeks_since_2nd_vax)) %>%
+    mutate(across(k,
+                  ~ case_when(
+                    outcome %in% names(outcomes[outcomes=="postest"]) &
+                      .x %in% "3-6"
+                    ~ str_c(.x, "\n \nFollow-up from\n", min_and_max_fu_dates_subgroup$min_fu),
+                    outcome %in% names(outcomes[outcomes=="noncoviddeath"]) &
+                      .x %in% "23-26"
+                    ~ str_c(.x, "\n \nLatest follow-up\n", min_and_max_fu_dates_subgroup$max_fu),
+                    TRUE ~ as.character(.x)))) %>%
     mutate(across(model,
                   factor,
                   levels = models,
@@ -279,16 +301,14 @@ plot_fun <- function(
     mutate(across(subgroup,
                   factor,
                   levels = subgroup_labels_full,
-                  labels = sapply(subgroups, str_wrap, width=legend_width))) %>%
-    mutate(across(k, 
-                  factor, 
-                  levels = 1:K,
-                  labels = weeks_since_2nd_vax)) %>%
-    ggplot(aes(x = k, y = estimate, colour = !! sym(colour_var))) +
+                  labels = sapply(subgroups, str_wrap, width=legend_width))) 
+    
+  plot_res <- plot_data2 %>%
+    ggplot(aes(x = reorder(k,order), y = estimate, colour = !! sym(colour_var))) +
     geom_hline(aes(yintercept=1), colour='grey') +
     geom_linerange(aes(ymin = lower, ymax = upper), position = position_dodge(width = position_dodge_val)) +
     geom_point(position = position_dodge(width = position_dodge_val)) +
-    facet_wrap(~outcome, ncol=2)  +
+    facet_wrap(~outcome, ncol=2, scales = "free_x")  +
     scale_y_log10(
       name = y_axis_label,
       breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10),
@@ -313,7 +333,7 @@ plot_fun <- function(
       
       axis.text = element_text(size=8),
       
-      axis.title.x = element_text(size = 10, margin = margin(t = 20, r = 0, b = 0, l = 0)),
+      axis.title.x = element_text(size = 10, margin = margin(t = 0, r = 0, b = 0, l = 0)),
       axis.title.y = element_text(size = 10, margin = margin(t = 0, r = 10, b = 0, l = 0)),
       
       panel.grid.minor.x = element_blank(),
@@ -328,6 +348,8 @@ plot_fun <- function(
       plot.title.position = "plot",
       plot.caption.position = "plot",
       plot.caption = element_text(hjust = 0, face= "italic"),
+      
+      plot.margin = margin(t=10, r=15, b=10, l=10)
       
     ) +
     theme_legend(
