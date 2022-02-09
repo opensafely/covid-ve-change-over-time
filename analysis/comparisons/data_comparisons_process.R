@@ -165,17 +165,32 @@ source(here::here("analysis", "lib", "process_covariates.R"))
 
 ################################################################################
 # generate and save datasets
-
+data_list <- list()
 for (arm in c("unvax", "BNT162b2", "ChAdOx")) {
   
-    data_comparisons <- comparison_arms(arm = arm) %>%
+  data_list[[arm]] <- comparison_arms(arm = arm) %>%
       process_covariates()
     
     readr::write_rds(
-      data_comparisons,
+      data_list[[arm]],
       here::here("output", "comparisons", "data", glue("data_comparisons_{arm}.rds")),
       compress = "gz"
     )
     
 }
 
+################################################################################
+cat("min and max follow-up dates per subgroup")
+min_and_max_fu_dates <- bind_rows(data_list) %>%
+  group_by(subgroup) %>%
+  summarise(min_fu = min(start_fu_date), max_fu = max(end_fu_date)) %>%
+  ungroup() %>%
+  mutate(across(c(min_fu, max_fu),
+                ~ str_c(day(.x), " ", month(.x, label=TRUE), " ", year(.x))))
+
+print(min_and_max_fu_dates)
+
+readr::write_rds(
+  min_and_max_fu_dates,
+  here::here("output", "lib", glue("min_and_max_fu_dates.rds"))
+)
