@@ -8,6 +8,7 @@
 library(tidyverse)
 library(RColorBrewer)
 library(glue)
+library(cowplot)
 
 ## import command-line arguments ----
 args <- commandArgs(trailingOnly=TRUE)
@@ -22,6 +23,8 @@ if(length(args)==0){
   
 }
 
+################################################################################
+fs::dir_create(here::here("output", "models_cox", "images"))
 
 ################################################################################
 # read study parameters
@@ -48,6 +51,54 @@ gg_color_hue <- function(n, transparency = 1) {
 }
 
 ################################################################################
+arm1 <- if_else(plot =="ChAdOx", "ChAdOx", "BNT162b2")
+arm2 <- if_else(plot == "BNT162b2vsChAdOx", "ChAdOx", "unvax")
+arm3 <- if_else(plot == "BNT162b2andChAdOx", "ChAdOx", NA_character_)
+
+data_tests <- readr::read_rds(
+  here::here("output", "data", "data_tests.rds")) %>%
+  select(patient_id, starts_with("pos_rate")) %>% 
+  pivot_longer(
+    cols = -patient_id,
+    names_pattern = "pos_rate_(\\d)",
+    names_to = "comparison",
+    values_drop_na = TRUE
+  ) 
+
+data_comparisons <- local({
+  
+  data_arm1 <-  readr::read_rds(
+    here::here("output", "comparisons", "data", glue("data_comparisons_{arm1}.rds"))) %>%
+    select(patient_id, comparison, arm, subgroup)
+  subgroups_1 <- unique(as.character(data_arm1$subgroup))
+  
+  data_arm2 <-  readr::read_rds(
+    here::here("output", "comparisons", "data", glue("data_comparisons_{arm2}.rds"))) %>%
+    select(patient_id, comparison, arm, subgroup)
+  subgroups_2 <- unique(as.character(data_arm2$subgroup))
+  subgroups <- intersect(subgroups_1, subgroups_2)
+  
+  data <- bind_rows(data_arm1, data_arm2)
+  
+  if (!is.na(arm3)) {
+    data_arm3 <-  readr::read_rds(
+      here::here("output", "comparisons", "data", glue("data_comparisons_{arm3}.rds"))) %>%
+      select(patient_id, comparison, arm, subgroup)
+    subgroups_3 <- unique(as.character(data_arm3$subgroup))
+    subgroups <- intersect(subgroups, subgroups_3)
+    data <- bind_rows(data, data_arm3)
+  }
+  
+  data %>%
+    filter(subgroup %in% subgroups) %>%
+    mutate(across(comparison, as.character))
+  
+})
+
+data_posrate <- data_comparisons %>%
+  inner_join(data_tests, by = c("patient_id", "comparison"))
+
+##############################################################################
 
 if (plot %in% "BNT162b2") {
   subgroup_labels <- subgroup_labels_full
@@ -189,6 +240,7 @@ plot_fun <- function(
     "Stratification variables are: JCVI group, eligibility date for first dose of vaccination, geographical region.",
     "Hazard ratios estimated using a stratified Cox model adjusted for demographic and clinical variables (stratification variables are: JCVI group, eligibility date for first dose of vaccination, geographical region)"
   )
+  x_title <- "weeks since second dose"
   
   subtitle_string <- str_c("Outcome: ", names(plot_outcomes),"\n ")
   
@@ -218,11 +270,9 @@ plot_fun <- function(
         ...
       )
     }
+    ##
  
-  
-  
-  
-  plot_res <- expanded_data %>% 
+  plot_anytest <- expanded_data %>% 
     mutate(across(outcome, factor, levels = names(plot_outcomes))) %>%
     left_join(plot_data, by = c("outcome", "k")) %>%
     mutate(across(model,
@@ -255,7 +305,7 @@ plot_fun <- function(
       values = palette,
       na.translate = F) +
     labs(
-      x = "weeks since second dose",
+      x = x_title,
       colour = NULL,
       title = title_string,
       subtitle = subtitle_string,
@@ -289,15 +339,72 @@ plot_fun <- function(
       legend.title = element_text(size = 10)
     )
   
+  palette_posrate <- gg_color_hue(2, transparency = alpha_unadj)
+  posrate_colours <- c(
+    "BNT162b2" = palette_posrate[1], #red
+    "ChAdOx" = palette_posrate[2], #blue
+    "Unvaccinated" = "#C0C0C0" #grey
+  )
+  plot_data_posrate <- data_posrate %>%
+    mutate(across(comparison, 
+                  factor, 
+                  levels = 1:K,
+                  labels = weeks_since_2nd_vax)) %>%
+    mutate(across(arm, ~if_else(.x%in%"unvax", "Unvaccinated", .x))) 
+  
+  plot_posrate <- plot_data_posrate %>%
+    ggplot(aes(x = comparison, y = value, fill = arm)) +
+    geom_violin(colour = "grey") +
+    facet_wrap(~subgroup, nrow=2) +
+    scale_fill_manual(
+      name = NULL,
+      values = posrate_colours[names(posrate_colours) %in% unique(plot_data_posrate$arm)]
+      ) +
+    labs(
+      title = "SARS-CoV-2 test positivity rate",
+      x = x_title,
+      y = "crude rate*",
+      caption = str_wrap("The crude SARS-CoV-2 test postivity rate was calculated as the total number of positive tests divided by the total number of tests in each comparison period. Individuals were removed from comparison periods during which they took zero tests.", caption_width)) +
+    theme_bw() +
+    theme(
+      panel.border = element_blank(),
+      axis.line.y = element_line(colour = "black"),
+      
+      axis.text = element_text(size=8),
+      
+      axis.title.x = element_text(size = 10, margin = margin(t = 20, r = 0, b = 0, l = 0)),
+      axis.title.y = element_text(size = 10, margin = margin(t = 0, r = 10, b = 0, l = 0)),
+      
+      panel.grid.minor.x = element_blank(),
+      panel.grid.minor.y = element_blank(),
+      strip.background = element_blank(),
+      strip.placement = "outside",
+      strip.text.y.left = element_text(angle = 0),
+      
+      panel.spacing = unit(0.8, "lines"),
+      
+      plot.title = element_text(hjust = 0, size = 11),
+      plot.title.position = "plot",
+      plot.caption.position = "plot",
+      plot.caption = element_text(hjust = 0, face= "italic"),
+      
+    ) +
+    theme_legend(
+      legend.title = element_text(size = 10)
+    )
+  
+  
   ic <- str_c(plot_subgroup, collapse = "")
   jc <- str_c(plot_model, collapse = "")
   
-  # save the plot
-  ggsave(plot = plot_res,
+  # save the plots
+  ggsave(plot = plot_anytest,
          filename = here::here("output", "models_cox", "images", glue("hr_anytest_{plot}_{ic}_{jc}.png")),
          width=plot_width, height=plot_height, units="cm")
   
-  return(plot_res)
+  ggsave(plot = plot_posrate,
+         filename = here::here("output", "models_cox", "images", glue("posrate_{plot}_{ic}_{jc}.png")),
+         width=plot_width, height=plot_height, units="cm")
   
 }
 
