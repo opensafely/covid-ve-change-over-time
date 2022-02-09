@@ -195,8 +195,7 @@ plot_fun <- function(
                            function(y) {
                              
                              if (
-                               (x %in% "BNT162b2" & y %in% 2) |
-                               (x %in% "both" & y %in% 3)
+                               (x %in% "BNT162b2" & y %in% 2) 
                              ) {
                                plot_outcomes <- outcomes_model[outcomes_model != "coviddeath"]
                              } else {
@@ -219,6 +218,55 @@ plot_fun <- function(
   
   
 }
+
+coef_plot_fun <- function(
+  comparison
+) {
+  
+  if (comparison %in% "BNT162b2") {
+    subgroup_labels_plot <- subgroup_labels
+  } else {
+    subgroup_labels_plot <- subgroup_labels[subgroups != "18-39 years"]
+  }
+  
+  
+  splice(
+    
+    comment(glue("plot coefficients for {comparison}")),
+    action(
+      name = glue("plot_coefs_{comparison}"),
+      run = "r:latest analysis/comparisons/plot_coefficients.R",
+      arguments = comparison,
+      needs = splice("design",
+                     as.list(unlist(lapply(
+                           subgroup_labels_plot,
+                           function(y) {
+                             
+                             if (
+                               (comparison %in% "BNT162b2" & y %in% 2) 
+                             ) {
+                               plot_outcomes <- outcomes_model[outcomes_model != "coviddeath"]
+                             } else {
+                               plot_outcomes <- outcomes_model
+                             }
+                             
+                             unlist(lapply(
+                               plot_outcomes,
+                               function(z)
+                                 glue("apply_model_cox_{comparison}_{y}_{z}")
+                             ), recursive = FALSE)
+                           }
+                         ), recursive = FALSE)
+                     )),
+      moderately_sensitive = list(
+        plot = glue("output/models_cox/images/coefs_{comparison}_*.png"))
+    )
+    
+  )
+  
+  
+}
+
     
 # specify project ----
 
@@ -524,7 +572,17 @@ actions_list <- splice(
     unlist(lapply(plots,
                   function(p)
                     plot_fun(plot = p)
-                  ), recursive = FALSE))#,
+                  ), recursive = FALSE)),
+  
+  splice(
+    unlist(lapply(comparisons,
+                  function(x)
+                    coef_plot_fun(comparison = x)
+    ), recursive = FALSE))#,
+  
+  
+  
+  
   # 
   # comment("combine all incidence tables"),
   # action(
