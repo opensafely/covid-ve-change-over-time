@@ -14,8 +14,8 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  comparison <- "ChAdOx"
-  subgroup_label <- 3
+  comparison <- "BNT162b2"
+  subgroup_label <- 1
   outcome <- "noncoviddeath"
   
 } else{
@@ -45,7 +45,6 @@ model_varlist <- readr::read_rds(
   here::here("output", "lib", "model_varlist.rds")
 )
 vars <- unname(unlist(model_varlist))
-# vars <- vars[vars!="age"]
 
 ################################################################################
 # read functions
@@ -71,14 +70,28 @@ data_0 <- readr::read_rds(
   mutate(strata_var = factor(str_c(jcvi_group, elig_date, region, sep = ", "))) %>%
   droplevels()
 
-################################################################################
-# tabulate events per level
+# keep only comparisons with > 10 events
+events_per_comparison <- data_0 %>%
+  group_by(comparison) %>%
+  summarise(events = sum(status), .groups="keep") %>%
+  ungroup() %>%
+  mutate(keep = events > 10)
 
-# check there are > 0 events
-total_events <- data_0 %>% filter(status) %>% nrow()
+keep_comparisons <- as.integer(events_per_comparison$comparison[events_per_comparison$keep])
+drop_comparisons <- as.integer(events_per_comparison$comparison[!events_per_comparison$keep])
 
-if (total_events > 0) {
+data_1 <- data_0 %>%
+  filter(comparison %in% keep_comparisons) %>%
+  droplevels()
+
+# do not run if all comparisons dropped
+if (nrow(data_1) > 0) {
   
+  # only keep categorical covariates with > 20 events per level
+  events_threshold <- 20
+  
+  ################################################################################
+  # tabulate events per level
   cat("...split data by comparison and status...\n")
   tbl_list <- data_0 %>%
     select(comparison, status, all_of(vars)) %>%
@@ -166,24 +179,6 @@ if (total_events > 0) {
       filename = glue("eventcheck_{comparison}_{subgroup_label}_{outcome}_REDACTED.html"),
       path = here::here("output", "preflight", "tables")
     )
-  
-  ################################################################################
-  # remove comparisons with <= 10 events
-  events_threshold <- 20
-  
-  # check events per comparison
-  events_per_comparison <- data_0 %>%
-    group_by(comparison) %>%
-    summarise(events = sum(status), .groups="keep") %>%
-    ungroup() %>%
-    mutate(keep = events > events_threshold)
-  
-  keep_comparisons <- as.integer(events_per_comparison$comparison[events_per_comparison$keep])
-  drop_comparisons <- as.integer(events_per_comparison$comparison[!events_per_comparison$keep])
-  
-  data_1 <- data_0 %>%
-    filter(comparison %in% keep_comparisons) %>%
-    droplevels()
   
   ################################################################################
   # check levels per covariate
@@ -352,9 +347,18 @@ if (total_events > 0) {
   
   drop_merged_var <- drop_merged_var[!is.na(drop_merged_var)]
   
-  data_3 <- data_2 %>%
-    select(-all_of(c(drop_vars$variable, drop_merged_var))) %>%
-    droplevels()
+  if (is_empty(drop_vars$variable) && is_empty(drop_merged_var)) {
+    
+    data_3 <- data_2 %>%
+      droplevels()
+    
+  } else {
+    
+    data_3 <- data_2 %>%
+      select(-all_of(c(drop_vars$variable, drop_merged_var))) %>%
+      droplevels()
+    
+  }
   
   ################################################################################
   # create comparison dummy variables
@@ -526,7 +530,7 @@ if (total_events > 0) {
   )
   
   readr::write_rds(
-    tibble(),
+    NULL,
     here::here("output", "preflight", "data", glue("model_input_{comparison}_{subgroup_label}_{outcome}.rds"))
   )
   
