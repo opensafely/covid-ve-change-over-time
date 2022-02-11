@@ -138,20 +138,23 @@ data_tests_2 <- data_tests_1 %>%
   select(-elig_date)
 
 data_tests_3 <- data_tests_2 %>%
-  left_join(data_eligible_e %>% 
-              select(patient_id, arm), by = "patient_id") 
-for (k in 1:study_parameters$max_comparisons) {
-  
-  positive_test_k_n <- glue("positive_test_{k}_n")
-  any_test_k_n <- glue("any_test_{k}_n")
-  pos_rate_k <- glue("pos_rate_{k}")
-  
-  data_tests_3 <- data_tests_3 %>%
-    mutate(!! sym(pos_rate_k) := !! sym(positive_test_k_n)/!! sym(any_test_k_n)) %>%
-    mutate(across(!! sym(pos_rate_k), ~ if_else(is.nan(.), NA_real_, .x))) %>%
-    select(-matches(c(positive_test_k_n, any_test_k_n)))
-  
-}
+  select(-matches("\\w+_test_\\d_n"))
+
+# data_tests_3 <- data_tests_2 %>%
+#   left_join(data_eligible_e %>% 
+#               select(patient_id, arm), by = "patient_id") 
+# for (k in 1:study_parameters$max_comparisons) {
+#   
+#   positive_test_k_n <- glue("positive_test_{k}_n")
+#   any_test_k_n <- glue("any_test_{k}_n")
+#   pos_rate_k <- glue("pos_rate_{k}")
+#   
+#   data_tests_3 <- data_tests_3 %>%
+#     mutate(!! sym(pos_rate_k) := !! sym(positive_test_k_n)/!! sym(any_test_k_n)) %>%
+#     mutate(across(!! sym(pos_rate_k), ~ if_else(is.nan(.), NA_real_, .x))) %>%
+#     select(-matches(c(positive_test_k_n, any_test_k_n)))
+#   
+# }
 
 cat("--- save data_tests.rds ----")
 readr::write_rds(
@@ -161,26 +164,26 @@ readr::write_rds(
 )
 
 ################################################################################
-cat("--- check distribution of pos_rate")
-dodge <- 0.5
-data_tests_3 %>%
-  select(patient_id, starts_with("pos_rate")) %>%
-  pivot_longer(cols = -patient_id,
-               names_pattern = "pos_rate_(\\d)",
-               values_drop_na = TRUE) %>%
-  left_join(data_eligible_e, by = "patient_id") %>%
-  group_by(name, arm) %>%
-  summarise(mean = mean(value), se = sd(value)/sqrt(n()), .groups = "keep")  %>%
-  ungroup() %>%
-  mutate(lower = mean - qnorm(0.975)*se,
-         upper = mean + qnorm(0.975)*se) %>%
-  ggplot(aes(x = name, colour = arm)) +
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2, position = position_dodge(width=dodge)) +
-  geom_point(aes(y = mean), position = position_dodge(width=dodge)) +
-  labs(x = "comparison", y = "mean positivity rate (confidence interval)")
-ggsave(
-  filename = here::here("output", "tests", "images", "pos_rate_distribution.png"),
-  width=15, height=10, units="cm")
+# cat("--- check distribution of pos_rate")
+# dodge <- 0.5
+# data_tests_3 %>%
+#   select(patient_id, starts_with("pos_rate")) %>%
+#   pivot_longer(cols = -patient_id,
+#                names_pattern = "pos_rate_(\\d)",
+#                values_drop_na = TRUE) %>%
+#   left_join(data_eligible_e, by = "patient_id") %>%
+#   group_by(name, arm) %>%
+#   summarise(mean = mean(value), se = sd(value)/sqrt(n()), .groups = "keep")  %>%
+#   ungroup() %>%
+#   mutate(lower = mean - qnorm(0.975)*se,
+#          upper = mean + qnorm(0.975)*se) %>%
+#   ggplot(aes(x = name, colour = arm)) +
+#   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2, position = position_dodge(width=dodge)) +
+#   geom_point(aes(y = mean), position = position_dodge(width=dodge)) +
+#   labs(x = "comparison", y = "mean positivity rate (confidence interval)")
+# ggsave(
+#   filename = here::here("output", "tests", "images", "pos_rate_distribution.png"),
+#   width=15, height=10, units="cm")
 
 
 
