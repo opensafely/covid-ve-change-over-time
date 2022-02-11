@@ -2007,7 +2007,6 @@ actions:
     - apply_model_cox_BNT162b2_3_anytest
     - apply_model_cox_BNT162b2_4_anytest
     - apply_model_cox_ChAdOx_1_anytest
-    - apply_model_cox_ChAdOx_2_anytest
     - apply_model_cox_ChAdOx_3_anytest
     - apply_model_cox_ChAdOx_4_anytest
     outputs:
@@ -2041,10 +2040,6 @@ actions:
     - apply_model_cox_ChAdOx_1_covidadmitted
     - apply_model_cox_ChAdOx_1_coviddeath
     - apply_model_cox_ChAdOx_1_noncoviddeath
-    - apply_model_cox_ChAdOx_2_postest
-    - apply_model_cox_ChAdOx_2_covidadmitted
-    - apply_model_cox_ChAdOx_2_coviddeath
-    - apply_model_cox_ChAdOx_2_noncoviddeath
     - apply_model_cox_ChAdOx_3_postest
     - apply_model_cox_ChAdOx_3_covidadmitted
     - apply_model_cox_ChAdOx_3_coviddeath

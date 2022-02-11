@@ -150,14 +150,6 @@ plot_fun <- function(
     xs <- "both"
   }
   
-  if (plot %in% c("ChAdOx", "BNT162b2vsChAdOx")) {
-    ys <- subgroup_labels[-which(subgroups == "18-39 years")]
-  } else {
-    ys <- subgroup_labels
-  }
-  
-  
-  
   splice(
     comment(glue("plot anytest {plot}")),
     action(
@@ -171,6 +163,12 @@ plot_fun <- function(
                      as.list(unlist(lapply(
                        xs,
                        function(x)
+                         {
+                         if (x %in% c("ChAdOx", "both")) {
+                           ys <- subgroup_labels[subgroups != "18-39 years"]
+                         } else {
+                           ys <- subgroup_labels
+                         }
                          unlist(lapply(
                            ys,
                            function(y)
@@ -180,6 +178,7 @@ plot_fun <- function(
                                  glue("apply_model_cox_{x}_{y}_{z}")
                              ), recursive = FALSE)
                          ), recursive = FALSE)
+                         }
                      ), recursive = FALSE))),
       moderately_sensitive = list(
         plot_anytest = glue("output/models_cox/images/hr_anytest_{plot}_*.png")
@@ -196,6 +195,12 @@ plot_fun <- function(
                      as.list(unlist(lapply(
                        xs,
                        function(x)
+                         {
+                         if (x %in% c("ChAdOx", "both")) {
+                           ys <- subgroup_labels[subgroups != "18-39 years"]
+                         } else {
+                           ys <- subgroup_labels
+                         }
                          unlist(lapply(
                            ys,
                            function(y) {
@@ -215,6 +220,7 @@ plot_fun <- function(
                              ), recursive = FALSE)
                            }
                          ), recursive = FALSE)
+                         }
                      ), recursive = FALSE))),
       moderately_sensitive = list(
         plot = glue("output/models_cox/images/hr_{plot}_*.png"))
