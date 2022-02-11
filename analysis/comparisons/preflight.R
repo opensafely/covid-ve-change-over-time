@@ -169,7 +169,7 @@ if (total_events > 0) {
   
   ################################################################################
   # remove comparisons with <= 10 events
-  events_threshold <- 10
+  events_threshold <- 20
   
   # check events per comparison
   events_per_comparison <- data_0 %>%
@@ -228,7 +228,7 @@ if (total_events > 0) {
   
   
   # merge levels for ordinal variables with > 2 levels, in which some levels have low numbers
-  merge_levs_fun <- function(data, threshold=10) {
+  merge_levs_fun <- function(data, threshold) {
     
     # flag n that are less than threshold
     data <- data %>% mutate(keep = n > threshold)
@@ -310,7 +310,7 @@ if (total_events > 0) {
   
   # apply the merge function
   new_level_key <- oridinal_var_list %>%
-    map(~merge_levs_fun(., threshold = 10)) 
+    map(~merge_levs_fun(., threshold = events_threshold)) 
   
   # use the new merged levels to re-code the variables in the original data
   data_2 <- data_1
