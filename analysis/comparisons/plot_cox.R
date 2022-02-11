@@ -14,7 +14,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  plot <- "BNT162b2" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
+  plot <- "BNT162b2andChAdOx" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
   
 } else {
    
@@ -45,7 +45,7 @@ plot_outcomes <- outcomes[outcomes_order]
 subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
 # subgroups <- c(subgroups, "all")
-subgroup_labels_full <- seq_along(subgroups)
+subgroup_labels <- seq_along(subgroups)
 
 # min and max follow-up dates per subgroup
 min_and_max_fu_dates <- readr::read_rds(
@@ -57,13 +57,6 @@ gg_color_hue <- function(n, transparency = 1) {
 }
 
 ################################################################################
-
-if (plot %in% "BNT162b2") {
-  subgroup_labels <- subgroup_labels_full
-} else {
-  subgroup_labels <- subgroup_labels_full[-which(subgroups == "18-39 years")]
-}
-
 if (plot == "BNT162b2andChAdOx") {
   comparisons <- c("BNT162b2", "ChAdOx")
 } else if (plot == "BNT162b2vsChAdOx") {
@@ -300,7 +293,7 @@ plot_fun <- function(
                                   str_wrap, width=legend_width))) %>%
     mutate(across(subgroup,
                   factor,
-                  levels = subgroup_labels_full,
+                  levels = subgroup_labels,
                   labels = sapply(subgroups, str_wrap, width=legend_width))) 
     
   plot_res <- plot_data2 %>%
@@ -372,15 +365,11 @@ plot_fun <- function(
 
 plot_subgroups <- as.list(subgroup_labels)
 
-if (plot %in% c("BNT162b2", "ChAdOx", "BNT162b2vsChAdOx")) {
-  plot_subgroups <- splice(
-    plot_subgroups#,c(1:4)
-  )
-}
-
-for (i in seq_along(plot_subgroups)) {
+for (i in plot_subgroups) {
   
-  if (length(plot_subgroups[[i]])==1 && plot %in% c("BNT162b2", "ChAdOx", "BNT162b2vsChAdOx")) {
+  if (subgroups[i] == "18-39 years" & plot %in% c("ChAdOx", "BNT162b2vsChAdOx")) next
+  
+  if (plot %in% c("BNT162b2", "ChAdOx", "BNT162b2vsChAdOx")) {
     j <- c("0", "2")
   } else {
     j <- "2"
