@@ -453,12 +453,12 @@ actions_list <- splice(
       data_tests = "output/data/data_tests.rds",
       data_pregnancy = "output/data/data_pregnancy.rds",
       data_age = "output/data/data_age.rds"
-    ),
-    moderately_sensitive = list(
-      # covariate_distribution = "output/tests/images/covariate_distribution.png",
-      pos_rate_distribution = "output/tests/images/pos_rate_distribution.png"#,
-      # data_tests_tabulate = "output/tests/tables/data_tests_tabulate.txt"
-    )
+    )#,
+    # moderately_sensitive = list(
+    #   # covariate_distribution = "output/tests/images/covariate_distribution.png",
+    #   pos_rate_distribution = "output/tests/images/pos_rate_distribution.png"#,
+    #   # data_tests_tabulate = "output/tests/tables/data_tests_tabulate.txt"
+    # )
   ),
   
   comment("####################################",
