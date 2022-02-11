@@ -88,7 +88,7 @@ data_1 <- data_0 %>%
 if (nrow(data_1) > 0) {
   
   # only keep categorical covariates with > 20 events per level
-  events_threshold <- 20
+  events_threshold <- 2
   
   ################################################################################
   # tabulate events per level
@@ -190,31 +190,77 @@ if (nrow(data_1) > 0) {
     function(x) length(levels(x))
   )
   
-  # calculate events per level
-  events_per_level <- data_1 %>%
-    filter(status) %>%
-    select(all_of(vars)) %>%
-    select(-age) %>%
-    map(function(x) {
-      tab <- table(x)
-      tibble(level = names(tab), 
-             n = as.vector(tab))
-    }) %>%
-    bind_rows(.id="variable") %>%
-    mutate(keep = n > events_threshold) %>%
-    group_by(variable) %>%
-    mutate(
-      n_levels = n(),
-      n_keep = sum(keep)
-    ) %>%
-    ungroup()
+  # calculate events per level during each comparison period
+  data_1_list <- data_1 %>% 
+    arrange(comparison) %>%
+    group_split(comparison) %>%
+    as.list()
   
-  drop_vars <- events_per_level %>%
-    filter(
-      # remove if one level or binary and one level with too few events
-      n_levels ==1 | (n_levels == 2  & n_keep == 1) 
-    ) %>% 
-    distinct(variable)
+  events_per_level_list <- list()
+  for (i in seq_along(data_1_list)) {
+    
+    events_per_level_list[[i]] <- data_1_list[[i]] %>%
+      filter(status) %>%
+      select(all_of(vars)) %>%
+      select(-age) %>%
+      map(function(x) {
+        tab <- table(x)
+        tibble(level = names(tab), 
+               n = as.vector(tab))
+      }) %>%
+      bind_rows(.id="variable") %>%
+      mutate(keep = n > events_threshold) %>%
+      group_by(variable) %>%
+      mutate(
+        n_levels = n(),
+        n_keep = sum(keep)
+      ) %>%
+      ungroup() #%>%
+      # rename_with(~str_c(.x, "_", i), .cols = c(n, keep, n_levels, n_keep))
+    
+  }
+  
+  # drop_vars <- events_per_level %>%
+  #   mutate(across(matches("^n_\\d$"), ~if_else(is.na(.x), 0L, .x))) %>%
+  #   mutate(across(matches("^keep_\\d$"), ~if_else(is.na(.x), FALSE, .x))) %>%
+  #   group_by(variable) %>%
+  #   mutate(across(matches(c("^n_levels_\\d$", "^n_keep_\\d$")), mean, na.rm=TRUE)) %>%
+  #   arrange(variable, level) %>%
+  #   # if for any comparison period (n_levels == 1 | (n_levels == 2  & n_keep == 1)) 
+  #   filter_at()
+  #   
+  #   filter_at()
+  #   filter(
+  #     # remove if one level or binary and one level with too few events
+  #     n_levels ==1 | (n_levels == 2  & n_keep == 1) 
+  #   ) %>% 
+  #   distinct(variable)
+  
+  drop_vars_list <- list()
+  for (i in seq_along(data_1_list)) {
+    
+    drop_vars_list[[i]] <- events_per_level_list[[i]] %>%
+      filter(
+        # remove if one level or binary and one level with too few events
+        # would be one level only if other levels dropped previously with droplevels
+        n_levels ==1 | (n_levels == 2  & n_keep == 1) 
+      ) %>% 
+      distinct(variable)
+    
+  }
+  drop_vars <- bind_rows(drop_vars_list) %>% distinct()
+  
+  for (i in seq_along(data_1_list)) {
+
+    if (i==1) {
+      events_per_level <- events_per_level_list[[i]]
+    } else {
+      events_per_level <- events_per_level %>%
+        full_join(events_per_level_list[[i]],
+                  by = c("variable", "level"))
+    }
+
+  }
   
   # for ordinal variables, try combining levels 
   oridinal_var_list <- events_per_level %>%
