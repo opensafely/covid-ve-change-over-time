@@ -89,13 +89,13 @@ cox_model <- function(
   
   model_name <- model_names[number]
   
-  # opt_control <- coxph.control(iter.max = 30)
-  if (filename_prefix %in% c("ChAdOx_3_noncoviddeath", "ChAdOx_3_death")) {
-    # because adjusted model failing despite no issues with low event counts
-    opt_control <- coxph.control(iter.max = 50)
-  } else {
-    opt_control <- coxph.control(iter.max = 30)
-  }
+  opt_control <- coxph.control(iter.max = 30)
+  # if (filename_prefix %in% c("ChAdOx_3_noncoviddeath", "ChAdOx_3_death")) {
+  #   # because adjusted model failing despite no issues with low event counts
+  #   opt_control <- coxph.control(iter.max = 50)
+  # } else {
+  #   opt_control <- coxph.control(iter.max = 30)
+  # }
   
   cat(glue("...... fitting model {number} ......"), "\n")
   cat(glue("{model_name}"), "\n")
