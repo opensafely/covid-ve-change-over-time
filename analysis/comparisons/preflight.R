@@ -87,7 +87,7 @@ data_1 <- data_0 %>%
 # do not run if all comparisons dropped
 if (nrow(data_1) > 0) {
   
-  # only keep categorical covariates with > 20 events per level
+  # only keep categorical covariates with > 2 events per level per arm
   events_threshold <- 2
   
   ################################################################################
@@ -215,9 +215,7 @@ if (nrow(data_1) > 0) {
         n_levels = n(),
         n_keep = sum(keep)
       ) %>%
-      ungroup() #%>%
-      # rename_with(~str_c(.x, "_", i), .cols = c(n, keep, n_levels, n_keep))
-    
+      ungroup() 
   }
   
   drop_vars_list <- list()
@@ -432,6 +430,11 @@ if (nrow(data_1) > 0) {
                cat(str_c(levs[[x]], collapse = "\n")) 
                cat("\n")
            })
+    ####
+    cat("\n")
+    cat("---\n")
+    cat(glue("Formulas:"), "\n")
+    print(formulas_list)
   }
   
   capture.output(
