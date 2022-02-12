@@ -119,8 +119,9 @@ if (is.null(model_input)) {
       coxmod <- coxph(
         formula = formula_cox,
         data = data_cox,
-        robust = TRUE,
-        id = patient_id,
+        # robust = TRUE,
+        # id = patient_id,
+        cluster = patient_id,
         na.action = "na.fail",
         control = opt_control)
     ))
