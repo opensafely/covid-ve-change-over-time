@@ -323,7 +323,7 @@ if (nrow(data_1) > 0) {
       group_split(jcvi_group, elig_date) %>%
       as.list()
     
-    for (i in seq_along(data_4_list)) {
+    for (i in seq_along(data_3_list)) {
       
       g <- unique(data_3_list[[i]]$jcvi_group)
       j <- unique(data_3_list[[i]]$elig_date)
