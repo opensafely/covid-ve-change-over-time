@@ -199,14 +199,6 @@ study=StudyDefinition(
         },
     ),
 
-    ###############################################
-    ### VARIABLES FROM study_definition_covs.py ###
-    ###############################################
-
-    # as IMD and region are all defined on a given date, these can only be updated at elig_date + 8 weeks... 
-    # this is the ealiest possible date for start_1 as:
-    # elig_date + 6 weeks is earliest possible 2nd vax date, + 2 weeks for start of comparison 1
-
     #############################
     ### DEMOGRAPHIC VARIABLES ###
     #############################
@@ -261,8 +253,17 @@ study=StudyDefinition(
     # # ##########################
     # # ### CLINICAL VARIABLES ###
     # # ##########################
-
+    # PRIMIS definitions
     # "ever" variables only, others defined in study_definition_tests
+
+    # asthma diagnosis code
+    astdx=patients.with_these_clinical_events(
+        ast_primis,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        on_or_before=f"elig_date + {112 + 14 + (max_comparisons + 1)*28} days",
+        find_first_match_in_period=True,
+    ),
 
     # chronic heart disease
     chd_date=patients.with_these_clinical_events(
@@ -273,47 +274,15 @@ study=StudyDefinition(
         find_first_match_in_period=True,
     ),
    
-    # heart failure
-     heart_failure_date=patients.with_these_clinical_events(
-        heart_failure_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before=f"elig_date + {112 + 14 + (max_comparisons + 1)*28} days",
-        find_first_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-    
-    # other heart disease
-    other_heart_disease_date=patients.with_these_clinical_events(
-        other_heart_disease_codes,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before=f"elig_date + {112 + 14 + (max_comparisons + 1)*28} days",
-        find_first_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
-   
-    # diabetes
+
+    # diabetes (ever)
     diabetes_date=patients.with_these_clinical_events(
-        diabetes_codes,
+        diab_primis,
         returning="date",
         date_format="YYYY-MM-DD",
         on_or_before=f"elig_date + {112 + 14 + (max_comparisons + 1)*28} days",
         find_first_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
+        ),
    
     # dialysis
     dialysis_date=patients.with_these_clinical_events(
