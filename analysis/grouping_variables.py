@@ -29,13 +29,6 @@ elig_dates = pd.read_csv(
 dict_elig = { elig_dates['date'][i] : elig_dates['description'][i] for i in elig_dates.index }
 ratio_elig = { elig_dates['date'][i] : 1/len(elig_dates.index) for i in elig_dates.index }
 
-# regions
-regions = pd.read_csv(
-    filepath_or_buffer='./output/lib/regions.csv',
-    dtype=str
-)
-ratio_regions = { regions['region'][i] : float(regions['ratio'][i]) for i in regions.index }
-
 #study_parameters
 with open("./output/lib/study_parameters.json") as f:
   study_parameters = json.load(f)
@@ -140,11 +133,11 @@ jcvi_variables = dict(
       astadm OR
       (ast AND astrxm1 AND astrxm2 AND astrxm3)
       """,
-    # Asthma Admission codes
+    # Asthma Admission codes in past 24 months
     astadm=patients.with_these_clinical_events(
-      astadm,
+      astadm_primis,
       returning="binary_flag",
-      on_or_before=days(ref_ar, -1),
+      between=[days(ref_ar, -2*365), days(ref_ar, -1)],
     ),
     # Asthma Diagnosis code
     ast = patients.with_these_clinical_events(
@@ -362,28 +355,28 @@ jcvi_variables = dict(
         return_expectations={"incidence": 0.01},
     ),
 
-    preg_group=patients.satisfying(
-        """
-        (preg_36wks_date AND sex = 'F' AND age_1 < 50) AND
-        (pregdel_pre_date <= preg_36wks_date OR NOT pregdel_pre_date)
-        """,
-        # date of last pregnancy code in 36 weeks before ref_cev
-        preg_36wks_date=patients.with_these_clinical_events(
-            preg_primis,
-            returning="date",
-            find_last_match_in_period=True,
-            between=[days(ref_cev, -252), days(ref_cev, -1)],
-            date_format="YYYY-MM-DD",
-        ),
-        # date of last delivery code recorded in 36 weeks before elig_date
-        pregdel_pre_date=patients.with_these_clinical_events(
-            pregdel_primis,
-            returning="date",
-            find_last_match_in_period=True,
-            between=[days(ref_cev, -252), days(ref_cev, -1)],
-            date_format="YYYY-MM-DD",
-        ),
-    ),
+    # preg_group=patients.satisfying(
+    #     """
+    #     (preg_36wks_date AND sex = 'F' AND age_1 < 50) AND
+    #     (pregdel_pre_date <= preg_36wks_date OR NOT pregdel_pre_date)
+    #     """,
+    #     # date of last pregnancy code in 36 weeks before ref_cev
+    #     preg_36wks_date=patients.with_these_clinical_events(
+    #         preg_primis,
+    #         returning="date",
+    #         find_last_match_in_period=True,
+    #         between=[days(ref_cev, -252), days(ref_cev, -1)],
+    #         date_format="YYYY-MM-DD",
+    #     ),
+    #     # date of last delivery code recorded in 36 weeks before elig_date
+    #     pregdel_pre_date=patients.with_these_clinical_events(
+    #         pregdel_primis,
+    #         returning="date",
+    #         find_last_match_in_period=True,
+    #         between=[days(ref_cev, -252), days(ref_cev, -1)],
+    #         date_format="YYYY-MM-DD",
+    #     ),
+    # ),
 
     # at risk group
     atrisk_group=patients.satisfying(
@@ -423,19 +416,6 @@ jcvi_variables = dict(
             ratio_elig
             },
             "incidence": 1,
-        },
-    ),
-
-    # region - NHS England 9 regions
-    region=patients.registered_practice_as_of(
-        "elig_date + 42 days",
-        returning="nuts1_region_name",
-        return_expectations={
-            "rate": "universal",
-            "category": {
-                "ratios": ratio_regions,
-            },
-            "incidence": 0.99
         },
     ),
 
