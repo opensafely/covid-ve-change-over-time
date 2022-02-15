@@ -22,7 +22,7 @@ end_date=study_parameters["end_date"] # latest date of data
 import numpy as np
 np.random.seed(study_parameters["seed"])
 
-k="1"#"%placeholder_k%"
+k="%placeholder_k%"
 
 ###
 study=StudyDefinition(
@@ -171,6 +171,31 @@ study=StudyDefinition(
             between=["start_k_date - 252 days", "start_k_date"],
             date_format="YYYY-MM-DD",
         ),
+    ),
+
+    cev_group=patients.satisfying(
+        "severely_clinically_vulnerable AND NOT less_vulnerable",
+
+        # SHIELDED GROUP - first flag all patients with "high risk" codes
+        severely_clinically_vulnerable=patients.with_these_clinical_events(
+            shield_primis,
+            returning="binary_flag",
+            on_or_before="start_k_date",
+            find_last_match_in_period=True,
+        ),
+
+        # find date at which the high risk code was added
+        severely_clinically_vulnerable_date=patients.date_of(
+            "severely_clinically_vulnerable",
+            date_format="YYYY-MM-DD",
+        ),
+
+        # NOT SHIELDED GROUP (medium and low risk) - only flag if later than 'shielded'
+        less_vulnerable=patients.with_these_clinical_events(
+            nonshield_primis,
+            between=["severely_clinically_vulnerable_date + 1 day", "start_k_date"],
+        ),
+        return_expectations={"incidence": 0.01},
     ),
 
 )
