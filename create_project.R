@@ -593,10 +593,10 @@ actions_list <- splice(
                     coef_plot_fun(comparison = x)
     ), recursive = FALSE)),
   
-  comment(glue("plot all hazard ratios on one plot")),
+  comment(glue("combine estimates into csv for release")),
   action(
-    name = glue("plot_hr_all"),
-    run = "r:latest analysis/report/plot_hr_all.R",
+    name = glue("combine_estimates"),
+    run = "r:latest analysis/report/combine_estimates.R",
     needs = splice(
       "design",
       as.list(unlist(lapply(
@@ -620,7 +620,8 @@ actions_list <- splice(
         }
       ), recursive = FALSE))),
     moderately_sensitive = list(
-      plot_hr_all = glue("output/report/images/plot_hr_all.png")
+      hr_all = glue("output/report/data/hr_all.csv"),
+      hr_arms = glue("output/report/data/hr_arms.csv")
     )
   )
   

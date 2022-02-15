@@ -2169,10 +2169,10 @@ actions:
       moderately_sensitive:
         plot: output/models_cox/images/coefs_both_*.png
 
-  ## plot all hazard ratios on one plot 
+  ## combine estimates into csv for release 
 
-  plot_hr_all:
-    run: r:latest analysis/report/plot_hr_all.R
+  combine_estimates:
+    run: r:latest analysis/report/combine_estimates.R
     needs:
     - design
     - apply_model_cox_BNT162b2_1_anytest
@@ -2227,5 +2227,6 @@ actions:
     - apply_model_cox_both_4_noncoviddeath
     outputs:
       moderately_sensitive:
-        plot_hr_all: output/report/images/plot_hr_all.png
+        hr_all: output/report/data/hr_all.csv
+        hr_arms: output/report/data/hr_arms.csv
 
