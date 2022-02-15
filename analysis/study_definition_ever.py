@@ -128,7 +128,7 @@ study=StudyDefinition(
     ),
 
     # Chronic Liver disease codes
-    cld_group=patients.with_these_clinical_events(
+    cld_date=patients.with_these_clinical_events(
         cld_primis,
         returning="date",
         date_format="YYYY-MM-DD",
@@ -138,7 +138,7 @@ study=StudyDefinition(
     ),
 
     # Immunosuppression diagnosis codes
-    immdx=patients.with_these_clinical_events(
+    immdx_date=patients.with_these_clinical_events(
         immdx_primis,
         returning="date",
         date_format="YYYY-MM-DD",
