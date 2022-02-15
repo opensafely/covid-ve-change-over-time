@@ -3,6 +3,26 @@ library('yaml')
 library('here')
 library('glue')
 
+# create study definitions for the comparison periods
+K <- 6
+
+create_study_definitions <- 
+  str_c("#!/bin/sh",
+        "# Run this script to create a study_definition for each k",
+        "",
+        str_c("for i in {1..",K,"}; do"),
+        "sed -e \"s;%placeholder_k%;$i;g\" ./analysis/study_definition_k.py > ./analysis/study_definition_$i.py;",
+        "done;", sep = "\n")
+
+create_study_definitions %>%
+  writeLines(here::here("analysis/create_study_definitions.sh"))
+
+# create study definitions from template_study_definition.py
+check_create <- try(processx::run(command="bash", args= "analysis/create_study_definitions.sh"))
+
+if (class(check_create)=="try-error") stop("Study definitions not created.")
+
+
 # create action functions ----
 
 ## generic action function ----
@@ -325,22 +345,22 @@ actions_list <- splice(
           "####################################"),
   comment("generate dummy data for study_definition"),
   action(
-    name = "dummy_data",
-    run = "r:latest analysis/dummy_data.R",
+    name = "dummy_data_vax",
+    run = "r:latest analysis/dummy_data_vax.R",
     needs = list("design"),
     moderately_sensitive = list(
-      dummy_data = "analysis/dummy_data.feather"
+      dummy_data = "analysis/dummy_data_vax.feather"
     )
   ),
   
   comment("study definition"),
   action(
     name = "generate_study_population",
-    run = "cohortextractor:latest generate_cohort --study-definition study_definition --output-format feather",
+    run = "cohortextractor:latest generate_cohort --study-definition study_definition_vax --output-format feather",
     dummy_data_file = "analysis/dummy_data.feather",
-    needs = list("design", "dummy_data"),
+    needs = list("design", "dummy_data_vax"),
     highly_sensitive = list(
-      cohort = "output/input.feather"
+      cohort = "output/input_vax.feather"
     )
   ),
   
@@ -352,12 +372,9 @@ actions_list <- splice(
   action(
     name = "data_input_process",
     run = "r:latest analysis/preprocess/data_input_process.R",
-    needs = list("design", "dummy_data", "generate_study_population"),
+    needs = list("design", "dummy_data_vax", "generate_study_population"),
     highly_sensitive = list(
       data_wide_vax_dates = "output/data/data_wide_vax_dates.rds",
-      data_long_shielded_dates = "output/data/data_long_shielded_dates.rds",
-      data_long_nonshielded_dates = "output/data/data_long_nonshielded_dates.rds",
-      data_long_bmi_dates = "output/data/data_long_bmi_dates.rds",
       data_processed = "output/data/data_processed.rds"
     ),
     moderately_sensitive = list(
@@ -421,28 +438,35 @@ actions_list <- splice(
   ),
   
   comment("####################################", 
-          "study definition tests",
+          "study definition ever and k",
           "####################################"),
-  comment("generate dummy data for study_definition_tests"),
+  
+  comment("study definition ever"),
   action(
-    name = "dummy_data_tests",
-    run = "r:latest analysis/dummy_data_tests.R",
-    needs = list("design", "dummy_data", "data_eligible_cde"),
-    moderately_sensitive = list(
-      dummy_data_tests = "analysis/dummy_data_tests.feather"
+    name = "generate_ever_data",
+    run = "cohortextractor:latest generate_cohort --study-definition study_definition_ever --output-format feather",
+    needs = list("design", "data_eligible_cde"),
+    highly_sensitive = list(
+      cohort = "output/input_ever.feather"
     )
   ),
   
-  comment("study definition tests"),
-  action(
-    name = "generate_covid_tests_data",
-    run = "cohortextractor:latest generate_cohort --study-definition study_definition_tests --output-format feather",
-    dummy_data_file = "analysis/dummy_data_tests.feather",
-    needs = list("design", "data_eligible_cde", "dummy_data_tests"),
-    highly_sensitive = list(
-      cohort = "output/input_tests.feather"
-    )
-  ),
+  splice(unlist(lapply(
+    1:6,
+    function(k) {
+      splice(
+        comment(glue("study definition for period {k}")),
+        action(
+          name = glue("generate_input_{k}"),
+          run = glue("cohortextractor:latest generate_cohort --study-definition study_definition_{k} --output-format feather"),
+          needs = list("design", "data_eligible_cde"),
+          highly_sensitive = list(
+            cohort = glue("output/input_{k}.feather")
+          )
+        )
+      )
+    }
+  ), recursive = FALSE)),
   
   comment("check the tests data as expected and save processed data"),
   action(
