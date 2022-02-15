@@ -1,4 +1,3 @@
-
 from datetime import date
 
 from cohortextractor import (
@@ -108,32 +107,6 @@ jcvi_variables = dict(
                 }
         },
 
-    #### Pregnancy or Delivery codes recorded (for deriving JCVI group)
-    #### remove, as this was not used to define at risk group until December 2021 
-    #### https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1045852/Greenbook-chapter-14a-11Jan22.pdf
-    # preg_group=patients.satisfying(
-    #     """
-    #     (preg_36wks_date AND sex = 'F' AND age_1 < 50) AND
-    #     (pregdel_pre_date <= preg_36wks_date OR NOT pregdel_pre_date)
-    #     """,
-    #     # date of last pregnancy code in 36 weeks before ref_cev
-    #     preg_36wks_date=patients.with_these_clinical_events(
-    #         preg_primis,
-    #         returning="date",
-    #         find_last_match_in_period=True,
-    #         between=[days(ref_cev, -252), days(ref_cev, -1)],
-    #         date_format="YYYY-MM-DD",
-    #     ),
-    #     # date of last delivery code recorded in 36 weeks before elig_date
-    #     pregdel_pre_date=patients.with_these_clinical_events(
-    #         pregdel_primis,
-    #         returning="date",
-    #         find_last_match_in_period=True,
-    #         between=[days(ref_cev, -252), days(ref_cev, -1)],
-    #         date_format="YYYY-MM-DD",
-    #     ),
-    # ),
-
     #### clinically extremely vulnerable group variables
     cev_group=patients.satisfying(
         "severely_clinically_vulnerable AND NOT less_vulnerable",
@@ -161,47 +134,44 @@ jcvi_variables = dict(
     ),
 
     #### at-risk group variables
-    # Asthma Diagnosis code
-    astdx=patients.with_these_clinical_events(
-        ast_primis,
-        returning="binary_flag",
-        on_or_before=days(ref_ar, -1),
-        return_expectations={"incidence": 0.05},
-    ),
-            
     # asthma
     asthma_group=patients.satisfying(
-        """
-        astadm OR
-        (astdx AND astrxm1 AND astrxm2 AND astrxm3)
-        """,
-        # day before date at which at risk group became eligible
-        # Asthma Admission codes
-        astadm=patients.with_these_clinical_events(
-            astadm_primis,
-            returning="binary_flag",
-            on_or_before=days(ref_ar, -1),
-        ),
-        # Asthma systemic steroid prescription code in month 1
-        astrxm1=patients.with_these_medications(
-            astrx_primis,
-            returning="binary_flag",
-            between=[days(ref_ar, -31), days(ref_ar, -1)],
-        ),
-        # Asthma systemic steroid prescription code in month 2
-        astrxm2=patients.with_these_medications(
-            astrx_primis,
-            returning="binary_flag",
-            between=[days(ref_ar, -61), days(ref_ar, -32)],
-        ),
-        # Asthma systemic steroid prescription code in month 3
-        astrxm3=patients.with_these_medications(
-            astrx_primis,
-            returning="binary_flag",
-            between=[days(ref_ar, -91), days(ref_ar, -62)],
-        ),
-        return_expectations={"incidence": 0.01},
+    """
+      astadm OR
+      (ast AND astrxm1 AND astrxm2 AND astrxm3)
+      """,
+    # Asthma Admission codes
+    astadm=patients.with_these_clinical_events(
+      astadm,
+      returning="binary_flag",
+      on_or_before=days(ref_ar, -1),
     ),
+    # Asthma Diagnosis code
+    ast = patients.with_these_clinical_events(
+      ast_primis,
+      returning="binary_flag",
+      on_or_before=days(ref_ar, -1),
+    ),
+    # Asthma systemic steroid prescription code in month 1
+    astrxm1=patients.with_these_medications(
+      astrx_primis,
+      returning="binary_flag",
+      between=[days(ref_ar, -31), days(ref_ar, -1)],
+    ),
+    # Asthma systemic steroid prescription code in month 2
+    astrxm2=patients.with_these_medications(
+      astrx_primis,
+      returning="binary_flag",
+      between=[days(ref_ar, -61), days(ref_ar, -32)],
+    ),
+    # Asthma systemic steroid prescription code in month 3
+    astrxm3=patients.with_these_medications(
+      astrx_primis,
+      returning="binary_flag",
+      between=[days(ref_ar, -91), days(ref_ar, -62)],
+    ),
+
+  ),
 
     # Chronic Respiratory Disease other than asthma
     resp_group=patients.with_these_clinical_events(
@@ -392,12 +362,36 @@ jcvi_variables = dict(
         return_expectations={"incidence": 0.01},
     ),
 
+    preg_group=patients.satisfying(
+        """
+        (preg_36wks_date AND sex = 'F' AND age_1 < 50) AND
+        (pregdel_pre_date <= preg_36wks_date OR NOT pregdel_pre_date)
+        """,
+        # date of last pregnancy code in 36 weeks before ref_cev
+        preg_36wks_date=patients.with_these_clinical_events(
+            preg_primis,
+            returning="date",
+            find_last_match_in_period=True,
+            between=[days(ref_cev, -252), days(ref_cev, -1)],
+            date_format="YYYY-MM-DD",
+        ),
+        # date of last delivery code recorded in 36 weeks before elig_date
+        pregdel_pre_date=patients.with_these_clinical_events(
+            pregdel_primis,
+            returning="date",
+            find_last_match_in_period=True,
+            between=[days(ref_cev, -252), days(ref_cev, -1)],
+            date_format="YYYY-MM-DD",
+        ),
+    ),
+
     # at risk group
     atrisk_group=patients.satisfying(
              """
              immuno_group OR
              ckd_group OR
              resp_group OR
+             asthma_group OR
              diab_group OR
              cld_group OR
              cns_group OR
