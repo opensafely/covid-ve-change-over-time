@@ -114,6 +114,7 @@ bmi_stage_primis = codelist_from_csv(
     "codelists/primis-covid19-vacc-uptake-bmi_stage.csv",
     system="snomed",
     column="code",
+    category_column="term",
 )
 
 # Severe Obesity code recorded
