@@ -85,20 +85,29 @@ var_category <- function(.data, name, categories, conditions=NULL, ratios=NULL, 
 }
 
 # function for recurrent bmi variables (where 1 is most recent, 2 2nd most recent etc.)
-vars_bmi_recurrent <- function(.data, r = 10, decay = 0.2) {
+vars_bmi_recurrent <- function(.data, r = 6, decay = 0.2) {
   
   out <- .data %>%
-    var_date(bmi_1_date_measured, 
+    var_date(bmi_0_date_measured, 
              incidence = 0.95, 
              earliest = "2018-01-01",
              keep_vars = FALSE) %>%
-    mutate(bmi_1 = if_else(
-      is.na(bmi_1_date_measured),
-      NA_real_,
-      rnorm(nrow(.), 28, 8)
-    ))
+    mutate(
+      bmi_0 = if_else(
+        is.na(bmi_0_date_measured),NA_real_, rnorm(nrow(.), 28, 8)),
+      bmi_0_stage = sample(
+        x = c(NA_character_, str_c("Obese class ", c("I", "II", "III"))),
+        size = nrow(.),
+        replace=TRUE,
+        prob = c(0.7,0.1,0.1,0.1)),
+      bmi_0_stage_date = if_else(
+        is.na(bmi_0_stage),
+        as.Date(NA_character_),
+        as.Date("2021-01-01")
+      )
+    )
   
-  for (i in 2:r) {
+  for (i in 1:r) {
     out <- out %>%
       mutate(missing = sample(
         x=c(NA_real_, 1),
@@ -109,9 +118,11 @@ vars_bmi_recurrent <- function(.data, r = 10, decay = 0.2) {
       mutate(
         !! glue("bmi_{i}_date_measured") := 
           !! sym(glue("bmi_{i-1}_date_measured")) 
-        - sample(x=1:500, size = nrow(.), replace = TRUE)*missing,
+        + sample(x=1:500, size = nrow(.), replace = TRUE)*missing,
         !! glue("bmi_{i}") := !! sym(glue("bmi_{i-1}"))
-        + rnorm(n = nrow(.))*missing
+        + rnorm(n = nrow(.))*missing,
+        !! glue("bmi_{i}_stage") := !! sym(glue("bmi_{i-1}_stage")),
+        !! glue("bmi_{i}_stage_date") := !! sym(glue("bmi_{i-1}_stage_date"))
         ) 
   }
   
@@ -125,12 +136,16 @@ var_date_recurrent <- function(
   name_string,
   incidence, 
   earliest = start_date, 
-  r = 10, 
+  r = 5, 
   decay = 0.5,
   start_index = 0) {
   
   out <- .data %>%
-    var_date(name = !! sym(glue("{name_string}_{start_index}_date")), incidence = incidence, earliest = earliest, keep_vars = FALSE)
+    var_date(
+      name = !! sym(glue("{name_string}_{start_index}_date")),
+      incidence = incidence, 
+      earliest = earliest,
+      keep_vars = FALSE)
   
   for (i in (start_index+1):r) {
     out <- out %>%
