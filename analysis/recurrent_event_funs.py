@@ -173,12 +173,34 @@ def most_recent_bmi_stage_k(K):
     return variables
 
 
-# clinical events with codelist in each comparison period
+# clinical events with codelist in each comparison period (up to K-1)
 def with_these_clinical_events_date_k(K, name, codelist):
     
     def var_signature(name, codelist, lower, upper):
         return {
             name: patients.with_these_clinical_events(
+                    codelist,
+                    returning="date",
+                    between=[lower,upper],
+                    date_format="YYYY-MM-DD",
+                    find_last_match_in_period=True,
+	        ),
+        }
+    variables=dict()
+    for i in range(1, K):
+        variables.update(var_signature(
+            name=f"{name}_{i}_date", 
+            codelist=codelist,
+            lower=f"start_1_date + {(i-1)*28 + 1} days", 
+            upper=f"end_1_date + {(i-1)*28} days"),
+            )
+    return variables
+# clinical events with medications in each comparison period (up to K-1)
+def with_these_medications_k(K, name, codelist):
+    
+    def var_signature(name, codelist, lower, upper):
+        return {
+            name: patients.with_these_medications(
                     codelist,
                     returning="date",
                     between=[lower,upper],
