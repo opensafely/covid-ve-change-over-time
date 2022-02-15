@@ -591,7 +591,39 @@ actions_list <- splice(
     unlist(lapply(comparisons,
                   function(x)
                     coef_plot_fun(comparison = x)
-    ), recursive = FALSE))
+    ), recursive = FALSE)),
+  
+  comment(glue("plot all hazard ratios on one plot")),
+  action(
+    name = glue("plot_hr_all"),
+    run = "r:latest analysis/report/plot_hr_all.R",
+    needs = splice(
+      "design",
+      as.list(unlist(lapply(
+        comparisons,
+        function(x)
+        {
+          if (x %in% c("ChAdOx", "both")) {
+            ys <- subgroup_labels[subgroups != "18-39 years"]
+          } else {
+            ys <- subgroup_labels
+          }
+          unlist(lapply(
+            ys,
+            function(y)
+              unlist(lapply(
+                outcomes,
+                function(z)
+                  glue("apply_model_cox_{x}_{y}_{z}")
+              ), recursive = FALSE)
+          ), recursive = FALSE)
+        }
+      ), recursive = FALSE))),
+    moderately_sensitive = list(
+      plot_hr_all = glue("output/report/images/plot_hr_all.png")
+    )
+  )
+  
 )
 
 ## combine everything ----
