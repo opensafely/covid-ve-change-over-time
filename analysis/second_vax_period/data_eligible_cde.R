@@ -145,6 +145,16 @@ data_eligible_e <- bind_rows(
   ungroup() %>%
   select(-subgroup)
 
+for (k in 2:study_parameters$max_comparisons) {
+  
+  data_eligible_e <- data_eligible_e %>%
+    mutate(
+      !! sym(glue("start_{k}_date")) := !! sym(glue("start_{k-1}_date")) + days(28),
+      !! sym(glue("end_{k}_date")) := !! sym(glue("end_{k-1}_date")) + days(28),
+    )
+  
+}
+
 readr::write_csv(
   data_eligible_e,
   here::here("output", "data", "data_eligible_e.csv")
