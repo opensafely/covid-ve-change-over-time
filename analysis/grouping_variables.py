@@ -109,28 +109,30 @@ jcvi_variables = dict(
         },
 
     #### Pregnancy or Delivery codes recorded (for deriving JCVI group)
-    preg_group=patients.satisfying(
-        """
-        (preg_36wks_date AND sex = 'F' AND age_1 < 50) AND
-        (pregdel_pre_date <= preg_36wks_date OR NOT pregdel_pre_date)
-        """,
-        # date of last pregnancy code in 36 weeks before ref_cev
-        preg_36wks_date=patients.with_these_clinical_events(
-            preg_primis,
-            returning="date",
-            find_last_match_in_period=True,
-            between=[days(ref_cev, -252), days(ref_cev, -1)],
-            date_format="YYYY-MM-DD",
-        ),
-        # date of last delivery code recorded in 36 weeks before elig_date
-        pregdel_pre_date=patients.with_these_clinical_events(
-            pregdel_primis,
-            returning="date",
-            find_last_match_in_period=True,
-            between=[days(ref_cev, -252), days(ref_cev, -1)],
-            date_format="YYYY-MM-DD",
-        ),
-    ),
+    #### remove, as this was not used to define at risk group until December 2021 
+    #### https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1045852/Greenbook-chapter-14a-11Jan22.pdf
+    # preg_group=patients.satisfying(
+    #     """
+    #     (preg_36wks_date AND sex = 'F' AND age_1 < 50) AND
+    #     (pregdel_pre_date <= preg_36wks_date OR NOT pregdel_pre_date)
+    #     """,
+    #     # date of last pregnancy code in 36 weeks before ref_cev
+    #     preg_36wks_date=patients.with_these_clinical_events(
+    #         preg_primis,
+    #         returning="date",
+    #         find_last_match_in_period=True,
+    #         between=[days(ref_cev, -252), days(ref_cev, -1)],
+    #         date_format="YYYY-MM-DD",
+    #     ),
+    #     # date of last delivery code recorded in 36 weeks before elig_date
+    #     pregdel_pre_date=patients.with_these_clinical_events(
+    #         pregdel_primis,
+    #         returning="date",
+    #         find_last_match_in_period=True,
+    #         between=[days(ref_cev, -252), days(ref_cev, -1)],
+    #         date_format="YYYY-MM-DD",
+    #     ),
+    # ),
 
     #### clinically extremely vulnerable group variables
     cev_group=patients.satisfying(
