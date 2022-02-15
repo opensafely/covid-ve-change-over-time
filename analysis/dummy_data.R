@@ -201,46 +201,6 @@ dummy_data_covs <- dummy_data_vax %>%
                   .x))) %>%
   # add recurrent bmi vars
   bind_cols(vars_bmi_recurrent(.data = ., r = study_parameters$recur_bmi)) %>%
-  # add recurrent shielded vars
-  bind_cols(
-    var_date_recurrent(
-      .data = ., 
-      name_string = "shielded", 
-      incidence = 0.2,
-      r = study_parameters$recur_shielded)) %>%
-  bind_cols(
-    var_date_recurrent(
-      .data = .,
-      name_string = "nonshielded", 
-      incidence = 0.1,
-      r = study_parameters$recur_shielded)) %>%
-  bind_cols(
-    var_date_recurrent(
-      .data = .,
-      name_string = "covid_test", 
-      incidence = 0.1,
-      r = study_parameters$recur_covid_test,
-      start_index = 1)) %>%
-  # add recurrent hospital admission vars
-  # bind_cols(
-  #   var_date_recurrent(
-  #     .data = ., 
-  #     name_string = "admitted_unplanned", 
-  #     incidence = 0.1,
-  #     r = study_parameters$recur_admissions)) %>%
-  # bind_cols(
-  #   var_date_recurrent(
-  #     .data = ., 
-  #     name_string = "admitted_unplanned_infectious", 
-  #     incidence = 0.1,
-  #     r = study_parameters$recur_admissions)) %>% 
-  # # add dob
-  # mutate(
-  #   dob = as.POSIXct(
-  #     # floor_date as all 1st of the month as dob YYYY-MM in OpenSAFELY
-  #     # then add days(31) to make sure no ages are below 16 because of floor_date
-  #     floor_date(as.Date(study_parameters$ref_age_2) - years(age_2) + days(31), unit = "months"))
-  #      ) %>%
   mutate(across(contains("_date"), as.POSIXct)) %>%
   mutate(across(ends_with("date"), as.POSIXct)) %>%
   mutate(across(c(ethnicity_6, ethnicity_6_sus, jcvi_group, region, sex),
