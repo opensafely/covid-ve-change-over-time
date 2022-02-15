@@ -14,35 +14,9 @@ source(here::here("analysis", "lib", "dummy_data_functions.R"))
 set.seed(5476)
 
 # date vars 
-# set these to have occured ever during lifetime
-date_vars_ever <- c("chronic_cardiac_disease_date",
-                    "heart_failure_date",
-                    "other_heart_disease_date",
-                    "diabetes_date",
-                    "dialysis_date", 
-                    "chronic_liver_disease_date", 
-                    "current_copd_date",
-                    "ld_inc_ds_and_cp_date", 
-                    "cystic_fibrosis_date", 
-                    "other_respiratory_date",
-                    "lung_cancer_date",
-                    "haematological_cancer_date",
-                    "cancer_excl_lung_and_haem_date", 
-                    "chemo_or_radio_date",
-                    "solid_organ_transplantation_date",
-                    "bone_marrow_transplant_date",
-                    "sickle_cell_disease_date", 
-                    "permanant_immunosuppression_date",
-                    "temporary_immunosuppression_date", 
-                    "asplenia_date", 
-                    "dmards_date", 
-                    "dementia_date", 
-                    "other_neuro_conditions_date", 
-                    "psychosis_schiz_bipolar_date")
 # set these to have occured since start of pandemic
 date_vars_recent <- c("positive_test_0_date", 
                       "primary_care_covid_case_0_date", 
-                      "primary_care_suspected_covid_0_date",
                       "covidadmitted_0_date",
                       "death_date",
                       "longres_date", 
@@ -165,20 +139,6 @@ dummy_data_vax <- dummy_data_elig %>%
 
 ### from dummy_data_covs
 dummy_data_covs <- dummy_data_vax %>%
-  # indicator for flu vaccine in past 5 years
-  mutate(flu_vaccine = rbernoulli(n = nrow(.), p=0.3)) %>%
-  # date vars ever
-  bind_cols(
-    pmap(
-      list(a = date_vars_ever, 
-           b = rep(0.2, length(date_vars_ever))),
-      function(a,b) 
-        var_date(
-          .data = ., 
-          name = !! a,
-          incidence = b,
-          keep_vars = FALSE
-        ))) %>%
   # date vars recent
   bind_cols(
     pmap(
@@ -199,8 +159,6 @@ dummy_data_covs <- dummy_data_vax %>%
                   !is.na(coviddeath_date), 
                   coviddeath_date,
                   .x))) %>%
-  # add recurrent bmi vars
-  bind_cols(vars_bmi_recurrent(.data = ., r = study_parameters$recur_bmi)) %>%
   mutate(across(contains("_date"), as.POSIXct)) %>%
   mutate(across(ends_with("date"), as.POSIXct)) %>%
   mutate(across(c(ethnicity_6, ethnicity_6_sus, jcvi_group, region, sex),
