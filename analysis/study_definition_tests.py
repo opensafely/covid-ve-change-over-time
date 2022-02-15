@@ -115,7 +115,10 @@ study=StudyDefinition(
         return_expectations={"date": {"earliest": start_date, "latest": end_date}}
     ),
 
-    #### clinical covariates
+    #### clinical covariates, defined at start of comparison period 1
+    
+
+
     # indicator for pregnancy at start of follow-up for comparison k
     **preg_36wks_k_date(max_comparisons),
     **pregdel_pre_k_date(max_comparisons),
@@ -126,7 +129,7 @@ study=StudyDefinition(
                 minimum_age_at_measurement=16,
                 include_measurement_date=True,
                 date_format="YYYY-MM-DD"),
-    **most_recent_bmi_k(max_comparisons),
+    # **most_recent_bmi_k(max_comparisons),
     bmi_0_stage=patients.with_these_clinical_events(
                 bmi_stage_primis,
                 on_or_before=f"start_1_date",
@@ -135,7 +138,7 @@ study=StudyDefinition(
                 date_format="YYYY-MM-DD",
                 find_last_match_in_period=True
             ),
-    **most_recent_bmi_stage_k(max_comparisons),
+    # **most_recent_bmi_stage_k(max_comparisons),
 
     # date of most recent shielding recording before each comparison start date
     shielded_0_date=patients.with_these_clinical_events(
@@ -145,11 +148,11 @@ study=StudyDefinition(
         on_or_before="start_1_date",
         find_last_match_in_period=True,
     ),
-    **with_these_clinical_events_date_k(
-        K=max_comparisons,
-        name="shielded",
-        codelist=shield_primis
-    ),
+    # **with_these_clinical_events_date_k(
+    #     K=max_comparisons,
+    #     name="shielded",
+    #     codelist=shield_primis
+    # ),
     nonshielded_0_date=patients.with_these_clinical_events(
         shield_primis,
         returning="date",
@@ -157,9 +160,12 @@ study=StudyDefinition(
         on_or_before="start_1_date",
         find_last_match_in_period=True,
     ),
-    **with_these_clinical_events_date_k(
-        K=max_comparisons,
-        name="nonshielded",
-        codelist=nonshield_primis
-    ),
+    # **with_these_clinical_events_date_k(
+    #     K=max_comparisons,
+    #     name="nonshielded",
+    #     codelist=nonshield_primis
+    # ),
+
+    # asthma admission or steroids
+
 )
