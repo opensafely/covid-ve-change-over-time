@@ -56,17 +56,17 @@ test_k_date <- function(k, test_result = "any") {
 
 
 # function for result_test_k_date so that any_test_k_n >= positive_test_k_n
-test_k_n <- function(k) {
-  
-  name_any <- glue("any_test_{k}_n")
-  name_positive <- glue("positive_test_{k}_n")
-  
-  dummy_data %>%
-    mutate(!! sym(name_positive) := rpois(n = nrow(.), lambda = 0.25)) %>%
-    mutate(!! sym(name_any) := !! sym(name_positive) + rpois(n = nrow(.), lambda = 1)) %>%
-    select(!! sym(name_any), !! sym(name_positive))
-  
-}
+# test_k_n <- function(k) {
+#   
+#   name_any <- glue("any_test_{k}_n")
+#   name_positive <- glue("positive_test_{k}_n")
+#   
+#   dummy_data %>%
+#     mutate(!! sym(name_positive) := rpois(n = nrow(.), lambda = 0.25)) %>%
+#     mutate(!! sym(name_any) := !! sym(name_positive) + rpois(n = nrow(.), lambda = 1)) %>%
+#     select(!! sym(name_any), !! sym(name_positive))
+#   
+# }
 
 # pregnancy dates
 preg_k_date <- function(k, type = "pregnancy") {
@@ -96,14 +96,28 @@ preg_k <- function(k) {
 
 dummy_data_tests <- dummy_data %>%
   bind_cols(lapply(1:(K), test_k_date)) %>%
-  bind_cols(lapply(1:(K), test_k_n)) %>%
+  # bind_cols(lapply(1:(K), test_k_n)) %>%
   bind_cols(lapply(1:K, preg_k_date)) %>%
   bind_cols(lapply(1:K, function(x) preg_k_date(k=x, type = "delivery"))) %>%
   bind_cols(lapply(1:K, preg_k)) %>%
   mutate(test_hist_1_n = rpois(n = nrow(.), lambda = 3),
          test_hist_2_n = rpois(n = nrow(.), lambda = 3),
          test_hist_3_n = rpois(n = nrow(.), lambda = 3)) %>%
-  mutate(across(ends_with("date"), as.POSIXct))
+  bind_cols(vars_bmi_recurrent(.data = ., r = 5)) %>%
+  # add recurrent shielded vars
+  bind_cols(
+    var_date_recurrent(
+      .data = ., 
+      name_string = "shielded", 
+      incidence = 0.2,
+      r = 5)) %>%
+  bind_cols(
+    var_date_recurrent(
+      .data = .,
+      name_string = "nonshielded",
+      incidence = 0.1,
+      r = 5)) %>%
+  mutate(across(contains("_date"), as.POSIXct))
 
 
 arrow::write_feather(dummy_data_tests, here::here("analysis", "dummy_data_tests.feather"))
