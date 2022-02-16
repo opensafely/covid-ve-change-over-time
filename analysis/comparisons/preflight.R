@@ -16,11 +16,11 @@ if(length(args)==0){
   # use for interactive testing
   comparison <- "BNT162b2"
   subgroup_label <- 1
-  outcome <- "noncoviddeath"
+  outcome <- "anytest"
   
 } else{
   comparison <- args[[1]]
-  subgroup_label <- args[[2]]
+  subgroup_label <- as.integer(args[[2]])
   outcome <- args[[3]]
 }
 
@@ -37,14 +37,37 @@ study_parameters <- readr::read_rds(
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
-subgroups <- c(subgroups, "all")
-subgroup <- subgroups[subgroup_label]
 
 # model covariates
 model_varlist <- readr::read_rds(
   here::here("output", "lib", "model_varlist.rds")
 )
 vars <- unname(unlist(model_varlist))
+
+# specfiy arms
+arm1 <- if_else(comparison == "ChAdOx", "ChAdOx", "BNT162b2")
+arm2 <- if_else(comparison == "both", "ChAdOx", "unvax")
+
+## read data
+# covariates data
+data_covariates <- readr::read_rds(
+  here::here("output", "data", "data_covariates.rds")) %>%
+  filter(arm %in% c(arm1, arm2))
+
+# processed data
+data_processed <- readr::read_rds(
+  here::here("output", "data", "data_processed.rds")) %>%
+  filter(subgroup %in% subgroups[subgroup_label])
+
+data_in <- data_covariates %>%
+  inner_join(
+    data_processed,
+    by = "patient_id"
+  ) %>%
+  select(patient_id, k,
+         jcvi_group, elig_date, region,
+         unname(model_varlist$demographic),
+         unname(model_varlist$clinical))
 
 ################################################################################
 # read functions
@@ -53,38 +76,28 @@ vars <- unname(unlist(model_varlist))
 source(here::here("analysis", "lib", "redaction_functions.R"))
 
 ################################################################################
-arm1 <- if_else(comparison == "ChAdOx", "ChAdOx", "BNT162b2")
-arm2 <- if_else(comparison == "both", "ChAdOx", "unvax")
-
+# join to tte data
 data_0 <- readr::read_rds(
   here::here("output", "tte", "data", glue("data_tte_{comparison}_{subgroup_label}_{outcome}.rds"))) %>%
-  left_join(
-    bind_rows(
-      readr::read_rds(
-        here::here("output", "comparisons", "data", glue("data_comparisons_{arm1}.rds"))),
-      readr::read_rds(
-        here::here("output", "comparisons", "data", glue("data_comparisons_{arm2}.rds")))
-    ) %>%
-      select(patient_id, comparison, jcvi_group, elig_date, region, all_of(vars)),
-    by = c("patient_id", "comparison")) %>% 
+  left_join(data_in, by = c("patient_id", "k")) %>%
   mutate(strata_var = factor(str_c(jcvi_group, elig_date, region, sep = ", "))) %>%
   droplevels()
 
-# keep only comparisons with > 5 events
-events_per_comparison <- data_0 %>%
-  group_by(comparison) %>%
+# keep only periods with > 5 events
+events_per_period <- data_0 %>%
+  group_by(k) %>%
   summarise(events = sum(status), .groups="keep") %>%
   ungroup() %>%
   mutate(keep = events > 5)
 
-keep_comparisons <- as.integer(events_per_comparison$comparison[events_per_comparison$keep])
-drop_comparisons <- as.integer(events_per_comparison$comparison[!events_per_comparison$keep])
+keep_periods <- as.integer(events_per_period$k[events_per_period$keep])
+drop_periods <- as.integer(events_per_period$k[!events_per_period$keep])
 
 data_1 <- data_0 %>%
-  filter(comparison %in% keep_comparisons) %>%
+  filter(k %in% keep_periods) %>%
   droplevels()
 
-# do not run if all comparisons dropped
+# do not run if all periods dropped
 if (nrow(data_1) > 0) {
   
   # only keep categorical covariates with > 2 events per level per arm
@@ -92,16 +105,16 @@ if (nrow(data_1) > 0) {
   
   ################################################################################
   # tabulate events per level
-  cat("...split data by comparison and status...\n")
+  cat("...split data by k and status...\n")
   tbl_list <- data_0 %>%
-    select(comparison, status, all_of(vars)) %>%
+    select(k, status, all_of(vars)) %>%
     select(-age) %>%
-    group_split(comparison, status)
+    group_split(k, status)
   
   # names for each element in list
   group_split_labels <- lapply(
     tbl_list,
-    function(x) str_c(unique(x$comparison), unique(x$status))
+    function(x) str_c(unique(x$k), unique(x$status))
   ) %>% 
     unlist()
   
@@ -130,7 +143,7 @@ if (nrow(data_1) > 0) {
     .id = "group"
   ) %>%
     mutate(
-      comparison = str_extract(group, "\\d"),
+      k = str_extract(group, "\\d"),
       status = as.logical(str_remove(group, "\\d")))  %>%
     select(-group) %>%
     pivot_wider(
@@ -138,15 +151,15 @@ if (nrow(data_1) > 0) {
       values_from = n
     ) %>%
     pivot_wider(
-      names_from = comparison,
+      names_from = k,
       values_from = c("FALSE", "TRUE"),
-      names_glue = "comparison{comparison}_{.value}"
+      names_glue = "period{k}_{.value}"
     ) %>%
-    mutate(across(starts_with("comparison"), 
+    mutate(across(starts_with("period"), 
                   ~ if_else(is.na(.x), 0L, .x))) %>% 
     group_by(variable) %>%
-    mutate(across(starts_with("comparison"), redactor2)) %>% 
-    mutate(across(starts_with("comparison"), 
+    mutate(across(starts_with("period"), redactor2)) %>% 
+    mutate(across(starts_with("period"), 
                   ~ if_else(is.na(.x), "-", scales::comma(.x, accuracy = 1)))) %>% 
     ungroup()
   
@@ -190,10 +203,10 @@ if (nrow(data_1) > 0) {
     function(x) length(levels(x))
   )
   
-  # calculate events per level during each comparison period, split by treatment arm
+  # calculate events per level during each period, split by treatment arm
   data_1_list <- data_1 %>% 
-    arrange(comparison, arm) %>%
-    group_split(comparison, arm) %>%
+    arrange(k, arm) %>%
+    group_split(k, arm) %>%
     as.list()
   
   events_per_level_list <- list()
@@ -236,13 +249,13 @@ if (nrow(data_1) > 0) {
   merge_levels <- function(var) {
     
     data <- data_1 %>%
-      select(status, comparison, arm, all_of(var))
+      select(status, k, arm, all_of(var))
     
     event_count_fun <- function(var) {
       
       data %>%
         filter(status) %>%
-        group_by(comparison, arm, !! sym(var)) %>%
+        group_by(k, arm, !! sym(var)) %>%
         count() %>%
         ungroup() %>%
         summarise(min_n=min(n)) %>%
@@ -295,13 +308,13 @@ if (nrow(data_1) > 0) {
   # create comparison dummy variables
   data_3 <- data_2 %>%
     dummy_cols(
-      select_columns = c("comparison"),
+      select_columns = c("k"),
       remove_selected_columns = TRUE
     ) %>%
-    mutate(across(starts_with("comparison"),
+    mutate(across(starts_with("k"),
                   ~ if_else(arm %in% arm1,
                             .x, 0L))) %>%
-    rename_at(vars(starts_with("comparison")), ~str_c(.x, "_", arm1))
+    rename_at(vars(starts_with("k")), ~str_c(.x, "_", arm1))
   
   ################################################################################
   # create age variables
@@ -310,8 +323,8 @@ if (nrow(data_1) > 0) {
     # age and age^2 for subgroup 16-64 and vulnerable
     data_4 <- data_3 %>%
       mutate(
-        age_1 = age,
-        age_1_squared = age * age
+        `age_16to64` = age,
+        `age_16to64_squared` = age * age
         ) %>%
       select(-age)
     
@@ -327,14 +340,21 @@ if (nrow(data_1) > 0) {
       j <- unique(data_3_list[[i]]$elig_date)
       
       if (g == "07" && j == as.Date("2021-03-01")) {
-        
+        # no age variable needed as all same age in strata
         data_3_list[[i]] <- data_3_list[[i]] %>%
           select(-age)
         
       } else {
         
+        age_range <- data_3_list[[i]] %>%
+          summarise(min(age), max(age)) %>%
+          mutate(across(`max(age)`,
+                        ~if_else(.x > 80, "plus", str_c("to", .x)))) %>%
+          unlist() %>% unname() %>% 
+          str_c(., collapse = "")
+        
         data_3_list[[i]] <- data_3_list[[i]] %>%
-          mutate(!! sym(glue("age_{i}")) := age) %>%
+          mutate(!! sym(glue("age_{age_range}")) := age) %>%
           select(-age)
         
       }
@@ -344,7 +364,7 @@ if (nrow(data_1) > 0) {
         
         data_3_list[[i]] <- data_3_list[[i]] %>%
           mutate(
-            !! sym(glue("age_{i}_squared")) := !! sym(glue("age_{i}")) * !! sym(glue("age_{i}"))
+            age_80plus_squared =  age_80plus * age_80plus
             )
       }
     }
@@ -362,11 +382,11 @@ if (nrow(data_1) > 0) {
   ################################################################################
   # define formulas
   
-  comparisons <- data_5 %>% select(starts_with("comparison")) %>% names()
+  exposures <- data_5 %>% select(starts_with("k_")) %>% names()
   
   formula_unadj <- as.formula(str_c(
     "Surv(tstart, tstop, status, type = \"counting\") ~ ",
-    str_c(comparisons, collapse = " + "),
+    str_c(exposures, collapse = " + "),
     " + strata(strata_var)"))
   
   demog_vars <- c(names(data_5)[str_detect(names(data_5), "^age_")],
@@ -396,24 +416,24 @@ if (nrow(data_1) > 0) {
   ################################################################################
   
   preflight_report <- function(
-    dropped_comparisons,
+    dropped_periods,
     dropped_variables,
     merged_variables,
-    subgroup_string = subgroup
+    subgroup_string = subgroups[subgroup_label]
   ) {
     ####
     cat(glue("Comparison = {comparison}; Subgroup = {subgroup_string}; Outcome = {outcome}"), "\n")
     cat("---\n")
-    if (is_empty(drop_comparisons)) {
-      dropped_comparisons <- "none"
+    if (is_empty(dropped_periods)) {
+      dropped_periods <- "none"
     } else {
-      dropped_comparisons <- str_c(dropped_comparisons, collapse = ", ")
+      dropped_periods <- str_c(dropped_periods, collapse = ", ")
     }
-    cat(glue("Dropped comparisons: {dropped_comparisons}"), "\n")
+    cat(glue("Dropped periods: {dropped_periods}"), "\n")
     ####
     cat("---\n")
     if (is_empty(dropped_variables)) {
-      dropped_comparisons <- "none"
+      dropped_variables <- "none"
     } else {
       dropped_variables <- str_c(str_c("- ", dropped_variables), collapse = "\n")
     }
@@ -439,7 +459,7 @@ if (nrow(data_1) > 0) {
   
   capture.output(
     preflight_report(
-      dropped_comparisons = drop_comparisons,
+      dropped_periods = drop_periods,
       dropped_variables = drop_vars,
       merged_variables = merged_vars
     ),
