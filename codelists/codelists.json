@@ -222,197 +222,11 @@
       "downloaded_at": "2021-10-28 08:04:30.906621Z",
       "sha": "38dc0c0a34e2b8b376ba72819923f442c30b4946"
     },
-    "opensafely-covid-identification-in-primary-care-suspected-covid-advice.csv": {
-      "id": "opensafely/covid-identification-in-primary-care-suspected-covid-advice/2020-07-16",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/covid-identification-in-primary-care-suspected-covid-advice/2020-07-16/",
-      "downloaded_at": "2021-10-29 14:41:42.389003Z",
-      "sha": "b898d52ea318da16cbeea0ba2d2a1635b3673f90"
-    },
-    "opensafely-covid-identification-in-primary-care-suspected-covid-had-test.csv": {
-      "id": "opensafely/covid-identification-in-primary-care-suspected-covid-had-test/2020-07-16",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/covid-identification-in-primary-care-suspected-covid-had-test/2020-07-16/",
-      "downloaded_at": "2021-10-29 14:41:42.707963Z",
-      "sha": "c540d48e1d3ecce3d56f090f56bbe6d87e6fb459"
-    },
-    "opensafely-covid-identification-in-primary-care-suspected-covid-isolation-code.csv": {
-      "id": "opensafely/covid-identification-in-primary-care-suspected-covid-isolation-code/2020-07-16",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/covid-identification-in-primary-care-suspected-covid-isolation-code/2020-07-16/",
-      "downloaded_at": "2021-10-29 14:41:43.008787Z",
-      "sha": "36bba5f68368ff788ac243b5912df5db96c2b99c"
-    },
-    "opensafely-covid-identification-in-primary-care-suspected-covid-nonspecific-clinical-assessment.csv": {
-      "id": "opensafely/covid-identification-in-primary-care-suspected-covid-nonspecific-clinical-assessment/2020-07-16",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/covid-identification-in-primary-care-suspected-covid-nonspecific-clinical-assessment/2020-07-16/",
-      "downloaded_at": "2021-10-29 14:41:43.322154Z",
-      "sha": "99d10fc347d107a8a7c490180ed91d39bd2e1275"
-    },
-    "opensafely-covid-identification-in-primary-care-exposure-to-disease.csv": {
-      "id": "opensafely/covid-identification-in-primary-care-exposure-to-disease/2020-06-23",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/covid-identification-in-primary-care-exposure-to-disease/2020-06-23/",
-      "downloaded_at": "2021-10-29 14:41:43.644843Z",
-      "sha": "b7cd77be113fa93776d072da047dc22b4a021091"
-    },
     "opensafely-icd-10-chapter-i.csv": {
       "id": "opensafely/icd-10-chapter-i/10e46159",
       "url": "https://codelists.opensafely.org/codelist/opensafely/icd-10-chapter-i/10e46159/",
       "downloaded_at": "2021-10-29 15:08:07.726305Z",
       "sha": "7aca1aa8a92cace55d48ddd5a62a5d13a41888e9"
-    },
-    "opensafely-chronic-cardiac-disease.csv": {
-      "id": "opensafely/chronic-cardiac-disease/2020-04-08",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/chronic-cardiac-disease/2020-04-08/",
-      "downloaded_at": "2021-11-01 12:25:46.197627Z",
-      "sha": "2267f6fada9c77a2bbf62ce7a1c07ddf48348d61"
-    },
-    "opensafely-heart-failure.csv": {
-      "id": "opensafely/heart-failure/2020-05-05",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/heart-failure/2020-05-05/",
-      "downloaded_at": "2021-11-01 12:25:46.479351Z",
-      "sha": "6139df4911534868bc5ade1ada53395606651064"
-    },
-    "opensafely-other-heart-disease.csv": {
-      "id": "opensafely/other-heart-disease/2020-05-11",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/other-heart-disease/2020-05-11/",
-      "downloaded_at": "2021-11-01 12:25:46.829350Z",
-      "sha": "1649c5f85c6ad064d54132db15505cd0dcb31017"
-    },
-    "opensafely-diabetes.csv": {
-      "id": "opensafely/diabetes/2020-04-15",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/diabetes/2020-04-15/",
-      "downloaded_at": "2021-11-01 12:27:34.732914Z",
-      "sha": "605104b3e3770b7ab703d12943f5f15fa8eafe77"
-    },
-    "opensafely-dialysis.csv": {
-      "id": "opensafely/dialysis/2020-07-16",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/dialysis/2020-07-16/",
-      "downloaded_at": "2021-11-01 13:31:52.627301Z",
-      "sha": "9ef20ad32280d276774f5b99b12c6a46513fc478"
-    },
-    "opensafely-chronic-liver-disease.csv": {
-      "id": "opensafely/chronic-liver-disease/2020-06-02",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/chronic-liver-disease/2020-06-02/",
-      "downloaded_at": "2021-11-01 13:31:52.928914Z",
-      "sha": "d31d212d23c5f0e15f63236d2106282fb070bd7c"
-    },
-    "opensafely-current-copd.csv": {
-      "id": "opensafely/current-copd/2020-05-06",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/current-copd/2020-05-06/",
-      "downloaded_at": "2021-11-01 13:31:53.238703Z",
-      "sha": "bab838b50e256ceef8b9d2f6ca1132491e522bda"
-    },
-    "opensafely-learning-disabilities.csv": {
-      "id": "opensafely/learning-disabilities/2020-07-06",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/learning-disabilities/2020-07-06/",
-      "downloaded_at": "2021-11-01 13:31:53.559168Z",
-      "sha": "ab5b5f60e8525af5898ec1066fc820501b8e5e29"
-    },
-    "opensafely-down-syndrome.csv": {
-      "id": "opensafely/down-syndrome/15832db6",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/down-syndrome/15832db6/",
-      "downloaded_at": "2021-11-01 13:31:53.862901Z",
-      "sha": "0f621ff90caa40b1a88c026078eecf0c4d69d04e"
-    },
-    "opensafely-cerebral-palsy.csv": {
-      "id": "opensafely/cerebral-palsy/1835edac",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/cerebral-palsy/1835edac/",
-      "downloaded_at": "2021-11-01 13:31:54.167793Z",
-      "sha": "45cd282e51831fc7d2827c9d96a1f34c2a32d5b0"
-    },
-    "opensafely-cystic-fibrosis.csv": {
-      "id": "opensafely/cystic-fibrosis/2020-07-20",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/cystic-fibrosis/2020-07-20/",
-      "downloaded_at": "2021-11-01 13:31:54.449107Z",
-      "sha": "31d7fecefd8c77801c73226d01fc6577b82a2cef"
-    },
-    "opensafely-other-respiratory-conditions.csv": {
-      "id": "opensafely/other-respiratory-conditions/2020-07-21",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/other-respiratory-conditions/2020-07-21/",
-      "downloaded_at": "2021-11-01 13:31:54.749648Z",
-      "sha": "76cfb92e19e1b2b69953186daddc704458a6a2ab"
-    },
-    "opensafely-lung-cancer.csv": {
-      "id": "opensafely/lung-cancer/2020-04-15",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/lung-cancer/2020-04-15/",
-      "downloaded_at": "2021-11-01 14:54:19.320692Z",
-      "sha": "645584a20f81c4d76187a2c305c904e8b8c63dbb"
-    },
-    "opensafely-haematological-cancer.csv": {
-      "id": "opensafely/haematological-cancer/2020-04-15",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/haematological-cancer/2020-04-15/",
-      "downloaded_at": "2021-11-01 14:54:20.623150Z",
-      "sha": "59d65c613a7b984ba46eca8a74eedcc6320609fe"
-    },
-    "opensafely-cancer-excluding-lung-and-haematological.csv": {
-      "id": "opensafely/cancer-excluding-lung-and-haematological/2020-04-15",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/cancer-excluding-lung-and-haematological/2020-04-15/",
-      "downloaded_at": "2021-11-01 14:54:20.906806Z",
-      "sha": "8fa1164b587028c4bd5903289e0948642d399e56"
-    },
-    "opensafely-chemotherapy-or-radiotherapy.csv": {
-      "id": "opensafely/chemotherapy-or-radiotherapy/2020-04-15",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/chemotherapy-or-radiotherapy/2020-04-15/",
-      "downloaded_at": "2021-11-01 14:54:21.174741Z",
-      "sha": "cd33b4059bb1f9afcf4d04ff46bf72f088548750"
-    },
-    "opensafely-solid-organ-transplantation.csv": {
-      "id": "opensafely/solid-organ-transplantation/2020-04-10",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/solid-organ-transplantation/2020-04-10/",
-      "downloaded_at": "2021-11-01 14:54:21.461755Z",
-      "sha": "94178a9e19770b9c43c08fe42df6ab5ed0d9ec49"
-    },
-    "opensafely-bone-marrow-transplant.csv": {
-      "id": "opensafely/bone-marrow-transplant/2020-04-15",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/bone-marrow-transplant/2020-04-15/",
-      "downloaded_at": "2021-11-01 14:54:21.736849Z",
-      "sha": "3898cc82227c9268fd7e159c2531dfeb01c6f523"
-    },
-    "opensafely-sickle-cell-disease.csv": {
-      "id": "opensafely/sickle-cell-disease/2020-04-14",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/sickle-cell-disease/2020-04-14/",
-      "downloaded_at": "2021-11-01 14:54:22.373807Z",
-      "sha": "c30644d91b2c23e805f1ad6b723c30d1f4cc2191"
-    },
-    "opensafely-permanent-immunosuppression.csv": {
-      "id": "opensafely/permanent-immunosuppression/2020-06-02",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/permanent-immunosuppression/2020-06-02/",
-      "downloaded_at": "2021-11-01 14:54:22.667005Z",
-      "sha": "15dd49a1cbc8b8e9f4a9e05bbcbeb45b4e03106e"
-    },
-    "opensafely-temporary-immunosuppression.csv": {
-      "id": "opensafely/temporary-immunosuppression/2020-04-24",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/temporary-immunosuppression/2020-04-24/",
-      "downloaded_at": "2021-11-01 14:54:22.952538Z",
-      "sha": "99f6c0787e17e16430549a4cfb5084612faba2ac"
-    },
-    "opensafely-asplenia.csv": {
-      "id": "opensafely/asplenia/2020-06-02",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/asplenia/2020-06-02/",
-      "downloaded_at": "2021-11-01 14:54:23.197619Z",
-      "sha": "7599ea87a8f3d9d92389a728966d3077b00ac828"
-    },
-    "opensafely-dmards.csv": {
-      "id": "opensafely/dmards/2020-06-23",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/dmards/2020-06-23/",
-      "downloaded_at": "2021-11-01 14:54:23.526054Z",
-      "sha": "06aae624d5a02a69c9e9e518a6d64e0a8e74e66e"
-    },
-    "opensafely-dementia-complete.csv": {
-      "id": "opensafely/dementia-complete/48c76cf8",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/dementia-complete/48c76cf8/",
-      "downloaded_at": "2021-11-01 14:54:24.841106Z",
-      "sha": "b73c9363f19a9ee9f4407e34e95e11d3eeb615f4"
-    },
-    "opensafely-other-neurological-conditions.csv": {
-      "id": "opensafely/other-neurological-conditions/2020-06-02",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/other-neurological-conditions/2020-06-02/",
-      "downloaded_at": "2021-11-01 14:54:25.122777Z",
-      "sha": "855e7e09a0500401ae2429c6a401978e8c9075ec"
-    },
-    "opensafely-psychosis-schizophrenia-bipolar-affective-disease.csv": {
-      "id": "opensafely/psychosis-schizophrenia-bipolar-affective-disease/2020-07-09",
-      "url": "https://codelists.opensafely.org/codelist/opensafely/psychosis-schizophrenia-bipolar-affective-disease/2020-07-09/",
-      "downloaded_at": "2021-11-01 14:54:26.441763Z",
-      "sha": "c7c23c83a155cab15a41b21e10e26f33ca17bc3f"
     },
     "opensafely-midazolam-end-of-life.csv": {
       "id": "opensafely/midazolam-end-of-life/4c1b3c89",
@@ -425,6 +239,18 @@
       "url": "https://codelists.opensafely.org/codelist/nhsd-primary-care-domain-refsets/palcare_cod/5fce98cf/",
       "downloaded_at": "2021-10-28 08:04:31.410219Z",
       "sha": "777b61f976301db98e5da0c5b9ceebe48222558f"
+    },
+    "opensafely-housebound.csv": {
+      "id": "opensafely/housebound/5bc77310",
+      "url": "https://codelists.opensafely.org/codelist/opensafely/housebound/5bc77310/",
+      "downloaded_at": "2022-02-16 07:27:54.893364Z",
+      "sha": "4408752ee525151741ce050f1a20c51cd5c0116a"
+    },
+    "opensafely-no-longer-housebound.csv": {
+      "id": "opensafely/no-longer-housebound/29a88ca6",
+      "url": "https://codelists.opensafely.org/codelist/opensafely/no-longer-housebound/29a88ca6/",
+      "downloaded_at": "2022-02-16 07:27:55.148559Z",
+      "sha": "cedcdcc0354885c1aa08224072718ff6bdae7450"
     },
     "opensafely-influenza-vaccination.csv": {
       "id": "opensafely/influenza-vaccination/2020-05-12",
