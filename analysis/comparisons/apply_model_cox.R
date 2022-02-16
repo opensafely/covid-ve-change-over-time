@@ -17,13 +17,13 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  comparison <- "ChAdOx"
-  subgroup_label <- 3
+  comparison <- "BNT162b2"
+  subgroup_label <- 1
   outcome <- "noncoviddeath"
   
 } else{
   comparison <- args[[1]]
-  subgroup_label <- args[[2]]
+  subgroup_label <- as.integer(args[[2]])
   outcome <- args[[3]]
 }
 
