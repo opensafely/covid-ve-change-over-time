@@ -11,19 +11,8 @@ fs::dir_create(here::here("output", "report", "tables"))
 ## import study_parameters
 study_parameters <- readr::read_rds(
   here::here("output", "lib", "study_parameters.rds"))
-
-
-# individuals eligible based on box c & e criteria
-data_eligible_e_vax <- readr::read_rds(
-  here::here("output", "data", "data_eligible_e_vax.rds"))  %>%
-  mutate(arm = brand) %>%
-  select(patient_id, start_of_period, arm)
-
-# individuals eligible based on box d & e criteria
-data_eligible_e_unvax <- readr::read_rds(
-  here::here("output", "data", "data_eligible_e_unvax.rds"))  %>%
-  mutate(arm = "unvax") %>%
-  select(patient_id, start_of_period, arm)
+K <- study_parameters$max_comparisons
+K<-2
 
 # read list of covariates for model
 model_varlist <- readr::read_rds(
@@ -38,18 +27,13 @@ strata_vars <- strata_vars[strata_vars!="elig_date"]
 data_processed <- readr::read_rds(
   here::here("output", "data", "data_processed.rds")) 
 
+# covariates data
+data_covariates <- readr::read_rds(
+  here::here("output", "data", "data_covariates.rds")) 
+
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
-
-# read outcomes
-outcomes <- readr::read_rds(
-  here::here("output", "lib", "outcomes.rds"))
-outcomes <- unname(outcomes)
-outcomes <- outcomes[outcomes!="anytest"]
-
-# read script for processing covariates for comparison 1
-source(here::here("analysis", "lib", "process_covariates.R"))
 
 # redaction functions
 source(here::here("analysis", "lib", "redaction_functions.R"))
@@ -62,31 +46,53 @@ no_evidence_of <- function(cov_date, index_date) {
 
 censor_vars <- c("death_date", "dereg_date")
 
-data_comparison_1 <- bind_rows(
-  data_eligible_e_vax,
-  data_eligible_e_unvax
-  ) %>%
-  left_join(data_processed,
-            by = "patient_id") %>%
-  mutate(
-    # start date of comparison 1 
-    start_fu_date = start_of_period + days(14),
-    end_fu_date = start_fu_date + days(28)
-  ) %>%
-  select(-start_of_period) %>%
-  # remove if death or dereg before start_of_period
-  filter_at(
-    all_of(censor_vars),
-    all_vars(no_evidence_of(., start_fu_date))) %>%
-  ungroup() %>%
-  select(patient_id, jcvi_group, elig_date, region, arm,
-         start_fu_date, end_fu_date) %>%
-  mutate(comparison = factor(1, levels = 1:study_parameters$max_comparisons))
+# data_comparison_1 <- data_eligible_e %>%
+#   select(patient_id, start_1_date, arm) %>%
+#   mutate(across(contains("_date"), 
+#                 ~ floor_date(
+#                   as.Date(.x, format="%Y-%m-%d"),
+#                   unit = "days"))) %>%
+#   left_join( # join for brand info
+#     data_eligible_e_vax,
+#     by = "patient_id"
+#   ) %>%
+#   mutate(across(arm, 
+#                 ~if_else(!is.na(brand), brand, .x))) %>%
+#   select(-brand) %>%
+#   left_join(data_processed,
+#             by = "patient_id") %>%
+#   # remove if death or dereg before start of comparison k
+#   filter_at(
+#     all_of(censor_vars),
+#     all_vars(no_evidence_of(cov_date = ., index_date = start_1_date))) %>%
+#   # ungroup() %>%
+#   select(patient_id, subgroup, jcvi_group, elig_date, region, arm,
+#          sex, imd, ethnicity)
 
 ################################################################################
+# join to covariates data
+# data_tables <- data_comparison_1 %>%
+#   left_join(
+#     data_covariates %>% 
+#       filter(k==1),
+#     by = "patient_id"
+#   ) %>%
+#   select(patient_id, arm, region, jcvi_group, subgroup,
+#          all_of(unname(unlist(model_varlist)))) %>% 
+#   group_split(subgroup)
 
-data_tables <- data_comparison_1 %>%
-  process_covariates() %>%
+data_tables <- data_covariates %>% 
+  filter(k==1) %>%
+  left_join(data_processed %>%
+              select(patient_id, subgroup,
+                     all_of(unname(strata_vars)),
+                     sex, imd, ethnicity,
+                     all_of(censor_vars)),
+            by = "patient_id") %>%
+  # remove if death or dereg before start of comparison 1
+  filter_at(
+    all_of(censor_vars),
+    all_vars(no_evidence_of(., start_k_date))) %>%
   select(patient_id, arm, region, jcvi_group, subgroup,
          all_of(unname(unlist(model_varlist)))) %>% 
   group_split(subgroup)
@@ -98,7 +104,7 @@ for (i in c(0, seq_along(data_tables))) {
   cat("---- define obejcts ----\n")
   variables <- c(unname(strata_vars), unname(unlist(model_varlist)))
   variables <- variables[variables != "age"]
-  vars_ordered_levs <- c("region", "jcvi_group", "sex", "imd", "ethnicity", "bmi", "multimorb", "test_hist_1_n")
+  vars_ordered_levs <- c("region", "jcvi_group", "sex", "imd", "ethnicity", "bmi", "multimorb", "test_hist_n")
   
   # tibble for assigning tidy variable names
   var_labels <- tibble(
@@ -202,10 +208,15 @@ for (i in c(0, seq_along(data_tables))) {
   cat("---- tidy table 1 ----\n")
   # vairables under "History of" heading
   history_of_vars <- c(
-    "heart_failure", "other_heart_disease", "dialysis", "diabetes", 
-    "chronic_liver_disease", "current_copd", "other_respiratory", "lung_cancer", 
-    "haematological_cancer", "cancer_excl_lung_and_haem", "any_immunosuppression", 
-    "dementia", "other_neuro_conditions", "ld_inc_ds_and_cp", "psychosis_schiz_bipolar")
+    "chronic_respiratory_disease",
+    "chronic_heart_disease", 
+    "chronic_liver_disease", 
+    "ckd", 
+    "chronic_neuro_inc_ld",
+    "diabetes",
+    "any_immunosuppression", 
+    "ld_inc_ds_and_cp", 
+    "sev_ment")
   # tidy table1
   table1_tidy <- var_order %>% 
     left_join(var_labels, by = "variable") %>%
