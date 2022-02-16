@@ -23,6 +23,9 @@ arm1 <- if_else(comparison =="ChAdOx", "ChAdOx", "BNT162b2")
 arm2 <- if_else(comparison == "both", "ChAdOx", "unvax")
 
 ################################################################################
+study_parameters <- readr::read_rds(
+  here::here("output", "lib", "study_parameters.rds"))
+
 # read outcomes
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds"))
@@ -36,88 +39,36 @@ data_covariates <- readr::read_rds(
 data_processed <- readr::read_rds(
   here::here("output", "data", "data_processed.rds")) 
 
-data_all <- data_covariates %>%
-  left_join(
-    data_processed,
-    by = "patient_id"
-  )
-
-# # outcomes for exclusions prior to comparison 1
-# data_prior_outcomes <- readr::read_rds(
-#   here::here("output", "data", "data_processed.rds")) %>%
-#   select(patient_id, starts_with(unname(outcomes))) %>%
-#   rename_with(~ glue("prior_{.x}"), starts_with(unname(outcomes)))
-
-# # read any test data
-# data_tests <- readr::read_rds(
-#   here::here("output", "data", "data_tests.rds")) %>%
-#   select(patient_id, matches("any_test_\\d\\_date")) %>%
-#   pivot_longer(
-#     cols = -patient_id,
-#     names_pattern = "^(.*)_(\\d+)_date",
-#     names_to = c(NA, "comparison"),
-#     values_to = "anytest_date",
-#     values_drop_na = TRUE
-#   )
-
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
+subgroup_labels <- seq_along(subgroups)
 if ("ChAdOx" %in% c(arm1, arm2)) {
-  
-  
-  
+  subgroup_labels <- subgroup_labels[subgroups != "18-39 years"]
+  subgroups <- subgroups[subgroups != "18-39 years"]
 }
-
-subgroups <- c(subgroups, "all")
 
 fs::dir_create(here::here("output", "tte", "data"))
 fs::dir_create(here::here("output", "tte", "tables"))
 
 ################################################################################
 
-
-################################################################################
-
-data_comparisons <- data_all %>%
+data <- data_covariates %>%
+  left_join(
+    data_processed,
+    by = "patient_id"
+  ) %>%
+  # filter subgroups
+  filter(subgroup %in% subgroups) %>%
+  # keep only odd unvax for odd k, equiv. for even
+  filter(
+    is.na(split) |
+      ((k %% 2) == 0 & split == "even") |
+      ((k %% 2) != 0 & split == "odd")
+  ) %>%
   select(patient_id, k, arm, subgroup, split,
          start_k_date, end_k_date, dereg_date,
          all_of(str_c(outcomes, "_date"))) 
-
-
-subgroups_1 <- data_all %>%
-  filter(arm %in% arm1) %>%
-  distinct(subgroup) %>%
-  unlist() %>% unname() %>% as.character()
-subgroups_2 <- data_all %>%
-  filter(arm %in% arm2) %>%
-  distinct(subgroup) %>%
-  unlist() %>% unname() %>% as.character()
-subgroups <- c(intersect(subgroups_1, subgroups_2))
-
-data_comparisons <- local({
-  
-  data_arm1 <-  data_covariates %>%
-    select(patient_id, comparison, arm, subgroup, start_k_date, end_k_date, anytest_date, split)
-  
-  data_arm2 <-  readr::read_rds(
-    here::here("output", "comparisons", "data", glue("data_comparisons_{arm2}.rds"))) %>%
-    select(patient_id, comparison, arm, subgroup, start_fu_date, end_fu_date,
-           dereg_date, death_date,
-           starts_with(unname(outcomes)))
-  
-  subgroups_1 <- unique(as.character(data_arm1$subgroup))
-  subgroups_2 <- unique(as.character(data_arm2$subgroup))
-  subgroups <- c(intersect(subgroups_1, subgroups_2), "all")
-  
-  bind_rows(data_arm1, data_arm2) %>%
-    filter(subgroup %in% subgroups)
-
-})
-
-data <- data_comparisons %>%
-  left_join(data_prior_outcomes, by = "patient_id") %>%
-  left_join(data_tests, by = c("patient_id", "comparison"))
 
 ################################################################################
 # generates and saves data_tte and tabulates event counts 
@@ -134,71 +85,67 @@ derive_data_tte <- function(
     "postest",
     outcome)
   
-  data_inc <- .data %>%
+  
+  # function to be applied in dplyr::filter
+  occurs_after_start_date <- function(cov_date, index_date) {
+    is.na(cov_date) | index_date < cov_date
+  }
+  
+  data_tte <- .data %>%
+    # exclude if death, dereg or outcome_exclude occurred before start of period
+    filter_at(
+      vars(str_c(unique(c("dereg", "coviddeath", "noncoviddeath", outcome_exclude)), "_date")),
+      all_vars(occurs_after_start_date(cov_date = ., index_date = start_k_date))
+    ) %>%
+    # only keep periods for which start_k_date < end_date
     filter(
-      # allow for the fact that the first comparison for the even unvax arm is 2
-      (!(arm %in% "unvax") & comparison %in% "1") |
-        (arm %in% "unvax" & comparison %in% c("1", "2"))  
+      start_k_date < as.Date(study_parameters$end_date) 
     ) %>%
-    filter(
-      # remove people who have experienced the outcome before first comparison
-      is.na(!! sym(glue("prior_{outcome_exclude}_date"))) |
-        start_fu_date < !! sym(glue("prior_{outcome_exclude}_date"))
-    ) %>%
-    select(patient_id)
-  
-  # keep the selected patients from .data
-  data_tte_0 <- data_inc %>%
-    left_join(.data, by = "patient_id") %>%
-    select(patient_id, comparison, arm, subgroup, start_fu_date, end_fu_date, 
-           dereg_date, death_date, # for censoring
-           # when outcome is anytest, keep postest too
-           all_of(glue("{unique(c(outcome, outcome_exclude))}_date"))) %>%
-    arrange(patient_id, comparison) 
-  
-  data_tte_1 <- data_tte_0 %>%
-    group_by(patient_id) %>%
-    # remove comparisons for which outcome_exclude has occurred before start_fu_date
-    mutate(
-      event_seq = cumsum(cumsum(!is.na(!! sym(glue("{outcome_exclude}_date")))))
-    ) %>%
-    ungroup() %>%
-    filter(event_seq <= 1)
-  
-  data_tte_2 <- data_tte_1 %>%
+    # if end_k_date > end_date, replace with end_date
+    mutate(across(end_k_date,
+                  ~ if_else(as.Date(study_parameters$end_date) < .x,
+                            as.Date(study_parameters$end_date),
+                            .x))) %>%
+    # only keep dates between start_k_date and end_k_date
+    mutate(across(all_of(str_c(unique(c("dereg", outcomes)), "_date")),
+                  ~ if_else(
+                    !is.na(.x) & (start_k_date < .x) & (.x <= end_k_date),
+                    .x,
+                    as.Date(NA_character_)
+                  ))) %>%
     # new time-scale: time since earliest start_fu_date in data
     mutate(across(ends_with("_date"),
-                  ~ as.integer(.x - min(start_fu_date)))) %>%
+                  ~ as.integer(.x - min(start_k_date)))) %>%
     rename_at(vars(ends_with("_date")),
               ~ str_remove(.x, "_date")) %>%
     mutate(
-      tte = pmin(!! sym(outcome), dereg, death, end_fu, na.rm = TRUE),
+      tte = pmin(!! sym(outcome), dereg, coviddeath, noncoviddeath, end_k, na.rm = TRUE),
       status = if_else(
         !is.na(!! sym(outcome)) & !! sym(outcome) == tte,
         TRUE,
         FALSE
       )) %>%
-    select(patient_id, arm, comparison, tstart = start_fu, tstop = tte, status) %>%
-    arrange(patient_id, comparison) 
+    select(patient_id, arm, k, tstart = start_k, tstop = tte, status) %>%
+    arrange(patient_id, k) 
   
   # checks
-  stopifnot("tstart should be  >= 0 in data_tte_2" = data_tte_2$tstart>=0)
-  stopifnot("tstop - tstart should be strictly > 0 in data_tte_2" = data_tte_2$tstop - data_tte_2$tstart > 0)
+  stopifnot("tstart should be  >= 0 in data_tte" = data_tte$tstart>=0)
+  stopifnot("tstop - tstart should be strictly > 0 in data_tte" = data_tte$tstop - data_tte$tstart > 0)
   
   # subgroups in .data
   subgroup <- unique(as.character(.data$subgroup))
   if (length(subgroup) > 1) subgroup <- "all"
-  subgroup_label <- which(subgroups == subgroup)
+  subgroup_label <- subgroup_labels[subgroups == subgroup]
   
   # save data_tte
   readr::write_rds(
-    data_tte_2,
+    data_tte,
     here::here("output", "tte", "data", glue("data_tte_{comparison}_{subgroup_label}_{outcome}.rds")),
     compress = "gz")
   
   # tabulate events per comparison and save
-  table_events <- data_tte_2 %>%
-    group_by(comparison, arm) %>%
+  table_events <- data_tte %>%
+    group_by(k, arm) %>%
     summarise(
       n = n(),
       events = sum(status),
@@ -217,7 +164,7 @@ derive_data_tte <- function(
 
 table_events <- 
   lapply(
-    splice(data, as.list(data %>% group_split(subgroup))),
+    as.list(data %>% group_split(subgroup)),
     function(y)
       lapply(
         outcomes,
