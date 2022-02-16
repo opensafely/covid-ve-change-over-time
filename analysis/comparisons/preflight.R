@@ -15,7 +15,7 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   comparison <- "BNT162b2"
-  subgroup_label <- 1
+  subgroup_label <- 4
   outcome <- "anytest"
   
 } else{
@@ -330,6 +330,7 @@ if (nrow(data_1) > 0) {
     
   } else {
     
+    # separate age terms for each jcvi_group / elig_date
     data_3_list <- data_3 %>%
       group_split(jcvi_group, elig_date) %>%
       as.list()
@@ -344,28 +345,25 @@ if (nrow(data_1) > 0) {
         data_3_list[[i]] <- data_3_list[[i]] %>%
           select(-age)
         
-      } else {
+      } else if (g == "02") { 
+      # create age and age^2 term for jcvi group 2 (80+)
+        data_3_list[[i]] <- data_3_list[[i]] %>%
+          mutate(
+            age_80plus = age,
+            age_80plus_squared =  age * age
+          )
         
+      } else {
+        # for all others, just create age term
         age_range <- data_3_list[[i]] %>%
           summarise(min(age), max(age)) %>%
-          mutate(across(`max(age)`,
-                        ~if_else(.x > 80, "plus", str_c("to", .x)))) %>%
           unlist() %>% unname() %>% 
-          str_c(., collapse = "")
+          str_c(., collapse = "to")
         
         data_3_list[[i]] <- data_3_list[[i]] %>%
           mutate(!! sym(glue("age_{age_range}")) := age) %>%
           select(-age)
         
-      }
-      
-      # add an age^2 term for jcvi group 2 (80+)
-      if (g == "02") {
-        
-        data_3_list[[i]] <- data_3_list[[i]] %>%
-          mutate(
-            age_80plus_squared =  age_80plus * age_80plus
-            )
       }
     }
     
