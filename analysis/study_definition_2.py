@@ -198,4 +198,28 @@ study=StudyDefinition(
         return_expectations={"incidence": 0.01},
     ),
 
+    housebound = patients.satisfying(
+    """
+    housebound_date
+    AND NOT no_longer_housebound
+    AND NOT moved_into_care_home
+    """,
+        
+    housebound_date=patients.with_these_clinical_events( 
+      housebound, 
+      on_or_before="start_k_date",
+      find_last_match_in_period = True,
+      returning="date",
+      date_format="YYYY-MM-DD",
+    ),   
+    no_longer_housebound=patients.with_these_clinical_events( 
+      no_longer_housebound, 
+      on_or_after="housebound_date",
+    ),
+    moved_into_care_home=patients.with_these_clinical_events(
+      longres_primis,
+      on_or_after="housebound_date",
+    ),
+  ),
+
 )
