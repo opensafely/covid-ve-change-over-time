@@ -8,12 +8,6 @@ library(gt)
 fs::dir_create(here::here("output", "report", "tables"))
 
 ################################################################################
-## import study_parameters
-study_parameters <- readr::read_rds(
-  here::here("output", "lib", "study_parameters.rds"))
-K <- study_parameters$max_comparisons
-K<-2
-
 # read list of covariates for model
 model_varlist <- readr::read_rds(
   here::here("output", "lib", "model_varlist.rds"))
@@ -46,41 +40,8 @@ no_evidence_of <- function(cov_date, index_date) {
 
 censor_vars <- c("death_date", "dereg_date")
 
-# data_comparison_1 <- data_eligible_e %>%
-#   select(patient_id, start_1_date, arm) %>%
-#   mutate(across(contains("_date"), 
-#                 ~ floor_date(
-#                   as.Date(.x, format="%Y-%m-%d"),
-#                   unit = "days"))) %>%
-#   left_join( # join for brand info
-#     data_eligible_e_vax,
-#     by = "patient_id"
-#   ) %>%
-#   mutate(across(arm, 
-#                 ~if_else(!is.na(brand), brand, .x))) %>%
-#   select(-brand) %>%
-#   left_join(data_processed,
-#             by = "patient_id") %>%
-#   # remove if death or dereg before start of comparison k
-#   filter_at(
-#     all_of(censor_vars),
-#     all_vars(no_evidence_of(cov_date = ., index_date = start_1_date))) %>%
-#   # ungroup() %>%
-#   select(patient_id, subgroup, jcvi_group, elig_date, region, arm,
-#          sex, imd, ethnicity)
-
 ################################################################################
-# join to covariates data
-# data_tables <- data_comparison_1 %>%
-#   left_join(
-#     data_covariates %>% 
-#       filter(k==1),
-#     by = "patient_id"
-#   ) %>%
-#   select(patient_id, arm, region, jcvi_group, subgroup,
-#          all_of(unname(unlist(model_varlist)))) %>% 
-#   group_split(subgroup)
-
+# prepare data
 data_tables <- data_covariates %>% 
   filter(k==1) %>%
   left_join(data_processed %>%
