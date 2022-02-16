@@ -19,50 +19,86 @@ if(length(args)==0){
   comparison <- args[[1]]
 }
 
+arm1 <- if_else(comparison =="ChAdOx", "ChAdOx", "BNT162b2")
+arm2 <- if_else(comparison == "both", "ChAdOx", "unvax")
+
 ################################################################################
 # read outcomes
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds"))
 
-# outcomes for exclusions prior to comparison 1
-data_prior_outcomes <- readr::read_rds(
-  here::here("output", "data", "data_processed.rds")) %>%
-  select(patient_id, starts_with(unname(outcomes))) %>%
-  rename_with(~ glue("prior_{.x}"), starts_with(unname(outcomes)))
+# covariates data
+data_covariates <- readr::read_rds(
+  here::here("output", "data", "data_covariates.rds")) %>%
+  filter(arm %in% c(arm1, arm2))
 
-# read any test data
-data_tests <- readr::read_rds(
-  here::here("output", "data", "data_tests.rds")) %>%
-  select(patient_id, matches("any_test_\\d\\_date")) %>%
-  pivot_longer(
-    cols = -patient_id,
-    names_pattern = "^(.*)_(\\d+)_date",
-    names_to = c(NA, "comparison"),
-    values_to = "anytest_date",
-    values_drop_na = TRUE
+# processed data
+data_processed <- readr::read_rds(
+  here::here("output", "data", "data_processed.rds")) 
+
+data_all <- data_covariates %>%
+  left_join(
+    data_processed,
+    by = "patient_id"
   )
+
+# # outcomes for exclusions prior to comparison 1
+# data_prior_outcomes <- readr::read_rds(
+#   here::here("output", "data", "data_processed.rds")) %>%
+#   select(patient_id, starts_with(unname(outcomes))) %>%
+#   rename_with(~ glue("prior_{.x}"), starts_with(unname(outcomes)))
+
+# # read any test data
+# data_tests <- readr::read_rds(
+#   here::here("output", "data", "data_tests.rds")) %>%
+#   select(patient_id, matches("any_test_\\d\\_date")) %>%
+#   pivot_longer(
+#     cols = -patient_id,
+#     names_pattern = "^(.*)_(\\d+)_date",
+#     names_to = c(NA, "comparison"),
+#     values_to = "anytest_date",
+#     values_drop_na = TRUE
+#   )
 
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
+if ("ChAdOx" %in% c(arm1, arm2)) {
+  
+  
+  
+}
+
 subgroups <- c(subgroups, "all")
 
 fs::dir_create(here::here("output", "tte", "data"))
 fs::dir_create(here::here("output", "tte", "tables"))
 
 ################################################################################
-arm1 <- if_else(comparison =="ChAdOx", "ChAdOx", "BNT162b2")
-arm2 <- if_else(comparison == "both", "ChAdOx", "unvax")
+
 
 ################################################################################
 
+data_comparisons <- data_all %>%
+  select(patient_id, k, arm, subgroup, split,
+         start_k_date, end_k_date, dereg_date,
+         all_of(str_c(outcomes, "_date"))) 
+
+
+subgroups_1 <- data_all %>%
+  filter(arm %in% arm1) %>%
+  distinct(subgroup) %>%
+  unlist() %>% unname() %>% as.character()
+subgroups_2 <- data_all %>%
+  filter(arm %in% arm2) %>%
+  distinct(subgroup) %>%
+  unlist() %>% unname() %>% as.character()
+subgroups <- c(intersect(subgroups_1, subgroups_2))
+
 data_comparisons <- local({
   
-  data_arm1 <-  readr::read_rds(
-    here::here("output", "comparisons", "data", glue("data_comparisons_{arm1}.rds"))) %>%
-    select(patient_id, comparison, arm, subgroup, start_fu_date, end_fu_date,
-           dereg_date, death_date,
-           starts_with(unname(outcomes)))
+  data_arm1 <-  data_covariates %>%
+    select(patient_id, comparison, arm, subgroup, start_k_date, end_k_date, anytest_date, split)
   
   data_arm2 <-  readr::read_rds(
     here::here("output", "comparisons", "data", glue("data_comparisons_{arm2}.rds"))) %>%
