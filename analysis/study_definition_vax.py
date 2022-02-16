@@ -27,9 +27,6 @@ regions = pd.read_csv(
 )
 ratio_regions = { regions['region'][i] : float(regions['ratio'][i]) for i in regions.index }
 
-# import recurring event functions
-from recurrent_event_funs import *
-
 # set seed so that dummy data can be reproduced
 import numpy as np
 np.random.seed(study_parameters["seed"])
