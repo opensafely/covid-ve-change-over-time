@@ -173,14 +173,6 @@ study=StudyDefinition(
         ),
     ),
 
-    # Patients in long-stay nursing and residential care before start period k
-    longres_group=patients.with_these_clinical_events(
-        longres_primis,
-        returning="binary_flag",
-        on_or_before="start_k_date",
-        return_expectations={"incidence": 0.01},
-    ),
-
     cev_group=patients.satisfying(
         "severely_clinically_vulnerable AND NOT less_vulnerable",
 
@@ -215,7 +207,7 @@ study=StudyDefinition(
         
     housebound_date=patients.with_these_clinical_events( 
       housebound, 
-      on_or_before="start_date",
+      on_or_before="start_k_date",
       find_last_match_in_period = True,
       returning="date",
       date_format="YYYY-MM-DD",
