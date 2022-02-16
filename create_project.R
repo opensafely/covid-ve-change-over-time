@@ -367,7 +367,7 @@ actions_list <- splice(
   action(
     name = "generate_study_population",
     run = "cohortextractor:latest generate_cohort --study-definition study_definition_vax --output-format feather",
-    dummy_data_file = "analysis/dummy_data.feather",
+    dummy_data_file = "analysis/dummy_data_vax.feather",
     needs = list("design", "dummy_data_vax"),
     highly_sensitive = list(
       cohort = "output/input_vax.feather"
