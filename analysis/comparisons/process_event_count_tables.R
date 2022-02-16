@@ -75,8 +75,8 @@ process_tables <- function(
   
   # redact low values
   table_out <- table %>%
-    select(comparison, all_of(cols_order)) %>%
-    mutate(across(-comparison, 
+    select(k, all_of(cols_order)) %>%
+    mutate(across(-k, 
                   ~ if_else(.x <= 5,
                             "-",
                             scales::comma(.x, accuracy = 1)))) 
