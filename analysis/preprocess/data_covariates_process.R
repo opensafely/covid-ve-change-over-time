@@ -6,38 +6,59 @@ library(glue)
 
 ################################################################################
 ## create folders for outputs
-fs::dir_create(here::here("output", "data"))
+# fs::dir_create(here::here("output", "data"))
 
 ################################################################################
 ## import study_parameters
 study_parameters <- readr::read_rds(
   here::here("output", "lib", "study_parameters.rds"))
 K <- study_parameters$max_comparisons
-
+K<-2
 # import variable names
 model_varlist <- readr::read_rds(
   here::here("output", "lib", "model_varlist.rds")
 )
 
-data_eligible_e <- readr::read_csv(
-  here::here("output", "data", "data_eligible_e.csv"))
+# individuals eligible based on box c & e criteria 
+# arm and split info
+data_arm <- bind_rows(
+  readr::read_rds(
+    here::here("output", "data", "data_eligible_e_vax.rds")) %>%
+    rename(arm=brand),
+  readr::read_rds(
+    here::here("output", "data", "data_eligible_e_unvax.rds")) %>%
+    mutate(arm = "unvax")
+)  %>%
+  select(patient_id, arm, split)
 
 # read data for ever covariates
 data_ever <- arrow::read_feather(
   file = here::here("output", "input_ever.feather")) 
 # read data for k covariates
 data_k <- bind_rows(lapply(
-  1:2,
+  1:K,
   function(k)
   arrow::read_feather(
     file = here::here("output", glue("input_{k}.feather"))) %>%
     mutate(k=k)
 ))
 
+ever_before <- function(.data, name, var) {
+  .data %>%
+    mutate(!! sym(name) := if_else(
+      !is.na(!! sym(var)) & (!! sym(var) <= start_k_date),
+      TRUE,
+      FALSE
+    ))
+}
+
 ################################################################################
-# process covaraiets data
+# process covariates data
 data_covariates <- data_k %>% 
   left_join(data_ever %>% select(-start_1_date), 
+            by = "patient_id") %>%
+  # arm and split info
+  left_join(data_arm,
             by = "patient_id") %>%
   # clean BMI data
   mutate(across(bmi_stage,
@@ -81,7 +102,7 @@ data_covariates <- data_k %>%
                   is.na(bmi),
                   as.POSIXct(NA_character_),
                   .x))) %>%
-  # define clinical covariates
+  # clean asthma data
   mutate(
     # clinically extremely vulnerable in period k
     cev = cev_group,
@@ -94,30 +115,74 @@ data_covariates <- data_k %>%
         astrxm2 & 
         astrxm3 ~ TRUE,
       TRUE ~ FALSE
-    ),
-    # chronic respiratory disease other than asthma ever
-    other_respiratory = resp_date <= start_k_date,
-    chronic_respiratory_disease = asthma | other_respiratory,
-    # chronic neurological disease including significant learning disorder
-    chronic_neuro_inc_ld = cns_date <= start_k_date,
-    # wider learning disorder
-    ld_inc_ds_and_cp = learndis_date <= start_k_date,
-    # diabetes ever
-    diabetes = diab_date <= start_k_date,
-    # severe mental illness ever
-    sev_ment = sev_mental_date <= start_k_date,
-    # chronic heart disease ever
-    chronic_heart_disease = chd_date <= start_k_date,
-    # chronic liver disease ever
-    chronic_liver_disease = cld_date <= start_k_date,
-    # permanent immunosupression
-    permanant_immunosuppression = immdx_date <= start_k_date,
+    )) %>%
+  # clean test history data
+  mutate(across(test_hist_n,
+                ~ factor(case_when(
+                  is.na(.x) ~ NA_character_,
+                  .x < 1 ~ "0",
+                  .x < 2 ~ "1",
+                  .x < 3 ~ "2",
+                  TRUE ~ "3+"
+                )))) %>%
+  # clean "ever" variables
+  # chronic respiratory disease other than asthma ever
+  ever_before(
+    name = "other_respiratory",
+    var = "resp_date"
+  ) %>%
+  # chronic neurological disease including significant learning disorder
+  ever_before(
+    name = "chronic_neuro_inc_ld",
+    var = "cns_date"
+  ) %>%
+  # wider learning disorder
+  ever_before(
+    name = "ld_inc_ds_and_cp",
+    var = "learndis_date"
+  ) %>%
+  # diabetes ever
+  ever_before(
+    name = "diabetes",
+    var = "diab_date"
+  ) %>%
+  # severe mental illness ever
+  ever_before(
+    name = "sev_ment",
+    var = "sev_mental_date"
+  ) %>%
+  # chronic heart disease ever
+  ever_before(
+    name = "chronic_heart_disease",
+    var = "chd_date"
+  ) %>%
+  # chronic liver disease ever
+  ever_before(
+    name = "chronic_liver_disease",
+    var = "cld_date"
+  ) %>%
+  # permanent immunosupression
+  ever_before(
+    name = "permanant_immunosuppression",
+    var = "immdx_date"
+  ) %>%
+  # asplenia or dysfunction of the spleen ever
+  ever_before(
+    name = "asplenia_ever",
+    var = "spln_date"
+  ) %>%
+  # resident in longterm residential home
+  ever_before(
+    name = "longres",
+    var = "longres_date"
+  ) %>%
+  mutate(
     # current immunosuppression medication
     immunosuppression_meds = immrx,
-    # asplenia or dysfunction of the spleen ever
-    asplenia_ever = spln_date <= start_k_date,
     # chronic kidney disease stages 3-5
     ckd = ckd_group,
+    # any chronic respiratory disease
+    chronic_respiratory_disease = asthma | other_respiratory,
     # bmi
     bmi = factor(
       case_when(
@@ -132,14 +197,14 @@ data_covariates <- data_k %>%
       "Obese I (30-34.9)",
       "Obese II (35-39.9)",
       "Obese III (40+)"
-      ),
-    
-    pregnancy = preg_group
+      )
   ),
+  
+  pregnancy = preg_group,
   
   any_immunosuppression = (
     permanant_immunosuppression | 
-      asplenia | 
+      asplenia_ever | 
       immunosuppression_meds),
   
   multimorb =
@@ -160,8 +225,14 @@ data_covariates <- data_k %>%
     right=FALSE)
   
   ) %>%
-  select(patient_id, start_k_date, end_k_date, anytest_date
-         all_of(unlist(unname(model_varlist))))
+  mutate(across(contains("_date"), 
+                ~ floor_date(
+                  as.Date(.x, format="%Y-%m-%d"),
+                  unit = "days"))) %>%
+  select(patient_id, start_k_date, end_k_date, k,
+         arm, split,
+         anytest_date, age,
+         all_of(unname(model_varlist$clinical)))
   
 
 readr::write_rds(
