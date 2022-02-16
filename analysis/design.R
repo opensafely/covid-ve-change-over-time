@@ -34,7 +34,7 @@ study_parameters <-
     start_date_pfizer = "2020-12-08",
     start_date_az = "2021-01-04",
     start_date_moderna = "2021-03-04",
-    end_date = "2021-12-31" # last date of available data
+    end_date = "2021-12-15" # last date of available data
   ) 
 
 # use lower thresholds if not running in the server
@@ -148,11 +148,11 @@ clinical <-c(
   "Chronic kidney disease" = "ckd", 
   "Chronic neurological disease" = "chronic_neuro_inc_ld",
   "Diabetes" = "diabetes",
-  "Imunosuppressed" = "any_immunosuppression",
+  "Immunosuppression" = "any_immunosuppression",
   "Learning disability" = "ld_inc_ds_and_cp",
   "Serious mental illness" = "sev_ment",
   "Shielding criteria met" = "cev", 
-  "Morbidity count" = "mutlimorb",
+  "Morbidity count" = "multimorb",
   "Flu vaccine in previous 5 years" = "flu_vaccine",
   "Resident in long-term residential home" = "longres", 
   "Housebound" = "housebound",
