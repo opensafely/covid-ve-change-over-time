@@ -6,6 +6,13 @@ expectations:
 
 actions:
 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  ## DO NOT EDIT project.yaml or study_definition_1-6.py DIRECTLY 
+  ## These files are created by create-project.R 
+  ## Edit and run create-project.R to update the project.yaml 
+  ## Edit study_definition_k.py and run create-project.R to update 
+  ## study_definition_1-6.py 
+  ## # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   ## #################################### 
   ## preliminaries 
   ## #################################### 
@@ -216,4 +223,59 @@ actions:
       highly_sensitive:
         cohort: output/input_6.feather
 
-  
+  ## #################################### 
+  ## process covariates data 
+  ## #################################### 
+  ## (includes anytest_date) 
+
+  data_covariates_process:
+    run: r:latest analysis/preprocess/data_covariates_process.R
+    needs:
+    - design
+    - data_input_process
+    - data_eligible_cde
+    - generate_ever_data
+    - generate_input_1
+    - generate_input_2
+    # - generate_input_3
+    # - generate_input_4
+    # - generate_input_5
+    # - generate_input_6
+    outputs:
+      highly_sensitive:
+        data_covariates: output/data/data_covariates.rds
+
+  ## #################################### 
+  ## subsequent vaccination 
+  ## #################################### 
+  ## plot cumulative incidence of subsequent vaccination 
+
+  plot_cumulative_incidence:
+    run: r:latest analysis/subsequent_vax/plot_cumulative_incidence.R
+    needs:
+    - design
+    - data_input_process
+    - data_eligible_cde
+    outputs:
+      moderately_sensitive:
+        ci_vax: output/subsequent_vax/images/ci_vax_*.png
+        survtable: output/subsequent_vax/tables/survtable_*.txt
+
+  ## #################################### 
+  ## table 1 for report 
+  ## #################################### 
+  ## create table 1 for all and for each subgroup 
+
+  table1:
+    run: r:latest analysis/report/table1.R
+    needs:
+    - design
+    - data_input_process
+    - data_eligible_cde
+    - data_covariates_process
+    outputs:
+      moderately_sensitive:
+        table_csv: output/report/tables/table1_*_REDACTED.csv
+        table_html: output/report/tables/table1_*_REDACTED.html
+
+ 

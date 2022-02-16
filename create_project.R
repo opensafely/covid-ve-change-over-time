@@ -321,6 +321,15 @@ outcomes_model <- outcomes
 ## actions ----
 actions_list <- splice(
   
+  comment("# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #",
+          "DO NOT EDIT project.yaml or study_definition_1-6.py DIRECTLY",
+          "These files are created by create-project.R",
+          "Edit and run create-project.R to update the project.yaml",
+          "Edit study_definition_k.py and run create-project.R to update",
+          "study_definition_1-6.py",
+          "# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #"
+  ),
+  
   comment("####################################",
           "preliminaries",
           "####################################"),
@@ -452,7 +461,7 @@ actions_list <- splice(
   ),
   
   splice(unlist(lapply(
-    1:6,
+    1:K,
     function(k) {
       splice(
         comment(glue("study definition for period {k}")),
@@ -468,21 +477,27 @@ actions_list <- splice(
     }
   ), recursive = FALSE)),
   
-  comment("check the tests data as expected and save processed data"),
+  comment("####################################", 
+          "process covariates data",
+          "####################################"),
+  
+  comment("(includes anytest_date)"),
   action(
-    name = "process_tests",
-    run = "r:latest analysis/tests/process_tests.R",
-    needs = list("design", "data_input_process", "data_eligible_cde", "generate_covid_tests_data"),
+    name = "data_covariates_process",
+    run = "r:latest analysis/preprocess/data_covariates_process.R",
+    needs = splice(
+      "design", 
+      "data_input_process", 
+      "data_eligible_cde", 
+      "generate_ever_data",
+      lapply(
+        1:K,
+        function(k)
+        glue("generate_input_{k}")
+      )),
     highly_sensitive = list(
-      data_tests = "output/data/data_tests.rds",
-      data_pregnancy = "output/data/data_pregnancy.rds",
-      data_age = "output/data/data_age.rds"
-    )#,
-    # moderately_sensitive = list(
-    #   # covariate_distribution = "output/tests/images/covariate_distribution.png",
-    #   pos_rate_distribution = "output/tests/images/pos_rate_distribution.png"#,
-    #   # data_tests_tabulate = "output/tests/tables/data_tests_tabulate.txt"
-    # )
+      data_covariates = "output/data/data_covariates.rds"
+    )
   ),
   
   comment("####################################",
@@ -507,7 +522,11 @@ actions_list <- splice(
   action(
     name = "table1",
     run = "r:latest analysis/report/table1.R",
-    needs = list("design", "data_input_process", "data_eligible_cde", "process_tests"),
+    needs = list(
+      "design", 
+      "data_input_process", 
+      "data_eligible_cde",
+      "data_covariates_process"),
     moderately_sensitive = list(
       table_csv = "output/report/tables/table1_*_REDACTED.csv",
       table_html = "output/report/tables/table1_*_REDACTED.html"
