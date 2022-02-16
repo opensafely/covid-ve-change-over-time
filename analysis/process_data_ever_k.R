@@ -14,6 +14,11 @@ study_parameters <- readr::read_rds(
   here::here("output", "lib", "study_parameters.rds"))
 K <- study_parameters$max_comparisons
 
+# import variable names
+model_varlist <- readr::read_rds(
+  here::here("output", "lib", "model_varlist.rds")
+)
+
 data_eligible_e <- readr::read_csv(
   here::here("output", "data", "data_eligible_e.csv"))
 
@@ -30,8 +35,8 @@ data_k <- bind_rows(lapply(
 ))
 
 ################################################################################
-# process data
-data_0 <- data_k %>% 
+# process covaraiets data
+data_covariates <- data_k %>% 
   left_join(data_ever %>% select(-start_1_date), 
             by = "patient_id") %>%
   # clean BMI data
@@ -92,26 +97,29 @@ data_0 <- data_k %>%
     ),
     # chronic respiratory disease other than asthma ever
     other_respiratory = resp_date <= start_k_date,
+    chronic_respiratory_disease = asthma | other_respiratory,
     # chronic neurological disease including significant learning disorder
     chronic_neuro_inc_ld = cns_date <= start_k_date,
+    # wider learning disorder
+    ld_inc_ds_and_cp = learndis_date <= start_k_date,
     # diabetes ever
     diabetes = diab_date <= start_k_date,
     # severe mental illness ever
     sev_ment = sev_mental_date <= start_k_date,
     # chronic heart disease ever
-    chd = chd_date <= start_k_date,
+    chronic_heart_disease = chd_date <= start_k_date,
     # chronic liver disease ever
-    cld = cld_date <= start_k_date,
-    # immunosupressed ever
-    immunosupressed_ever = immdx_date <= start_k_date,
+    chronic_liver_disease = cld_date <= start_k_date,
+    # permanent immunosupression
+    permanant_immunosuppression = immdx_date <= start_k_date,
     # current immunosuppression medication
-    immunosupressed_meds = immrx,
+    immunosuppression_meds = immrx,
     # asplenia or dysfunction of the spleen ever
     asplenia_ever = spln_date <= start_k_date,
     # chronic kidney disease stages 3-5
     ckd = ckd_group,
     # bmi
-    bmi_new = factor(
+    bmi = factor(
       case_when(
         is.na(bmi) & is.na(bmi_stage) ~ "Not obese",
         is.na(bmi) ~ bmi_stage,
@@ -124,11 +132,41 @@ data_0 <- data_k %>%
       "Obese I (30-34.9)",
       "Obese II (35-39.9)",
       "Obese III (40+)"
-      )
-  )
-  )
+      ),
+    
+    pregnancy = preg_group
+  ),
   
-#TODO
-# finish deriving covariates
+  any_immunosuppression = (
+    permanant_immunosuppression | 
+      asplenia | 
+      immunosuppression_meds),
+  
+  multimorb =
+    bmi %in% "Obese III (40+)" +
+    chronic_heart_disease  +
+    diabetes +
+    chronic_liver_disease +
+    ckd +
+    chronic_respiratory_disease +
+    any_immunosuppression +
+    chronic_neuro_inc_ld +
+    ld_inc_ds_and_cp +
+    sev_ment,
+  multimorb = cut(
+    multimorb, 
+    breaks = c(0, 1, 2, Inf),
+    labels=c("0", "1", "2+"), 
+    right=FALSE)
+  
+  ) %>%
+  select(patient_id, start_k_date, end_k_date, 
+         all_of(unlist(unname(model_varlist))))
+  
 
+readr::write_rds(
+  data_covariates,
+  here::here("output", "data", "data_covariates.rds"),
+  compress = "gz"
+)
 
