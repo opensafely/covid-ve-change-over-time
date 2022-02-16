@@ -92,7 +92,8 @@ apply_model_fun <- function(
       arguments = c(comparison, subgroup_label, outcome),
       needs = list(
         "design", 
-        "data_comparisons_process", 
+        "data_input_process",
+        "data_covariates_process", 
         glue("data_tte_process_{comparison}")
         ),
       highly_sensitive = list(
@@ -437,7 +438,7 @@ actions_list <- splice(
   comment("apply eligiblity criteria from boxes c, d and e"),
   action(
     name = "data_eligible_cde",
-    run = "r:latest analysis/second_vax_period/data_eligible_cde.R",
+    run = "r:latest analysis/preprocess/data_eligible_cde.R",
     needs = list("design", "data_input_process", "data_eligible_ab", "data_2nd_vax_dates"),
     highly_sensitive = list(
       data_eligible_e_vax = "output/data/data_eligible_e_vax.rds",
@@ -534,24 +535,8 @@ actions_list <- splice(
   ),
   
   comment("####################################",
-          "comparisons", 
+          "process time to event data", 
           "####################################"),
-  
-  comment("process comparisons data"),
-  action(
-    name = "data_comparisons_process",
-    run = "r:latest analysis/comparisons/data_comparisons_process.R",
-    needs = list(
-      "design", 
-      "data_input_process", 
-      "data_2nd_vax_dates", 
-      "data_eligible_cde",
-      "process_tests"),
-    highly_sensitive = list(
-      data_comparisons = "output/comparisons/data/data_comparisons_*.rds",
-      min_and_max_fu_dates = "output/lib/min_and_max_fu_dates.rds"
-    )
-  ),
   
   comment(glue("process tte data")),
   splice(unlist(lapply(
@@ -564,8 +549,7 @@ actions_list <- splice(
         needs = list(
           "design",
           "data_input_process",
-          "data_comparisons_process",
-          "process_tests"),
+          "data_covariates_process"),
         highly_sensitive = list(
           data_tte_brand_outcome = glue("output/tte/data/data_tte_{x}*.rds"),
           event_counts = glue("output/tte/tables/event_counts_{x}.rds")
@@ -586,7 +570,9 @@ actions_list <- splice(
     )
   ),
   
-  comment("apply models"),
+  comment("####################################",
+          "apply models", 
+          "####################################"),
   splice(
     # over subgroups
     unlist(lapply(
