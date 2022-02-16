@@ -167,6 +167,16 @@ study=StudyDefinition(
         return_expectations={"incidence": 0.02},
     ),
 
+    # Patients in long-stay nursing and residential care before start period k
+    longres_date=patients.with_these_clinical_events(
+        longres_primis,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        on_or_before=end_date,
+        find_first_match_in_period=True,
+        return_expectations={"incidence": 0.02},
+    ),
+
     # flu vaccine in the 5 years before start_k_date
     flu_vaccine=patients.satisfying(
         """
