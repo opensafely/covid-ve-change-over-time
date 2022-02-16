@@ -13,7 +13,7 @@ library(glue)
 study_parameters <- readr::read_rds(
   here::here("output", "lib", "study_parameters.rds"))
 K <- study_parameters$max_comparisons
-K<-2
+
 # import variable names
 model_varlist <- readr::read_rds(
   here::here("output", "lib", "model_varlist.rds")
