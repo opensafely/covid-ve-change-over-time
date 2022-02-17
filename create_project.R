@@ -107,14 +107,14 @@ apply_model_fun <- function(
     comment("apply cox model"),
     action(
       name = glue("apply_model_cox_{comparison}_{subgroup_label}_{outcome}"),
-      run = "r:latest analysis/comparisons/apply_model_cox.R",
+      run = "r:latest analysis/comparisons/apply_model_cox_update.R",
       arguments = c(comparison, subgroup_label, outcome),
       needs = list(
         "design", 
         glue("preflight_{comparison}_{subgroup_label}_{outcome}")),
       highly_sensitive = list(
         modelnumber = glue("output/models_cox/data/model*_{comparison}_{subgroup_label}_{outcome}.rds"),
-        model_summary = glue("output/models_cox/data/modelcox_summary_{comparison}_{subgroup_label}_{outcome}.rds"),
+        model_tidy = glue("output/models_cox/data/modelcox_tidy_{comparison}_{subgroup_label}_{outcome}.rds"),
         model_glance = glue("output/models_cox/data/modelcox_glance_{comparison}_{subgroup_label}_{outcome}.rds")
       )
     )
@@ -498,6 +498,16 @@ actions_list <- splice(
       )),
     highly_sensitive = list(
       data_covariates = "output/data/data_covariates.rds"
+    )
+  ),
+  
+  comment("min and max follow-up dates for plots"),
+  action(
+    name = "data_min_max_fu",
+    run = "r:latest analysis/comparisons/data_min_max_fu.R",
+    needs = list("design", "data_input_process", "data_covariates_process"),
+    highly_sensitive = list(
+      data_min_max_fu = "output/lib/data_min_max_fu.rds"
     )
   ),
   
