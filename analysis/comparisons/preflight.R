@@ -6,7 +6,6 @@
 ################################################################################
 library(tidyverse)
 library(glue)
-library(fastDummies)
 library(gt)
 
 ## import command-line arguments ----
