@@ -42,8 +42,8 @@ subgroups <- readr::read_rds(
 subgroup_labels <- seq_along(subgroups)
 
 # min and max follow-up dates per subgroup
-min_and_max_fu_dates <- readr::read_rds(
-  here::here("output", "lib", glue("min_and_max_fu_dates.rds")))
+min_max_fu_dates <- readr::read_rds(
+  here::here("output", "lib", glue("data_min_max_fu.rds")))
 
 gg_color_hue <- function(n, transparency = 1) {
   hues = seq(15, 375, length = n + 1)
@@ -227,7 +227,7 @@ plot_fun <- function(
                     factor,
                     levels = subgroup_labels,
                     labels = sapply(subgroups, str_wrap, width=legend_width))) %>%
-      left_join(min_and_max_fu_dates, by = "subgroup") %>%
+      left_join(min_max_fu_dates, by = "subgroup") %>%
       group_by(subgroup) %>%
       mutate(
         min_k = min(k),
@@ -239,7 +239,7 @@ plot_fun <- function(
   
   tmp1 <- plot_data2 %>% 
     filter(max_k < K) %>%
-    distinct(subgroup, k, max_fu, max_k) 
+    distinct(subgroup, k, max_fu_date, max_k) 
   
   tmp2 <- list()
   for (i in unique(tmp1$subgroup)) {
@@ -247,7 +247,7 @@ plot_fun <- function(
       subgroup = i,
       model = 1,
       max_k = unique(tmp1$max_k[tmp1$subgroup == i]),
-      max_fu = unique(tmp1$max_fu[tmp1$subgroup == i]),
+      max_fu = unique(tmp1$max_fu_date[tmp1$subgroup == i]),
       k = seq(max(tmp1$k[tmp1$subgroup == i]) + 1, K, 1)
     )
   }
@@ -264,9 +264,9 @@ plot_fun <- function(
     mutate(across(k,
                   ~ case_when(
                     order == min_k
-                    ~ str_c(.x, "\n \nFollow-up from\n", min_fu),
+                    ~ str_c(.x, "\n \nFollow-up from\n", min_fu_date),
                     order == max_k
-                    ~ str_c(.x, "\n \nLatest follow-up\n", max_fu),
+                    ~ str_c(.x, "\n \nLatest follow-up\n", max_fu_date),
                     TRUE ~ as.character(.x)))) %>%
     mutate(across(model,
                   factor,

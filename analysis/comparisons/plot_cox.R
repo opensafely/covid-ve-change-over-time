@@ -45,8 +45,8 @@ subgroups <- readr::read_rds(
 subgroup_labels <- seq_along(subgroups)
 
 # min and max follow-up dates per subgroup
-min_and_max_fu_dates <- readr::read_rds(
-  here::here("output", "lib", glue("min_and_max_fu_dates.rds")))
+min_max_fu_dates <- readr::read_rds(
+  here::here("output", "lib", glue("data_min_max_fu.rds")))
 
 gg_color_hue <- function(n, transparency = 1) {
   hues = seq(15, 375, length = n + 1)
@@ -124,7 +124,7 @@ plot_fun <- function(
   colour_var_length <- lengths[lengths > 1]
   
   # min and max follow_up dates
-  min_and_max_fu_dates_subgroup <- min_and_max_fu_dates %>%
+  min_max_fu_dates_subgroup <- min_max_fu_dates %>%
     filter(subgroup %in% subgroups[plot_subgroup])
   
   # scale for x-axis
@@ -264,10 +264,10 @@ plot_fun <- function(
                   ~ case_when(
                     outcome %in% names(outcomes[outcomes=="postest"]) &
                       .x %in% "3-6"
-                    ~ str_c(.x, "\n \nFollow-up from\n", min_and_max_fu_dates_subgroup$min_fu),
+                    ~ str_c(.x, "\n \nFollow-up from\n", min_max_fu_dates_subgroup$min_fu_date),
                     outcome %in% names(outcomes[outcomes=="noncoviddeath"]) &
                       .x %in% "23-26"
-                    ~ str_c(.x, "\n \nLatest follow-up\n", min_and_max_fu_dates_subgroup$max_fu),
+                    ~ str_c(.x, "\n \nLatest follow-up\n", min_max_fu_dates_subgroup$max_fu_date),
                     TRUE ~ as.character(.x)))) %>%
     mutate(across(model,
                   factor,
