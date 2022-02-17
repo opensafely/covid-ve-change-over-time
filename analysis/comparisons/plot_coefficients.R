@@ -51,7 +51,7 @@ for (i in subgroup_labels) {
     unname(plot_outcomes),
     function(x)
       readr::read_rds(
-        here::here("output", "models_cox", "data", glue("modelcox_summary_{comparison}_{i}_{x}.rds"))
+        here::here("output", "models_cox", "data", glue("modelcox_tidy_{comparison}_{i}_{x}.rds"))
       ) %>% 
       mutate(outcome = x)
   )
@@ -60,27 +60,28 @@ for (i in subgroup_labels) {
   plot_data <- bind_rows(
     modelcox_summary
   ) %>% 
-    filter(!str_detect(term, "^comparison")) %>%
+    filter(variable != "k") %>%
     mutate(
       var_group = factor(case_when(
         str_detect(term, "^age") ~ "demographic",
-        str_detect(term, "^imd") ~ "demographic",
-        str_detect(term, "^sex") ~ "demographic",
-        str_detect(term, "^ethnicity") ~ "demographic",
+        variable %in% "imd" ~ "demographic",
+        variable %in% "sex" ~ "demographic",
+        variable %in% "ethnicity" ~ "demographic",
         TRUE ~ "clinical"
       ),
       levels = c("demographic", "clinical"))) %>%
     mutate(across(outcome, factor, levels = unname(outcomes), labels = str_wrap(names(outcomes),18))) %>%
-    arrange(var_group, term) 
+    arrange(var_group, term) %>%
+    mutate(across(c(estimate, conf.low, conf.high), exp))
   
   # define order of variables for plot
   order <- plot_data %>%
-    distinct(var_group, term) %>%
+    distinct(var_group, variable, term, label) %>%
     mutate(
       short_term = term,
       order = row_number()
     ) %>%
-    mutate(across(short_term, ~str_remove(.x, " least deprived"))) %>%
+    mutate(across(short_term, ~str_remove(.x, " \\w+ deprived"))) %>%
     mutate(across(short_term, ~str_remove(.x, "ethnicity"))) %>%
     mutate(across(short_term, ~str_remove(.x, "bmi"))) %>%
     mutate(across(short_term, ~str_remove(.x, "TRUE"))) %>%
@@ -95,7 +96,7 @@ for (i in subgroup_labels) {
     ggplot(aes(x = reorder(term,-order), y = estimate, colour = var_group)) +
     geom_hline(yintercept = 1, colour = "grey") +
     geom_point() +
-    geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
+    geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
     facet_wrap(~ outcome, nrow=1, scales = "free_x") +
     scale_x_discrete(breaks = order$term, labels = order$short_term) +
     scale_y_log10(

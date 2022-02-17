@@ -29,9 +29,6 @@ fs::dir_create(here::here("output", "models_cox", "images"))
 study_parameters <- readr::read_rds(
   here::here("output", "lib", "study_parameters.rds"))
 
-second_vax_period_dates <- readr::read_rds(
-  here::here("output", "second_vax_period", "data", "second_vax_period_dates.rds")) 
-
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds")
 )
@@ -66,7 +63,7 @@ if (plot == "BNT162b2andChAdOx") {
 }
 
 ################################################################################
-models <- c("0","2")
+models <- 1:2
 
 model_tidy_list <- unlist(lapply(
   comparisons,
@@ -79,10 +76,10 @@ model_tidy_list <- unlist(lapply(
           function(z)
             try(
               readr::read_rds(
-                here::here("output", "models_cox", "data", glue("modelcox_summary_{x}_{y}_{z}.rds")
+                here::here("output", "models_cox", "data", glue("modelcox_tidy_{x}_{y}_{z}.rds")
                 )
               ) %>%
-                mutate(comparison = x, subgroup = y)
+                mutate(comparison = x, subgroup = y, outcome = z)
             )
         )
     ),
@@ -95,23 +92,12 @@ recursive = FALSE
 model_tidy_tibble <- bind_rows(
   model_tidy_list[sapply(model_tidy_list, function(x) is_tibble(x))]
 ) %>%
-  mutate(across(outcome, factor, levels = plot_outcomes, labels = names(plot_outcomes)))
-  # remove death outcomes in the 18-39 and 40-64 pfizer subgroups
-  # very few outcomes so massive CIs cluttering the plots
-  # filter(!(
-  #   (comparisons %in% c("BNT162b2", "both")) &
-  #     (subgroup %in% c(2,3)) &
-  #     str_detect(outcome, "death")
-  # )
-  # )
-
-# if (plot %in% c("BNT162b2", "BNT162b2")) {
-#   model_tidy_tibble <- model_tidy_tibble %>%
-#     filter(!(
-#       subgroup %in% c(2,3) &
-#         str_detect(outcome, "death")
-#     ))
-# }
+  mutate(across(outcome,
+                factor,
+                levels = plot_outcomes,
+                labels = names(plot_outcomes))) %>%
+  # I checked and conf.low and high were calculated with robust standard errors
+  mutate(across(c(estimate, conf.low, conf.high), exp))
 
 plot_fun <- function(
   plot_subgroup,
@@ -153,10 +139,8 @@ plot_fun <- function(
       subgroup %in% plot_subgroup,
       comparison %in% plot_comparison
     ) %>%
-    filter(str_detect(term, "^comparison")) %>%
-    mutate(
-      k = as.integer(str_remove(str_extract(term, "comparison_\\d"), "comparison_"))
-      )
+    filter(variable %in% "k" & !reference_row) %>%
+    mutate(k = as.integer(label))
   
   expanded_data <- tibble(
     outcome = character(),
@@ -299,7 +283,7 @@ plot_fun <- function(
   plot_res <- plot_data2 %>%
     ggplot(aes(x = reorder(k,order), y = estimate, colour = !! sym(colour_var))) +
     geom_hline(aes(yintercept=1), colour='grey') +
-    geom_linerange(aes(ymin = lower, ymax = upper), position = position_dodge(width = position_dodge_val)) +
+    geom_linerange(aes(ymin = conf.low, ymax = conf.high), position = position_dodge(width = position_dodge_val)) +
     geom_point(position = position_dodge(width = position_dodge_val)) +
     facet_wrap(~outcome, ncol=2, scales = "free_x")  +
     scale_y_log10(
@@ -370,9 +354,9 @@ for (i in plot_subgroups) {
   if (subgroups[i] == "18-39 years" & plot %in% c("ChAdOx", "BNT162b2vsChAdOx")) next
   
   if (plot %in% c("BNT162b2", "ChAdOx", "BNT162b2vsChAdOx")) {
-    j <- c("0", "2")
+    j <- 1:2
   } else {
-    j <- "2"
+    j <- 2
   }
   
   plot_fun(

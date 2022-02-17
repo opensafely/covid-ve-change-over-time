@@ -14,7 +14,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  plot <- "BNT162b2andChAdOx" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
+  plot <- "BNT162b2" # "BNT162b2"  "ChAdOx" "BNT162b2andChAdOx" "BNT162b2vsChAdOx"
   
 } else {
   
@@ -29,9 +29,6 @@ fs::dir_create(here::here("output", "models_cox", "images"))
 # read study parameters
 study_parameters <- readr::read_rds(
   here::here("output", "lib", "study_parameters.rds"))
-
-second_vax_period_dates <- readr::read_rds(
-  here::here("output", "second_vax_period", "data", "second_vax_period_dates.rds")) 
 
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds")
@@ -54,73 +51,6 @@ gg_color_hue <- function(n, transparency = 1) {
 }
 
 ################################################################################
-# arm1 <- if_else(plot =="ChAdOx", "ChAdOx", "BNT162b2")
-# arm2 <- if_else(plot == "BNT162b2vsChAdOx", "ChAdOx", "unvax")
-# arm3 <- if_else(plot == "BNT162b2andChAdOx", "ChAdOx", NA_character_)
-# 
-# data_tests <- readr::read_rds(
-#   here::here("output", "data", "data_tests.rds")) %>%
-#   select(patient_id, matches("\\w+_test_\\d_n")) %>% 
-#   pivot_longer(
-#     cols = -patient_id,
-#     names_pattern = "(\\w+)_test_(\\d)_n",
-#     names_to = c("result", "comparison"),
-#     values_drop_na = TRUE
-#   ) %>%
-#   pivot_wider(
-#     names_from = result, 
-#     values_from = value
-#   )
-# 
-# data_comparisons <- local({
-#   
-#   data_arm1 <-  readr::read_rds(
-#     here::here("output", "comparisons", "data", glue("data_comparisons_{arm1}.rds"))) %>%
-#     select(patient_id, comparison, arm, subgroup)
-#   subgroups_1 <- unique(as.character(data_arm1$subgroup))
-#   
-#   data_arm2 <-  readr::read_rds(
-#     here::here("output", "comparisons", "data", glue("data_comparisons_{arm2}.rds"))) %>%
-#     select(patient_id, comparison, arm, subgroup)
-#   subgroups_2 <- unique(as.character(data_arm2$subgroup))
-#   subgroups <- unique(subgroups_1, subgroups_2)
-#   
-#   data <- bind_rows(data_arm1, data_arm2)
-#   
-#   if (!is.na(arm3)) {
-#     data_arm3 <-  readr::read_rds(
-#       here::here("output", "comparisons", "data", glue("data_comparisons_{arm3}.rds"))) %>%
-#       select(patient_id, comparison, arm, subgroup)
-#     subgroups_3 <- unique(as.character(data_arm3$subgroup))
-#     subgroups <- unique(subgroups, subgroups_3)
-#     data <- bind_rows(data, data_arm3)
-#   }
-#   
-#   data %>%
-#     filter(subgroup %in% subgroups) %>%
-#     mutate(across(comparison, as.character))
-#   
-# })
-
-# data_posrate <- data_comparisons %>%
-#   inner_join(data_tests, by = c("patient_id", "comparison")) %>%
-#   group_by(subgroup, arm, comparison) %>%
-#   summarise(any = sum(any), positive = sum(positive), .groups = "keep") %>%
-#   ungroup() %>%
-#   mutate(
-#     posrate = positive/any,
-#     ef = exp(qnorm(0.975)/sqrt(positive)),
-#     lower = posrate/ef,
-#     upper = posrate*ef
-#     )
-
-##############################################################################
-# if (plot %in% c("BNT162b2", "BNT162b2andChAdOx")) {
-#   subgroup_labels <- subgroup_labels_full
-# } else {
-#   subgroup_labels <- subgroup_labels_full[-which(subgroups == "18-39 years")]
-# }
-
 if (plot == "BNT162b2andChAdOx") {
   comparisons <- c("BNT162b2", "ChAdOx")
 } else if (plot == "BNT162b2vsChAdOx") {
@@ -130,7 +60,7 @@ if (plot == "BNT162b2andChAdOx") {
 }
 
 ################################################################################
-models <- c("0","2")
+models <- 1:2
 
 model_tidy_list <- unlist(lapply(
   comparisons,
@@ -143,10 +73,10 @@ model_tidy_list <- unlist(lapply(
           function(z)
             try(
               readr::read_rds(
-                here::here("output", "models_cox", "data", glue("modelcox_summary_{x}_{y}_{z}.rds")
+                here::here("output", "models_cox", "data", glue("modelcox_tidy_{x}_{y}_{z}.rds")
                 )
               ) %>%
-                mutate(comparison = x, subgroup = y)
+                mutate(comparison = x, subgroup = y, outcome = z)
             )
         )
     ),
@@ -159,7 +89,12 @@ recursive = FALSE
 model_tidy_tibble <- bind_rows(
   model_tidy_list[sapply(model_tidy_list, function(x) is_tibble(x))]
 ) %>%
-  mutate(across(outcome, factor, levels = plot_outcomes, labels = names(plot_outcomes)))
+  mutate(across(outcome,
+                factor,
+                levels = plot_outcomes,
+                labels = names(plot_outcomes))) %>%
+  # I checked and conf.low and high were calculated with robust standard errors
+  mutate(across(c(estimate, conf.low, conf.high), exp))
 
 plot_fun <- function(
   plot_subgroup,
@@ -196,10 +131,8 @@ plot_fun <- function(
       subgroup %in% plot_subgroup,
       comparison %in% plot_comparison
     ) %>%
-    filter(str_detect(term, "^comparison")) %>%
-    mutate(
-      k = as.integer(str_remove(str_extract(term, "comparison_\\d"), "comparison_"))
-    )
+    filter(variable %in% "k" & !reference_row) %>%
+    mutate(k = as.integer(label))
   
   expanded_data <- tibble(
     outcome = character(),
@@ -312,7 +245,7 @@ plot_fun <- function(
   for (i in unique(tmp1$subgroup)) {
     tmp2[[i]] <- tibble(
       subgroup = i,
-      model = "0",
+      model = 1,
       max_k = unique(tmp1$max_k[tmp1$subgroup == i]),
       max_fu = unique(tmp1$max_fu[tmp1$subgroup == i]),
       k = seq(max(tmp1$k[tmp1$subgroup == i]) + 1, K, 1)
@@ -345,7 +278,7 @@ plot_fun <- function(
   plot_anytest <- plot_data3 %>%
     ggplot(aes(x = reorder(k,order), y = estimate, colour = !! sym(colour_var))) +
     geom_hline(aes(yintercept=1), colour='grey') +
-    geom_linerange(aes(ymin = lower, ymax = upper), position = position_dodge(width = position_dodge_val)) +
+    geom_linerange(aes(ymin = conf.low, ymax = conf.high), position = position_dodge(width = position_dodge_val)) +
     geom_point(position = position_dodge(width = position_dodge_val)) +
     facet_wrap(~subgroup, ncol=2, scales = "free_x")  +
     scale_y_log10(
@@ -402,89 +335,15 @@ plot_fun <- function(
   ggsave(plot = plot_anytest,
          filename = here::here("output", "models_cox", "images", glue("hr_anytest_{plot}_{ic}_{jc}.png")),
          width=plot_width, height=plot_height, units="cm")
-  
-  
-  # if (all(plot_comparison == c("BNT162b2", "ChAdOx"))) {
-  #   
-  #   palette_posrate <- gg_color_hue(2, transparency = alpha_unadj)
-  #   posrate_colours <- c(
-  #     "BNT162b2" = palette_posrate[1], #red
-  #     "ChAdOx" = palette_posrate[2], #blue
-  #     "Unvaccinated" = "#C0C0C0" #grey
-  #   )
-  #   plot_data_posrate <- plot_data3 %>%
-  #     select(subgroup, order, k) %>%
-  #     left_join(
-  #       data_posrate %>% mutate(across(comparison, as.integer)),
-  #       by = c("subgroup", "order" = "comparison")
-  #     ) %>%
-  #     mutate(across(arm, ~if_else(.x%in%"unvax", "Unvaccinated", .x))) %>%
-  #     mutate(across(c(posrate, lower, upper),
-  #                   ~ if_else(str_detect(k, "^-"),
-  #                             NA_real_, .x)))
-  #   
-  #   plot_posrate <- plot_data_posrate %>%
-  #     ggplot(aes(x = reorder(k,order), y = posrate, colour = arm)) +
-  #     geom_linerange(aes(ymin = lower, ymax = upper), position = position_dodge(width = position_dodge_val)) +
-  #     geom_point(position = position_dodge(width = position_dodge_val)) +
-  #     facet_wrap(~subgroup, nrow=2, scales = "free_x") +
-  #     scale_fill_manual(
-  #       name = NULL,
-  #       values = posrate_colours[names(posrate_colours) %in% unique(plot_data_posrate$arm)]
-  #     ) +
-  #     scale_colour_manual(
-  #       name = NULL, 
-  #       values = c(palette, "darkgrey"),
-  #       na.translate = F) +
-  #     labs(
-  #       title = "SARS-CoV-2 test positivity rate",
-  #       x = x_title,
-  #       y = "crude rate*",
-  #       caption = str_wrap("*The crude SARS-CoV-2 test postivity rate was calculated as the total number of positive tests divided by the total number of tests in each comparison period.", caption_width)) +
-  #     theme_bw() +
-  #     theme(
-  #       panel.border = element_blank(),
-  #       axis.line.y = element_line(colour = "black"),
-  #       
-  #       axis.text = element_text(size=8),
-  #       
-  #       axis.title.x = element_text(size = 10, margin = margin(t = 20, r = 0, b = 0, l = 0)),
-  #       axis.title.y = element_text(size = 10, margin = margin(t = 0, r = 10, b = 0, l = 0)),
-  #       
-  #       panel.grid.minor.x = element_blank(),
-  #       panel.grid.minor.y = element_blank(),
-  #       strip.background = element_blank(),
-  #       strip.placement = "outside",
-  #       strip.text.y.left = element_text(angle = 0),
-  #       
-  #       panel.spacing = unit(2, "lines"),
-  #       
-  #       plot.title = element_text(hjust = 0, size = 11),
-  #       plot.title.position = "plot",
-  #       plot.caption.position = "plot",
-  #       plot.caption = element_text(hjust = 0, face= "italic"),
-  #       
-  #       plot.margin = margin(t=10, r=15, b=10, l=10)
-  #       
-  #     ) +
-  #     theme_legend(
-  #       legend.title = element_text(size = 10)
-  #     )
-  #   
-  #   ggsave(plot = plot_posrate,
-  #          filename = here::here("output", "models_cox", "images", glue("plot_posrate.png")),
-  #          width=plot_width, height=plot_height, units="cm")
-  #   
-  # }
-  
+
 }
 
 ################################################################################
 
 if (plot %in% c("BNT162b2", "ChAdOx", "BNT162b2vsChAdOx")) {
-  j <- c("0", "2")
+  j <- 1:2
 } else {
-  j <- "2"
+  j <- 2
 }
 
 plot_fun(
