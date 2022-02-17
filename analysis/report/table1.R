@@ -201,7 +201,7 @@ for (i in c(0, seq_along(data_tables))) {
       iqr = IQR(age, na.rm = TRUE),
       .groups = "keep") %>% 
     ungroup() %>%
-    transmute(arm, value = glue("{median} ({iqr})")) %>%
+    transmute(arm, value = as.character(glue("{median} ({iqr})"))) %>%
     pivot_wider(names_from = "arm", values_from = "value") %>%
     mutate(Variable = "Age", Characteristic = "Median (IQR)") 
   
