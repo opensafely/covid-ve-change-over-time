@@ -6,7 +6,6 @@
 
 ################################################################################
 library(tidyverse)
-library(fastDummies)
 library(glue)
 library(survival)
 library(broom)
@@ -44,20 +43,23 @@ model_input <-  readr::read_rds(
   here::here("output", "preflight", "data", glue("model_input_{comparison}_{subgroup_label}_{outcome}.rds"))
 )
 
+# specify filename_suffix for saving models
+filename_suffix <- glue("{comparison}_{subgroup_label}_{outcome}")
+
 if (is.null(model_input)) {
   # model input null if not enough events, see preflight.R for threshold
   # save empty tibbles to avoid errors
   readr::write_rds(
     tibble(),
-    here::here("output", "models_cox", "data", glue("modelcox_glance_{comparison}_{subgroup_label}_{outcome}.rds"))) 
+    here::here("output", "models_cox", "data", glue("modelcox_glance_{filename_suffix}.rds"))) 
   
   readr::write_rds(
     tibble(),
-    here::here("output", "models_cox", "data", glue("modelcox_tidy_{comparison}_{subgroup_label}_{outcome}.rds"))) 
+    here::here("output", "models_cox", "data", glue("modelcox_tidy_{filename_suffix}.rds"))) 
   
   readr::write_rds(
     tibble(),
-    here::here("output", "models_cox", "data", glue("modelx_{comparison}_{subgroup_label}_{outcome}.rds")), 
+    here::here("output", "models_cox", "data", glue("modelx_{comparison}_{filename_suffix}.rds")), 
     compress="gz")
   
 } else {
@@ -87,9 +89,6 @@ if (is.null(model_input)) {
   
   # set max iterations
   opt_control <- coxph.control(iter.max = 30)
-  
-  # specify filename_suffix for saving models
-  filename_suffix <- glue("{comparison}_{subgroup_label}_{outcome}")
   
   coxmods <- list()
   cat(glue("...... fitting unadjusted model ......"), "\n")
