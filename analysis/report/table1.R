@@ -25,9 +25,6 @@ data_processed <- readr::read_rds(
 data_covariates <- readr::read_rds(
   here::here("output", "data", "data_covariates.rds")) 
 
-data_covariates %>% filter(is.na(arm)) %>% select(-patient_id) %>% summary()
-stop("stop")
-
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
@@ -218,9 +215,6 @@ for (i in c(0, seq_along(data_tables))) {
     pivot_wider(names_from = "arm", values_from = "value") %>%
     mutate(Variable = "Age", Characteristic = "Missing") 
   
-  cat("\n---Samples with missing age---\n")
-  print(age_missing)
-  
   table1_tidy_n <- data %>% 
     group_by(arm) %>% 
     count() %>% 
@@ -230,8 +224,8 @@ for (i in c(0, seq_along(data_tables))) {
     mutate(across(c(BNT162b2, ChAdOx, unvax), 
                   ~ scales::comma(.x, accuracy = 1))) %>%
     bind_rows(
-      age_summary#,
-      # age_missing
+      age_summary,
+      age_missing
       ) %>%
     rename(Unvaccinated = unvax) %>%
     bind_rows(
