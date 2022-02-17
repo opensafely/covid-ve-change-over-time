@@ -55,32 +55,12 @@ ever_before <- function(.data, name, var) {
 
 ################################################################################
 # process covariates data
-data_covariates_1 <- data_k %>% 
-  left_join(data_ever %>% select(-start_1_date), 
-            by = "patient_id") %>%
-  # arm and split info
-  left_join(data_arm,
-            by = "patient_id") #%>%
-
-cat("\ncheck data_covariates_1\n")
-data_covariates_1 %>%
-  group_by(arm) %>%
-  count()
-
-data_covariates_2 <- data_arm %>% 
+data_covariates <- data_arm %>% 
   left_join(data_ever %>% select(-start_1_date), 
             by = "patient_id") %>%
   # arm and split info
   left_join(data_k,
-            by = "patient_id") #%>%
-
-cat("\ncheck data_covariates_2\n")
-data_covariates_2 %>%
-  group_by(arm) %>%
-  count()
-
-stop("stop")
-
+            by = "patient_id") %>%
   # clean BMI data
   mutate(across(bmi_stage,
                 ~ case_when(
