@@ -53,7 +53,7 @@ if (is.null(model_input)) {
   
   readr::write_rds(
     tibble(),
-    here::here("output", "models_cox", "data", glue("modelcox_summary_{comparison}_{subgroup_label}_{outcome}.rds"))) 
+    here::here("output", "models_cox", "data", glue("modelcox_tidy_{comparison}_{subgroup_label}_{outcome}.rds"))) 
   
   readr::write_rds(
     tibble(),
