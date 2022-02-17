@@ -629,10 +629,10 @@ actions_list <- splice(
                     coef_plot_fun(comparison = x)
     ), recursive = FALSE)),
   
-  comment(glue("combine estimates into csv for release")),
+  comment("combine all estimates for release"),
   action(
     name = glue("combine_estimates"),
-    run = "r:latest analysis/report/combine_estimates.R",
+    run = "r:latest analysis/comparisons/combine_estimates.R",
     needs = splice(
       "design",
       as.list(unlist(lapply(
@@ -656,8 +656,7 @@ actions_list <- splice(
         }
       ), recursive = FALSE))),
     moderately_sensitive = list(
-      hr_all = glue("output/report/data/hr_all.csv"),
-      hr_arms = glue("output/report/data/hr_arms.csv")
+      tidy_tables_events = glue("output/models_cox/data/estimates_all.csv")
     )
   )
   
