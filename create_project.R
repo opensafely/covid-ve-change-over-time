@@ -178,9 +178,7 @@ plot_fun <- function(
       run = "r:latest analysis/comparisons/plot_cox_anytest.R",
       arguments = plot,
       needs = splice("design",
-                     "data_2nd_vax_dates",
-                     "process_tests",
-                     "data_comparisons_process",
+                     "data_min_max_fu",
                      as.list(unlist(lapply(
                        xs,
                        function(x)
@@ -211,8 +209,7 @@ plot_fun <- function(
       run = "r:latest analysis/comparisons/plot_cox.R",
       arguments = plot,
       needs = splice("design",
-                     "data_2nd_vax_dates",
-                     "data_comparisons_process",
+                     "data_min_max_fu",
                      as.list(unlist(lapply(
                        xs,
                        function(x)
