@@ -7,6 +7,9 @@
 
 library(tidyverse)
 
+# create output directories ----
+fs::dir_create(here::here("output", "lib"))
+
 # read study parameters
 study_parameters <- readr::read_rds(
   here::here("output", "lib", "study_parameters.rds"))
