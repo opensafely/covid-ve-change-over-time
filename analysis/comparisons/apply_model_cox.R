@@ -19,7 +19,7 @@ if(length(args)==0){
   # use for interactive testing
   comparison <- "BNT162b2"
   subgroup_label <- 1
-  outcome <- "noncoviddeath"
+  outcome <- "anytest"
   
 } else{
   comparison <- args[[1]]
@@ -152,6 +152,24 @@ if (is.null(model_input)) {
       # add output of system.time
       bind_cols(as_tibble(t(as.matrix(timetofit))))
     
+    tidy <-
+      broom.helpers::tidy_plus_plus(
+        coxmod,
+        exponentiate = FALSE
+      ) %>%
+      tidy_add_n(
+        coxmod
+      ) %>%
+      add_column(
+        model = number,
+        .before=1
+      )
+    
+    readr::write_rds(
+      tidy,
+      here::here("output", "models_cox", "data", glue("model{number}_tidy_{filename_prefix}.rds"))
+    )
+    
     coxmod$data <- NULL
     
     readr::write_rds(
@@ -159,7 +177,10 @@ if (is.null(model_input)) {
       here::here("output", "models_cox", "data", glue("model{number}_{filename_prefix}.rds")), 
       compress="gz")
     
-    lst(glance = glance, summary = coxmod_summary)
+    lst(
+      glance = glance, 
+      summary = coxmod_summary
+      )
   }
   
   ################################################################################
@@ -167,11 +188,11 @@ if (is.null(model_input)) {
   model_output <- list()
   model_output[[1]] <- try(cox_model(
     number = 0, 
-    formula = formula_cox_0,
+    formula_cox = formula_cox_0,
     filename_prefix = glue("{comparison}_{subgroup_label}_{outcome}")))
   model_output[[3]] <- try(cox_model(
     number = 2, 
-    formula = formula_cox_2,
+    formula_cox = formula_cox_2,
     filename_prefix = glue("{comparison}_{subgroup_label}_{outcome}")))
   
   
@@ -193,8 +214,8 @@ if (is.null(model_input)) {
     model_summary,
     here::here("output", "models_cox", "data", glue("modelcox_summary_{comparison}_{subgroup_label}_{outcome}.rds"))) 
   
-  ### postprocessing using broom (may be unreliable)
-  # combine results
+  ### postprocessing using broom
+  # combine glance results
   model_glance <- bind_rows(
     lapply(
       # only bind tibbles (to avoid errors in case some models did not converge)
@@ -207,6 +228,21 @@ if (is.null(model_input)) {
   readr::write_rds(
     model_glance,
     here::here("output", "models_cox", "data", glue("modelcox_glance_{comparison}_{subgroup_label}_{outcome}.rds"))) 
+  
+  # combine tidy results
+  model_tidy <- bind_rows(
+    lapply(
+      # only bind tibbles (to avoid errors in case some models did not converge)
+      seq_along(model_output)[sapply(model_output, function(x) is_tibble(x[[1]]))],
+      # select glance
+      function(x) model_output[[x]]$tidy
+    )) %>%
+    mutate(outcome = outcome)
+  
+  readr::write_rds(
+    model_glance,
+    here::here("output", "models_cox", "data", glue("modelcox_glance_{comparison}_{subgroup_label}_{outcome}.rds"))) 
+  
   
   # }
   
