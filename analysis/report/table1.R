@@ -25,6 +25,9 @@ data_processed <- readr::read_rds(
 data_covariates <- readr::read_rds(
   here::here("output", "data", "data_covariates.rds")) 
 
+data_covariates %>% filter(is.na(arm)) %>% select(-patient_id) %>% summary()
+stop("stop")
+
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
