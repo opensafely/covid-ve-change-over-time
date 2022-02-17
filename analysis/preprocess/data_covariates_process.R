@@ -5,10 +5,6 @@ library(lubridate)
 library(glue)
 
 ################################################################################
-## create folders for outputs
-# fs::dir_create(here::here("output", "data"))
-
-################################################################################
 ## import study_parameters
 study_parameters <- readr::read_rds(
   here::here("output", "lib", "study_parameters.rds"))
@@ -19,7 +15,7 @@ model_varlist <- readr::read_rds(
   here::here("output", "lib", "model_varlist.rds")
 )
 
-# individuals eligible based on box c & e criteria 
+# individuals eligible based on box c, d & e criteria 
 # arm and split info
 data_arm <- bind_rows(
   readr::read_rds(
@@ -30,6 +26,11 @@ data_arm <- bind_rows(
     mutate(arm = "unvax")
 )  %>%
   select(patient_id, arm, split)
+
+cat("\ncheck data_arm\n")
+data_arm %>%
+  group_by(arm) %>%
+  count()
 
 # read data for ever covariates
 data_ever <- arrow::read_feather(
@@ -54,12 +55,32 @@ ever_before <- function(.data, name, var) {
 
 ################################################################################
 # process covariates data
-data_covariates <- data_k %>% 
+data_covariates_1 <- data_k %>% 
   left_join(data_ever %>% select(-start_1_date), 
             by = "patient_id") %>%
   # arm and split info
   left_join(data_arm,
+            by = "patient_id") #%>%
+
+cat("\ncheck data_covariates_1\n")
+data_covariates %>%
+  group_by(arm) %>%
+  count()
+
+data_covariates_2 <- data_arm %>% 
+  left_join(data_ever %>% select(-start_1_date), 
             by = "patient_id") %>%
+  # arm and split info
+  left_join(data_k,
+            by = "patient_id") #%>%
+
+cat("\ncheck data_covariates_2\n")
+data_covariates %>%
+  group_by(arm) %>%
+  count()
+
+stop("stop")
+
   # clean BMI data
   mutate(across(bmi_stage,
                 ~ case_when(
