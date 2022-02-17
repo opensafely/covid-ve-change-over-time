@@ -41,7 +41,6 @@ print_table <- function(outcome) {
     here::here("output", "models_cox", "data", glue("modelcox_glance_{comparison}_{subgroup_label}_{outcome}.rds")))
   
   model_glance %>%
-    select(-outcome) %>%
     mutate(across(where(is.numeric), signif, digits = 6)) %>%
     mutate(across(everything(), as.character)) %>%
     pivot_longer(
@@ -68,18 +67,22 @@ capture.output(
 print_coefficients <- function(outcome) {
   
   data <- readr::read_rds(
-    here::here("output", "models_cox", "data", glue("modelcox_summary_{comparison}_{subgroup_label}_{outcome}.rds")))
+    here::here("output", "models_cox", "data", glue("modelcox_tidy_{comparison}_{subgroup_label}_{outcome}.rds")))
                
   data %>%
-    filter(outcome %in% outcome) %>%
-    mutate(across(c(estimate, lower, upper), round, 2)) %>%
+    filter(is.na(reference_row) | !reference_row) %>% 
+    mutate(
+      lower = estimate - qnorm(0.975)*robust.se,
+      upper = estimate + qnorm(0.975)*robust.se
+      ) %>%
+    mutate(across(c(estimate, lower, upper), 
+                  ~round(exp(.x), 2))) %>%
     mutate(value = str_c(estimate, " (", lower, "-", upper, ")")) %>%
     select(term, value, model) %>% 
     mutate(across(model, 
                   factor,
-                  levels = as.character(0:2),
+                  levels = as.character(1:2),
                   labels = c("unadjusted",
-                             "demographic",
                              "demographic + clinical"))) %>%
     pivot_wider(names_from = "model", values_from = "value") %>%
     kableExtra::kable("pipe", caption = outcome)
