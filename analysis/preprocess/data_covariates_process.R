@@ -63,7 +63,7 @@ data_covariates_1 <- data_k %>%
             by = "patient_id") #%>%
 
 cat("\ncheck data_covariates_1\n")
-data_covariates %>%
+data_covariates_1 %>%
   group_by(arm) %>%
   count()
 
@@ -75,7 +75,7 @@ data_covariates_2 <- data_arm %>%
             by = "patient_id") #%>%
 
 cat("\ncheck data_covariates_2\n")
-data_covariates %>%
+data_covariates_2 %>%
   group_by(arm) %>%
   count()
 
