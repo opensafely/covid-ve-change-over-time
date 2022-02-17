@@ -15,7 +15,7 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   comparison <- "BNT162b2"
-  subgroup_label <- 4
+  subgroup_label <- 1
   outcome <- "anytest"
   
 } else{
@@ -33,6 +33,7 @@ fs::dir_create(here::here("output", "preflight", "tables"))
 # read study parameters
 study_parameters <- readr::read_rds(
   here::here("output", "lib", "study_parameters.rds"))
+K <- study_parameters$max_comparisons
 
 # read subgroups
 subgroups <- readr::read_rds(
@@ -305,16 +306,14 @@ if (nrow(data_1) > 0) {
     droplevels()
   
   ################################################################################
-  # create comparison dummy variables
+  # create exposure variable
   data_3 <- data_2 %>%
-    dummy_cols(
-      select_columns = c("k"),
-      remove_selected_columns = TRUE
-    ) %>%
-    mutate(across(starts_with("k"),
-                  ~ if_else(arm %in% arm1,
-                            .x, 0L))) %>%
-    rename_at(vars(starts_with("k")), ~str_c(.x, "_", arm1))
+    mutate(across(k,
+                  ~factor(
+                    if_else(arm %in% arm1,
+                            as.integer(k),
+                            0L),
+                    levels = 0:K)))
   
   ################################################################################
   # create age variables
@@ -380,12 +379,7 @@ if (nrow(data_1) > 0) {
   ################################################################################
   # define formulas
   
-  exposures <- data_5 %>% select(starts_with("k_")) %>% names()
-  
-  formula_unadj <- as.formula(str_c(
-    "Surv(tstart, tstop, status, type = \"counting\") ~ ",
-    str_c(exposures, collapse = " + "),
-    " + strata(strata_var)"))
+  formula_unadj <- formula(Surv(tstart, tstop, status, type = "counting") ~ k + strata(strata_var))
   
   demog_vars <- c(names(data_5)[str_detect(names(data_5), "^age_")],
                   unname(model_varlist$demographic[which(model_varlist$demographic %in% names(data_5))]))
