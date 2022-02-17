@@ -214,7 +214,9 @@ for (i in c(0, seq_along(data_tables))) {
     transmute(arm, value = scales::comma(missing, accuracy = 1)) %>%
     pivot_wider(names_from = "arm", values_from = "value") %>%
     mutate(Variable = "Age", Characteristic = "Missing") 
-    
+  
+  cat("\n---Samples with missing age---\n")
+  print(age_missing)
   
   table1_tidy_n <- data %>% 
     group_by(arm) %>% 
@@ -225,8 +227,8 @@ for (i in c(0, seq_along(data_tables))) {
     mutate(across(c(BNT162b2, ChAdOx, unvax), 
                   ~ scales::comma(.x, accuracy = 1))) %>%
     bind_rows(
-      age_summary,
-      age_missing
+      age_summary#,
+      # age_missing
       ) %>%
     rename(Unvaccinated = unvax) %>%
     bind_rows(
