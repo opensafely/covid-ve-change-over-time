@@ -27,10 +27,10 @@ data_arm <- bind_rows(
 )  %>%
   select(patient_id, arm, split)
 
-cat("\ncheck data_arm\n")
-data_arm %>%
-  group_by(arm) %>%
-  count()
+# sex from data_processed
+data_sex <- readr::read_rds(
+  here::here("output", "data", "data_processed.rds")) %>%
+  select(patient_id, sex)
 
 # read data for ever covariates
 data_ever <- arrow::read_feather(
@@ -56,10 +56,14 @@ ever_before <- function(.data, name, var) {
 ################################################################################
 # process covariates data
 data_covariates <- data_arm %>% 
+  # join ever covariates
   left_join(data_ever %>% select(-start_1_date), 
             by = "patient_id") %>%
-  # arm and split info
+  # join period-updating covariates
   left_join(data_k,
+            by = "patient_id") %>%
+  # join sex
+  left_join(data_sex,
             by = "patient_id") %>%
   # clean BMI data
   mutate(across(bmi_stage,
@@ -201,7 +205,7 @@ data_covariates <- data_arm %>%
       )
   ),
   
-  pregnancy = preg_group,
+  pregnancy = preg_group & (sex == "Female") & (age < 50),
   
   any_immunosuppression = (
     permanant_immunosuppression | 
