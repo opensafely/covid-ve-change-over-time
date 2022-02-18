@@ -83,12 +83,17 @@ data_0 <- readr::read_rds(
   mutate(strata_var = factor(str_c(jcvi_group, elig_date, region, sep = ", "))) %>%
   droplevels()
 
-# keep only periods with > 5 events
+
+events_threshold <- 2
+
+# keep only periods with > 2 events in each arm
 events_per_period <- data_0 %>%
-  group_by(k) %>%
+  group_by(k, arm) %>%
   summarise(events = sum(status), .groups="keep") %>%
+  ungroup(arm) %>%
+  summarise(min_events = min(events), .groups = "keep") %>%
   ungroup() %>%
-  mutate(keep = events > 5)
+  mutate(keep = min_events > events_threshold)
 
 keep_periods <- as.integer(events_per_period$k[events_per_period$keep])
 drop_periods <- as.integer(events_per_period$k[!events_per_period$keep])
@@ -101,7 +106,6 @@ data_1 <- data_0 %>%
 if (nrow(data_1) > 0) {
   
   # only keep categorical covariates with > 2 events per level per arm
-  events_threshold <- 2
   
   ################################################################################
   # tabulate events per level
@@ -338,7 +342,7 @@ if (nrow(data_1) > 0) {
       g <- unique(data_3_list[[i]]$jcvi_group)
       j <- unique(data_3_list[[i]]$elig_date)
       
-      if (g == "07" && j == as.Date("2021-03-01")) {
+      if (g == "07" && j == as.Date("2021-02-22")) {
         # no age variable needed as all same age in strata
         data_3_list[[i]] <- data_3_list[[i]] %>%
           select(-age)
