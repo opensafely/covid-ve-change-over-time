@@ -241,7 +241,7 @@ for (i in c(0, seq_along(data_tables))) {
   
   cat("---- save table1.csv ----\n")
   # save table1_tidy
-  readr::write_csv(table1_tidy,
+  readr::write_csv(table1_tidy_n,
                    here::here("output", "report", "tables", glue("table1_{subgroup_label}_REDACTED.csv")))
   
   cat("---- save table1.html ----\n")
