@@ -62,11 +62,10 @@ model_tidy_tibble <- bind_rows(
                 factor, levels = 1:2, labels = "unadjusted", "adjusted")) %>%
   mutate(across(c(estimate, conf.low, conf.high), exp)) %>%
   # redact estimates where n_obs <= 5
-  mutate(redact = redactor(n = n_obs, threshold = 5)) %>%
-  mutate(across(c(n_obs, estimate, conf.low, conf.high), 
-                ~if_else(redact, NA_real_, .x))) %>%
-  # redact n_event where n_event <=5
-  mutate(across(n_event, redactor2)) 
+  mutate(redact = redactor(n = n_event, threshold = 5)) %>%
+  mutate(across(redact, ~if_else(n_event == 0, TRUE, .x))) %>%
+  mutate(across(c(n_event, n_obs, estimate, conf.low, conf.high), 
+                ~if_else(redact, NA_real_, .x))) 
   
 cat("\nEstimates redacted for the following:\n")
 model_tidy_tibble %>%

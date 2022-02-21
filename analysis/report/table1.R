@@ -137,8 +137,16 @@ for (i in c(0, seq_along(data_tables))) {
       group_by(arm, !! sym(var)) %>%
       mutate(across(n, redactor2)) %>%
       ungroup() %>%
-      mutate(across(percent, ~ if_else(is.na(n), "-", as.character(.x)))) %>%
-      mutate(across(n, ~ if_else(is.na(.x), "-", scales::comma(.x, accuracy = 1)))) %>%
+      mutate(across(percent, 
+                    ~if_else(
+                      is.na(n) | n == 0, 
+                      "-", 
+                      as.character(.x)))) %>%
+      mutate(across(n, 
+                    ~if_else(
+                      is.na(.x) | .x == 0, 
+                      "-", 
+                      scales::comma(.x, accuracy = 1)))) %>%
       mutate(value = as.character(glue("{n} ({percent}%)"))) %>%
       select(arm, !! sym(var), value) %>%
       pivot_wider(
@@ -191,7 +199,7 @@ for (i in c(0, seq_along(data_tables))) {
     select(-variable) %>%
     select(Variable, Characteristic, everything()) %>%
     mutate(across(c(BNT162b2, ChAdOx, Unvaccinated), 
-                  ~ if_else(is.na(.x), "0 (0%)", .x))) 
+                  ~ if_else(is.na(.x), "- (-%)", .x))) 
   
   # age summary
   age_summary <- data %>%
@@ -205,15 +213,15 @@ for (i in c(0, seq_along(data_tables))) {
     pivot_wider(names_from = "arm", values_from = "value") %>%
     mutate(Variable = "Age", Characteristic = "Median (IQR)") 
   
-  age_missing <- data %>% 
-    group_by(arm) %>%
-    summarise(
-      missing = sum(is.na(age)), 
-      .groups = "keep") %>%
-    ungroup() %>%
-    transmute(arm, value = scales::comma(missing, accuracy = 1)) %>%
-    pivot_wider(names_from = "arm", values_from = "value") %>%
-    mutate(Variable = "Age", Characteristic = "Missing") 
+  # age_missing <- data %>% 
+  #   group_by(arm) %>%
+  #   summarise(
+  #     missing = sum(is.na(age)), 
+  #     .groups = "keep") %>%
+  #   ungroup() %>%
+  #   transmute(arm, value = scales::comma(missing, accuracy = 1)) %>%
+  #   pivot_wider(names_from = "arm", values_from = "value") %>%
+  #   mutate(Variable = "Age", Characteristic = "Missing") 
   
   table1_tidy_n <- data %>% 
     group_by(arm) %>% 
@@ -224,8 +232,7 @@ for (i in c(0, seq_along(data_tables))) {
     mutate(across(c(BNT162b2, ChAdOx, unvax), 
                   ~ scales::comma(.x, accuracy = 1))) %>%
     bind_rows(
-      age_summary,
-      age_missing
+      age_summary
       ) %>%
     rename(Unvaccinated = unvax) %>%
     bind_rows(
