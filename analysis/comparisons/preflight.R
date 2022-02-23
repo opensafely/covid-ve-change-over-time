@@ -14,7 +14,7 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   comparison <- "BNT162b2"
-  subgroup_label <- 1
+  subgroup_label <- 4
   outcome <- "anytest"
   
 } else{
@@ -327,8 +327,7 @@ if (nrow(data_1) > 0) {
       mutate(
         `age_16to64` = age,
         `age_16to64_squared` = age * age
-        ) %>%
-      select(-age)
+        ) 
     
   } else {
     
@@ -344,8 +343,7 @@ if (nrow(data_1) > 0) {
       
       if (g == "07" && j == as.Date("2021-02-22")) {
         # no age variable needed as all same age in strata
-        data_3_list[[i]] <- data_3_list[[i]] %>%
-          select(-age)
+        data_3_list[[i]] <- data_3_list[[i]] 
         
       } else if (g == "02") { 
       # create age and age^2 term for jcvi group 2 (80+)
@@ -363,8 +361,7 @@ if (nrow(data_1) > 0) {
           str_c(., collapse = "to")
         
         data_3_list[[i]] <- data_3_list[[i]] %>%
-          mutate(!! sym(glue("age_{age_range}")) := age) %>%
-          select(-age)
+          mutate(!! sym(glue("age_{age_range}")) := age) 
         
       }
     }
@@ -374,6 +371,7 @@ if (nrow(data_1) > 0) {
   }
   
   data_5 <- data_4 %>%
+    select(-age) %>%
     mutate(across(starts_with("age"),
                   ~ if_else(is.na(.x),
                             0,
