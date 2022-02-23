@@ -21,7 +21,7 @@ metareg_results <- metareg_results_0 %>%
 
 metareg_results_k <- metareg_results %>%
   distinct(subgroup, comparison, outcome) %>%
-  mutate(k=factor(-1, levels=-1:6)) %>%
+  mutate(k=factor(1, levels=1:6)) %>%
   complete(subgroup, comparison, outcome, k) %>%
   left_join(
     metareg_results,
@@ -29,9 +29,10 @@ metareg_results_k <- metareg_results %>%
   ) %>%
   mutate(across(k, ~as.integer(as.character(.x)))) %>%
   mutate(
-    line = loghr1 + k*logrhr,
-    line_lower = loghr1_lower + k*logrhr_lower,
-    line_higher = loghr1_higher + k*logrhr_higher
+    line = loghr1 + (k-1)*logrhr#, # use k-1 because intercept at k=-1
+    # CI for slope not valid as don't know covariance between intercept and slope
+    # line_lower = loghr1_lower + (k-1)*logrhr_lower,
+    # line_higher = loghr1_higher + (k-1)*logrhr_higher
   ) %>%
   mutate(across(starts_with("line"), exp))
 
