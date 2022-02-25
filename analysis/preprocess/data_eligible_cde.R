@@ -61,6 +61,12 @@ data_eligible_c <- data_eligible_b %>%
          start_of_period, end_of_period) %>%
   droplevels()
 
+# count the number of patients in the extracted data
+eligibility_count <- tribble(
+  ~description, ~n,
+  "vax: second dose received during SVP.", n_distinct(data_eligible_c$patient_id)
+)
+
 ################################################################################
 # apply eligibility criteria in box d ----
 
@@ -87,50 +93,116 @@ data_eligible_d <- data_eligible_a %>%
          covid_vax_1_date, start_of_period, end_of_period, split) %>%
   droplevels()
 
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "unvax: unvaccinated at start of SVP",
+    n =  n_distinct(data_eligible_d$patient_id)
+  )
+
 ################################################################################
 # apply eligibility criteria in box e ----
 
-exclusion_e <- function(.data) {
+exclusion_e <- function(group) {
   
   # function to be applied in dplyr::filter
   no_evidence_of <- function(cov_date, index_date) {
     is.na(cov_date) | index_date < cov_date
   }
   
-  .data %>%
+  # define data based on group
+  if (group == "vax") {
+    data <- data_eligible_c
+  } else {
+    data <- data_eligible_d
+  }
+  
+  # remove if any covid before start of period
+  data <- data %>%
     left_join(data_processed, by = "patient_id") %>%
     filter(
-      no_evidence_of(covid_any_date, start_of_period),
-      no_evidence_of(longres_date, start_of_period),
+      no_evidence_of(covid_any_date, start_of_period)) 
+  
+  eligibility_count_e <- tribble(
+    ~description, ~n,
+    glue("{group}: Evidence of COVID before SVP."), n_distinct(data$patient_id)
+  )
+  
+  # remove if in long-term residential home before start date
+  data <- data %>%
+    filter(
+      no_evidence_of(longres_date, start_of_period))
+  
+  eligibility_count_e <- eligibility_count_e %>%
+    add_row(
+      description = glue("{group}: Evidence of longres before SVP."),
+      n =  n_distinct(data$patient_id)
+    )
+  
+  # remove if end of life care before start date
+  data <- data %>%
+    filter(
       no_evidence_of(endoflife_date, start_of_period),
       no_evidence_of(midazolam_date, start_of_period)
     ) %>%
     select(-all_of(names(data_processed)[!names(data_processed) %in% "patient_id"]))
+  
+  eligibility_count_e <- eligibility_count_e %>%
+    add_row(
+      description = glue("{group}: Evidence of end of life care before SVP."),
+      n =  n_distinct(data$patient_id)
+    )
+  
+  list(data = data, eligibility_count = eligibility_count_e)
     
 }
 
-data_eligible_e_vax <- data_eligible_c %>% exclusion_e()
-data_eligible_e_unvax <- data_eligible_d %>% exclusion_e()
+################################################################################
+
+data_eligible_e_vax <- exclusion_e("vax")
+data_eligible_e_unvax <- exclusion_e("unvax")
 
 readr::write_rds(
-  data_eligible_e_vax,
+  data_eligible_e_vax[[1]],
   here::here("output", "data", "data_eligible_e_vax.rds"),
   compress = "gz")
 
 readr::write_rds(
-  data_eligible_e_unvax,
+  data_eligible_e_unvax[[1]],
   here::here("output", "data", "data_eligible_e_unvax.rds"),
   compress = "gz")
 
+################################################################################
+# eligibility count
+eligibility_count <- eligibility_count %>%
+  bind_rows(
+    data_eligible_e_vax[[2]], data_eligible_e_unvax[[2]]
+  )
+
+# number of people eligible at each stage ----
+eligibility_count_cde <- eligibility_count %>%
+  mutate(group = str_extract(description, "\\w+:")) %>%
+  arrange(group) %>%
+  # round to nearest 10
+  mutate(across(n, ~round(.x, -1))) %>%
+  group_by(group) %>%
+  mutate(n_removed = lag(n) - n) %>%
+  ungroup() %>%
+  select(-group)
+
+readr::write_csv(
+  eligibility_count_cde,
+  here::here("output", "tables", "eligibility_count_cde.csv"))
+
+################################################################################
 # for reading into study_definition_tests
 data_eligible_e <- bind_rows(
-  data_eligible_e_vax %>% 
+  data_eligible_e_vax[[1]] %>% 
     transmute(patient_id, 
               elig_date, 
               start_1_date = covid_vax_2_date + days(14),
               end_1_date = start_1_date + days(28),
               arm = "vax"),
-  data_eligible_e_unvax %>% 
+  data_eligible_e_unvax[[1]] %>% 
     transmute(patient_id, 
               elig_date, 
               start_1_date = start_of_period + days(14),
