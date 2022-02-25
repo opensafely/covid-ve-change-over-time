@@ -74,7 +74,7 @@ data_covariates <- data_arm %>%
   left_join(data_wide_vax_dates,
             by = "patient_id") %>%
   # subsequent vax date
-  mutate(subsequent_vax = if_else(
+  mutate(subsequent_vax_date = if_else(
     arm %in% "unvax",
     covid_vax_1_date,
     covid_vax_3_date
@@ -249,7 +249,7 @@ data_covariates <- data_arm %>%
                   as.Date(.x, format="%Y-%m-%d"),
                   unit = "days"))) %>%
   select(patient_id, start_k_date, end_k_date, k,
-         arm, split, subsequent_vax,
+         arm, split, subsequent_vax_date,
          anytest_date, age,
          all_of(unname(model_varlist$clinical)))
   

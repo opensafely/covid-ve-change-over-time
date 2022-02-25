@@ -71,7 +71,7 @@ data <- data_covariates %>%
       ((k %% 2) != 0 & split == "odd")
   ) %>%
   select(patient_id, k, arm, subgroup, split,
-         start_k_date, end_k_date, subsequent_vax, dereg_date,
+         start_k_date, end_k_date, subsequent_vax_date, dereg_date,
          all_of(str_c(outcomes, "_date"))) 
 
 ################################################################################

@@ -80,7 +80,7 @@ eligibility_count <- eligibility_count %>%
 # remove if dereg before start of comparison 1
 data_tables <- data_tables %>%
   filter_at(
-    vars("dereg"),
+    vars("dereg_date"),
     all_vars(no_evidence_of(., start_k_date))) 
 
 eligibility_count <- eligibility_count %>%
@@ -97,7 +97,7 @@ eligibility_count <- eligibility_count %>%
 # remove if subsequent_vax before start of comparison 1
 data_tables <- data_tables %>%
   filter_at(
-    vars("subsequent_vax"),
+    vars("subsequent_vax_date"),
     all_vars(no_evidence_of(., start_k_date))) 
 
 eligibility_count <- eligibility_count %>%
