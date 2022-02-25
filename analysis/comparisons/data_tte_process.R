@@ -13,7 +13,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 if(length(args)==0){
   # use for interactive testing
-  comparison <- "ChAdOx"
+  comparison <- "BNT162b2"
   
 } else{
   comparison <- args[[1]]
@@ -44,9 +44,15 @@ subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
 subgroup_labels <- seq_along(subgroups)
 if ("ChAdOx" %in% c(arm1, arm2)) {
-  subgroup_labels <- subgroup_labels[subgroups != "18-39 years"]
-  subgroups <- subgroups[subgroups != "18-39 years"]
+  # subgroup_labels <- subgroup_labels[subgroups != "18-39 years"]
+  # subgroups <- subgroups[subgroups != "18-39 years"]
+  select_subgroups <- subgroups[subgroups != "18-39 years"]
+} else {
+  select_subgroups <- subgroups
 }
+
+# redaction functions
+source(here::here("analysis", "lib", "redaction_functions.R"))
 
 fs::dir_create(here::here("output", "tte", "data"))
 fs::dir_create(here::here("output", "tte", "tables"))
@@ -59,7 +65,7 @@ data <- data_covariates %>%
     by = "patient_id"
   ) %>%
   # filter subgroups
-  filter(subgroup %in% subgroups) %>%
+  filter(subgroup %in% select_subgroups) %>%
   # keep only odd unvax for odd k, equiv. for even
   filter(
     is.na(split) |
@@ -133,27 +139,43 @@ derive_data_tte <- function(
   stopifnot("tstop - tstart should be strictly > 0 in data_tte" = data_tte$tstop - data_tte$tstart > 0)
   
   # subgroups in .data
-  subgroup <- unique(as.character(.data$subgroup))
-  if (length(subgroup) > 1) subgroup <- "all"
-  subgroup_label <- subgroup_labels[subgroups == subgroup]
+  subgroup_current <- unique(as.character(.data$subgroup))
+  subgroup_current_label <- subgroup_labels[subgroups == subgroup_current]
   
   # save data_tte
   readr::write_rds(
     data_tte,
-    here::here("output", "tte", "data", glue("data_tte_{comparison}_{subgroup_label}_{outcome}.rds")),
+    here::here("output", "tte", "data", glue("data_tte_{comparison}_{subgroup_current_label}_{outcome}.rds")),
     compress = "gz")
   
   # tabulate events per comparison and save
   table_events <- data_tte %>%
+    mutate(person_days = tstop-tstart) %>%
     group_by(k, arm) %>%
     summarise(
       n = n(),
+      person_years = sum(person_days)/365.25,
       events = sum(status),
       .groups = "keep"
     ) %>%
+    ### REDACT SMALL NUMBERS ###
+    # remove counts <=5 from n and events
+    mutate(across(c(n, events), redactor2)) %>%
+    # also redact 0 counts (not done in redactor2)
+    mutate(across(c(n, events), 
+                  ~if_else(.x==0,
+                           NA_integer_, 
+                           .x))) %>%
+    # also redact person_years if n is redacted
+    # if not redacting, round to 2 d.p.
+    mutate(across(person_years, 
+                  ~if_else(is.na(n),
+                           NA_real_, 
+                           round(.x, 2)))) %>%
     ungroup() %>%
     mutate(outcome = outcome,
-           subgroup = subgroup)
+           subgroup = subgroup_current_label) %>%
+    select(subgroup, arm, outcome, k, n, person_years, events)
   
   return(table_events)
   
@@ -175,12 +197,11 @@ table_events <-
 
 table_events <- bind_rows(
   unlist(table_events, recursive = FALSE)
-)
+) 
 
-readr::write_rds(
+readr::write_csv(
   table_events,
-  here::here("output", "tte", "tables", glue("event_counts_{comparison}.rds")),
-  compress = "gz")
+  here::here("output", "tte", "tables", glue("event_counts_{comparison}.csv")))
   
 
 
