@@ -44,8 +44,6 @@ subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
 subgroup_labels <- seq_along(subgroups)
 if ("ChAdOx" %in% c(arm1, arm2)) {
-  # subgroup_labels <- subgroup_labels[subgroups != "18-39 years"]
-  # subgroups <- subgroups[subgroups != "18-39 years"]
   select_subgroups <- subgroups[subgroups != "18-39 years"]
 } else {
   select_subgroups <- subgroups
@@ -73,7 +71,7 @@ data <- data_covariates %>%
       ((k %% 2) != 0 & split == "odd")
   ) %>%
   select(patient_id, k, arm, subgroup, split,
-         start_k_date, end_k_date, dereg_date,
+         start_k_date, end_k_date, subsequent_vax, dereg_date,
          all_of(str_c(outcomes, "_date"))) 
 
 ################################################################################
@@ -98,9 +96,9 @@ derive_data_tte <- function(
   }
   
   data_tte <- .data %>%
-    # exclude if death, dereg or outcome_exclude occurred before start of period
+    # exclude if subsequent_vax, death, dereg or outcome_exclude occurred before start of period
     filter_at(
-      vars(str_c(unique(c("dereg", "coviddeath", "noncoviddeath", outcome_exclude)), "_date")),
+      vars(str_c(unique(c("subsequent_vax", "dereg", "coviddeath", "noncoviddeath", outcome_exclude)), "_date")),
       all_vars(occurs_after_start_date(cov_date = ., index_date = start_k_date))
     ) %>%
     # only keep periods for which start_k_date < end_date
@@ -112,7 +110,7 @@ derive_data_tte <- function(
                   ~ if_else(as.Date(study_parameters$end_date) < .x,
                             as.Date(study_parameters$end_date),
                             .x))) %>%
-    # only keep dates between start_k_date and end_k_date
+    # only keep dates for censoring and outcome variables between start_k_date and end_k_date
     mutate(across(all_of(str_c(unique(c("dereg", outcomes)), "_date")),
                   ~ if_else(
                     !is.na(.x) & (start_k_date < .x) & (.x <= end_k_date),
@@ -125,6 +123,7 @@ derive_data_tte <- function(
     rename_at(vars(ends_with("_date")),
               ~ str_remove(.x, "_date")) %>%
     mutate(
+      # censor follow-up time at first of the following:
       tte = pmin(!! sym(outcome), dereg, coviddeath, noncoviddeath, end_k, na.rm = TRUE),
       status = if_else(
         !is.na(!! sym(outcome)) & !! sym(outcome) == tte,

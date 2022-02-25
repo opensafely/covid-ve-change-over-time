@@ -87,7 +87,7 @@ actions:
         data_eligible_a: output/data/data_eligible_a.rds
         data_eligible_b: output/data/data_eligible_b.rds
       moderately_sensitive:
-        eligibility_count: output/tables/eligibility_count_ab.txt
+        eligibility_count_ab: output/tables/eligibility_count_ab.csv
         group_age_ranges: output/lib/group_age_ranges.csv
 
   ## #################################### 
@@ -135,6 +135,8 @@ actions:
         data_eligible_e_vax: output/data/data_eligible_e_vax.rds
         data_eligible_e_unvax: output/data/data_eligible_e_unvax.rds
         data_eligible_e: output/data/data_eligible_e.csv
+      moderately_sensitive:
+        eligibility_count_cde: output/tables/eligibility_count_cde.csv
 
   ## #################################### 
   ## study definition ever and k 
@@ -287,6 +289,7 @@ actions:
     - data_covariates_process
     outputs:
       moderately_sensitive:
+        eligibility_count_p1: output/tables/eligibility_count_p1.csv
         table_csv: output/report/tables/table1_*_REDACTED.csv
         table_html: output/report/tables/table1_*_REDACTED.html
 
@@ -330,5 +333,3 @@ actions:
         data_tte_brand_outcome: output/tte/data/data_tte_both*.rds
       moderately_sensitive:
         event_counts: output/tte/tables/event_counts_both.csv
-
-  

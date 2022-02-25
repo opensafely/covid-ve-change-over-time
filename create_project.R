@@ -399,7 +399,7 @@ actions_list <- splice(
       data_eligible_b = "output/data/data_eligible_b.rds"
     ),
     moderately_sensitive = list(
-      eligibility_count = "output/tables/eligibility_count_ab.txt",
+      eligibility_count_ab = "output/tables/eligibility_count_ab.csv",
       group_age_ranges = "output/lib/group_age_ranges.csv"
     )
   ),
@@ -441,6 +441,9 @@ actions_list <- splice(
       data_eligible_e_vax = "output/data/data_eligible_e_vax.rds",
       data_eligible_e_unvax = "output/data/data_eligible_e_unvax.rds",
       data_eligible_e = "output/data/data_eligible_e.csv"
+    ),
+    moderately_sensitive = list(
+      eligibility_count_cde = "output/tables/eligibility_count_cde.csv"
     )
   ),
   
@@ -536,6 +539,7 @@ actions_list <- splice(
       "data_eligible_cde",
       "data_covariates_process"),
     moderately_sensitive = list(
+      eligibility_count_p1 = "output/tables/eligibility_count_p1.csv",
       table_csv = "output/report/tables/table1_*_REDACTED.csv",
       table_html = "output/report/tables/table1_*_REDACTED.html"
     )
