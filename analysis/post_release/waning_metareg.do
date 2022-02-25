@@ -7,7 +7,7 @@ set more off
 clear
 
 
-import delimited using data_metareg.csv
+import delimited "/Users/eh1415/Documents/covid-ve-change-over-time/release20220221/data_metareg.csv"
 
 replace estimate="" if estimate=="NA"
 destring estimate, replace
@@ -55,7 +55,7 @@ label list vaccine
 replace k=k-1
 
 sort outcome stratum vaccine
-save waning_metareg, replace
+save "/Users/eh1415/Documents/covid-ve-change-over-time/release20220221/waning_metareg.dta", replace
 /*
 metareg loghr k if outcome==1 & stratum==0 & vaccine==3, wsse(seloghr)
 local a=_b[k]
