@@ -38,8 +38,6 @@ no_evidence_of <- function(cov_date, index_date) {
   is.na(cov_date) | index_date < cov_date
 }
 
-censor_vars <- c("death_date", "dereg_date")
-
 ################################################################################
 # prepare data
 data_tables <- data_covariates %>% 
@@ -47,13 +45,89 @@ data_tables <- data_covariates %>%
   left_join(data_processed %>%
               select(patient_id, subgroup,
                      all_of(unname(strata_vars)),
-                     sex, imd, ethnicity,
-                     all_of(censor_vars)),
+                     sex, imd, ethnicity, 
+                     death_date, dereg_date),
             by = "patient_id") %>%
-  # remove if death or dereg before start of comparison 1
+  mutate(group = if_else(arm == "unvax", "unvax", "vax"))
+
+# eligible for comparison period 1
+eligibility_count <- data_tables %>% 
+  group_by(group) %>%
+  count() %>%
+  ungroup() %>%
+  transmute(
+    description = glue("{group}: satisfying eligibility criteria up to and including box E."),
+    n
+  )
+
+# remove if death before start of comparison 1
+data_tables <- data_tables %>%
   filter_at(
-    all_of(censor_vars),
-    all_vars(no_evidence_of(., start_k_date))) %>%
+    vars("death_date"),
+    all_vars(no_evidence_of(., start_k_date))) 
+
+eligibility_count <- eligibility_count %>%
+  bind_rows(
+    data_tables %>% 
+      group_by(group) %>%
+      count() %>%
+      ungroup() %>%
+      transmute(
+        description = glue("{group}: after removing those who died before start of period 1."),
+        n
+      ))
+
+# remove if dereg before start of comparison 1
+data_tables <- data_tables %>%
+  filter_at(
+    vars("dereg"),
+    all_vars(no_evidence_of(., start_k_date))) 
+
+eligibility_count <- eligibility_count %>%
+  bind_rows(
+    data_tables %>% 
+      group_by(group) %>%
+      count() %>%
+      ungroup() %>%
+      transmute(
+        description = glue("{group}: after removing those who deregistered before start of period 1."),
+        n
+      ))
+
+# remove if subsequent_vax before start of comparison 1
+data_tables <- data_tables %>%
+  filter_at(
+    vars("subsequent_vax"),
+    all_vars(no_evidence_of(., start_k_date))) 
+
+eligibility_count <- eligibility_count %>%
+  bind_rows(
+    data_tables %>% 
+      group_by(group) %>%
+      count() %>%
+      ungroup() %>%
+      transmute(
+        description = glue("{group}: after removing those who received a subsequent dose before start of period 1."),
+        n
+      ))
+
+eligibility_count_p1 <- eligibility_count %>%
+  mutate(group = str_extract(description, "\\w+:")) %>%
+  arrange(group) %>%
+  # round to nearest 10
+  mutate(across(n, ~round(.x, -1))) %>%
+  group_by(group) %>%
+  mutate(n_removed = lag(n) - n) %>%
+  ungroup() %>%
+  select(-group)
+
+readr::write_csv(
+  eligibility_count_p1,
+  here::here("output", "tables", "eligibility_count_p1.csv"))
+
+################################################################################
+# split data in subgropus
+data_tables <- data_tables %>%
   select(patient_id, arm, region, jcvi_group, subgroup,
          all_of(unname(unlist(model_varlist)))) %>% 
   group_split(subgroup)
