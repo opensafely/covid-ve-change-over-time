@@ -1,0 +1,61 @@
+---
+title: "table1"
+author: "Elsie Horne"
+date: "22/02/2022"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include = FALSE)
+```
+
+## R Markdown
+
+```{r}
+library(tidyverse)
+library(glue)
+library(kableExtra)
+
+table1 <- bind_rows(
+  lapply(
+    1:4,
+    function(x) 
+      readr::read_csv(here::here("release20220221", glue("table1_{x}_REDACTED.csv"))) %>%
+      mutate(subgroup = x)
+    ) 
+  )
+```
+
+```{r}
+table1_wide <- table1 %>%
+  pivot_wider(
+    names_from = subgroup,
+    values_from = c(BNT162b2, ChAdOx, Unvaccinated),
+    names_glue = "{subgroup}_{.value}"
+  ) %>%
+  select(-`2_ChAdOx`) %>%
+  select(Variable, Characteristic, starts_with("4"), starts_with("1"), starts_with("3"), starts_with("2"))
+```
+
+
+```{r, include = TRUE}
+variable_order <- c(NA_character_, "Age", "Sex", "IMD", "Ethnicity", "BMI", "Morbidity count", "Number of SARS-CoV-2 tests between 2020-05-18 and 2020-12-08", "Pregnancy", "Flu vaccine in previous 5 years", "Shielding criteria met", "Housebound")
+
+tibble(Variable = variable_order) %>%
+  left_join(table1_wide) %>%
+  mutate(across(Variable, ~str_remove(.x, " between 2020-05-18 and 2020-12-08"))) %>%
+  mutate(across(Variable, ~str_remove(.x, " criteria met"))) %>%
+  kable("pipe", caption = "Table 1 for manuscript")
+```
+
+```{r, include = TRUE}
+variable_order_supplement <- c(NA_character_, "Region", "JCVI group", "Resident in long-term residential home", 
+                               "History of")
+                               # "Chronic respiratory disease", "Chronic heart disease", "Chronic liver disease",
+                               # "Chronic kidney disease", "Chronic neurological disease", "Diabetes",
+                               # "Immunosuppression", "Learning disability", "Serious mental illness")
+tibble(Variable = variable_order_supplement) %>%
+  left_join(table1_wide) %>%
+  kable("pipe", caption = "Table for appendix")
+```
+
