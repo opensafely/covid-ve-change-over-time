@@ -32,6 +32,11 @@ data_sex <- readr::read_rds(
   here::here("output", "data", "data_processed.rds")) %>%
   select(patient_id, sex)
 
+# vax data
+data_wide_vax_dates <- readRDS(
+  here::here("output", "data", "data_wide_vax_dates.rds")) %>%
+  select(patient_id, covid_vax_1_date, covid_vax_3_date)
+
 # read data for ever covariates
 data_ever <- arrow::read_feather(
   file = here::here("output", "input_ever.feather")) 
@@ -65,6 +70,15 @@ data_covariates <- data_arm %>%
   # join sex
   left_join(data_sex,
             by = "patient_id") %>%
+  # join vax for subsequent vax
+  left_join(data_wide_vax_dates,
+            by = "patient_id") %>%
+  # subsequent vax date
+  mutate(subsequent_vax = if_else(
+    arm %in% "unvax",
+    covid_vax_1_date,
+    covid_vax_3_date
+  )) %>%
   # clean BMI data
   mutate(across(bmi_stage,
                 ~ case_when(
@@ -235,7 +249,7 @@ data_covariates <- data_arm %>%
                   as.Date(.x, format="%Y-%m-%d"),
                   unit = "days"))) %>%
   select(patient_id, start_k_date, end_k_date, k,
-         arm, split,
+         arm, split, subsequent_vax,
          anytest_date, age,
          all_of(unname(model_varlist$clinical)))
   
