@@ -558,24 +558,26 @@ actions_list <- splice(
           "data_input_process",
           "data_covariates_process"),
         highly_sensitive = list(
-          data_tte_brand_outcome = glue("output/tte/data/data_tte_{x}*.rds"),
-          event_counts = glue("output/tte/tables/event_counts_{x}.rds")
+          data_tte_brand_outcome = glue("output/tte/data/data_tte_{x}*.rds")
+        ),
+        moderately_sensitive = list(
+          event_counts = glue("output/tte/tables/event_counts_{x}.csv")
         )
       )
   ), recursive = FALSE)),
   
-  comment(glue("process event counts tables")),
-  action(
-    name = glue("process_event_count_tables"),
-    run = "r:latest analysis/comparisons/process_event_count_tables.R",
-    needs = list(
-      "design",
-      "data_tte_process_BNT162b2",
-      "data_tte_process_ChAdOx"),
-    moderately_sensitive = list(
-      tidy_tables_events = glue("output/tte/tables/tidy_events*.txt")
-    )
-  ),
+  # comment(glue("process event counts tables")),
+  # action(
+  #   name = glue("process_event_count_tables"),
+  #   run = "r:latest analysis/comparisons/process_event_count_tables.R",
+  #   needs = list(
+  #     "design",
+  #     "data_tte_process_BNT162b2",
+  #     "data_tte_process_ChAdOx"),
+  #   moderately_sensitive = list(
+  #     tidy_tables_events = glue("output/tte/tables/tidy_events*.txt")
+  #   )
+  # ),
   
   comment("####################################",
           "apply models", 
