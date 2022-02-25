@@ -152,23 +152,47 @@ data_eligible_b <- data_eligible_a %>%
     covid_vax_1_brand %in% c("az", "pfizer"),
     # second dose received in interval [elig_date + 6 weeks, elig_date + 16 weeks)
     covid_vax_2_date >= elig_date + weeks(6),
-    covid_vax_2_date < elig_date + weeks(16),
-    
-    ### exclusion
+    covid_vax_2_date < elig_date + weeks(16))
+
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Inclusion criteria in box b applied.",
+    n = n_distinct(data_eligible_b$patient_id)
+  )
+
+### exclusion
+data_eligible_b <- data_eligible_b %>%
+  filter(
     # first dose received before eligibility date
-    covid_vax_1_date > elig_date,
+    covid_vax_1_date > elig_date
+  )
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Samples with 1st dose before eligibility date removed.",
+    n = n_distinct(data_eligible_b$patient_id)
+  )
+
+data_eligible_b <- data_eligible_b %>%
+  filter(
     # less than six or more than 14 weeks between 1st and 2nd dose
-    between_doses >= 6,
-    between_doses < 14,
+    between_doses >= 6, between_doses < 14
+  )
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Samples with <6 or >=14 weeks between 1st and 2nd dose removed",
+    n = n_distinct(data_eligible_b$patient_id)
+  )
+
+data_eligible_b <- data_eligible_b %>%
+  filter(
     # flagged as hcw
     !hscworker
   ) %>%
   select(patient_id, jcvi_group, elig_date, region, ethnicity) %>%
   droplevels()
-
 eligibility_count <- eligibility_count %>%
   add_row(
-    description = "Criteria in box b applied.",
+    description = "Healthcare workers removed.",
     n = n_distinct(data_eligible_b$patient_id)
   )
 
@@ -182,13 +206,9 @@ eligibility_count <- eligibility_count %>%
   mutate(across(n, ~round(.x, -1))) %>%
   mutate(n_removed = lag(n) - n)
 
-capture.output(
-  eligibility_count %>% 
-    mutate(across(c(n, n_removed), ~scales::comma(.x, accuracy=1))) %>%
-    kableExtra::kable("pipe"),
-  file = here::here("output", "tables", "eligibility_count_ab.txt"),
-  append = FALSE
-)
+readr::write_csv(
+  eligibility_count,
+  here::here("output", "tables", "eligibility_count_ab.csv"))
 
 ################################################################################
 # jcvi_group, elig_date combos ----
