@@ -152,6 +152,7 @@ survtable <- ggsurvplot_res$data.survplot %>%
          cumprod_vax = cumprod(prob_vax),
          cuminc = 1-cumprod_vax) %>%
   ungroup() %>%
+  mutate(across(cuminc, round, digits=3)) %>%
   select(arm, subgroup, time, n.risk, n.event, n.censor, cuminc)
 
 readr::write_csv(
