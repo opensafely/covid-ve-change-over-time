@@ -521,8 +521,8 @@ actions_list <- splice(
     run = "r:latest analysis/subsequent_vax/plot_cumulative_incidence.R",
     needs = list("design", "data_input_process", "data_eligible_cde"),
     moderately_sensitive = list(
-      ci_vax = "output/subsequent_vax/images/ci_vax_*.png",
-      survtable = "output/subsequent_vax/tables/survtable_*.txt"
+      ci_vax = "output/subsequent_vax/images/ci_vax.png",
+      survtable = "output/subsequent_vax/tables/survtable.csv"
     )
   ),
   

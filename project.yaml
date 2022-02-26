@@ -272,8 +272,8 @@ actions:
     - data_eligible_cde
     outputs:
       moderately_sensitive:
-        ci_vax: output/subsequent_vax/images/ci_vax_*.png
-        survtable: output/subsequent_vax/tables/survtable_*.txt
+        ci_vax: output/subsequent_vax/images/ci_vax.png
+        survtable: output/subsequent_vax/tables/survtable.csv
 
   ## #################################### 
   ## table 1 for report 
