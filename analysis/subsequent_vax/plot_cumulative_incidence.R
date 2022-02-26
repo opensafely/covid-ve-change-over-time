@@ -143,7 +143,7 @@ survtable <- ggsurvplot_res$data.survplot %>%
   # recalculate n.risk now that small numbers suppressed in n.event and n.censor
   mutate(across(n.risk,
                 ~ if_else(
-                  is.na(n.risk_new),
+                  is.na(n.risk_new), # NA for time 1 only
                   .x,
                   n.risk_new)
   )) %>%
