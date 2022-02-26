@@ -86,7 +86,6 @@ plot_2nd_vax_dates_fun <- function(
   # caption:
   # X-axes restricted to 6 to 16 weeks after eligibility date.
   # Bars show the number of individuals who received a second dose of the given brand of vaccine on the given date.
-  # Lines show the 7-day moving average (centred on day 4) of the numbers represented by the bars.
   
   # save the plot
   ggsave(plot_by_region,
