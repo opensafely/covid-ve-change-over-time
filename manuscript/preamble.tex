@@ -1,0 +1,24 @@
+%%%%% preamble start
+% set font
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+
+
+\usepackage{titlesec}
+\titleformat*{\section}{\normalsize\bfseries}
+\titlespacing*{\section}{0pt}{*2}{12pt}
+\titleformat*{\subsection}{\normalsize\bfseries}
+\titlespacing*{\subsection}{0pt}{*1}{12pt}
+
+% table and figure caption labels
+\renewcommand{\tablename}{Supplementary Table}
+
+% make caption labels bold
+\usepackage[labelfont=bf]{caption}
+
+% Landscape command for landscaped figures and tables
+\usepackage{lscape}
+\newcommand{\blandscape}{\begin{landscape}}
+\newcommand{\elandscape}{\end{landscape}}
+
+%%%%% preamble end
