@@ -17,6 +17,7 @@ Untitled.ipynb
 release*
 *.docx
 *.dotx
+*.smcl
 
 manuscript/images/*
 manuscript/appendix.pdf
