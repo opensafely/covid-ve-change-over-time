@@ -19,5 +19,6 @@ release*
 *.dotx
 
 manuscript/images/*
-mansucript/*.pdf
-mansucript/appendix.tex
+manuscript/appendix.pdf
+manuscript/appendix.tex
+manuscript/appendix.log
