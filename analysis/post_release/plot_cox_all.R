@@ -11,6 +11,8 @@ library(glue)
 ################################################################################
 fs::dir_create(here::here("output", "report", "data"))
 
+release_folder <- "release20220226"
+
 ################################################################################
 # read study parameters
 study_parameters <- readr::read_rds(
@@ -60,42 +62,14 @@ starts <- ends + 1
 weeks_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
 
 ################################################################################
-# model_tidy_list <- unlist(lapply(
-#   comparisons,
-#   function(x)
-#     unlist(lapply(
-#       subgroup_labels,
-#       function(y)
-#         lapply(
-#           unname(outcomes),
-#           function(z)
-#             try(
-#               readr::read_rds(
-#                 here::here("output", "models_cox", "data", glue("modelcox_tidy_{x}_{y}_{z}.rds")
-#                 )
-#               ) %>%
-#                 mutate(comparison = x, subgroup = y, outcome = z)
-#             )
-#         )
-#     ),
-#     recursive = FALSE
-#     )
-# ),
-# recursive = FALSE
-# )
-# 
-# model_tidy_tibble <- bind_rows(
-#   model_tidy_list[sapply(model_tidy_list, function(x) is_tibble(x))]
-# ) 
-
 # read estimates data
 estimates_all <- readr::read_csv(
-  here::here("release20220221", "estimates_all.csv")) %>%
+  here::here(release_folder, "estimates_all.csv")) %>%
   mutate(across(model, ~as.integer(str_remove(.x, "unadjusted"))))
 
 # read metareg data
 metareg_results_k <- readr::read_rds(
-  here::here("release20220221", "metareg_results_k.rds")) %>%
+  here::here(release_folder, "metareg_results_k.rds")) %>%
   select(subgroup, comparison, outcome, k, starts_with("line")) %>%
   mutate(model=2)
 
@@ -275,7 +249,7 @@ plot_vax <- plot_data %>%
 
 # save the plot
 ggsave(plot_vax,
-       filename = here::here("release20220221", glue("hr_vax.png")),
+       filename = here::here(release_folder, glue("hr_vax.png")),
        width=27, height=16, units="cm")
 
 ################################################################################
@@ -359,7 +333,7 @@ plot_brand <- plot_data %>%
     legend.text = element_text(size=10)
   ) 
 ggsave(plot_brand,
-       filename = here::here("release20220221", glue("hr_brand.png")),
+       filename = here::here(release_folder, glue("hr_brand.png")),
        width=14, height=14, units="cm")
 
 ################################################################################
@@ -438,7 +412,7 @@ plot_vax_anytest <- plot_data %>%
 
 # save the plot
 ggsave(plot_vax_anytest,
-       filename = here::here("release20220221", glue("hr_vax_anytest.png")),
+       filename = here::here(release_folder, glue("hr_vax_anytest.png")),
        width=16, height=12, units="cm")
 
 ################################################################################
@@ -524,7 +498,7 @@ plot_brand_anytest <- plot_data %>%
     legend.text = element_text(size=10)
   ) 
 ggsave(plot_brand_anytest,
-       filename = here::here("release20220221", glue("hr_brand_anytest.png")),
+       filename = here::here(release_folder, glue("hr_brand_anytest.png")),
        width=16, height=7, units="cm")
 
 ################################################################################
@@ -646,7 +620,7 @@ plot_unadj_adj <- function(plot_comparison) {
   
   # save the plot
   ggsave(plot_vax_2,
-         filename = here::here("release20220221", glue("hr_vax_{plot_comparison}.png")),
+         filename = here::here(release_folder, glue("hr_vax_{plot_comparison}.png")),
          width=27, height=16, units="cm")
   
   # plot comparison
@@ -718,7 +692,7 @@ plot_unadj_adj <- function(plot_comparison) {
   
   # save the plot
   ggsave(plot_vax_anytest,
-         filename = here::here("release20220221", glue("hr_vax_anytest_{plot_comparison}.png")),
+         filename = here::here(release_folder, glue("hr_vax_anytest_{plot_comparison}.png")),
          width=16, height=12, units="cm")
   
 }
