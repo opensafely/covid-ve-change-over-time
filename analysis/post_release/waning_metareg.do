@@ -1,4 +1,6 @@
-cd "/Users/eh1415/Documents/covid-change-ve-over-time"
+*cd "/Users/eh1415/Documents/covid-change-ve-over-time/release20220226"
+
+*ssc install metareg
 
 capture log close
 log using waning_metareg, replace
@@ -7,7 +9,7 @@ set more off
 clear
 
 
-import delimited "/Users/eh1415/Documents/covid-ve-change-over-time/release20220221/data_metareg.csv"
+import delimited data_metareg.csv
 
 replace estimate="" if estimate=="NA"
 destring estimate, replace
@@ -55,8 +57,8 @@ label list vaccine
 replace k=k-1
 
 sort outcome stratum vaccine
-save "/Users/eh1415/Documents/covid-ve-change-over-time/release20220221/waning_metareg.dta", replace
-/*
+save waning_metareg.dta, replace
+
 metareg loghr k if outcome==1 & stratum==0 & vaccine==3, wsse(seloghr)
 local a=_b[k]
 local b=_se[k]
@@ -92,12 +94,12 @@ postfile `memhold' outcome stratum vaccine logrhr selogrhr loghr1 seloghr1 using
 
 postclose `memhold'
 di "`memhold'"
-*/
+
 use results, clear
 sort outcome stratum vaccine
 save results, replace
 
-use waning_metareg, clear
+use waning_metareg.dta, clear
 merge m:1 outcome stratum vaccine using results
 tab _merge
 
