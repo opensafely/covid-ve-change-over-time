@@ -53,6 +53,7 @@ set_flextable_defaults(
 # Supplementary Methods
 
 # Supplementary Results
+Test some text referring to \figref{fig:svp}.
 
 ```{r}
 # create table1_ft
@@ -115,7 +116,7 @@ table1_ft <- tibble(Variable = variable_order_supplement) %>%
 
 \begin{landscape}
 
-```{r, include=TRUE, fig.cap.pre = "Supplementary Figure ", fig.cap="Second vaccination period", fig.width=20}
+```{r svp, include=TRUE, fig.cap="Second vaccination period", fig.width=20}
 knitr::include_graphics(file.path(image_path, "plot_by_region_10_2021-04-13.png"))
 ```
 
