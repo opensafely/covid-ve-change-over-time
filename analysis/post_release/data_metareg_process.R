@@ -1,8 +1,10 @@
 library(tidyverse)
 
+release_folder <- "release20220226"
+
 # read data
 estimates_all <- readr::read_csv(
-  here::here("release20220221", "estimates_all.csv"))
+  here::here(release_folder, "estimates_all.csv"))
 
 # read subgroups
 subgroups <- readr::read_rds(
@@ -25,4 +27,4 @@ data_metareg <- estimates_all %>%
 # save data
 readr::write_csv(
   data_metareg,
-  here::here("release20220221", "data_metareg.csv"))
+  here::here(release_folder, "data_metareg.csv"))
