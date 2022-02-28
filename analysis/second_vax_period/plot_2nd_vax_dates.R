@@ -72,8 +72,9 @@ plot_2nd_vax_dates_fun <- function(
     scale_y_continuous(expand = expansion(mult = c(0,.05))) +
     scale_fill_discrete(name = "brand") +
     labs(x = "date of second vaccination", y = "number of individuals",
-         title = title_string, subtitle = subtitle_string,
-         caption = "Dashed vertical lines show start and end of 28-day second vaccination period.") +
+         title = title_string, subtitle = subtitle_string
+         # , caption = "Dashed vertical lines show start and end of 28-day second vaccination period."
+         ) +
     theme_bw(base_size = 10) +
     theme(legend.position = "bottom",
           legend.box="vertical",
