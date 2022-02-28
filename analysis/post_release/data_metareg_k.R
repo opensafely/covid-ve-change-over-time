@@ -1,15 +1,39 @@
 library(tidyverse)
 
-metareg_results_0 <- readxl::read_excel(here::here("release20220221", "metareg_results.xlsx"))
+################################################################################
+release_folder <- "release20220226"
+
+# read subgroups
+subgroups <- readr::read_rds(
+  here::here("output", "lib", "subgroups.rds"))
+subgroup_labels <- seq_along(subgroups)
+subgroups_order <- c(4,1,3,2)
+
+################################################################################
+
+metareg_results_0 <- haven::read_dta(here::here(release_folder, "results.dta"))
+# metareg_results_0 <- readxl::read_excel(here::here("release20220221", "metareg_results.xlsx"))
 
 metareg_results <- metareg_results_0 %>%
+  rename(subgroup = stratum, comparison = vaccine) %>%
+  mutate(across(subgroup,
+                factor,
+                levels = 0:3,
+                labels = subgroups[c(4,1,3,2)])) %>%
+  mutate(across(subgroup, ~factor(as.character(.x)))) %>%
+  mutate(across(comparison, 
+                factor,
+                levels = 1:3,
+                labels = c("BNT162b2", "ChAdOx", "both")
+                )) %>%
   mutate(across(outcome,
-                ~case_when(.x %in% "Any test" ~ "anytest",
-                           .x %in% "Positive test" ~ "postest",
-                           .x %in% "COVID-19 hospitalisation" ~ "covidadmitted",
-                           .x %in% "COVID-19 death" ~ "coviddeath",
-                           .x %in% "Non-COVID death" ~ "noncoviddeath",
-                           TRUE ~ NA_character_))) %>%
+                factor,
+                levels = 1:5,
+                labels = c("covidadmitted",
+                           "coviddeath",
+                           "postest",
+                           "noncoviddeath",
+                           "anytest"))) %>%
   mutate(
     # slope ci
     logrhr_lower = logrhr - qnorm(0.975)*selogrhr,
@@ -38,11 +62,5 @@ metareg_results_k <- metareg_results %>%
 
 readr::write_rds(
   metareg_results_k,
-  here::here("release20220221", "metareg_results_k.rds")
+  here::here(release_folder, "metareg_results_k.rds")
 )
-
-# metareg_results_k %>%
-#   filter(subgroup =="65+ years", comparison!="both", outcome == "COVID-19 hospitalisation") %>%
-#   ggplot(aes(x = k)) +
-#   geom_line(aes(y = line, colour=comparison)) +
-#   geom_ribbon(aes(ymin=line_lower, ymax=line_higher, fill = comparison), alpha=0.2)
