@@ -23,20 +23,49 @@ knitr::opts_chunk$set(
 ```{r}
 library(tidyverse)
 library(flextable)
+library(ftExtra)
+library(officer)
 library(glue)
 ```
 
 ```{r}
 image_path <- here::here("manuscript", "images")
+
+release_folder <- "release20220226"
 ```
 
 
 ```{r}
+# read estimates data
+estimates_all <- readr::read_csv(
+  here::here(release_folder, "estimates_all.csv")) %>%
+  mutate(across(model, ~as.integer(str_remove(.x, "unadjusted"))))
+
+# read varlist
+ model_varlist <- readr::read_rds(
+    here::here("output", "lib", "model_varlist.rds"))
+
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
 subgroup_labels <- seq_along(subgroups)
 subgroup_order <- c(4,1,3,2)
+subgroups_long <- if_else(
+    subgroups %in% subgroups[c(2,3)],
+    as.character(glue("{subgroups} and not clinically vulnerable")),
+    subgroups
+  )
+
+# outcomes 
+outcomes <- readr::read_rds(
+  here::here("output", "lib", "outcomes.rds")
+)
+outcomes_order <- c(which(outcomes == "covidadmitted"),
+                    which(outcomes == "coviddeath"),
+                    which(outcomes == "postest"),
+                    which(outcomes == "noncoviddeath"),
+                    which(outcomes == "anytest"))
+select_outcomes <- unname(outcomes[outcomes_order])
 ```
 
 ```{r}
@@ -61,7 +90,7 @@ table1 <- bind_rows(
   lapply(
     1:4,
     function(x) 
-      readr::read_csv(here::here("release20220221", glue("table1_{x}_REDACTED.csv")),
+      readr::read_csv(here::here(release_folder, glue("table1_{x}_REDACTED.csv")),
                       show_col_types = FALSE) %>%
       mutate(subgroup = x)
     ) 
@@ -83,9 +112,18 @@ cols_subtype <- sapply(
   function(x) sum(str_detect(table1_names, glue("{x}_")))
   )
 
+variable_order <- c(NA_character_, "Age", "Sex", "IMD", "Ethnicity", "BMI", "Morbidity count", "Number of SARS-CoV-2 tests between 2020-05-18 and 2020-12-08", "Flu vaccine in previous 5 years", "Shielding criteria met")
+
+table1_manuscript <- tibble(Variable = variable_order) %>%
+  left_join(table1) %>%
+  mutate(across(Variable, ~str_remove(.x, " between 2020-05-18 and 2020-12-08"))) %>%
+  mutate(across(Variable, ~str_remove(.x, " criteria met"))) 
+readr::write_rds(
+  table1_manuscript,
+  here::here(release_folder, "table1_manuscript.rds"))
 
 variable_order_supplement <- c(NA_character_, "Region", "JCVI group", "Resident in long-term residential home",
-                               "History of")
+                               "History of", "Pregnancy", "Housebound")
 table1_ft <- tibble(Variable = variable_order_supplement) %>%
   left_join(table1, by = "Variable") %>%
   group_by(Variable) %>%
@@ -114,6 +152,145 @@ table1_ft <- tibble(Variable = variable_order_supplement) %>%
   )
 ```
 
+```{r}
+# create covariate_estimates_*_*_ft
+estimates_covs <- estimates_all %>%
+  filter(variable != "k") %>%
+  mutate(across(subgroup, 
+                factor, 
+                levels = subgroup_order, 
+                labels = subgroups[subgroup_order])) %>%
+  mutate(across(outcome, 
+                factor,
+                levels = unname(outcomes[outcomes_order]),
+                labels = names(outcomes[outcomes_order]))) %>%
+  group_split(subgroup) %>%
+  as.list()
+```
+
+```{r}
+table_estimates_covs_ft <- function(i) {
+  
+  subgroup <- unique(estimates_covs[[i]]$subgroup)
+  subgroup_long <- subgroups_long[subgroups == subgroup]
+  
+  
+  table <- estimates_covs[[i]] %>%
+    mutate(across(c(estimate, conf.low, conf.high), ~format(round(.x, digits=2), nsmall=2))) %>%
+    transmute(
+      comparison = comparison,
+      outcome = outcome,
+      variable = variable,
+      label = label,
+      value = if_else(
+        !reference_row | is.na(reference_row),
+        as.character(glue("{estimate} ({conf.low}-{conf.high})")),
+        "1.00 (ref)"
+      )
+    ) %>%
+    pivot_wider(
+      names_from = outcome,
+      values_from = value
+    ) %>%
+    select(comparison, variable, label, all_of(names(outcomes[outcomes_order]))) 
+  
+  age_order <- sort(unique(table$label[str_detect(table$label, "^age")]))
+  age_order <- age_order[age_order!="age"]
+  
+  history_of_vars <- c(
+    "chronic_respiratory_disease",
+    "chronic_heart_disease", 
+    "chronic_liver_disease", 
+    "ckd", 
+    "chronic_neuro_inc_ld",
+    "diabetes",
+    "any_immunosuppression", 
+    "ld_inc_ds_and_cp", 
+    "sev_ment")
+  
+  tibble(
+    Variable = c(age_order, names(c(model_varlist$demographic, model_varlist$clinical))),
+    variable = c(age_order, unname(unlist(model_varlist)))
+  ) %>%
+    full_join(table, by = "variable") %>%
+    filter(Variable != "Age") %>% # remove this line after new results released
+    select(-variable) %>%
+    mutate(across(Variable, ~if_else(str_detect(label, "^age"), "Age", .x))) %>%
+    mutate(label_old = label) %>%
+    mutate(across(label, 
+                  ~if_else(.x %in% glue("{history_of_vars}TRUE"),
+                           Variable,
+                           .x))) %>%
+    mutate(across(Variable, 
+                  ~if_else(label_old %in% glue("{history_of_vars}TRUE"),
+                           "History of",
+                           .x))) %>%
+    mutate(across(label, 
+                  ~if_else(str_detect(.x, "TRUE$"),
+                           "yes",
+                           .x))) %>%
+    mutate(across(Variable, 
+                  ~if_else(str_detect(.x, "Number of SARS-CoV-2 tests"),
+                           "Number of SARS-CoV-2 tests",
+                           .x))) %>%
+    mutate(across(all_of(names(outcomes)), ~if_else(is.na(.x), "NA", .x))) %>%
+    mutate(across(comparison,
+                  factor,
+                  levels = c("BNT162b2", "ChAdOx", "both"),
+                  labels = c("BNT162b2 vs unvaccinated", "ChAdOx vs unvaccinated", "BNT162b2 vs ChAdOx"))) %>%
+    select(-label_old) %>%
+    select(comparison, Variable, Category = label, all_of(names(outcomes[outcomes_order]))) %>%
+    arrange(comparison) %>%
+    as_grouped_data(groups = "comparison") %>%
+    as_flextable(hide_grouplabel = TRUE) %>% 
+    merge_v(j = "Variable") %>% 
+    valign(valign = "top") %>% 
+    width(j = 1:7, width = 22/7, unit = "cm") %>%
+    bold(part="header") %>%
+     bold(
+    i = ~ !is.na(comparison),
+    j = 1,
+    part = "body"
+  ) %>%
+  compose(
+    i = 1, j = 2,
+    value = as_paragraph("Category", as_sup("a")),
+    part = "header"
+  ) %>%
+  add_footer_lines(
+    values = "\\textsuperscript\\{a\\}test"
+  ) %>%
+    # compose(
+    #   i = 1, j = 1,
+    #   value = as_paragraph_md("^a^test superscript"),
+    #   # value = as_paragraph(
+    #   #   as_chunk("a", props = fp_text(vertical.align = "superscript")),
+    #   #   as_chunk("Some categories are merged.")
+    #   #   ),
+    #   part = "footer"
+    # ) %>%
+    # footnote(
+    #   i = 1, j = 2,
+    #   value = as_paragraph(""),
+    #   ref_symbols = "a",
+    #   part = "header",
+    #   inline = TRUE
+    #   ) %>%
+    # footnote(
+    #   i = 1, j = 1,
+    #   value = "Details about age vars.",
+    #   ref_symbols = "b",
+    #   part = "body",
+    #   inline = TRUE
+    #   ) %>%
+    set_caption(
+      caption = glue("Covariate coefficients for all models in the {subgroup_long} subgroup."),
+      style = "Supplementary Table"
+    )
+}
+```
+
+
 \begin{landscape}
 
 ```{r svp, include=TRUE, fig.cap="Second vaccination period", fig.width=20}
@@ -124,4 +301,9 @@ knitr::include_graphics(file.path(image_path, "plot_by_region_10_2021-04-13.png"
 ```{r table1, include=TRUE, tab.cap.pre = "Supplementary Table ", tab.cap="Additional characteristics summarised across groups."}
 table1_ft
 ```
+
+```{r table-estimates-covs-ft-1, include=TRUE, tab.cap.pre = "Supplementary Table "}
+table_estimates_covs_ft(1)
+```
+
 \end{landscape}
