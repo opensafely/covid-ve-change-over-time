@@ -17,3 +17,7 @@ Untitled.ipynb
 release*
 *.docx
 *.dotx
+
+manuscript/images/*
+mansucript/*.pdf
+mansucript/appendix.tex
