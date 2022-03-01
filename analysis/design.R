@@ -213,7 +213,7 @@ outcomes <- c(
   "Positive SARS-CoV-2 test" = "postest", 
   "COVID-19 hospital admission" = "covidadmitted",
   "COVID-19 death" = "coviddeath", 
-  "non-COVID-19 death" = "noncoviddeath")
+  "Non-COVID-19 death" = "noncoviddeath")
 
 readr::write_rds(
   outcomes,
