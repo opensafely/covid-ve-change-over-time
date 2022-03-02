@@ -75,6 +75,9 @@ metareg_results_k <- readr::read_rds(
 
 ################################################################################
 
+page_height <- 27
+page_width <- 16
+
 legend_width <- 15
 xlab <- "Weeks since second dose"
 subgroup_plot_labels <- if_else(
@@ -91,12 +94,12 @@ plot_data <- estimates_all %>%
   # remove as very few events
   filter(!(comparison %in% c("BNT162b2", "both") & subgroup==3 & outcome == "noncoviddeath")) %>%
   mutate(k=as.integer(label)) %>%
-  group_by(subgroup, model, k) %>%
-  mutate(k_missing = is.na(mean(estimate))) %>%
-  ungroup() %>%
-  group_by(subgroup, model) %>%
-  mutate(max_k = max(k)) %>%
-  ungroup() %>%
+  # group_by(subgroup, model, k) %>%
+  # mutate(k_missing = is.na(mean(estimate))) %>%
+  # ungroup() %>%
+  # group_by(subgroup, model) %>%
+  # mutate(max_k = max(k)) %>%
+  # ungroup() %>%
   left_join(
     min_max_fu_dates %>%
       mutate(across(subgroup, ~subgroup_labels[subgroups == .x])), 
@@ -119,7 +122,7 @@ plot_data <- estimates_all %>%
                 ~ case_when(
                   k == 1
                   ~ str_c(.x, "\n(from\n", min_fu_date, ")"),
-                  k == max_k
+                  k == K
                   ~ str_c(.x, "\n(to\n", max_fu_date, ")"),
                   TRUE ~ as.character(.x)))) %>%
   arrange(k) %>%
@@ -148,7 +151,21 @@ plot_data <- estimates_all %>%
                 levels = subgroups[subgroups_order],
                 labels = str_wrap(subgroup_plot_labels[subgroups_order], 25)
   )) %>%
-  mutate(line_group = str_c(subgroup, comparison, outcome,  model, sep = "; "))
+  mutate(line_group = str_c(subgroup, comparison, outcome,  model, sep = "; ")) %>%
+  # only plot line within range of estimates
+  mutate(k_nonmiss = if_else(!is.na(estimate), k, NA_integer_)) %>%
+  group_by(line_group) %>%
+  mutate(keep = 0 < sum(!is.na(k_nonmiss))) %>%
+  filter(keep) %>%
+  mutate(
+    min_k = min(k_nonmiss, na.rm = TRUE),
+    max_k = max(k_nonmiss, na.rm = TRUE)
+  ) %>%
+  ungroup() %>%
+  mutate(across(line,
+                ~ if_else(min_k <= k & k <= max_k,
+                          .x,
+                          NA_real_)))
 
 
 # spacing of points on plot
@@ -250,7 +267,7 @@ plot_vax <- plot_data %>%
 # save the plot
 ggsave(plot_vax,
        filename = here::here(release_folder, glue("hr_vax.png")),
-       width=27, height=16, units="cm")
+       width=page_height, height=page_width, units="cm")
 
 ################################################################################
 # brand comparison
@@ -334,7 +351,7 @@ plot_brand <- plot_data %>%
   ) 
 ggsave(plot_brand,
        filename = here::here(release_folder, glue("hr_brand.png")),
-       width=14, height=14, units="cm")
+       width=page_width, height=14, units="cm")
 
 ################################################################################
 # anytest
@@ -413,7 +430,7 @@ plot_vax_anytest <- plot_data %>%
 # save the plot
 ggsave(plot_vax_anytest,
        filename = here::here(release_folder, glue("hr_vax_anytest.png")),
-       width=16, height=12, units="cm")
+       width=page_width, height=12, units="cm")
 
 ################################################################################
 # anytest
@@ -499,7 +516,7 @@ plot_brand_anytest <- plot_data %>%
   ) 
 ggsave(plot_brand_anytest,
        filename = here::here(release_folder, glue("hr_brand_anytest.png")),
-       width=16, height=7, units="cm")
+       width=page_width, height=7, units="cm")
 
 ################################################################################
 # unadjusted and adjusted estimates for each comparison
@@ -621,7 +638,7 @@ plot_unadj_adj <- function(plot_comparison) {
   # save the plot
   ggsave(plot_vax_2,
          filename = here::here(release_folder, glue("hr_vax_{plot_comparison}.png")),
-         width=27, height=16, units="cm")
+         width=page_height, height=page_width, units="cm")
   
   # plot comparison
   plot_vax_anytest <- plot_data %>%
@@ -693,7 +710,7 @@ plot_unadj_adj <- function(plot_comparison) {
   # save the plot
   ggsave(plot_vax_anytest,
          filename = here::here(release_folder, glue("hr_vax_anytest_{plot_comparison}.png")),
-         width=16, height=12, units="cm")
+         width=page_width, height=12, units="cm")
   
 }
 
