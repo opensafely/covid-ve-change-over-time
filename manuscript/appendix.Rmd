@@ -133,6 +133,13 @@ set_flextable_defaults(
   )
 ```
 
+```{r fig-params}
+# dimensions in inches
+page_height <- 10
+page_width <- 6
+```
+
+
 ```{r prep-table1}
 table1_ft <- local({
   
