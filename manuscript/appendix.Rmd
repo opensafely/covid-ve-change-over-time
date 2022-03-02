@@ -23,17 +23,13 @@ knitr::opts_chunk$set(
 
 ```{r libraries}
 library(tidyverse)
-library(flextable)
-library(ftExtra)
-library(officer)
+library(kableExtra)
 library(glue)
 ```
 
 ```{r paths}
 # path for released results
 release_folder <- here::here("release20220226")
-# path for images
-# image_path <- here::here(release_folder, "images")
 ```
 
 ```{r read-meta-data}
@@ -123,29 +119,17 @@ metareg_results_k <- readr::read_rds(
   select(subgroup, comparison, outcome, k, rhr = logrhr, rhr_lower = logrhr_lower, rhr_higher = logrhr_higher)
 ```
 
-```{r flextable-defaults}
-set_flextable_defaults(
-  font.family = "Times New Roman",
-  font.size = 8,
-  font.color = "black",
-  table.layout = "fixed",
-  digits = 1
-  # theme_fun = "theme_vanilla"
-  )
-```
+```{r kable-opts}
+padding <- 0.5 # this is a guess, couldn't find default
+page_height <- 26 #cm
+page_width <- 16 #cm
 
-```{r fig-params}
-# dimensions in inches
-page_height <- 10
-page_width <- 6
 ```
-
 
 ```{r prep-table1}
-table1_ft <- local({
+print_table1 <- local({
   
-  # create table1_ft
-  table1 <- bind_rows(
+  table_out0 <- bind_rows(
     lapply(
       1:4,
       function(x) 
@@ -168,29 +152,40 @@ table1_ft <- local({
                     .x)))
   
   # column names for table
-  table1_names <- names(table1)
-  col_names <- str_remove(table1_names, "\\d_")
-  names(col_names) <- table1_names
+  table_names <- names(table_out0)
+  # remove subgroup label
+  col_names <- str_remove(table_names, "\\d_")
+  names(col_names) <- table_names
+  # number of columns for each subgroup
   cols_subtype <- sapply(
     as.character(subgroup_labels), 
-    function(x) sum(str_detect(table1_names, glue("{x}_")))
+    function(x) sum(str_detect(table_names, glue("{x}_")))
   )
-  
+  names(cols_subtype) <- subgroups
+  # reorder
+  cols_subtype <- cols_subtype[subgroup_order]
+  # add footnote marker to not clinically vulnerable subgroups
+  names(cols_subtype)[3:4] <- str_c(
+    names(cols_subtype)[3:4],
+    footnote_marker_alphabet(1, format = "latex", double_escape = TRUE)
+    )
+   
+  # create and save the version for the manuscript
   variable_order <- c(NA_character_, "Age", "Sex", "IMD", "Ethnicity", "BMI", "Morbidity count", "Number of SARS-CoV-2 tests between 2020-05-18 and 2020-12-08", "Flu vaccine in previous 5 years", "Shielding criteria met")
-  
   table1_manuscript <- tibble(Variable = variable_order) %>%
-    left_join(table1) %>%
+    left_join(table_out0, by = "Variable") %>%
     mutate(across(Variable, ~str_remove(.x, " between 2020-05-18 and 2020-12-08"))) %>%
     mutate(across(Variable, ~str_remove(.x, " criteria met"))) 
   readr::write_rds(
     table1_manuscript,
     here::here(release_folder, "table1_manuscript.rds"))
   
+  # create the version for the appendix
   variable_order_supplement <- c(NA_character_, "Region", "JCVI group", "Resident in long-term residential home",
                                  "History of", "Pregnancy", "Housebound")
   
-  table_ft <- tibble(Variable = variable_order_supplement) %>%
-    left_join(table1, by = "Variable") %>%
+  table_out1 <- tibble(Variable = variable_order_supplement) %>%
+    left_join(table_out0, by = "Variable") %>%
     mutate(tmp = row_number()) %>%
     group_by(Variable) %>%
     mutate(tmp = mean(tmp)) %>%
@@ -202,25 +197,38 @@ table1_ft <- local({
                   ~if_else(.x == "Immunosuppression",
                            "Immunosupp- ression",
                            .x))) %>%
-    as_grouped_data(groups = "Variable") %>%
-    as_flextable(hide_grouplabel = TRUE) %>%
-    bold(
-      i = ~ !is.na(Variable),
-      j = 1,
-      part = "body"
+    mutate(across(Variable, ~if_else(is.na(.x), " ", .x)))
+  
+  col_width <- (26 - ncol(table_out1)*padding)/ncol(table_out1)
+  col_width <- as.character(glue("{col_width}cm"))
+  
+  table_out2 <- table_out1 %>%
+    kable(
+      format = "latex",
+      col.names = col_names,
+      caption = "Additional characteristics summarised across groups.",
+      booktabs = TRUE, 
+      longtable = TRUE
     ) %>%
-    set_header_labels(
-      values = as.list(col_names)
-    ) %>%
-    add_header_row(
-      values = c("", subgroups[subgroup_order]),
-      colwidths = c(1, cols_subtype[subgroup_order])
-    ) %>%
-    bold(
-      part = "header"
+    row_spec(0, bold=TRUE) %>%
+    add_header_above(
+      c(" " = 2, cols_subtype),
+      bold=TRUE,
+      escape = FALSE
+      ) %>%
+    column_spec(seq_along(table_out1), width=col_width) %>%
+    collapse_rows(columns = 1, valign = "top", latex_hline = "major") %>%
+    kable_styling(
+      font_size = 6,
+      latex_options = c("hold_position", "repeat_header")
+      ) %>%
+    footnote(
+      alphabet = c("And not clinically vulnerable"),
+      footnote_as_chunk=TRUE,
+      escape=FALSE
     )
   
-  return(table_ft)
+  return(table_out2)
   
 })
 ```
@@ -228,7 +236,7 @@ table1_ft <- local({
 ```{r prep-table-events}
 table_events_ft <- local({
   
-  prep_table <- event_counts %>%
+  table_out0 <- event_counts %>%
     arrange(subgroup, outcome, arm, k) %>%
     mutate(across(c(events, person_years), ~scales::comma(.x, accuracy = 1))) %>%
     mutate(name = as.character(glue("{subgroup}_{arm}"))) %>%
@@ -246,36 +254,54 @@ table_events_ft <- local({
     select(outcome, k, starts_with(as.character(subgroup_order)))
   
   # column names for table
-  table_names <- names(prep_table)
+  table_names <- names(table_out0)
   col_names <- str_remove(table_names, "\\d_")
   names(col_names) <- table_names
   cols_subtype <- sapply(
     as.character(subgroup_labels), 
     function(x) sum(str_detect(table_names, glue("{x}_")))
   )
+  names(cols_subtype) <- subgroups
   col_names["k"] <- "Weeks since 2nd dose"
+  col_names["outcome"] <- "Outcome"
   
+  cols_subtype <- cols_subtype[subgroup_order]
+  # add footnote marker to not clinically vulnerable subgroups
+  names(cols_subtype)[3:4] <- str_c(
+    names(cols_subtype)[3:4],
+    footnote_marker_alphabet(1, format = "latex", double_escape = TRUE)
+    )
   
-  prep_table %>%
-    as_grouped_data(groups = "outcome") %>%
-    as_flextable(hide_grouplabel = TRUE) %>%
-    bold(
-      i = ~ !is.na(outcome),
-      j = 1,
-      part = "body"
+  col_width <- (26 - ncol(table_out0)*padding)/ncol(table_out0)
+  col_width <- as.character(glue("{col_width}cm"))
+  
+  table_out1 <- table_out0 %>%
+    kable(
+      format = "latex",
+      col.names = col_names,
+      caption = "Event counts during each comparison period.",
+      booktabs = TRUE, 
+      longtable = TRUE
     ) %>%
-    set_header_labels(
-      values = as.list(col_names)
-    ) %>%
-    add_header_row(
-      values = c("", subgroups[subgroup_order]),
-      colwidths = c(1, cols_subtype[subgroup_order])
-    ) %>%
-    bold(
-      part = "header"
-    ) %>%
-    width(j = 1, width = 1, unit = "cm") %>%
-    width(j = 2:12, width = 21.5/11, unit = "cm") 
+    row_spec(0, bold=TRUE) %>%
+    add_header_above(
+      c(" " = 2, cols_subtype),
+      bold=TRUE,
+      escape = FALSE
+      ) %>%
+    column_spec(seq_along(table_out0), width=col_width) %>%
+    collapse_rows(columns = 1, valign = "top", latex_hline = "major") %>%
+    kable_styling(
+      font_size = 6,
+      latex_options = c("hold_position", "repeat_header")
+      ) %>%
+    footnote(
+      alphabet = c("And not clinically vulnerable"),
+      footnote_as_chunk=TRUE,
+      escape=FALSE
+    )
+  
+  return(table_out1)
   
 })
 ```
@@ -283,9 +309,15 @@ table_events_ft <- local({
 ```{r prep-table-hrs}
 table_hrs_ft <- function(model){
   
-  if (model == "unadjusted") m <- 1 else if (model == "adjusted") m <- 2
+  if (model == "unadjusted") {
+    m <- 1 
+    caption_string <- "Unadjusted hazard ratios for each comparison period."
+  } else if (model == "adjusted") {
+    m <- 2
+    caption_string <- "Adjusted hazard ratios for each comparison period."
+  }
   
-  prep_table <- estimates_all %>%
+  table_out0 <- estimates_all %>%
     filter(
       variable == "k",
       model == m,
@@ -313,22 +345,35 @@ table_hrs_ft <- function(model){
                     .x)
                   )) 
   
-    drop_cols <- sapply(
-    seq_along(prep_table),
-    function(x) all(is.na(prep_table[[x]]))
+  drop_cols <- sapply(
+    seq_along(table_out0),
+    function(x) all(is.na(table_out0[[x]]))
   )
   
   # column names for table
-  table_names <- names(prep_table)
+  table_names <- names(table_out0)
   col_names <- str_remove(table_names, "\\d_")
   names(col_names) <- table_names
   cols_subtype <- sapply(
     as.character(subgroup_labels), 
     function(x) sum(str_detect(table_names, glue("{x}_")))
   )
-  col_names["k"] <- "Weeks since 2nd dose"
   
-  prep_table %>%
+  names(cols_subtype) <- subgroups
+  col_names["k"] <- "Weeks since 2nd dose"
+  col_names["outcome"] <- "Outcome"
+  
+  cols_subtype <- cols_subtype[subgroup_order]
+  # add footnote marker to not clinically vulnerable subgroups
+  names(cols_subtype)[3:4] <- str_c(
+    names(cols_subtype)[3:4],
+    footnote_marker_alphabet(1, format = "latex", double_escape = TRUE)
+    )
+  
+  col_width <- (26 - ncol(table_out0)*padding)/ncol(table_out0)
+  col_width <- as.character(glue("{col_width}cm"))
+  
+  table_out1 <- table_out0 %>%
     select(all_of(table_names)) %>%
     mutate(across(starts_with(as.character(subgroup_order)),
                   ~ if_else(
@@ -336,26 +381,32 @@ table_hrs_ft <- function(model){
                     "-",
                     .x)
                   ))  %>%
-    as_grouped_data(groups = "outcome") %>%
-    as_flextable(hide_grouplabel = TRUE) %>%
-    bold(
-      i = ~ !is.na(outcome),
-      j = 1,
-      part = "body"
+    kable(
+      format = "latex",
+      col.names = col_names,
+      caption = caption_string,
+      booktabs = TRUE, 
+      longtable = TRUE
     ) %>%
-    set_header_labels(
-      values = as.list(col_names)
-    ) %>%
-    add_header_row(
-      values = c("", subgroups[subgroup_order]),
-      colwidths = c(1, cols_subtype[subgroup_order])
-    ) %>%
-    bold(
-      part = "header"
-    ) %>%
-    width(j = 1, width = 1, unit = "cm") %>%
-    width(j = 2:11, width = 21.5/10, unit = "cm") 
+    row_spec(0, bold=TRUE) %>%
+    add_header_above(
+      c(" " = 2, cols_subtype),
+      bold=TRUE,
+      escape = FALSE
+      ) %>%
+    column_spec(seq_along(table_out0), width=col_width) %>%
+    collapse_rows(columns = 1, valign = "top", latex_hline = "major") %>%
+    kable_styling(
+      font_size = 6,
+      latex_options = c("hold_position", "repeat_header")
+      ) %>%
+    footnote(
+      alphabet = c("And not clinically vulnerable"),
+      footnote_as_chunk=TRUE,
+      escape=FALSE
+    )
   
+  return(table_out1)
   
 }
 ```
@@ -363,7 +414,7 @@ table_hrs_ft <- function(model){
 ```{r prep-table-metareg}
 table_metareg_ft <- local({
   
-  prep_table <- metareg_results_k %>%
+  table_out0 <- metareg_results_k %>%
   mutate(
       name = glue("{subgroup}_{comparison}"),
       value = glue("{rhr} ({rhr_lower}-{rhr_higher})")
@@ -384,12 +435,12 @@ table_metareg_ft <- local({
                   )) 
   
   drop_cols <- sapply(
-    seq_along(prep_table),
-    function(x) all(is.na(prep_table[[x]]))
+    seq_along(table_out0),
+    function(x) all(is.na(table_out0[[x]]))
   )
   
   # column names for table
-  table_names <- names(prep_table)[!drop_cols]
+  table_names <- names(table_out0)
   col_names <- str_remove(table_names, "\\d_")
   names(col_names) <- table_names
   cols_subtype <- sapply(
@@ -397,7 +448,20 @@ table_metareg_ft <- local({
     function(x) sum(str_detect(table_names, glue("{x}_")))
   )
   
-  prep_table %>%
+  names(cols_subtype) <- subgroups
+  col_names["outcome"] <- "Outcome"
+  
+  cols_subtype <- cols_subtype[subgroup_order]
+  # add footnote marker to not clinically vulnerable subgroups
+  names(cols_subtype)[3:4] <- str_c(
+    names(cols_subtype)[3:4],
+    footnote_marker_alphabet(1, format = "latex", double_escape = TRUE)
+    )
+  
+  col_width <- (26 - ncol(table_out0)*padding)/ncol(table_out0)
+  col_width <- as.character(glue("{col_width}cm"))
+  
+  table_out1 <- table_out0 %>%
     select(all_of(table_names)) %>%
     mutate(across(starts_with(as.character(subgroup_order)),
                   ~ if_else(
@@ -405,29 +469,37 @@ table_metareg_ft <- local({
                     "-",
                     .x)
                   ))  %>%
-    as_grouped_data(groups = "outcome") %>%
-    as_flextable(hide_grouplabel = TRUE) %>%
-    bold(
-      i = ~ !is.na(outcome),
-      j = 1,
-      part = "body"
+    kable(
+      format = "latex",
+      col.names = col_names,
+      caption = "Ratio of adjusted hazard ratios for each comparison period.",
+      booktabs = TRUE, 
+      longtable = TRUE
     ) %>%
-    set_header_labels(
-      values = as.list(col_names)
-    ) %>%
-    add_header_row(
-      values = subgroups[subgroup_order],
-      colwidths = cols_subtype[subgroup_order]
-    ) %>%
-    bold(
-      part = "header"
-    ) %>%
-    width(j = 1:10, width = 22/10, unit = "cm") 
+    row_spec(0, bold=TRUE) %>%
+    add_header_above(
+      c(" " = 1, cols_subtype),
+      bold=TRUE,
+      escape = FALSE
+      ) %>%
+    column_spec(seq_along(table_out0), width=col_width) %>%
+    collapse_rows(columns = 1, valign = "top", latex_hline = "major") %>%
+    kable_styling(
+      font_size = 6,
+      latex_options = c("hold_position", "repeat_header")
+      ) %>%
+    footnote(
+      alphabet = c("And not clinically vulnerable"),
+      footnote_as_chunk=TRUE,
+      escape=FALSE
+    )
+  
+  return(table_out1)
   
 })
 ```
 
-```{r prep-table-estimates-covs-ft}
+```{r prep-table-estimates-covs}
 # create estimates_covs
 estimates_covs <- estimates_all %>%
   filter(variable != "k") %>%
@@ -435,7 +507,7 @@ estimates_covs <- estimates_all %>%
                 factor, 
                 levels = subgroup_order, 
                 labels = subgroups[subgroup_order])) %>%
-  group_split(subgroup) %>%
+  group_split(subgroup, comparison) %>%
   as.list()
 
 table_estimates_covs_ft <- function(i) {
@@ -443,10 +515,21 @@ table_estimates_covs_ft <- function(i) {
   subgroup <- unique(estimates_covs[[i]]$subgroup)
   subgroup_long <- subgroups_long[subgroups == subgroup]
   
+  comparison <- unique(estimates_covs[[i]]$comparison)
   
-  table <- estimates_covs[[i]] %>%
+  if (subgroup %in% 3:4) {
+    subgroup_longer <- str_c(
+      subgroup_long,
+      " and not clinically vulnerable"
+    )
+  } else {
+    subgroup_longer <- subgroup_long
+  }
+  
+  caption_string <- glue("Covariate coefficients for the adjusted {comparison} model in the {subgroup_longer} subgroup.")
+  
+  table_out0 <- estimates_covs[[i]] %>%
     transmute(
-      comparison = comparison,
       outcome = outcome,
       variable = variable,
       label = label,
@@ -460,9 +543,9 @@ table_estimates_covs_ft <- function(i) {
       names_from = outcome,
       values_from = value
     ) %>%
-    select(comparison, variable, label, all_of(names(outcomes[outcomes_order]))) 
+    select(variable, label, all_of(names(outcomes[outcomes_order]))) 
   
-  age_order <- sort(unique(table$label[str_detect(table$label, "^age")]))
+  age_order <- sort(unique(table_out0$label[str_detect(table_out0$label, "^age")]))
   age_order <- age_order[age_order!="age"]
   
   history_of_vars <- c(
@@ -476,15 +559,25 @@ table_estimates_covs_ft <- function(i) {
     "ld_inc_ds_and_cp", 
     "sev_ment")
   
-  tibble(
+  
+  col_width <- (26 - ncol(table_out0)*padding)/ncol(table_out0)
+  col_width <- as.character(glue("{col_width}cm"))
+  
+  table_out1 <- tibble(
     Variable = c(age_order, names(c(model_varlist$demographic, model_varlist$clinical))),
     variable = c(age_order, unname(unlist(model_varlist)))
   ) %>%
-    full_join(table, by = "variable") %>%
+    inner_join(table_out0, by = "variable") %>%
     filter(Variable != "Age") %>% # remove this line after new results released
     select(-variable) %>%
-    mutate(across(Variable, ~if_else(str_detect(label, "^age"), "Age", .x))) %>%
+    mutate(across(Variable, 
+                  ~if_else(
+                    str_detect(label, "^age"), 
+                    "Age\\textsuperscript{a}",
+                    .x))) %>%
     mutate(label_old = label) %>%
+    mutate(across(label, 
+                  ~str_replace_all(.x, "\\_", "\\\\_"))) %>%
     mutate(across(label, 
                   ~if_else(.x %in% glue("{history_of_vars}TRUE"),
                            Variable,
@@ -503,35 +596,41 @@ table_estimates_covs_ft <- function(i) {
                            .x))) %>%
     mutate(across(all_of(names(outcomes)), ~if_else(is.na(.x), "-", .x))) %>%
     select(-label_old) %>%
-    select(comparison, Variable, Category = label, all_of(names(outcomes[outcomes_order]))) %>%
-    arrange(comparison) %>%
-    as_grouped_data(groups = "comparison") %>%
-    as_flextable(hide_grouplabel = TRUE) %>% 
-    merge_v(j = "Variable") %>% 
-    valign(valign = "top") %>% 
-    width(j = 1:7, width = 22/7, unit = "cm") %>%
-    bold(part="header") %>%
-     bold(
-    i = ~ !is.na(comparison),
-    j = 1,
-    part = "body"
-  ) %>%
-    footnote(
-      i = 1, j = 2,
-      value = as_paragraph("Categories separated by \" / \" were merged due to low event counts."),
-      ref_symbols = "a",
-      part = "header",
-      inline = FALSE
+    select(Variable, "Category\\textsuperscript{b}" = label, all_of(names(outcomes[outcomes_order])))
+  
+  table_out2 <- table_out1 %>%
+    kable(
+      format = "latex",
+      caption = caption_string,
+      booktabs = TRUE, 
+      longtable = TRUE,
+      escape = FALSE # manually escape all special characters
+    ) %>%
+    row_spec(0, bold=TRUE) %>%
+    column_spec(seq_along(table_out0), width=col_width) %>%
+    collapse_rows(
+      columns = 1, 
+      valign = "top",
+      latex_hline = "major"
+      ) %>%
+    kable_styling(
+      font_size = 6,
+      latex_options = c("hold_position", "repeat_header")
       ) %>%
     footnote(
-      i = 1, j = 1,
-      value = as_paragraph("Age terms were fit separately within strata. The age range in the strata is indicated by the suffix following the underscore on the age category label. Strata in which the age range was < 5 years included only a linear age term, otherwise a quadratic age term was included."),
-      ref_symbols = "b",
-      part = "body",
-      inline = FALSE
-      ) 
+      alphabet = c(
+        "Categories separated by \" / \" were merged due to low event counts.",
+        "Age terms were fit separately within strata. The age range in the strata is indicated by the suffix following the underscore on the age category label. Strata in which the age range was < 5 years included only a linear age term, otherwise a quadratic age term was included."),
+      footnote_as_chunk=TRUE,
+      escape=FALSE,
+      threeparttable = TRUE # to wrap footnote
+    )
+  
+  return(table_out2)
+    
 }
 ```
+
 
 # Supplementary Methods
 
@@ -610,21 +709,28 @@ knitr::include_graphics(file.path(release_folder, "plot_by_region_12_2021-06-15.
 knitr::include_graphics(file.path(release_folder, "ci_vax.png"))
 ```
 
-\pagebreak
+```{r table1, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(print_table1)
+```
+
+```{r table-events, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_events_ft)
+```
+
+
+```{r table-hrs-ft, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_hrs_ft("unadjusted"))
+```
+
+```{r table-ahrs-ft, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_hrs_ft("adjusted"))
+```
+
+```{r table-ratio-hrs-ft, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_metareg_ft)
+```
 
 \begin{landscape}
-
-```{r table1, include=TRUE, tab.cap.pre = "Supplementary Table ", tab.cap="Additional characteristics summarised across groups."}
-table1_ft
-```
-
-\pagebreak
-
-```{r table-events, include=TRUE, tab.cap.pre = "Supplementary Table ", tab.cap="Event counts during each comparison period."}
-table_events_ft
-```
-
-\pagebreak
 
 ```{r hr-vax-BNT162b2, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for BNT162b2 vs unvaccinated", out.width="\\linewidth"}
 knitr::include_graphics(file.path(release_folder, "hr_vax_BNT162b2.png"))
@@ -660,28 +766,10 @@ knitr::include_graphics(file.path(release_folder, "hr_vax_anytest.png"))
 knitr::include_graphics(file.path(release_folder, "hr_brand_anytest.png"))
 ```
 
-\begin{landscape}
-
-```{r table-hrs-ft, include=TRUE, tab.cap.pre = "Supplementary Table ", tab.cap="Unadjusted hazard ratios for each comparison period."}
-table_hrs_ft("unadjusted")
+```{r table-estimates-covs-1, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_estimates_covs_ft(1))
 ```
 
-\pagebreak
-
-```{r table-ahrs-ft, include=TRUE, tab.cap.pre = "Supplementary Table ", tab.cap="Adjusted hazard ratios for each comparison period."}
-table_hrs_ft("adjusted")
+```{r table-estimates-covs-2, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_estimates_covs_ft(2))
 ```
-
-\pagebreak
-
-```{r table-ratio-hrs-ft, include=TRUE, tab.cap.pre = "Supplementary Table ", tab.cap="Ratio of adjusted hazard ratios for each comparison period."}
-table_metareg_ft
-```
-
-\pagebreak
-
-```{r table-estimates-covs-ft-1, include=TRUE, tab.cap.pre = "Supplementary Table "}
-table_estimates_covs_ft(1)
-```
-
-\end{landscape}
