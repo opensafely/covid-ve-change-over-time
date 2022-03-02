@@ -9,7 +9,7 @@ output:
     toc: false # defined in preface.tex
 fontsize: 10
 subparagraph: yes
-geometry: margin=2cm
+geometry: margin=1.5cm
 ---
 
 ```{r setup, include=FALSE}
@@ -29,10 +29,10 @@ library(glue)
 ```
 
 ```{r paths}
-# path for images
-image_path <- here::here("manuscript", "images")
 # path for released results
-release_folder <- "release20220226"
+release_folder <- here::here("release20220226")
+# path for images
+# image_path <- here::here(release_folder, "images")
 ```
 
 ```{r read-meta-data}
@@ -71,7 +71,6 @@ ends <- seq(2, (K+1)*4, 4)
 starts <- ends + 1
 weeks_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
 ```
-
 
 ```{r read-data}
 # read event counts data
@@ -133,11 +132,6 @@ set_flextable_defaults(
   # theme_fun = "theme_vanilla"
   )
 ```
-
-# Supplementary Methods
-
-# Supplementary Results
-Test some text referring to \figref{fig:svp-10-2021-04-13} and \tabref{tab:table1}.
 
 ```{r prep-table1}
 table1_ft <- local({
@@ -279,12 +273,14 @@ table_events_ft <- local({
 ```
 
 ```{r prep-table-hrs}
-table_hrs_ft <- local({
+table_hrs_ft <- function(model){
+  
+  if (model == "unadjusted") m <- 1 else if (model == "adjusted") m <- 2
   
   prep_table <- estimates_all %>%
     filter(
       variable == "k",
-      model == 2,
+      model == m,
       !reference_row
       ) %>%
     mutate(
@@ -353,7 +349,7 @@ table_hrs_ft <- local({
     width(j = 2:11, width = 21.5/10, unit = "cm") 
   
   
-})
+}
 ```
 
 ```{r prep-table-metareg}
@@ -529,29 +525,152 @@ table_estimates_covs_ft <- function(i) {
 }
 ```
 
-\begin{landscape}
+# Supplementary Methods
 
-```{r svp-10-2021-04-13, include=TRUE, fig.cap="Second vaccination period", fig.width=20}
-knitr::include_graphics(file.path(image_path, "plot_by_region_10_2021-04-13.png"))
+# Supplementary Results
+<!-- Test some text referring to \figref{fig:svp-10-2021-04-13} and \tabref{tab:table1}. -->
+
+```{r flow-diagram, include=TRUE, fig.cap="Flow of patients into study", fig.width=16}
+knitr::include_graphics(file.path(release_folder, "flow_diagram.png"))
 ```
 
+\begin{landscape}
+
+```{r svp-02-2020-12-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 2", fig.width=20}
+knitr::include_graphics(file.path(release_folder, "plot_by_region_02_2020-12-08.png"))
+```
+
+```{r svp-03-2020-12-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 3", fig.width=20}
+knitr::include_graphics(file.path(release_folder, "plot_by_region_03_2020-12-08.png"))
+```
+
+```{r svp-04-2021-01-18, include=TRUE, fig.cap="Second vaccination period for JCVI group 4", fig.width=20}
+knitr::include_graphics(file.path(release_folder, "plot_by_region_04_2021-01-18.png"))
+```
+
+```{r svp-05-2021-02-15, include=TRUE, fig.cap="Second vaccination period for JCVI group 5", fig.width=20}
+knitr::include_graphics(file.path(release_folder, "plot_by_region_05_2021-02-15.png"))
+```
+
+```{r svp-06-2021-02-15, include=TRUE, fig.cap="Second vaccination period for JCVI group 6", fig.width=20}
+knitr::include_graphics(file.path(release_folder, "plot_by_region_06_2021-02-15.png"))
+```
+
+```{r svp-07-2021-02-22, include=TRUE, fig.cap="Second vaccination period for JCVI group 7 and aged 64 years", fig.width=20}
+knitr::include_graphics(file.path(release_folder, "plot_by_region_07_2021-02-22.png"))
+```
+
+```{r svp-07-2021-03-01, include=TRUE, fig.cap="Second vaccination period for JCVI group 7 and aged 60-63 years", fig.width=20}
+knitr::include_graphics(file.path(release_folder, "plot_by_region_07_2021-03-01.png"))
+```
+
+```{r svp-08-2021-03-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 8", fig.width=20}
+knitr::include_graphics(file.path(release_folder, "plot_by_region_08_2021-03-08.png"))
+```
+
+```{r svp-09-2021-03-19, include=TRUE, fig.cap="Second vaccination period for JCVI group 9", fig.width=20}
+knitr::include_graphics(file.path(release_folder, "plot_by_region_09_2021-03-19.png"))
+```
+
+```{r svp-10-2021-04-13, include=TRUE, fig.cap="Second vaccination period for JCVI group 10 and aged 45-49 years", fig.width=20}
+knitr::include_graphics(file.path(release_folder, "plot_by_region_10_2021-04-13.png"))
+```
+
+```{r svp-10-2021-04-26, include=TRUE, fig.cap="Second vaccination period for JCVI group 10 and aged 40-44 years", fig.width=20}
+knitr::include_graphics(file.path(release_folder, "plot_by_region_10_2021-04-26.png"))
+```
+
+```{r svp-11-2021-05-13, include=TRUE, fig.cap="Second vaccination period for JCVI group 11 and aged 36-39 years", fig.width=20}
+knitr::include_graphics(file.path(release_folder, "plot_by_region_11_2021-05-13.png"))
+```
+
+```{r svp-11-2021-05-21, include=TRUE, fig.cap="Second vaccination period for JCVI group 11 and aged 30-35 years", fig.width=20}
+knitr::include_graphics(file.path(release_folder, "plot_by_region_11_2021-05-21.png"))
+```
+
+```{r svp-12-2021-06-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 12 and aged 25-29 years", fig.width=20}
+knitr::include_graphics(file.path(release_folder, "plot_by_region_12_2021-06-08.png"))
+```
+
+```{r svp-12-2021-06-15, include=TRUE, fig.cap="Second vaccination period for JCVI group 12 and aged 18-24 years", fig.width=20}
+knitr::include_graphics(file.path(release_folder, "plot_by_region_12_2021-06-15.png"))
+```
+
+\end{landscape}
+
+```{r ci-vax, include=TRUE, fig.cap="Cumulative incidence of subsequent vaccination", fig.width=16}
+knitr::include_graphics(file.path(release_folder, "ci_vax.png"))
+```
+
+\pagebreak
+
+\begin{landscape}
 
 ```{r table1, include=TRUE, tab.cap.pre = "Supplementary Table ", tab.cap="Additional characteristics summarised across groups."}
 table1_ft
 ```
 
+\pagebreak
+
 ```{r table-events, include=TRUE, tab.cap.pre = "Supplementary Table ", tab.cap="Event counts during each comparison period."}
 table_events_ft
 ```
 
-```{r table-hrs-ft, include=TRUE, tab.cap.pre = "Supplementary Table ", tab.cap="Adjusted hazard ratios for each comparison period."}
-table_hrs_ft
+\pagebreak
+
+```{r hr-vax-BNT162b2, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for BNT162b2 vs unvaccinated", fig.width=26}
+knitr::include_graphics(file.path(release_folder, "hr_vax_BNT162b2.png"))
 ```
+
+```{r hr-vax-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for ChAdOx vs unvaccinated", fig.width=26}
+knitr::include_graphics(file.path(release_folder, "hr_vax_ChAdOx.png"))
+```
+
+```{r hr-vax-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for BNT162b2 vs ChAdOx", fig.width=26}
+knitr::include_graphics(file.path(release_folder, "hr_vax_both.png"))
+```
+
+\end{landscape}
+
+```{r hr-vax-anytest-BNT162b2, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs unvaccinated", fig.width=16}
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_BNT162b2.png"))
+```
+
+```{r hr-vax-anytest-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for ChAdOx vs unvaccinated", fig.width=16}
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_ChAdOx.png"))
+```
+
+```{r hr-vax-anytest-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx", fig.width=16}
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_both.png"))
+```
+
+```{r hr-vax-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 and ChAdOx vs unvaccinated", fig.width=16}
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest.png"))
+```
+
+```{r hr-brand-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx", fig.width=16}
+knitr::include_graphics(file.path(release_folder, "hr_brand_anytest.png"))
+```
+
+\begin{landscape}
+
+```{r table-hrs-ft, include=TRUE, tab.cap.pre = "Supplementary Table ", tab.cap="Unadjusted hazard ratios for each comparison period."}
+table_hrs_ft("unadjusted")
+```
+
+\pagebreak
+
+```{r table-ahrs-ft, include=TRUE, tab.cap.pre = "Supplementary Table ", tab.cap="Adjusted hazard ratios for each comparison period."}
+table_hrs_ft("adjusted")
+```
+
+\pagebreak
 
 ```{r table-ratio-hrs-ft, include=TRUE, tab.cap.pre = "Supplementary Table ", tab.cap="Ratio of adjusted hazard ratios for each comparison period."}
 table_metareg_ft
 ```
 
+\pagebreak
 
 ```{r table-estimates-covs-ft-1, include=TRUE, tab.cap.pre = "Supplementary Table "}
 table_estimates_covs_ft(1)
