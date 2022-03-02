@@ -16,7 +16,8 @@ geometry: margin=1.5cm
 knitr::opts_chunk$set(
   echo = FALSE,
   include = FALSE,
-  fig.pos = "H"
+  fig.pos = "H"#,
+  # ft.arraystretch=1
 )
 ```
 
@@ -128,7 +129,7 @@ set_flextable_defaults(
   font.size = 8,
   font.color = "black",
   table.layout = "fixed",
-  digits = 1#,
+  digits = 1
   # theme_fun = "theme_vanilla"
   )
 ```
