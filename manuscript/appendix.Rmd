@@ -537,75 +537,75 @@ table_estimates_covs_ft <- function(i) {
 # Supplementary Results
 <!-- Test some text referring to \figref{fig:svp-10-2021-04-13} and \tabref{tab:table1}. -->
 
-```{r flow-diagram, include=TRUE, fig.cap="Flow of patients into study", fig.width=16}
+```{r flow-diagram, include=TRUE, fig.cap="Flow of patients into study", fig.width=page_width}
 knitr::include_graphics(file.path(release_folder, "flow_diagram.png"))
 ```
 
 \begin{landscape}
 
-```{r svp-02-2020-12-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 2", fig.width=20}
+```{r svp-02-2020-12-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 2", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "plot_by_region_02_2020-12-08.png"))
 ```
 
-```{r svp-03-2020-12-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 3", fig.width=20}
+```{r svp-03-2020-12-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 3", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "plot_by_region_03_2020-12-08.png"))
 ```
 
-```{r svp-04-2021-01-18, include=TRUE, fig.cap="Second vaccination period for JCVI group 4", fig.width=20}
+```{r svp-04-2021-01-18, include=TRUE, fig.cap="Second vaccination period for JCVI group 4", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "plot_by_region_04_2021-01-18.png"))
 ```
 
-```{r svp-05-2021-02-15, include=TRUE, fig.cap="Second vaccination period for JCVI group 5", fig.width=20}
+```{r svp-05-2021-02-15, include=TRUE, fig.cap="Second vaccination period for JCVI group 5", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "plot_by_region_05_2021-02-15.png"))
 ```
 
-```{r svp-06-2021-02-15, include=TRUE, fig.cap="Second vaccination period for JCVI group 6", fig.width=20}
+```{r svp-06-2021-02-15, include=TRUE, fig.cap="Second vaccination period for JCVI group 6", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "plot_by_region_06_2021-02-15.png"))
 ```
 
-```{r svp-07-2021-02-22, include=TRUE, fig.cap="Second vaccination period for JCVI group 7 and aged 64 years", fig.width=20}
+```{r svp-07-2021-02-22, include=TRUE, fig.cap="Second vaccination period for JCVI group 7 and aged 64 years", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "plot_by_region_07_2021-02-22.png"))
 ```
 
-```{r svp-07-2021-03-01, include=TRUE, fig.cap="Second vaccination period for JCVI group 7 and aged 60-63 years", fig.width=20}
+```{r svp-07-2021-03-01, include=TRUE, fig.cap="Second vaccination period for JCVI group 7 and aged 60-63 years", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "plot_by_region_07_2021-03-01.png"))
 ```
 
-```{r svp-08-2021-03-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 8", fig.width=20}
+```{r svp-08-2021-03-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 8", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "plot_by_region_08_2021-03-08.png"))
 ```
 
-```{r svp-09-2021-03-19, include=TRUE, fig.cap="Second vaccination period for JCVI group 9", fig.width=20}
+```{r svp-09-2021-03-19, include=TRUE, fig.cap="Second vaccination period for JCVI group 9", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "plot_by_region_09_2021-03-19.png"))
 ```
 
-```{r svp-10-2021-04-13, include=TRUE, fig.cap="Second vaccination period for JCVI group 10 and aged 45-49 years", fig.width=20}
+```{r svp-10-2021-04-13, include=TRUE, fig.cap="Second vaccination period for JCVI group 10 and aged 45-49 years", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "plot_by_region_10_2021-04-13.png"))
 ```
 
-```{r svp-10-2021-04-26, include=TRUE, fig.cap="Second vaccination period for JCVI group 10 and aged 40-44 years", fig.width=20}
+```{r svp-10-2021-04-26, include=TRUE, fig.cap="Second vaccination period for JCVI group 10 and aged 40-44 years", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "plot_by_region_10_2021-04-26.png"))
 ```
 
-```{r svp-11-2021-05-13, include=TRUE, fig.cap="Second vaccination period for JCVI group 11 and aged 36-39 years", fig.width=20}
+```{r svp-11-2021-05-13, include=TRUE, fig.cap="Second vaccination period for JCVI group 11 and aged 36-39 years", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "plot_by_region_11_2021-05-13.png"))
 ```
 
-```{r svp-11-2021-05-21, include=TRUE, fig.cap="Second vaccination period for JCVI group 11 and aged 30-35 years", fig.width=20}
+```{r svp-11-2021-05-21, include=TRUE, fig.cap="Second vaccination period for JCVI group 11 and aged 30-35 years", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "plot_by_region_11_2021-05-21.png"))
 ```
 
-```{r svp-12-2021-06-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 12 and aged 25-29 years", fig.width=20}
+```{r svp-12-2021-06-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 12 and aged 25-29 years", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "plot_by_region_12_2021-06-08.png"))
 ```
 
-```{r svp-12-2021-06-15, include=TRUE, fig.cap="Second vaccination period for JCVI group 12 and aged 18-24 years", fig.width=20}
+```{r svp-12-2021-06-15, include=TRUE, fig.cap="Second vaccination period for JCVI group 12 and aged 18-24 years", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "plot_by_region_12_2021-06-15.png"))
 ```
 
 \end{landscape}
 
-```{r ci-vax, include=TRUE, fig.cap="Cumulative incidence of subsequent vaccination", fig.width=16}
+```{r ci-vax, include=TRUE, fig.cap="Cumulative incidence of subsequent vaccination", fig.width=page_width}
 knitr::include_graphics(file.path(release_folder, "ci_vax.png"))
 ```
 
@@ -625,37 +625,37 @@ table_events_ft
 
 \pagebreak
 
-```{r hr-vax-BNT162b2, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for BNT162b2 vs unvaccinated", fig.width=26}
+```{r hr-vax-BNT162b2, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for BNT162b2 vs unvaccinated", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "hr_vax_BNT162b2.png"))
 ```
 
-```{r hr-vax-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for ChAdOx vs unvaccinated", fig.width=26}
+```{r hr-vax-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for ChAdOx vs unvaccinated", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "hr_vax_ChAdOx.png"))
 ```
 
-```{r hr-vax-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for BNT162b2 vs ChAdOx", fig.width=26}
+```{r hr-vax-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for BNT162b2 vs ChAdOx", fig.width=page_height}
 knitr::include_graphics(file.path(release_folder, "hr_vax_both.png"))
 ```
 
 \end{landscape}
 
-```{r hr-vax-anytest-BNT162b2, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs unvaccinated", fig.width=16}
+```{r hr-vax-anytest-BNT162b2, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs unvaccinated", fig.width=page_width}
 knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_BNT162b2.png"))
 ```
 
-```{r hr-vax-anytest-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for ChAdOx vs unvaccinated", fig.width=16}
+```{r hr-vax-anytest-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for ChAdOx vs unvaccinated", fig.width=page_width}
 knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_ChAdOx.png"))
 ```
 
-```{r hr-vax-anytest-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx", fig.width=16}
+```{r hr-vax-anytest-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx", fig.width=page_width}
 knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_both.png"))
 ```
 
-```{r hr-vax-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 and ChAdOx vs unvaccinated", fig.width=16}
+```{r hr-vax-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 and ChAdOx vs unvaccinated", fig.width=page_width}
 knitr::include_graphics(file.path(release_folder, "hr_vax_anytest.png"))
 ```
 
-```{r hr-brand-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx", fig.width=16}
+```{r hr-brand-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx", fig.width=page_width}
 knitr::include_graphics(file.path(release_folder, "hr_brand_anytest.png"))
 ```
 
