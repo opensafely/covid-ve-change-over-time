@@ -1,0 +1,199 @@
+---
+title: "Untitled"
+author: "Elsie Horne"
+date: "02/03/2022"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include = FALSE)
+```
+
+## R Markdown
+
+```{r}
+library(tidyverse)
+library(glue)
+```
+
+```{r paths}
+# path for released results
+release_folder <- here::here("release20220226")
+```
+
+```{r read-meta-data}
+# read study parameters
+study_parameters <- readr::read_rds(
+  here::here("output", "lib", "study_parameters.rds"))
+
+# read subgroups
+subgroups <- readr::read_rds(
+  here::here("output", "lib", "subgroups.rds"))
+subgroup_labels <- seq_along(subgroups)
+subgroup_order <- c(4,1,3,2)
+subgroups_long <- if_else(
+    subgroups %in% subgroups[c(2,3)],
+    as.character(glue("{subgroups} and not clinically vulnerable")),
+    subgroups
+  )
+
+# outcomes 
+outcomes <- readr::read_rds(
+  here::here("output", "lib", "outcomes.rds"))
+outcomes_order <- c(which(outcomes == "covidadmitted"),
+                    which(outcomes == "coviddeath"),
+                    which(outcomes == "postest"),
+                    which(outcomes == "noncoviddeath"),
+                    which(outcomes == "anytest"))
+select_outcomes <- unname(outcomes[outcomes_order])
+
+```
+
+
+```{r}
+# read estimates data
+estimates_all <- readr::read_csv(
+  here::here(release_folder, "estimates_all.csv")) %>%
+  mutate(across(model, ~as.integer(str_remove(.x, "unadjusted")))) %>%
+  mutate(across(c(estimate, conf.low, conf.high), 
+                ~format(round(.x, digits=2), nsmall=2, trim = TRUE))) %>%
+  mutate(value = glue("{estimate} (95% CI {conf.low}-{conf.high})"))
+
+# read metaregression results
+metareg_results_k <- readr::read_rds(
+  here::here(release_folder, "metareg_results_k.rds")) %>%
+  mutate(across(subgroup, as.integer)) %>%
+  mutate(across(outcome,
+                factor,
+                levels = unname(outcomes[outcomes_order]),
+                labels = names(outcomes[outcomes_order]))) %>%
+      mutate(across(comparison,
+                  factor,
+                  levels = c("BNT162b2", "ChAdOx", "both"),
+                  labels = c("BNT162b2 vs unvaccinated", "ChAdOx vs unvaccinated", "BNT162b2 vs ChAdOx"))) %>%
+   mutate(across(c(logrhr, logrhr_lower, logrhr_higher), 
+                ~format(round(exp(.x), digits=2), nsmall=2, trim = TRUE))) %>%
+  select(subgroup, comparison, outcome, k, rhr = logrhr, rhr_lower = logrhr_lower, rhr_higher = logrhr_higher)
+```
+
+
+```{r}
+aHRs <- local({
+  
+  data <- estimates_all %>% 
+    filter(
+      model ==2,
+      variable == "k",
+      !reference_row
+    )
+  
+  data <- data %>%
+    group_split(subgroup) %>%
+    as.list()
+  
+  names(data) <- c("16-64", "18-39", "40-64", "65+")
+  
+  for (i in seq_along(data)) {
+    
+    comparisons <- sort(unique(data[[i]]$comparison))
+    
+    data[[i]] <- data[[i]] %>%
+      group_split(comparison) %>%
+      as.list()
+    
+    names(data[[i]]) <- comparisons
+    
+    for (j in seq_along(data[[i]])) {
+      
+      outcomes <- sort(unique(data[[i]][[j]]$outcome))
+      
+      data[[i]][[j]] <- data[[i]][[j]] %>%
+        group_split(outcome) %>%
+        as.list()
+      
+      names(data[[i]][[j]]) <- outcomes
+      
+      for (k in seq_along(data[[i]][[j]])) {
+        data[[i]][[j]][[k]] <- data[[i]][[j]][[k]] %>%
+          arrange(label) %>%
+          select(value) %>%
+          unlist() %>%
+          unname()
+      }
+      
+    }
+    
+  }
+  
+  return(data)
+  
+})
+```
+
+
+```{r}
+ratios <- local({
+  
+  data <- metareg_results_k %>%
+  select(-k) %>%
+  distinct(subgroup, comparison, outcome, .keep_all = TRUE) %>%
+  mutate(across(comparison,
+                factor,
+                levels = c("BNT162b2 vs unvaccinated",
+                           "ChAdOx vs unvaccinated",
+                           "BNT162b2 vs ChAdOx"),
+                labels = c("BNT162b2", "ChAdOx", "both"))) %>%
+  mutate(across(outcome,
+                factor,
+                levels = names(outcomes),
+                labels = unname(outcomes))) %>%
+    mutate(value = glue("{rhr_higher} (95% CI {rhr_lower}-{rhr_higher})"))
+  
+  data <- data %>%
+    group_split(subgroup) %>%
+    as.list()
+  
+  names(data) <- c("16-64", "18-39", "40-64", "65+")
+  
+  for (i in seq_along(data)) {
+    
+    comparisons <- sort(unique(data[[i]]$comparison))
+    
+    data[[i]] <- data[[i]] %>%
+      group_split(comparison) %>%
+      as.list()
+    
+    names(data[[i]]) <- comparisons
+    
+    for (j in seq_along(data[[i]])) {
+      
+      outcomes <- sort(unique(data[[i]][[j]]$outcome))
+      
+      data[[i]][[j]] <- data[[i]][[j]] %>%
+        group_split(outcome) %>%
+        as.list()
+      
+      names(data[[i]][[j]]) <- outcomes
+      
+      for (k in seq_along(data[[i]][[j]])) {
+        data[[i]][[j]][[k]] <- data[[i]][[j]][[k]] %>%
+          select(value) %>%
+          unlist() %>%
+          unname()
+      }
+      
+    }
+    
+  }
+  
+  return(data)
+  
+})
+
+```
+
+
+For COVID-19 hospital admission, estimated aHRs comparing BNT162b2 and ChAdOx with unvaccinated in the 65+ subgroup were `r aHRs[["65+"]][["BNT162b2"]][["covidadmitted"]][1]` and `r aHRs[["65+"]][["ChAdOx"]][["covidadmitted"]][1]` respectively at 3-6 weeks, waning to `r aHRs[["65+"]][["BNT162b2"]][["covidadmitted"]][6]` and `r aHRs[["65+"]][["ChAdOx"]][["covidadmitted"]][6]` respectively at 23-26 weeks. 
+The ratios of aHRs were `r ratios[["65+"]][["BNT162b2"]][["covidadmitted"]]` and `r ratios[["65+"]][["ChAdOx"]][["covidadmitted"]]` per period respectively. 
+In the 16-64 subgroup the equivalent aHRs were `r aHRs[["16-64"]][["BNT162b2"]][["covidadmitted"]][1]` and `r aHRs[["16-64"]][["ChAdOx"]][["covidadmitted"]][1]` for BNT162b2 and ChAdOx respectively at 3-6 weeks, waning to `r aHRs[["16-64"]][["BNT162b2"]][["covidadmitted"]][6]` and `r aHRs[["16-64"]][["ChAdOx"]][["covidadmitted"]][6]` respectively at 23-26 weeks.
+The ratios of aHRs were `r ratios[["16-64"]][["BNT162b2"]][["covidadmitted"]]` and `r ratios[["16-64"]][["ChAdOx"]][["covidadmitted"]]` per period respectively. 
