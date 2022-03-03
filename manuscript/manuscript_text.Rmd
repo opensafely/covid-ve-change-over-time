@@ -147,7 +147,7 @@ ratios <- local({
                 factor,
                 levels = names(outcomes),
                 labels = unname(outcomes))) %>%
-    mutate(value = glue("{rhr_higher} (95% CI {rhr_lower}-{rhr_higher})"))
+    mutate(value = glue("{rhr} (95% CI {rhr_lower}-{rhr_higher})"))
   
   data <- data %>%
     group_split(subgroup) %>%
@@ -192,8 +192,48 @@ ratios <- local({
 
 ```
 
+# vs unvaccinated
+## COVID-19 hospital admission
 
 For COVID-19 hospital admission, estimated aHRs comparing BNT162b2 and ChAdOx with unvaccinated in the 65+ subgroup were `r aHRs[["65+"]][["BNT162b2"]][["covidadmitted"]][1]` and `r aHRs[["65+"]][["ChAdOx"]][["covidadmitted"]][1]` respectively at 3-6 weeks, waning to `r aHRs[["65+"]][["BNT162b2"]][["covidadmitted"]][6]` and `r aHRs[["65+"]][["ChAdOx"]][["covidadmitted"]][6]` respectively at 23-26 weeks. 
-The ratios of aHRs were `r ratios[["65+"]][["BNT162b2"]][["covidadmitted"]]` and `r ratios[["65+"]][["ChAdOx"]][["covidadmitted"]]` per period respectively. 
-In the 16-64 subgroup the equivalent aHRs were `r aHRs[["16-64"]][["BNT162b2"]][["covidadmitted"]][1]` and `r aHRs[["16-64"]][["ChAdOx"]][["covidadmitted"]][1]` for BNT162b2 and ChAdOx respectively at 3-6 weeks, waning to `r aHRs[["16-64"]][["BNT162b2"]][["covidadmitted"]][6]` and `r aHRs[["16-64"]][["ChAdOx"]][["covidadmitted"]][6]` respectively at 23-26 weeks.
-The ratios of aHRs were `r ratios[["16-64"]][["BNT162b2"]][["covidadmitted"]]` and `r ratios[["16-64"]][["ChAdOx"]][["covidadmitted"]]` per period respectively. 
+The ratios of aHRs per period were `r ratios[["65+"]][["BNT162b2"]][["covidadmitted"]]` for BNT162b2 and `r ratios[["65+"]][["ChAdOx"]][["covidadmitted"]]` for ChAdOx. 
+Estimated aHRs comparing BNT162b2 and ChAdOx with unvaccinated in the 16-64 subgroup were `r aHRs[["16-64"]][["BNT162b2"]][["covidadmitted"]][2]` and `r aHRs[["16-64"]][["ChAdOx"]][["covidadmitted"]][2]` respectively at 7-10 weeks, waning to `r aHRs[["16-64"]][["BNT162b2"]][["covidadmitted"]][6]` and `r aHRs[["16-64"]][["ChAdOx"]][["covidadmitted"]][6]` respectively at 23-26 weeks. 
+The ratios of aHRs per period were `r ratios[["16-64"]][["BNT162b2"]][["covidadmitted"]]` for BNT162b2 and `r ratios[["16-64"]][["ChAdOx"]][["covidadmitted"]]` for ChAdOx. 
+Estimated aHRs comparing ChAdOx with unvaccinated in the 40-64 subgroup were `r aHRs[["40-64"]][["ChAdOx"]][["covidadmitted"]][1]` at 3-6 weeks, waning to `r aHRs[["40-64"]][["ChAdOx"]][["covidadmitted"]][6]` at 23-26 weeks. 
+The ratios of aHRs were `r ratios[["40-64"]][["ChAdOx"]][["covidadmitted"]]` per period. 
+There were not enough COVID-19 hospital admissions in the BNT162b2 group to estimate aHRs.
+Estimated aHRs comparing BNT162b2 with unvaccinated in the 18-39 subgroup were `r aHRs[["18-39"]][["BNT162b2"]][["covidadmitted"]][1]` at 3-6 weeks, waning to `r aHRs[["18-39"]][["BNT162b2"]][["covidadmitted"]][5]` at 19-22 weeks (aHRs could not be estimated at 23-26 weeks as follow-up was cut short in this subgroup due to the last date of available data). 
+The ratios of aHRs were `r ratios[["18-39"]][["BNT162b2"]][["covidadmitted"]]` per period. 
+
+## COVID-19 death
+
+For COVID-19 death, estimated aHRs comparing BNT162b2 and ChAdOx with unvaccinated in the 65+ subgroup were `r aHRs[["65+"]][["BNT162b2"]][["coviddeath"]][3]` and `r aHRs[["65+"]][["ChAdOx"]][["coviddeath"]][3]` respectively at 11-14 weeks, waning to `r aHRs[["65+"]][["BNT162b2"]][["covidadmitted"]][6]` and `r aHRs[["65+"]][["ChAdOx"]][["covidadmitted"]][6]` respectively at 23-26 weeks. 
+The ratios of aHRs per period were `r ratios[["65+"]][["BNT162b2"]][["coviddeath"]]` for BNT162b2 and `r ratios[["65+"]][["ChAdOx"]][["coviddeath"]]` for ChAdOx. 
+Estimated aHRs comparing BNT162b2 and ChAdOx with unvaccinated in the 16-64 subgroup were `r aHRs[["16-64"]][["BNT162b2"]][["coviddeath"]][4]` and `r aHRs[["16-64"]][["ChAdOx"]][["coviddeath"]][4]` respectively at 11-14 weeks, waning to `r aHRs[["16-64"]][["BNT162b2"]][["coviddeath"]][6]` and `r aHRs[["16-64"]][["ChAdOx"]][["coviddeath"]][6]` respectively at 23-26 weeks. 
+The ratios of aHRs per period were `r ratios[["16-64"]][["BNT162b2"]][["coviddeath"]]` for BNT162b2 and `r ratios[["16-64"]][["ChAdOx"]][["coviddeath"]]` for ChAdOx. 
+Estimated aHRs comparing ChAdOx with unvaccinated in the 40-64 subgroup were `r aHRs[["40-64"]][["ChAdOx"]][["coviddeath"]][4]` at 11-14 weeks, waning to `r aHRs[["40-64"]][["ChAdOx"]][["coviddeath"]][6]` at 23-26 weeks. 
+The ratio of aHRs per period was `r ratios[["40-64"]][["ChAdOx"]][["coviddeath"]]`. 
+
+## Positive SARS-CoV-2 test
+
+For positive SARS-CoV-2 test, aHRs at 3-6 weeks since second dose ranged from `r aHRs[["65+"]][["BNT162b2"]][["postest"]][1]` to `r aHRs[["40-64"]][["BNT162b2"]][["postest"]][1]` for BNT162b2, and `r aHRs[["65+"]][["ChAdOx"]][["postest"]][1]` to `r aHRs[["40-64"]][["ChAdOx"]][["postest"]][1]` for ChAdOx; 
+
+for example, in the 65+ years subgroup the ratio of aHRs was `r ratios[["65+"]][["BNT162b2"]][["postest"]]` for BNT162b2, and `r ratios[["65+"]][["ChAdOx"]][["postest"]]` for ChAdOx
+
+## non-COVID-19 death
+
+For non-COVID-19 death, the aHRs 3-6 weeks since second dose ranged from `r aHRs[["65+"]][["BNT162b2"]][["noncoviddeath"]][1]` to `r aHRs[["16-64"]][["BNT162b2"]][["noncoviddeath"]][1]` for BNT162b2, and `r aHRs[["40-64"]][["ChAdOx"]][["noncoviddeath"]][1]` to `r aHRs[["65+"]][["ChAdOx"]][["noncoviddeath"]][1]` for ChAdOx; 
+
+# BNT162b2 vs ChAdOx
+
+The aHRs consistently favoured BNT162b2 over ChAdOx during the earliest available comparison period.
+The aHRs ranged from `r aHRs[["16-64"]][["both"]][["covidadmitted"]][2]` to `r aHRs[["65+"]][["both"]][["covidadmitted"]][2]` for COVID-19 hospital admission at 7-10 weeks since second dose; `r aHRs[["65+"]][["both"]][["coviddeath"]][4]` to `r aHRs[["16-64"]][["both"]][["coviddeath"]][4]` for COVID-19 death  at 15-18 weeks since second dose; and `r aHRs[["16-64"]][["both"]][["postest"]][1]` to `r aHRs[["65+"]][["both"]][["postest"]][1]` for positive SARS-CoV-2 test  at 3-6 weeks since second dose. 
+However, as the rate of waning was slightly higher for BNT162b2 compared to ChAdOx (range `r ratios[["16-64"]][["both"]][["covidadmitted"]]` to `r ratios[["65+"]][["both"]][["covidadmitted"]]` for COVID-19 hospital admission; `r ratios[["65+"]][["both"]][["coviddeath"]]` to `r ratios[["16-64"]][["both"]][["coviddeath"]]` for COVID-19 death; and `r ratios[["65+"]][["both"]][["postest"]]` to `r ratios[["16-64"]][["both"]][["postest"]]` for positive SARS-CoV-2 test),
+the aHRs were attenuated by 23-26 weeks since second dose (range `r aHRs[["16-64"]][["both"]][["covidadmitted"]][6]` to `r aHRs[["65+"]][["both"]][["covidadmitted"]][6]` for COVID-19 hospital admission; `r aHRs[["16-64"]][["both"]][["coviddeath"]][6]` to `r aHRs[["65+"]][["both"]][["coviddeath"]][6]` for COVID-19 death; and `r aHRs[["40-64"]][["both"]][["postest"]][6]` to `r aHRs[["65+"]][["both"]][["postest"]][6]` for positive SARS-CoV-2 test).
+
+<!-- In this paragraph, we give the estimated aHRs comparing the rate of COVID-19 hospital admission in BNT162b2 and ChAdOx with unvaccinated. -->
+<!-- We give the aHRs estimated in the periods 3-6 weeks and 23-26 weeks since vaccination to demonstrate waning, unless the aHRs could not be estimate in one of these periods due to low event counts, in which case we state the period with the aHR.  -->
+<!-- The estimated aHRs in the 65+ subgroup were `r aHRs[["65+"]][["BNT162b2"]][["covidadmitted"]][1]` and `r aHRs[["65+"]][["ChAdOx"]][["covidadmitted"]][1]`, respectively, waning to `r aHRs[["65+"]][["BNT162b2"]][["covidadmitted"]][6]` and `r aHRs[["65+"]][["ChAdOx"]][["covidadmitted"]][6]`, respectively.  -->
+<!-- The ratios of aHRs were `r ratios[["65+"]][["BNT162b2"]][["covidadmitted"]]` and `r ratios[["65+"]][["ChAdOx"]][["covidadmitted"]]` per period, respectively.  -->
+<!-- The estimated aHRs in the 16-64 subgroup were `r aHRs[["16-64"]][["BNT162b2"]][["covidadmitted"]][2]` (at 7-11 weeks) and `r aHRs[["16-64"]][["ChAdOx"]][["covidadmitted"]][1]` for BNT162b2 and ChAdOx, respectively, waning to `r aHRs[["16-64"]][["BNT162b2"]][["covidadmitted"]][6]` and `r aHRs[["16-64"]][["ChAdOx"]][["covidadmitted"]][6]`, respectively. -->
+<!-- The ratios of aHRs were `r ratios[["16-64"]][["BNT162b2"]][["covidadmitted"]]` and `r ratios[["16-64"]][["ChAdOx"]][["covidadmitted"]]` per period, respectively.  -->
