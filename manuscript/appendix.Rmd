@@ -527,7 +527,7 @@ table_estimates_covs_ft <- function(i) {
     subgroup_longer <- subgroup_long
   }
   
-  caption_string <- glue("Covariate coefficients for the adjusted {comparison} model in the {subgroup_longer} subgroup.")
+  caption_string <- glue("Hazard ratios corresponding to covariates in the adjusted {comparison} model in the {subgroup_longer} subgroup.")
   
   table_out0 <- estimates_covs[[i]] %>%
     transmute(
