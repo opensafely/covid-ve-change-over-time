@@ -7,6 +7,7 @@ output:
     keep_tex: true
     latex_engine: xelatex
     toc: false # defined in preface.tex
+    number_sections: false
 fontsize: 10
 subparagraph: yes
 geometry: margin=1.5cm
@@ -542,7 +543,18 @@ table_estimates_covs_ft <- function(i) {
     pivot_wider(
       names_from = outcome,
       values_from = value
-    ) %>%
+    ) 
+  
+  # add column for missing outcomes for consistency across tables
+  missing_outcomes <- !(names(outcomes) %in% names(table_out0))
+  if (any(missing_outcomes)) {
+    for (o in names(outcomes)[missing_outcomes]) {
+    table_out0 <- table_out0 %>%
+      mutate(!! sym(o) := NA_character_)
+    }
+  }
+  
+  table_out0 <- table_out0 %>%
     select(variable, label, all_of(names(outcomes[outcomes_order]))) 
   
   age_order <- sort(unique(table_out0$label[str_detect(table_out0$label, "^age")]))
@@ -577,8 +589,6 @@ table_estimates_covs_ft <- function(i) {
                     .x))) %>%
     mutate(label_old = label) %>%
     mutate(across(label, 
-                  ~str_replace_all(.x, "\\_", "\\\\_"))) %>%
-    mutate(across(label, 
                   ~if_else(.x %in% glue("{history_of_vars}TRUE"),
                            Variable,
                            .x))) %>%
@@ -594,6 +604,8 @@ table_estimates_covs_ft <- function(i) {
                   ~if_else(str_detect(.x, "Number of SARS-CoV-2 tests"),
                            "Number of SARS-CoV-2 tests",
                            .x))) %>%
+    mutate(across(label, 
+                  ~str_replace_all(.x, "\\_", "\\\\_"))) %>%
     mutate(across(all_of(names(outcomes)), ~if_else(is.na(.x), "-", .x))) %>%
     select(-label_old) %>%
     select(Variable, "Category\\textsuperscript{b}" = label, all_of(names(outcomes[outcomes_order])))
@@ -633,6 +645,121 @@ table_estimates_covs_ft <- function(i) {
 
 
 # Supplementary Methods
+
+[Describe exactly how the age variables were derived.]
+
+```{r jcvi-groups, include=TRUE, tab.cap.pre = "Supplementary Table "}
+tribble(
+  ~priority_group, ~description,
+  "1", "Residents in a care home for older adults",
+  "1", "Staff in a care home for older adults",
+  "2", "All those 80 years of age and over",
+  "2", "Frontline health and social care workers",
+  "etc.", "etc."
+) %>%
+  kable(
+      format = "latex",
+      caption = "Priority groups for primary vaccination advised by the Joint Committee on Vaccination and Immunisation",
+      col.names = c("Priority group", "Risk group"),
+      booktabs = TRUE, 
+      longtable = TRUE,
+      escape = FALSE # manually escape all special characters
+    ) %>%
+    row_spec(0, bold=TRUE) %>%
+    column_spec(1, width="2cm") %>%
+    column_spec(2, width="10cm") %>%
+    collapse_rows(
+      columns = 1, 
+      valign = "top",
+      latex_hline = "major"
+      ) %>%
+    kable_styling(
+      font_size = 6,
+      latex_options = c("hold_position", "repeat_header")
+      ) 
+
+```
+
+\pagebreak
+
+```{r eligibility-dates, include=TRUE, tab.cap.pre = "Supplementary Table "}
+
+elig_dates <-
+tribble(
+    ~grouped_date, ~date, ~age_range, ~jcvi_groups,
+    "2020-12-08", "2020-12-08", "-", "01, 02, 03",
+    "2021-01-18", "2021-01-18", "-", "04",
+    ###
+    "2021-02-15", "2021-02-15", "-", "05, 06",
+    ###
+    "2021-02-22", "2021-02-22", "64", "07", 
+    "2021-03-01", "2021-03-01", "60-63", "07",
+    ###
+    # combine 2 rows as < 7 days between elig_dates
+    "2021-03-08", "2021-03-08", "56-59", "08",
+    "2021-03-08", "2021-03-09", "55", "08",
+    ###
+    "2021-03-19", "2021-03-19", "50-54", "09",
+    ###
+    "2021-04-13", "2021-04-13", "45-49", "10",
+    # combine 3 rows as < 7 days between elig_dates
+    "2021-04-26", "2021-04-26", "44", "10",
+    "2021-04-26", "2021-04-27", "42-43", "10",
+    "2021-04-26", "2021-04-30", "40-41", "10",
+    ###
+    # combine 2 rows as < 7 days between elig_dates
+    "2021-05-13", "2021-05-13", "38-39", "11",
+    "2021-05-13", "2021-05-19", "36-37", "11",
+    # combine 3 rows as < 7 days between elig_dates
+    "2021-05-21", "2021-05-21", "34-35", "11",
+    "2021-05-21", "2021-05-25", "32-33", "11",
+    "2021-05-21", "2021-05-26", "30-31", "11",
+    ###
+    "2021-06-08", "2021-06-08",  "25-29", "12",
+    # combine 3 rows as < 7 days between elig_dates
+    "2021-06-15", "2021-06-15", "23-24", "12",
+    "2021-06-15", "2021-06-16", "21-22", "12",
+    "2021-06-15", "2021-06-18", "18-20", "12",
+) %>%
+  mutate(reference  = "add url")
+
+  
+  col_width <- (page_width - ncol(elig_dates)*padding)/ncol(elig_dates)
+  col_width <- as.character(glue("{col_width}cm"))
+
+elig_dates %>%
+  select(grouped_date, date, jcvi_groups, age_range, reference) %>%
+  kable(
+      format = "latex",
+      caption = "Eligibility dates for first vaccine dose",
+      col.names = c("Grouped eligibility date", "Exact eligibility date", "JCVI groups", "Age range", "Reference"),
+      booktabs = TRUE, 
+      longtable = TRUE,
+      escape = FALSE # manually escape all special characters
+    ) %>%
+    row_spec(0, bold=TRUE) %>%
+    column_spec(seq_along(elig_dates), width=col_width) %>%
+    collapse_rows(
+      columns = 1, 
+      valign = "top",
+      latex_hline = "major"
+      ) %>%
+    kable_styling(
+      font_size = 6,
+      latex_options = c("hold_position", "repeat_header")
+      ) %>%
+    footnote(
+      general = c("JCVI: Joint Committee on Vaccination and Immunisation"),
+      footnote_as_chunk=TRUE,
+      escape=FALSE,
+      threeparttable = TRUE # to wrap footnote
+    )
+
+```
+
+```{r eligibilty-criteria, include=TRUE, fig.cap="Study eiligibility criteria.", out.width="\\linewidth"}
+knitr::include_graphics(here::here("manuscript", "images", "eligibility_criteria.png"))
+```
 
 # Supplementary Results
 <!-- Test some text referring to \figref{fig:svp-10-2021-04-13} and \tabref{tab:table1}. -->
@@ -772,4 +899,36 @@ landscape(table_estimates_covs_ft(1))
 
 ```{r table-estimates-covs-2, include=TRUE, tab.cap.pre = "Supplementary Table "}
 landscape(table_estimates_covs_ft(2))
+```
+
+```{r table-estimates-covs-3, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_estimates_covs_ft(3))
+```
+
+```{r table-estimates-covs-4, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_estimates_covs_ft(4))
+```
+
+```{r table-estimates-covs-5, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_estimates_covs_ft(5))
+```
+
+```{r table-estimates-covs-6, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_estimates_covs_ft(6))
+```
+
+```{r table-estimates-covs-7, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_estimates_covs_ft(7))
+```
+
+```{r table-estimates-covs-8, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_estimates_covs_ft(8))
+```
+
+```{r table-estimates-covs-9, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_estimates_covs_ft(9))
+```
+
+```{r table-estimates-covs-10, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_estimates_covs_ft(10))
 ```
