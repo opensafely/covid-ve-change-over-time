@@ -142,11 +142,13 @@ plot_out <- survtable_redacted %>%
     name = "Subgroup"
   ) +
   scale_x_continuous(
-    breaks = c(0,seq(2,26,4))
+    breaks = seq(0,24,4), # scale is time since start of period 1
+    labels = seq(2,26,4) # label scale as time since second vax
   ) +
-  labs(x = "Weeks since second dose",
-       y = "Cumulative event"
-       ) +
+  labs(
+    x = "Weeks since second dose",
+    y = "Cumulative event"
+    ) +
   theme_bw() +
   theme(
     
