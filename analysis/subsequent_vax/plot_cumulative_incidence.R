@@ -121,7 +121,9 @@ survtable_redacted <- round_km(
     c.inc = 1-surv,
     c.inc.ll = 1-surv.ul,
     c.inc.ul = 1-surv.ll
-  )
+  ) %>%
+  mutate(across(starts_with("c."), round, digits = 5)) %>%
+  select(subgroup, arm, time, n.risk, n.event, n.censor, c.inc)
 
 readr::write_csv(
   survtable_redacted,
@@ -134,9 +136,8 @@ x_labels <- x_breaks + 2
 
 # create plot
 plot_out <- survtable_redacted %>%
-  ggplot(aes(x = time, y = 1-surv, colour = subgroup)) +
-  # ggplot(aes(x = time, y = c.prod_prob_vax, colour = sex)) +
-  geom_step(size=1) +
+  ggplot(aes(x = time, y = c.inc, colour = subgroup)) +
+  geom_step(size=0.8) +
   facet_wrap(~ arm, nrow=2) +
   scale_color_viridis_d(
     name = "Subgroup"
