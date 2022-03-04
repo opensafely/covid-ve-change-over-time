@@ -1,10 +1,7 @@
 library(tidyverse)
-library(RColorBrewer)
 library(glue)
 library(survival)
-library(survminer)
 library(lubridate)
-library(cowplot)
 
 ################################################################################
 
@@ -40,11 +37,17 @@ data_wide_vax_dates <- readRDS(
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("output", "lib", "subgroups.rds"))
+subgroup_labels <- seq_along(subgroups)
+subgroup_order <- c(4,1,3,2)
+subgroups_long <- if_else(
+  subgroups %in% subgroups[c(2,3)],
+  as.character(glue("{subgroups}*")),
+  subgroups
+)
+subgroups_long_wrap <- str_wrap(subgroups_long, width = 25)
 
-# redaction functions
-source(here::here("analysis", "lib", "redaction_functions.R"))
-
-source(here::here("analysis", "lib", "data_process_functions.R"))
+# redaction function for KM curves
+source(here::here("analysis", "lib", "round_km.R"))
 
 ################################################################################
 
@@ -58,6 +61,10 @@ data_tte <- bind_rows(data_eligible_e_vax, data_eligible_e_unvax) %>%
             by = "patient_id") %>%
   left_join(data_wide_vax_dates,
             by = "patient_id") %>%
+  mutate(across(subgroup,
+                factor,
+                levels = subgroups[subgroup_order],
+                labels = subgroups_long_wrap[subgroup_order])) %>%
   mutate(
     # start date of comparison 1 
     start_fu_date = if_else(
@@ -95,92 +102,54 @@ data_tte <- bind_rows(data_eligible_e_vax, data_eligible_e_unvax) %>%
       FALSE
     )) %>%
   select(patient_id, arm, subgroup, tte, status) %>%
-  mutate(group = if_else(
-    arm == "unvax",
-    "unvaccinated",
-    "vaccinated"
-  ))
+  mutate(across(arm, 
+                ~if_else(
+                  arm == "unvax",
+                  "Unvaccinated",
+                  .x)
+                ))
 
 ################################################################################
+
+survtable_redacted <- round_km(
+  data = data_tte,
+  time = "tte",
+  event = "status",
+  strata = c("subgroup", "arm")
+) %>%
+  mutate(
+    c.inc = 1-surv,
+    c.inc.ll = 1-surv.ul,
+    c.inc.ul = 1-surv.ll
+  )
+
+readr::write_csv(
+  survtable_redacted,
+  here::here("output", "subsequent_vax", "tables", "survtable_redacted.csv"))
 
 # scale for x-axis
 K <- study_parameters$max_comparisons
 x_breaks <- seq(0,K*4,4)
 x_labels <- x_breaks + 2
 
-fit <- survfit(Surv(tte, status) ~ arm + subgroup, 
-               data = data_tte)
-
-ggsurvplot_res <- ggsurvplot(fit,
-                             data = data_tte,
-                             break.time.by = 4)  
-
-caption_string <- "For the unvaccinated arm the time-scale is \"weeks since start of second vaccination period\". Follow-up for all arms is censored at death and de-registration."
-
-
-survtable <- ggsurvplot_res$data.survplot %>%
-  # group by weeks (i.e. week 1 = days 1-7 etc)
-  mutate(across(time, ceiling)) %>%
-  group_by(strata, subgroup, arm, time) %>%
-  summarise(
-    n.risk = max(n.risk),
-    n.event = sum(n.event),
-    n.censor = sum(n.censor),
-    .groups = "keep"
-  ) %>%
-  ungroup(time) %>%
-  # suppress small numbers
-  mutate(across(c(n.event, n.censor),
-                ~ case_when(
-                  0 <= .x & .x <= 3 ~ 0,
-                  .x <= 5 ~ 6,
-                  TRUE ~ .x
-                ))) %>%
-  mutate(
-    n.excluded = lag(cumsum(n.event + n.censor)),
-    n.risk_new = max(n.risk) - n.excluded
-  ) %>%
-  # recalculate n.risk now that small numbers suppressed in n.event and n.censor
-  mutate(across(n.risk,
-                ~ if_else(
-                  is.na(n.risk_new), # NA for time 1 only
-                  .x,
-                  n.risk_new)
-  )) %>%
-  # calculate cumulative incidence
-  mutate(prob_vax = (n.risk - n.event)/n.risk,
-         cumprod_vax = cumprod(prob_vax),
-         cuminc = 1-cumprod_vax) %>%
-  ungroup() %>%
-  mutate(across(cuminc, round, digits=3)) %>%
-  select(arm, subgroup, time, n.risk, n.event, n.censor, cuminc)
-
-readr::write_csv(
-  survtable,
-  here::here("output", "subsequent_vax", "tables", "survtable.csv"))
-
-################################################################################
-plot_out <- survtable %>%
-  mutate(across(arm,
-                ~ fct_case_when(
-                  .x %in% "BNT162b2" ~ "3rd dose in BNT162b2 arm",
-                  .x %in% "ChAdOx" ~ "3rd dose in ChAdOx arm",
-                  .x %in% "unvax" ~ "1st dose in unvaccinated arm"
-                )
-  )) %>%
-  ggplot(aes(x = time, y = cuminc, colour = subgroup)) +
-  geom_step() +
-  facet_wrap(~ arm, nrow = 2) +
+# create plot
+plot_out <- survtable_redacted %>%
+  ggplot(aes(x = time, y = 1-surv, colour = subgroup)) +
+  # ggplot(aes(x = time, y = c.prod_prob_vax, colour = sex)) +
+  geom_step(size=1) +
+  facet_wrap(~ arm, nrow=2) +
+  scale_color_viridis_d(
+    name = "Subgroup"
+  ) +
   scale_x_continuous(
-    breaks = seq(0,24,4)
+    breaks = c(0,seq(2,26,4))
   ) +
   labs(x = "Weeks since second dose",
-       y = "Cumulative event",
-       caption = str_wrap(caption_string,102),
-       title = "Cumulative incidence of subsequent vaccination") +
-  scale_color_discrete(name = NULL) +
+       y = "Cumulative event"
+       ) +
   theme_bw() +
   theme(
+    
     panel.border = element_blank(),
     axis.line.y = element_line(colour = "black"),
     
@@ -202,11 +171,12 @@ plot_out <- survtable %>%
     plot.caption.position = "plot",
     plot.caption = element_text(hjust = 0, face= "italic"),
     
-    legend.position = c(0.75,0.25)
+    legend.position = c(0.75,0.2),
+    legend.key.size = unit(0.8, "cm")
     
   )
 
 ggsave(plot = plot_out,
        filename = here::here("output", "subsequent_vax", "images", "ci_vax.png"),
        width=15, height=12, units="cm")
-
+  
