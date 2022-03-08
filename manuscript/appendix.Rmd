@@ -127,6 +127,162 @@ page_width <- 16 #cm
 
 ```
 
+```{r variable-defs}
+variable_defs <- local({
+  
+  data <- tribble(
+  ~type, ~name, ~description, ~encoding, ~date_defined,
+  #
+  "Exclusion criteria",
+  "Evidence of prior COVID-19 infection",
+  "Date of code corresponding to COVID-19 hospitalisation, positive SARS-CoV-2 test, or probable COVID-19 code in GP record.",
+  "Date",
+  "First occurence",
+  #
+  "Exclusion criteria",
+  "End-of-life care pathway initiated",
+  "Date of code corresponding to end-of-life care or midazolam injection used in end-of-life care in patient’s record.",
+  "Date",
+  "First occurence prior to SVP",
+  #
+  "Exclusion criteria",
+  "Resident in care home",
+  "Date of code corresponding to care home in patient’s record.",
+  "Date",
+  "First occurence prior to SVP",
+  #
+  "Strata",
+  "JCVI group",
+  "Priority groups defined by the JCVI expert advisory group",
+  "2-12",
+  "Age defined on 31 March 2021 for individuals eligible in phase 1 and 1 July 2021 for individuals eligible in phase 2. Individuals defined as clinically extremely vulnerable on 18 Januray 2021, and at-risk on 15 February 2021.",
+  #
+  "Strata",
+  "Eligibility date",
+  "Date on which JCVI group (or age range within group) became eligible for 1st dose of COVID-19 vaccination.",
+  "Date",
+  "-",
+  #
+  "Strata",
+  "Region",
+  "NHS region based on practice address.",
+  "East of England; Midlands; London; North East; Yorkshire; North West; South East; South West.",
+  "Eligibility date + 6 weeks.",
+  #
+  "Potential confounders (demographic)",
+  "Sex",
+  "-",
+  "M; F.",
+  "-",
+  #
+  "Potential confounders (demographic)",
+  "Age",
+  "Age in whole years.",
+  "Integer",
+  "start\\textsubscript{1i}",
+  #
+  "Potential confounders (demographic)",
+  "Ethnicity",
+  "From primary care records or SUS if missing from primary care.",
+  "Black; Mixed; South Asian; White; Other.",
+  "Eligibility date + 6 weeks ",
+  #
+  "Potential confounders (demographic)",
+  "Index of Multiple Deprivation (IMD)",
+  "IMD quintile based on patient address",
+  "1; 2; 3; 4; 5.",
+  "Eligibility date + 6 weeks ",
+  #
+  "Potential confounders (clinical)",
+  "Body Mass Index (BMI)",
+  "Based on numeric BMI data from primary care records.",
+  "Under 30kg/m\\textsuperscript{2} or not recorded; 30-34.9; 35-39.9; 40+ kg/m\\textsuperscript{2}.",
+  "start\\textsubscript{ki}",
+  #
+  "Potential confounders (clinical)",
+  "Chronic heart disease; Chronic respiratory disease; Chronic liver disease; Chronic kidney disease; Diabetes; Chronic neurological disease; Immunosuppressed; Learning disability including Down’s syndrome; Serious mental illness.",
+  "Any code in primary care record before date defined.",
+  "0; 1.",
+  "start\\textsubscript{ki}",
+  #
+  "Potential confounders (clinical)",
+  "Multimorbidity",
+  "Number of comorbid conditions in different organ systems.",
+  "0; 1; 2+",
+  "start\\textsubscript{ki}",
+  #
+  "Potential confounders (clinical)",
+  "Influenza vaccination",
+  "Any record in past 5 years.",
+  "0; 1.",
+  "Eligibility date",
+  #
+  "Potential confounders (clinical)",
+  "Clinically extremely vulnerable",
+  "UK government COVID-19 shielding criteria met.",
+  "0; 1.",
+  "start\\textsubscript{ki}",
+  #
+  "Potential confounders (clinical)",
+  "Pregnancy",
+  "Pregnancy recorded in 36 weeks prior to date and no delivery code recorded more recently that pregnancy code.",
+  "0; 1.",
+  "start\\textsubscript{ki}",
+  #
+  "Potential confounders (clinical)",
+  "Care home",
+  "Code corresponding to care home in patient’s record before evaluation date.",
+  "0; 1.",
+  "start\\textsubscript{ki}",
+  #
+  "Potential confounders (clinical)",
+  "Housebound",
+  "Code indicating that the individual is housebound.",
+  "0; 1.",
+  "start\\textsubscript{ki}",
+  #
+  "Potential confounders (clinical)",
+  "Number of COVID-19 tests.",
+  "SARS-CoV-2 tests were identified using SGSS records and based on swab date. Both polymerase chain reaction (PCR) and lateral flow tests will be included, without differentiation between symptomatic and asymptomatic infection.",
+  "Integer",
+  "Between 18 May 2020 (when widespread testing became available in England) and the earliest date of eligibility for first dose in the subgroup."
+  )
+  
+  col_width <- (page_height - ncol(data)*padding)/ncol(data)
+  col_width <- as.character(glue("{col_width}cm"))
+  
+  data %>%
+   kable(
+      format = "latex",
+      caption = "Variable definitions",
+      col.names = c("Group", "Name", "Description", "Encoding", "Date defined"),
+      booktabs = TRUE, 
+      longtable = TRUE,
+      escape = FALSE # manually escape all special characters
+    ) %>%
+    row_spec(0, bold=TRUE) %>%
+    column_spec(seq_along(data), width=col_width) %>%
+    collapse_rows(
+      columns = 1, 
+      valign = "top",
+      latex_hline = "major"
+      ) %>%
+    kable_styling(
+      font_size = 8,
+      latex_options = c("hold_position", "repeat_header")
+      ) %>%
+    footnote(
+      general = c("JCVI: Joint Committee on Vaccination and Immunisation; start\\\\textsubscript{ki} is the start date of comparison period \\\\textit{k} for individual \\\\textit{i}."),
+      general_title = "",
+      footnote_as_chunk=TRUE,
+      escape=FALSE,
+      threeparttable = TRUE # to wrap footnote
+    )
+  
+})
+```
+
+
 ```{r prep-table1}
 print_table1 <- local({
   
@@ -237,9 +393,17 @@ print_table1 <- local({
 ```{r prep-table-events}
 table_events_ft <- local({
   
+  totals <- event_counts %>%
+    group_by(subgroup, arm, outcome) %>%
+    summarise(across(c(person_years, events), sum, na.rm=TRUE), .groups="keep") %>%
+    ungroup() %>%
+    mutate(k=7)
+  
   table_out0 <- event_counts %>%
+    bind_rows(totals) %>%
     arrange(subgroup, outcome, arm, k) %>%
     mutate(across(c(events, person_years), ~scales::comma(.x, accuracy = 1))) %>%
+    mutate(across(events, ~if_else(.x == "0", "-", .x))) %>%
     mutate(name = as.character(glue("{subgroup}_{arm}"))) %>%
     mutate(value = as.character(glue("{events} / {person_years}"))) %>%
     mutate(across(value, ~str_replace(.x, "NA", "-"))) %>%
@@ -250,8 +414,8 @@ table_events_ft <- local({
     ) %>%
     mutate(across(k,
                   factor,
-                  levels = 1:K,
-                  labels = weeks_since_2nd_vax)) %>%
+                  levels = 1:7,
+                  labels = c(weeks_since_2nd_vax, "Total"))) %>%
     select(outcome, k, starts_with(as.character(subgroup_order)))
   
   # column names for table
@@ -273,7 +437,12 @@ table_events_ft <- local({
     footnote_marker_alphabet(1, format = "latex", double_escape = TRUE)
     )
   
-  col_width <- (26 - ncol(table_out0)*padding)/ncol(table_out0)
+  
+  col_1_width <- 1
+  col_2_width <- 0.8
+  col_width <- (26 - col_1_width - col_2_width - ncol(table_out0)*padding)/(ncol(table_out0) - 2)
+  col_1_width <- as.character(glue("{col_1_width}cm"))
+  col_2_width <- as.character(glue("{col_2_width}cm"))
   col_width <- as.character(glue("{col_width}cm"))
   
   table_out1 <- table_out0 %>%
@@ -290,7 +459,9 @@ table_events_ft <- local({
       bold=TRUE,
       escape = FALSE
       ) %>%
-    column_spec(seq_along(table_out0), width=col_width) %>%
+    column_spec(1, width=col_1_width) %>%
+    column_spec(2, width=col_2_width) %>%
+    column_spec(3:ncol(table_out0), width=col_width) %>%
     collapse_rows(columns = 1, valign = "top", latex_hline = "major") %>%
     kable_styling(
       font_size = 6,
@@ -655,7 +826,17 @@ tribble(
   "1", "Staff in a care home for older adults",
   "2", "All those 80 years of age and over",
   "2", "Frontline health and social care workers",
-  "etc.", "etc."
+  "3", "All those 75 years of age and over",
+  "4", "All those 70 years of age and over",
+  "4", "Individuals aged 16 to 69 in a high risk group\\textsuperscript{a}",
+  "5", "All those 65 years of age and over",
+  "6", "Individuals aged 16 to 65 years in an at-risk group\\textsuperscript{a}",
+  "7", "All those 60 years of age and over",
+  "8", "All those 55 years of age and over",
+  "9", "All those 50 years of age and over",
+  "10", "All those 40 years of age and over",
+  "11", "All those 30 years of age and over",
+  "12", "All those 18 years of age and over"
 ) %>%
   kable(
       format = "latex",
@@ -674,9 +855,13 @@ tribble(
       latex_hline = "major"
       ) %>%
     kable_styling(
-      font_size = 6,
+      font_size = 8,
       latex_options = c("hold_position", "repeat_header")
-      ) 
+      ) %>%
+  footnote(
+    alphabet = c("See \\\\href{https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/1057798/Greenbook-chapter-14a-28Feb22.pdf}{COVID-19: the green book, chapter 14a} for definitions of the high-risk and at-risk groups."),
+    escape = FALSE
+  )
 
 ```
 
@@ -686,49 +871,50 @@ tribble(
 
 elig_dates <-
 tribble(
-    ~grouped_date, ~date, ~age_range, ~jcvi_groups,
-    "2020-12-08", "2020-12-08", "-", "01, 02, 03",
-    "2021-01-18", "2021-01-18", "-", "04",
+    ~grouped_date, ~date, ~age_range, ~jcvi_groups, ~source,
+    "2020-12-08", "2020-12-08", "-", "01, 02, 03", "-",
+    "2021-01-18", "2021-01-18", "-", "04", "https://www.bbc.co.uk/news/uk-55698132",
     ###
-    "2021-02-15", "2021-02-15", "-", "05, 06",
+    "2021-02-15", "2021-02-15", "-", "05, 06", "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2021/02/COVID-19-weekly-announced-vaccinations-25-February-2021.pdf",
     ###
-    "2021-02-22", "2021-02-22", "64", "07", 
-    "2021-03-01", "2021-03-01", "60-63", "07",
-    ###
-    # combine 2 rows as < 7 days between elig_dates
-    "2021-03-08", "2021-03-08", "56-59", "08",
-    "2021-03-08", "2021-03-09", "55", "08",
-    ###
-    "2021-03-19", "2021-03-19", "50-54", "09",
-    ###
-    "2021-04-13", "2021-04-13", "45-49", "10",
-    # combine 3 rows as < 7 days between elig_dates
-    "2021-04-26", "2021-04-26", "44", "10",
-    "2021-04-26", "2021-04-27", "42-43", "10",
-    "2021-04-26", "2021-04-30", "40-41", "10",
+    "2021-02-22", "2021-02-22", "64", "07", "https://www.england.nhs.uk/2021/03/nhs-invites-people-aged-60-plus-to-book-life-saving-covid-jab/", 
+    "2021-03-01", "2021-03-01", "60-63", "07", "https://www.england.nhs.uk/2021/03/nhs-invites-people-aged-60-plus-to-book-life-saving-covid-jab/",
     ###
     # combine 2 rows as < 7 days between elig_dates
-    "2021-05-13", "2021-05-13", "38-39", "11",
-    "2021-05-13", "2021-05-19", "36-37", "11",
-    # combine 3 rows as < 7 days between elig_dates
-    "2021-05-21", "2021-05-21", "34-35", "11",
-    "2021-05-21", "2021-05-25", "32-33", "11",
-    "2021-05-21", "2021-05-26", "30-31", "11",
+    "2021-03-08", "2021-03-08", "56-59", "08", "https://www.england.nhs.uk/2021/03/56-59/",
+    "2021-03-08", "2021-03-09", "55", "08", "https://web.archive.org/web/20210309005613/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
     ###
-    "2021-06-08", "2021-06-08",  "25-29", "12",
+    "2021-03-19", "2021-03-19", "50-54", "09", "https://web.archive.org/web/20210319164659/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    ###
+    "2021-04-13", "2021-04-13", "45-49", "10", "https://web.archive.org/web/20210413144439/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
     # combine 3 rows as < 7 days between elig_dates
-    "2021-06-15", "2021-06-15", "23-24", "12",
-    "2021-06-15", "2021-06-16", "21-22", "12",
-    "2021-06-15", "2021-06-18", "18-20", "12",
-) %>%
-  mutate(reference  = "add url")
+    "2021-04-26", "2021-04-26", "44", "10", "https://web.archive.org/web/20210426123732/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    "2021-04-26", "2021-04-27", "42-43", "10", "https://web.archive.org/web/20210427083317/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    "2021-04-26", "2021-04-30", "40-41", "10", "https://web.archive.org/web/20210430164542/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    ###
+    # combine 2 rows as < 7 days between elig_dates
+    "2021-05-13", "2021-05-13", "38-39", "11", "https://web.archive.org/web/20210513193310/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    "2021-05-13", "2021-05-19", "36-37", "11", "https://web.archive.org/web/20210519122344/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    # combine 3 rows as < 7 days between elig_dates
+    "2021-05-21", "2021-05-21", "34-35", "11", "https://web.archive.org/web/20210521233727/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    "2021-05-21", "2021-05-25", "32-33", "11", "https://web.archive.org/web/20210525112033/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    "2021-05-21", "2021-05-26", "30-31", "11", "https://web.archive.org/web/20210526111444/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    ###
+    "2021-06-08", "2021-06-08",  "25-29", "12", "https://web.archive.org/web/20210526111444/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    # combine 3 rows as < 7 days between elig_dates
+    "2021-06-15", "2021-06-15", "23-24", "12", "https://web.archive.org/web/20210615132025/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    "2021-06-15", "2021-06-16", "21-22", "12", "https://web.archive.org/web/20210616074746/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    "2021-06-15", "2021-06-18", "18-20", "12", "https://web.archive.org/web/20210618093608/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/"
+) 
 
   
   col_width <- (page_width - ncol(elig_dates)*padding)/ncol(elig_dates)
   col_width <- as.character(glue("{col_width}cm"))
 
 elig_dates %>%
-  select(grouped_date, date, jcvi_groups, age_range, reference) %>%
+  select(grouped_date, date, jcvi_groups, age_range, source) %>%
+  mutate(across(source,
+                ~str_c("\\href{", .x, "}{source}"))) %>%
   kable(
       format = "latex",
       caption = "Eligibility dates for first vaccine dose",
@@ -745,11 +931,12 @@ elig_dates %>%
       latex_hline = "major"
       ) %>%
     kable_styling(
-      font_size = 6,
+      font_size = 8,
       latex_options = c("hold_position", "repeat_header")
       ) %>%
     footnote(
       general = c("JCVI: Joint Committee on Vaccination and Immunisation"),
+      general_title = "",
       footnote_as_chunk=TRUE,
       escape=FALSE,
       threeparttable = TRUE # to wrap footnote
@@ -757,15 +944,20 @@ elig_dates %>%
 
 ```
 
-```{r eligibilty-criteria, include=TRUE, fig.cap="Study eiligibility criteria.", out.width="\\linewidth"}
+```{r print-variable-defs, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(variable_defs)
+```
+
+
+```{r eligibilty-criteria, include=TRUE, fig.cap="Study eligibility criteria.", out.width="\\linewidth"}
 knitr::include_graphics(here::here("manuscript", "images", "eligibility_criteria.png"))
 ```
 
 # Supplementary Results
 <!-- Test some text referring to \figref{fig:svp-10-2021-04-13} and \tabref{tab:table1}. -->
 
-```{r flow-diagram, include=TRUE, fig.cap="Flow of patients into study", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "flow_diagram.png"))
+```{r flow-diagram, include=TRUE, fig.cap="Flow of individuals into study", out.width="\\linewidth"}
+knitr::include_graphics(here::here("manuscript", "images", "flow_results.png"))
 ```
 
 \begin{landscape}
