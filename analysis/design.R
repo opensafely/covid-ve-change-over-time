@@ -73,7 +73,7 @@ readr::write_csv(jcvi_groups, here::here("output", "lib", "jcvi_groups.csv"))
 elig_dates <-
 tribble(
     ~date, ~description, ~jcvi_groups,
-    "2020-12-08", "jcvi_group='01' OR jcvi_group='02' OR jcvi_group='03'", "01, 02, 03",
+    "2020-12-08", "jcvi_group='01' OR jcvi_group='02' OR jcvi_group='03'", "01, 02, 03", #TODO
     "2021-01-18", "jcvi_group='04'", "04",
     ###
     "2021-02-15", "jcvi_group='05' OR jcvi_group='06'", "05, 06",
