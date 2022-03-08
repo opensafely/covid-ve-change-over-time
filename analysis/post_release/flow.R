@@ -44,38 +44,23 @@ n_groups <- eligibility_count_numeric %>%
     values_from = c(min_n, max_n)
   )
 
-
-# eligibility_count_numeric <- eligibility_count_numeric0 %>%
-#   group_by(criteria) %>%
-#   mutate(across(n_removed,
-#                 ~ case_when(
-#                   is.na(.x) & criteria %in% "c" ~ 
-#                     n_groups$min_n_b - n,
-#                   is.na(.x) & criteria %in% "d" ~ 
-#                     n_groups$min_n_a - n,
-#                   is.na(.x) & criteria %in% "p1" & arm %in% "unvax" ~ 
-#                     n_groups$min_n_unvax_cde - n,
-#                   is.na(.x) & criteria %in% "p1" & arm %in% "vax" ~ 
-#                     n_groups$min_n_vax_cde - n,
-#                   TRUE ~ .x
-#                   ))) 
-
 eligibility_count <- eligibility_count_numeric %>%
   mutate(across(starts_with("n"),
                 ~ str_c("(n = ", scales::comma(.x, accuracy=1), ")")))
 
 # create tibble for results
 ncol <- 5
-nrow <- 16
+nrow <- 100
 flow <- matrix("", nrow=nrow, ncol=ncol)
 
 prior_covid <- str_c("(n = ", scales::comma(sum(eligibility_count_numeric[6:8,]$n_removed), accuracy = 1), ")")
 
-not_b_or_d <- # not meeting inclusion B or D
-  n_groups$min_n_a # meeting inclusion and exclusion A
-- n_groups$min_n_b # meeting inclusion and exclusion B
-- n_groups$min_n_vax_d # meeting inclusion D
+# (not meeting inclusion B or D) - (meeting inclusion and exclusion A) - (meeting inclusion and exclusion B) - (meeting inclusion D)
+not_b_or_d <- n_groups$min_n_a - n_groups$min_n_b - n_groups$min_n_vax_d 
 not_b_or_d <- str_c("(n =", scales::comma(not_b_or_d, accuracy = 1), ")")
+
+not_c <- eligibility_count_numeric[13,]$n - eligibility_count_numeric[18,]$n
+not_c <- str_c("(n =", scales::comma(not_c, accuracy = 1), ")")
 
 i <- 1
 # A inc.
@@ -85,10 +70,10 @@ i <- i+2
 flow[i,5] <- glue("Meeting exclusion criteria A: aged >120 {eligibility_count[4,]$n_removed}; missing  sex, ethnicity, region, or IMD {eligibility_count[5,]$n_removed}; evidence of prior COVID-19 {prior_covid}; in care home {eligibility_count[9,]$n_removed}")
 i <- i+2
 # A remaining
-flow[i,5] <- glue("Remaining {eligibility_count[9,]$n}")
+flow[i,3] <- glue("Remaining: {eligibility_count[9,]$n}")
 i <- i+2
 # Not B or D
-flow[i,1] <- glue("Not meeting inclusion criteria B or D: {not_b_or_d}")
+flow[i,5] <- glue("Not meeting inclusion criteria B or D: {not_b_or_d}")
 i <- i+2
 # B inc.
 flow[i,2] <- glue("Meeting inclusion criteria B: second dose of BNT162b2 or ChAdOx received between 6 and 14 weeks after eligibility date {eligibility_count[10,]$n}")
@@ -97,9 +82,7 @@ i <- i+2
 flow[i,1] <- glue("Meeting exclusion criteria B: first dose received before eligibility date {eligibility_count[11,]$n_removed}; <6 or >=14 weeks between first and second dose {eligibility_count[12,]$n_removed}; healthcare worker {eligibility_count[13,]$n_removed}")
 i <- i+2
 # Not C
-flow[i,1] <- glue("Not meeting inclusion criteria C: {eligibility_count[18,]$n_removed}")
-# Not D
-flow[i,5] <- glue("Not meeting inclusion criteria D: {eligibility_count[14,]$n_removed}")
+flow[i,1] <- glue("Not meeting inclusion criteria C: {not_c}") 
 i <- i+2
 # C inc.
 flow[i,2] <- glue("Meeting inclusion criteria C: first dose received during SVP {eligibility_count[18,]$n}")
@@ -107,14 +90,21 @@ flow[i,2] <- glue("Meeting inclusion criteria C: first dose received during SVP 
 flow[i,4] <- glue("Meeting inclusion criteria D: unvaccinated at start of SVP {eligibility_count[14,]$n}")
 i <- i+2
 # E ex vax
-flow[i,1] <- glue("Meeting exclusion citeria E: evidence of COVID-19 before start of SVP {eligibility_count[19,]$n_removed}; resident in care home before start of SVP {eligibility_count[20,]$n_removed}; end of life care before start of SVP {eligibility_count[21,]$n_removed};")
+flow[i,1] <- glue("Meeting exclusion citeria E: evidence of COVID-19 before start of SVP {eligibility_count[19,]$n_removed}; resident in care home before start of SVP {eligibility_count[20,]$n_removed}; end of life care before start of SVP {eligibility_count[21,]$n_removed}")
 # E ex unvax
-flow[i,5] <- glue("Meeting exclusion citeria E: evidence of COVID-19 before start of SVP {eligibility_count[15,]$n_removed}; resident in care home before start of SVP {eligibility_count[16,]$n_removed}; end of life care before start of SVP {eligibility_count[17,]$n_removed};")
-#
-
+flow[i,5] <- glue("Meeting exclusion citeria E: evidence of COVID-19 before start of SVP {eligibility_count[15,]$n_removed}; resident in care home before start of SVP {eligibility_count[16,]$n_removed}; end of life care before start of SVP {eligibility_count[17,]$n_removed}")
+i <- i+2
+# P1 exclusions
+flow[i,1] <- glue("Occurrence of the following before the start of period 1: death {eligibility_count[27,]$n_removed}; de-registration {eligibility_count[28,]$n_removed}; subsequent dose {eligibility_count[29,]$n_removed}")
+flow[i,5] <- glue("Occurrence of the following before the start of period 1: death {eligibility_count[23,]$n_removed}; de-registration {eligibility_count[24,]$n_removed}; subsequent dose {eligibility_count[25,]$n_removed}")
+# remaining
+i <- i+2
+flow[i,2] <- glue("Eligible for vaccinated group in period 1 {eligibility_count[29,]$n}")
+flow[i,4] <- glue("Eligible for unvaccinated group in period 1 {eligibility_count[25,]$n}")
 
 readr::write_delim(
   as.data.frame(flow),
   file = file.path(release_folder, "flow.csv"),
   delim = "\t"
 )
+
