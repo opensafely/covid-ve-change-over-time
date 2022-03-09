@@ -82,7 +82,7 @@ event_counts <- readr::read_csv(
   mutate(across(arm,
                 factor,
                 levels = c("BNT162b2", "ChAdOx", "unvax"),
-                labels = c("BNT162b2", "ChAdOx", "Unvaccinated"))) %>%
+                labels = c("BNT162b2", "ChAdOx1", "Unvaccinated"))) %>%
   mutate(across(outcome,
                 factor,
                 levels = unname(outcomes[outcomes_order]),
@@ -101,7 +101,7 @@ estimates_all <- readr::read_csv(
       mutate(across(comparison,
                   factor,
                   levels = c("BNT162b2", "ChAdOx", "both"),
-                  labels = c("BNT162b2 vs unvaccinated", "ChAdOx vs unvaccinated", "BNT162b2 vs ChAdOx"))) 
+                  labels = c("BNT162b2 vs unvaccinated", "ChAdOx1 vs unvaccinated", "BNT162b2 vs ChAdOx1"))) 
 
 # read metaregression results
 metareg_results_k <- readr::read_rds(
@@ -114,7 +114,7 @@ metareg_results_k <- readr::read_rds(
       mutate(across(comparison,
                   factor,
                   levels = c("BNT162b2", "ChAdOx", "both"),
-                  labels = c("BNT162b2 vs unvaccinated", "ChAdOx vs unvaccinated", "BNT162b2 vs ChAdOx"))) %>%
+                  labels = c("BNT162b2 vs unvaccinated", "ChAdOx1 vs unvaccinated", "BNT162b2 vs ChAdOx1"))) %>%
    mutate(across(c(logrhr, logrhr_lower, logrhr_higher), 
                 ~format(round(exp(.x), digits=2), nsmall=2, trim = TRUE))) %>%
   select(subgroup, comparison, outcome, k, rhr = logrhr, rhr_lower = logrhr_lower, rhr_higher = logrhr_higher)
@@ -178,7 +178,7 @@ variable_defs <- local({
   "Potential confounders (demographic)",
   "Age",
   "Age in whole years.",
-  "Integer",
+  "Numeric\\textsuperscript{a}",
   "start\\textsubscript{1i}",
   #
   "Potential confounders (demographic)",
@@ -272,8 +272,9 @@ variable_defs <- local({
       latex_options = c("hold_position", "repeat_header")
       ) %>%
     footnote(
-      general = c("JCVI: Joint Committee on Vaccination and Immunisation; start\\\\textsubscript{ki} is the start date of comparison period \\\\textit{k} for individual \\\\textit{i}."),
+      general = c("JCVI: Joint Committee on Vaccination and Immunisation; start\\\\textsubscript{ki} is the start date of comparison period \\\\textit{k} for individual \\\\textit{i}.\\\\newline"),
       general_title = "",
+      alphabet = "Age was modelled separately within each strata. Age within strata was modelled as linear, with quadratic terms additionally included for strata with age range >5 years.",
       footnote_as_chunk=TRUE,
       escape=FALSE,
       threeparttable = TRUE # to wrap footnote
@@ -358,6 +359,8 @@ print_table1 <- local({
   
   col_width <- (26 - ncol(table_out1)*padding)/ncol(table_out1)
   col_width <- as.character(glue("{col_width}cm"))
+  
+  col_names <- str_replace(col_names, "ChAdOx", "ChAdOx1")
   
   table_out2 <- table_out1 %>%
     kable(
@@ -817,8 +820,6 @@ table_estimates_covs_ft <- function(i) {
 
 # Supplementary Methods
 
-[Describe exactly how the age variables were derived.]
-
 ```{r jcvi-groups, include=TRUE, tab.cap.pre = "Supplementary Table "}
 tribble(
   ~priority_group, ~description,
@@ -1024,7 +1025,7 @@ knitr::include_graphics(file.path(release_folder, "plot_by_region_12_2021-06-15.
 
 \end{landscape}
 
-```{r ci-vax, include=TRUE, fig.cap="Cumulative incidence of subsequent vaccination", out.width="\\linewidth"}
+```{r ci-vax, include=TRUE, fig.cap="Cumulative incidence of subsequent vaccination. *And not clinically vulnerable.", out.width="\\linewidth"}
 knitr::include_graphics(file.path(release_folder, "ci_vax.png"))
 ```
 
@@ -1055,11 +1056,11 @@ landscape(table_metareg_ft)
 knitr::include_graphics(file.path(release_folder, "hr_vax_BNT162b2.png"))
 ```
 
-```{r hr-vax-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for ChAdOx vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_vax_ChAdOx.png"))
+```{r hr-vax-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for ChAdOx1 vs unvaccinated", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "hr_vax_ChAdOx1.png"))
 ```
 
-```{r hr-vax-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for BNT162b2 vs ChAdOx", out.width="\\linewidth"}
+```{r hr-vax-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for BNT162b2 vs ChAdOx1", out.width="\\linewidth"}
 knitr::include_graphics(file.path(release_folder, "hr_vax_both.png"))
 ```
 
@@ -1069,19 +1070,19 @@ knitr::include_graphics(file.path(release_folder, "hr_vax_both.png"))
 knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_BNT162b2.png"))
 ```
 
-```{r hr-vax-anytest-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for ChAdOx vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_ChAdOx.png"))
+```{r hr-vax-anytest-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for ChAdOx1 vs unvaccinated", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_ChAdOx1.png"))
 ```
 
-```{r hr-vax-anytest-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx", out.width="\\linewidth"}
+```{r hr-vax-anytest-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx1", out.width="\\linewidth"}
 knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_both.png"))
 ```
 
-```{r hr-vax-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 and ChAdOx vs unvaccinated", out.width="\\linewidth"}
+```{r hr-vax-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 and ChAdOx1 vs unvaccinated", out.width="\\linewidth"}
 knitr::include_graphics(file.path(release_folder, "hr_vax_anytest.png"))
 ```
 
-```{r hr-brand-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx", out.width="\\linewidth"}
+```{r hr-brand-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx1", out.width="\\linewidth"}
 knitr::include_graphics(file.path(release_folder, "hr_brand_anytest.png"))
 ```
 
