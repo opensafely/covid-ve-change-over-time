@@ -50,6 +50,23 @@ select_outcomes <- unname(outcomes[outcomes_order])
 ```
 
 ```{r}
+# read event counts data
+event_counts <- readr::read_csv(
+  here::here(release_folder, "event_counts_BNT162b2.csv")) %>%
+  bind_rows(
+    readr::read_csv(
+  here::here(release_folder, "event_counts_ChAdOx.csv")) %>%
+    filter(arm != "unvax") # because unvax arm same in both datasets
+  ) %>%
+  mutate(across(arm,
+                factor,
+                levels = c("BNT162b2", "ChAdOx", "unvax"),
+                labels = c("BNT162b2", "ChAdOx", "Unvaccinated"))) %>%
+  mutate(across(outcome,
+                factor,
+                levels = unname(outcomes[outcomes_order]),
+                labels = names(outcomes[outcomes_order])))
+
 # read estimates data
 estimates_all <- readr::read_csv(
   here::here(release_folder, "estimates_all.csv")) %>%
@@ -74,6 +91,18 @@ metareg_results_k <- readr::read_rds(
                 ~format(round(exp(.x), digits=2), nsmall=2, trim = TRUE))) %>%
   select(subgroup, comparison, outcome, k, rhr = logrhr, rhr_lower = logrhr_lower, rhr_higher = logrhr_higher)
 ```
+
+```{r}
+event_counts %>%
+  group_by(arm, outcome) %>%
+  summarise(total_events = sum(events, na.rm = TRUE)) %>%
+  ungroup() %>%
+  arrange(outcome, arm) %>%
+  mutate(across(total_events, ~scales::comma(.x, accuracy = 1)))
+```
+
+
+
 
 ```{r}
 aHRs <- local({
