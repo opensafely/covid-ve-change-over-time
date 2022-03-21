@@ -13,7 +13,7 @@ You can run this project via [Gitpod](https://gitpod.io) in a web browser by cli
 * If you are interested in how we defined our code lists, look in the [codelists folder](./codelists/)
 * The [`project.yaml`](./project.yaml) defines run-order and dependencies for all the analysis scripts. **This file should *not* be edited directly**. To make changes to the yaml, edit and run the [`create-project.R`](./create-project.R) script instead.
 
-### Analysis scripts
+### `analysis/`
 
 * [`design.R`](./analysis/design.R) creates metadata for aspects of the study design
 * The following files outline how we defined our variables:
@@ -36,7 +36,10 @@ You can run this project via [Gitpod](https://gitpod.io) in a web browser by cli
   * [`data_metareg_k.R`](analysis/post_release/data_metareg_k.R) applies some postprocessing to the metaregression results
   * [`plot_cox_all.R`](analysis/post_release/plot_cox_all.R) plots the results of the Cox regression and metaregression
 
+### `manuscript/`
 
+* [`manuscript_text.Rmd`](manuscript/manuscript_text.Rmd) contains some paragraphs from the manuscript that have a lot of references to the effect estimates **note that this script needs updating with updated wording**
+* [`appendix.Rmd`](manuscript/appendix.Rmd) contains the supplementary material for the paper; to render to a PDF requires [`preamble.tex`](manuscript/preamble.tex) and [`preface.tex`](manuscript/preface.tex)
 
 # About the OpenSAFELY framework
 
