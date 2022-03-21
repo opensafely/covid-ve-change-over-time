@@ -52,7 +52,6 @@ source(here::here("analysis", "lib", "round_km.R"))
 ################################################################################
 
 # if running locally read extracted data:
-Sys.getenv("OPENSAFELY_BACKEND")
 if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
   
   release_folder <- "release20220226"
@@ -141,6 +140,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
     event = "status",
     strata = c("subgroup", "arm")
   ) %>%
+    ungroup() %>%
     mutate(
       c.inc = 1-surv,
       c.inc.ll = 1-surv.ul,
