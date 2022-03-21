@@ -56,6 +56,10 @@ subgroups_long <- if_else(
 # outcomes 
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds"))
+outcomes_long <- names(outcomes)
+outcomes_long[outcomes=="covidadmitted"] <- "COVID-19 hospitalisation"
+names(outcomes) <- outcomes_long
+rm(outcomes_long)
 outcomes_order <- c(which(outcomes == "covidadmitted"),
                     which(outcomes == "coviddeath"),
                     which(outcomes == "postest"),
