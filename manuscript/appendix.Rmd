@@ -242,7 +242,7 @@ variable_defs <- local({
   "start\\textsubscript{ki}",
   #
   "Potential confounders (clinical)",
-  "Number of COVID-19 tests.",
+  "Number of SARS-CoV-2 tests.",
   "SARS-CoV-2 tests were identified using SGSS records and based on swab date. Both polymerase chain reaction (PCR) and lateral flow tests will be included, without differentiation between symptomatic and asymptomatic infection.",
   "Integer",
   "Between 18 May 2020 (when widespread testing became available in England) and the earliest date of eligibility for first dose in the subgroup."
