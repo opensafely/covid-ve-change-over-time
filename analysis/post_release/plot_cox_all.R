@@ -23,6 +23,10 @@ outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds")
 )
 outcomes_order <- c(3,4,2,5,1)
+outcomes_long <- names(outcomes)
+outcomes_long[outcomes=="covidadmitted"] <- "COVID-19 hospitalisation"
+names(outcomes) <- outcomes_long
+rm(outcomes_long)
 
 # read subgroups
 subgroups <- readr::read_rds(
@@ -96,12 +100,6 @@ plot_data <- estimates_all %>%
   # remove as very few events
   filter(!(comparison %in% c("BNT162b2", "both") & subgroup==3 & outcome == "noncoviddeath")) %>%
   mutate(k=as.integer(label)) %>%
-  # group_by(subgroup, model, k) %>%
-  # mutate(k_missing = is.na(mean(estimate))) %>%
-  # ungroup() %>%
-  # group_by(subgroup, model) %>%
-  # mutate(max_k = max(k)) %>%
-  # ungroup() %>%
   left_join(
     min_max_fu_dates %>%
       mutate(across(subgroup, ~subgroup_labels[subgroups == .x])), 
@@ -117,7 +115,6 @@ plot_data <- estimates_all %>%
                 factor,
                 levels = subgroup_labels[subgroups_order],
                 labels = subgroups[subgroups_order]
-                # labels = str_wrap(subgroup_plot_labels[subgroups_order], 25)
                 )) %>%
   mutate(k_labelled_dates = k_labelled) %>%
   mutate(across(k_labelled_dates,
@@ -270,6 +267,9 @@ plot_vax <- plot_data %>%
 ggsave(plot_vax,
        filename = here::here(release_folder, glue("hr_vax.png")),
        width=page_height, height=page_width, units="cm")
+ggsave(plot_vax,
+       filename = here::here(release_folder, glue("hr_vax.svg")),
+       width=page_height, height=page_width, units="cm")
 
 ################################################################################
 # brand comparison
@@ -353,6 +353,9 @@ plot_brand <- plot_data %>%
   ) 
 ggsave(plot_brand,
        filename = here::here(release_folder, glue("hr_brand.png")),
+       width=page_width, height=14, units="cm")
+ggsave(plot_brand,
+       filename = here::here(release_folder, glue("hr_brand.svg")),
        width=page_width, height=14, units="cm")
 
 ################################################################################
