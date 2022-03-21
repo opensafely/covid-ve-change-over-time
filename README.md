@@ -25,10 +25,18 @@ You can run this project via [Gitpod](https://gitpod.io) in a web browser by cli
   * [`data_process_functions.R`](analysis/lib/data_process_functions.R) contains functions used in data processing
   * [`dummy_data_functions.R`](analysis/lib/dummy_data_functions.R) contains functions used to define the dummy data
   * [`data_properties.R`](analysis/lib/data_properties.R) contains functions to summarise data properties
-  * [`process_covariates.R`](analysis/lib/process_covariates.R) is a script for defining covariates on `start_fu_date`
   * [`redaction_functions.R`](analysis/lib/redaction_functions.R) contains functions for redacting values <= a specified threshold
   * [`round_km.R`](analysis/lib/round_km.R) contains functions for rounding Kaplan-Meier estimates for disclosure control
-* [`preprocess/`](.analysis/preprocess)
+* The scripts in [`preprocess/`](.analysis/preprocess), [`second_vax_period/`](./analysis/second_vax_period), [`subsequent_vax/`](./analysis/subsequent_vax), [`comparisons/`](./analysis/comparisons), and [`report/`](./analysis/report) carry out preprocessing, analysis and postprocessing, and are applied in the [`project.yaml`](./project.yaml)
+* [`post_release/`](./analysis/post_release) contains scripts that apply postprocessing to the released results:
+  * [`flow.R`](analysis/post_release/flow.R) creates a table of the flow of individuals into the study
+  * [`table1_process.Rmd`](analysis/post_release/table1_process.Rmd) creates Table 1 for the manuscript, which can be rendered by running [`render_tables.R`](analysis/post_release/render_tables.R)
+  * [`data_metareg_process.R`](analysis/post_release/data_metareg_process.R) prepares the data for metaregression
+  * [`waning_metareg.do`](analysis/post_release/waning_metareg.do) applies the metaregression
+  * [`data_metareg_k.R`](analysis/post_release/data_metareg_k.R) applies some postprocessing to the metaregression results
+  * [`plot_cox_all.R`](analysis/post_release/plot_cox_all.R) plots the results of the Cox regression and metaregression
+
+
 
 # About the OpenSAFELY framework
 
