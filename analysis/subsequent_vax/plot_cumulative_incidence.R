@@ -52,7 +52,8 @@ source(here::here("analysis", "lib", "round_km.R"))
 ################################################################################
 
 # if running locally read extracted data:
-if(Sys.getenv("OPENSAFELY_BACKEND") %in% c("", "expectations")) {
+Sys.getenv("OPENSAFELY_BACKEND")
+if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
   
   release_folder <- "release20220226"
   image_path <- here::here(release_folder)
