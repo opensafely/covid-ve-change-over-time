@@ -1,4 +1,4 @@
-from cohortextractor import (codelist_from_csv, combine_codelists)
+from cohortextractor import (codelist, codelist_from_csv, combine_codelists)
 
 #######################
 ### for JCVI groups ###
@@ -328,6 +328,17 @@ ICD10_I_codes = codelist_from_csv(
     "codelists/opensafely-icd-10-chapter-i.csv",
     system="icd10",
     column="code",
+)
+
+# for identifying hospitalisations from emergency data
+covid_emergency = codelist(
+    ["1240751000000100"],
+    system="snomed",
+)
+
+discharged_to_hospital = codelist(
+    ["306706006", "1066331000000109", "1066391000000105"],
+    system="snomed",
 )
 
 ###########################
