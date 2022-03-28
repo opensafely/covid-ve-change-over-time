@@ -29,6 +29,9 @@ study_parameters <- readr::read_rds(
 # read outcomes
 outcomes <- readr::read_rds(
   here::here("output", "lib", "outcomes.rds"))
+outcomes_death <- outcomes[str_detect(outcomes, "death")]
+outcomes <- c(outcomes_death, "covidadmitted", "covidemergency")
+names(outcomes) <- c(names(outcomes_death), "from APCS", "from ECDS")
 
 # covariates data
 data_covariates <- readr::read_rds(
@@ -188,7 +191,7 @@ table_events <-
     as.list(data %>% group_split(subgroup)),
     function(y)
       lapply(
-        outcomes,
+        outcomes[!str_detect(outcomes, "death")],
         function(z)
           try(y %>% derive_data_tte(outcome = z))
       )
