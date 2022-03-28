@@ -53,7 +53,8 @@ tribble(
     "01", "longres_group AND age_1 > 65",
     "02", "age_1 >=80",
     "03", "age_1 >=75",
-    "04", "age_1 >=70 OR (cev_group AND age_1 >=16)",
+    "04a", "age_1 >=70",
+    "04b", "cev_group AND age_1 >=16",
     "05", "age_1 >=65",
     "06", "atrisk_group AND age_1 >=16",
     "07", "age_1 >=60",
@@ -73,8 +74,8 @@ readr::write_csv(jcvi_groups, here::here("output", "lib", "jcvi_groups.csv"))
 elig_dates <-
 tribble(
     ~date, ~description, ~jcvi_groups,
-    "2020-12-08", "jcvi_group='01' OR jcvi_group='02' OR jcvi_group='03'", "01, 02, 03", #TODO
-    "2021-01-18", "jcvi_group='04'", "04",
+    "2020-12-08", "jcvi_group='01' OR jcvi_group='02'", "01, 02", 
+    "2021-01-18", "jcvi_group='03' OR jcvi_group='04a' OR jcvi_group='04b'", "03, 04a, 04b",
     ###
     "2021-02-15", "jcvi_group='05' OR jcvi_group='06'", "05, 06",
     ###
