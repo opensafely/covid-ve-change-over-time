@@ -250,7 +250,8 @@ data_covariates <- data_arm %>%
                   unit = "days"))) %>%
   select(patient_id, start_k_date, end_k_date, k,
          arm, split, subsequent_vax_date,
-         anytest_date, age,
+         anytest_date, age, 
+         covidemergency_date = covidemergency_0_date,
          all_of(unname(model_varlist$clinical)))
   
 
