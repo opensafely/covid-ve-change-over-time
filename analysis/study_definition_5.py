@@ -10,11 +10,11 @@ from codelists import *
 import json
 
 #study_parameters
-with open("./output/lib/study_parameters.json") as f:
+with open("./analysis/lib/study_parameters.json") as f:
   study_parameters = json.load(f)
 
 # define variables explicitly from study_parameters
-max_comparisons=study_parameters["max_comparisons"]
+max_comparisons=study_parameters["K"]
 start_date=study_parameters["start_date"] # start of phase 1
 end_date=study_parameters["end_date"] # latest date of data
 
