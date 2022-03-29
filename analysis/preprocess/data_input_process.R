@@ -14,8 +14,8 @@ library(lubridate)
 library(glue)
 
 ## source functions
-source(here::here("analysis", "lib", "data_process_functions.R"))
-source(here::here("analysis", "lib", "data_properties.R"))
+source(here::here("analysis", "functions", "data_process_functions.R"))
+source(here::here("analysis", "functions", "data_properties.R"))
 
 ## create folders for outputs
 fs::dir_create(here::here("output", "data"))
@@ -23,23 +23,16 @@ fs::dir_create(here::here("output", "tables"))
 
 ## import study_parameters
 study_parameters <- readr::read_rds(
-  here::here("output", "lib", "study_parameters.rds"))
+  here::here("analysis", "lib", "study_parameters.rds"))
 
 ## regions
 regions <- readr::read_csv(
-  here::here("output", "lib", "regions.csv")
+  here::here("analysis", "lib", "regions.csv")
 )
 
 ################################################################################
 # initial pre-processing
 cat("#### extract data ####\n")
-
-# # define breaks and labels for age_band
-# age_breaks_lower <- c(16, seq(20,95,5))
-# age_breaks_upper <- as.character(lead(age_breaks_lower) - 1)
-# age_breaks_upper[-length(age_breaks_upper)] <- str_c("-", age_breaks_upper[-length(age_breaks_upper)])
-# age_breaks_upper[length(age_breaks_upper)] <- "+"
-# age_labels <- str_c(age_breaks_lower, age_breaks_upper)
 
 data_extract <- 
   arrow::read_feather(file = here::here("output", "input_vax.feather")) %>%
@@ -79,8 +72,6 @@ data_processed_0 <- data_extract %>%
     sex = fct_case_when(
       sex == "F" ~ "Female",
       sex == "M" ~ "Male",
-      #sex == "I" ~ "Inter-sex",
-      #sex == "U" ~ "Unknown",
       TRUE ~ NA_character_
     ),
     #Subgroup
@@ -93,7 +84,6 @@ data_processed_0 <- data_extract %>%
     )
     
   ) %>%
-  # select(-ethnicity_6, -ethnicity_6_sus, -age_band_1, -age_band_2) %>%
   select(-ethnicity_6, -ethnicity_6_sus) %>%
   droplevels()
 
@@ -208,13 +198,27 @@ data_pr_probable_covid <- data_processed_0 %>%
   arrange(patient_id, date)
 
 ###############################################################################
-# covid admission
+# covid admission from APCS
 data_covidadmitted <- data_processed_0 %>%
   select(patient_id, 
          matches("^covidadmitted\\_\\d+\\_date")) %>%
   pivot_longer(
     cols = -patient_id,
     names_to = c(NA, "covidadmitted_index"),
+    names_pattern = "^(.*)_(\\d+)_date",
+    values_to = "date",
+    values_drop_na = TRUE
+  ) %>%
+  arrange(patient_id, date)
+
+###############################################################################
+# covid admission from ECDS
+data_covidemergency <- data_processed_0 %>%
+  select(patient_id, 
+         matches("^covidemergency\\_\\d+\\_date")) %>%
+  pivot_longer(
+    cols = -patient_id,
+    names_to = c(NA, "covidemergency_index"),
     names_pattern = "^(.*)_(\\d+)_date",
     values_to = "date",
     values_drop_na = TRUE
@@ -306,6 +310,10 @@ data_outcomes <- data_processed_0 %>%
     data_covidadmitted %>% select(patient_id, covidadmitted_date = date),
     by = "patient_id"
   ) %>%
+  left_join(
+    data_covidemergency %>% select(patient_id, covidemergency_date = date),
+    by = "patient_id"
+  ) %>%
   # in case coviddeath_date and death_date different dates
   mutate(across(c(coviddeath_date, death_date),
                 ~ if_else(
@@ -340,7 +348,8 @@ data_processed <- data_processed_0 %>%
       "primary_care_suspected_covid", 
       "primary_care_covid_case",
       "positive_test",
-      "covidadmitted"))
+      "covidadmitted",
+      "covidemergency"))
   ) %>%
   # join processed outcomes data
   left_join(
