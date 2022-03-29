@@ -12,9 +12,11 @@ fs::dir_create(here::here("output", "report", "data"))
 
 ################################################################################
 # read outcomes
-outcomes <- readr::read_rds(
-  here::here("output", "lib", "outcomes.rds")
-)
+# outcomes <- readr::read_rds(
+#   here::here("output", "lib", "outcomes.rds")
+# )
+outcomes <- c("covidadmitted", "covidemergency")
+names(outcomes) <- c("from APCS", "from ECDS")
 
 # read subgroups
 subgroups <- readr::read_rds(
@@ -37,12 +39,16 @@ model_tidy_list <- unlist(lapply(
         lapply(
           unname(outcomes),
           function(z)
-            try(
-              readr::read_rds(
-                here::here("output", "models_cox", "data", glue("modelcox_tidy_{x}_{y}_{z}.rds")
+            lapply(
+              1:6,
+              function(kk)
+                try(
+                  readr::read_rds(
+                    here::here("output", "models_cox", "data", glue("modelcox_tidy_{x}_{y}_{z}_{kk}.rds")
+                    )
+                  ) %>%
+                    mutate(comparison = x, subgroup = y, outcome = z, period = kk)
                 )
-              ) %>%
-                mutate(comparison = x, subgroup = y, outcome = z)
             )
         )
     ),
