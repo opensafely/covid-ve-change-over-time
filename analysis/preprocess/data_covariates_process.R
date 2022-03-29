@@ -7,12 +7,12 @@ library(glue)
 ################################################################################
 ## import study_parameters
 study_parameters <- readr::read_rds(
-  here::here("output", "lib", "study_parameters.rds"))
-K <- study_parameters$max_comparisons
+  here::here("analysis", "lib", "study_parameters.rds"))
+K <- study_parameters$K
 
 # import variable names
 model_varlist <- readr::read_rds(
-  here::here("output", "lib", "model_varlist.rds")
+  here::here("analysis", "lib", "model_varlist.rds")
 )
 
 # individuals eligible based on box c, d & e criteria 
@@ -251,7 +251,6 @@ data_covariates <- data_arm %>%
   select(patient_id, start_k_date, end_k_date, k,
          arm, split, subsequent_vax_date,
          anytest_date, age, 
-         covidemergency_date = covidemergency_0_date,
          all_of(unname(model_varlist$clinical)))
   
 
