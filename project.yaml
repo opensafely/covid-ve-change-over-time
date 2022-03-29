@@ -121,3 +121,4 @@ actions:
       moderately_sensitive:
         plots_by_region: output/second_vax_period/images/plot_by_region_*.png
 
+  

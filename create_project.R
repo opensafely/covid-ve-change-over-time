@@ -308,7 +308,8 @@ defaults_list <- list(
 
 
 
-outcomes <- readr::read_rds(here::here("output", "lib", "outcomes.rds")) %>% unname()
+# outcomes <- readr::read_rds(here::here("output", "lib", "outcomes.rds")) %>% unname()
+outcomes <- c("covidadmitted", "covidemergency")
 subgroups <- readr::read_rds(here::here("output", "lib", "subgroups.rds"))
 # subgroups <- c(readr::read_rds(here::here("output", "lib", "subgroups.rds")), "all")
 subgroup_labels <- seq_along(subgroups)
