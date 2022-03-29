@@ -9,7 +9,7 @@ library(tidyverse)
 library(lubridate)
 library(glue)
 
-source(here::here("analysis", "lib", "dummy_data_functions.R"))
+source(here::here("analysis", "functions", "dummy_data_functions.R"))
 
 set.seed(5476)
 
@@ -18,6 +18,7 @@ set.seed(5476)
 date_vars_recent <- c("positive_test_0_date", 
                       "primary_care_covid_case_0_date", 
                       "covidadmitted_0_date",
+                      "covidemergency_0_date",
                       "death_date",
                       "longres_date", 
                       "endoflife_date", 
@@ -25,7 +26,7 @@ date_vars_recent <- c("positive_test_0_date",
                       "coviddeath_date", 
                       "dereg_date")
 
-jcvi_group_patterns <- readr::read_csv(here::here("output", "lib", "jcvi_groups.csv")) %>%
+jcvi_group_patterns <- readr::read_csv(here::here("analysis", "lib", "jcvi_groups.csv")) %>%
   mutate(across(definition, ~str_extract(.x, "age_. >=\\d{2}"))) %>%
   # add dummy conditions for groups 1 and 6, as longres and atrisk data not available here (done correctly in real data)
   mutate(across(definition, ~case_when(group=="01" ~ "age_1 >=85", 
@@ -34,7 +35,7 @@ jcvi_group_patterns <- readr::read_csv(here::here("output", "lib", "jcvi_groups.
                                        TRUE ~ "TRUE")))
 
 # conditions for eligibility dates
-elig_date_patterns <- readr::read_csv(here::here("output", "lib", "elig_dates.csv")) %>%
+elig_date_patterns <- readr::read_csv(here::here("analysis", "lib", "elig_dates.csv")) %>%
   mutate(across(description, ~str_replace_all(.x, "p=", "p=="))) %>%
   mutate(across(description, ~str_replace_all(.x, "OR", "|"))) %>%
   mutate(across(description, ~str_replace_all(.x, "AND", "&"))) %>%
