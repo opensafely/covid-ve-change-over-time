@@ -14,7 +14,7 @@ library(glue)
 
 # read study parameters
 study_parameters <- readr::read_rds(
-  here::here("output", "lib", "study_parameters.rds"))
+  here::here("analysis", "lib", "study_parameters.rds"))
 
 # individuals who are eligible based on criteria in box a of Figure 3 on protocol
 data_eligible_a <- readr::read_rds(
@@ -45,7 +45,7 @@ data_eligible_c <- data_eligible_b %>%
   # keep brand of interest 
   # (already applied condition that 1st and 2nd doses are the same)
   mutate(brand = case_when(covid_vax_2_brand %in% "pfizer" ~ "BNT162b2",
-                           covid_vax_2_brand %in% "az" ~ "ChAdOx",
+                           covid_vax_2_brand %in% "az" ~ "ChAdOx1",
                            TRUE ~ NA_character_)) %>%
   select(-ends_with("_brand")) %>%
   # right join to keep only the jcvi_group:elig_date:region:brands
@@ -217,7 +217,7 @@ data_eligible_e <- bind_rows(
   ungroup() %>%
   select(-subgroup)
 
-for (k in 2:study_parameters$max_comparisons) {
+for (k in 2:study_parameters$K) {
   
   data_eligible_e <- data_eligible_e %>%
     mutate(
