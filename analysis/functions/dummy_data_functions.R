@@ -3,17 +3,17 @@ library(rlang)
 
 
 # preliminaries ----
-study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
+study_parameters <- readr::read_rds(here::here("analysis", "lib", "study_parameters.rds"))
 
 set.seed(study_parameters$seed)
 
 n <- study_parameters$n
 
-K <- study_parameters$max_comparisons
+K <- study_parameters$K
 
 start_date <- study_parameters$start_date
 
-regions <- readr::read_csv(here::here("output", "lib", "regions.csv"))
+regions <- readr::read_csv(here::here("analysis", "lib", "regions.csv"))
 
 # function for binary flag variables
 var_binary <- function(.data, name, incidence=0.05, keep_vars = TRUE) {

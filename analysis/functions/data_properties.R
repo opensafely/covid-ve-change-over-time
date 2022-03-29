@@ -18,7 +18,7 @@ data_properties <- function(
   
   # preliminaries
   library('tidyverse')
-  source(here::here("analysis", "lib", "redaction_functions.R"))
+  source(here::here("analysis", "functions", "redaction_functions.R"))
   
   # reset options when exit the function
   op <- options()
