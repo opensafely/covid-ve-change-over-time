@@ -9,7 +9,7 @@ from codelists import *
 # import json module
 import json
 #study_parameters
-with open("./output/lib/study_parameters.json") as f:
+with open("./analysis/lib/study_parameters.json") as f:
   study_parameters = json.load(f)
 
 # define variables explicitly
@@ -204,16 +204,5 @@ study=StudyDefinition(
         ),
         return_expectations={"incidence": 0.5, },
     ),
-
-  # any emergency attendance for covid
-  covidemergency_0_date=patients.attended_emergency_care(
-    returning="date_arrived",
-    on_or_before=end_date,
-    with_these_diagnoses=covid_emergency,
-    discharged_to=discharged_to_hospital,
-    date_format="YYYY-MM-DD",
-    find_first_match_in_period=True,
-  ),
-  
 
 )
