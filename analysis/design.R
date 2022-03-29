@@ -157,31 +157,6 @@ clinical <-c(
   "Pregnancy" = "pregnancy"
 )
 
-# clinical <- c(
-#   "BMI" = "bmi",
-#   "Heart failure" = "heart_failure", 
-#   "Other heart disease" = "other_heart_disease", 
-#   "Dialysis" = "dialysis",
-#   "Diabetes" = "diabetes",
-#   "Chronic liver disease" = "chronic_liver_disease", 
-#   "COPD" = "current_copd",
-#   "Other respiratory disease" = "other_respiratory", 
-#   "Lung cancer" = "lung_cancer",
-#   "Haematological cancer" = "haematological_cancer",
-#   "Cancer excl. lung, haemo" = "cancer_excl_lung_and_haem",
-#   "Immunosuppressed" = "any_immunosuppression",
-#   "Dementia"  = "dementia", 
-#   "Other neurological conditions" = "other_neuro_conditions",
-#   "Learning disabilities" = "ld_inc_ds_and_cp",
-#   "Serious mental illness" = "psychosis_schiz_bipolar",
-#   "Morbidity count" = "multimorb",
-#   "Shielding criteria met" = "shielded", 
-#   "Flu vaccine in previous 5 years" = "flu_vaccine",
-#   "Resident in long-term residential home" = "longres", 
-#   "Number of SARS-CoV-2 tests between 2020-05-18 and min_elig_date" = "test_hist_1_n",
-#   "Pregnancy" = "pregnancy"
-# )
-
 demographic <- c(
   "Age" = "age",
   "Sex" = "sex",
