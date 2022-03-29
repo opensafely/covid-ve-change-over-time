@@ -15,7 +15,7 @@ import pandas as pd
 ### import groups and dates
 # jcvi_groups
 jcvi_groups = pd.read_csv(
-    filepath_or_buffer='./output/lib/jcvi_groups.csv',
+    filepath_or_buffer='./analysis/lib/jcvi_groups.csv',
     dtype=str
 )
 dict_jcvi = { jcvi_groups['group'][i] : jcvi_groups['definition'][i] for i in jcvi_groups.index }
@@ -23,14 +23,14 @@ ratio_jcvi = { jcvi_groups['group'][i] : 1/len(jcvi_groups.index) for i in jcvi_
 
 # elig_dates
 elig_dates = pd.read_csv(
-    filepath_or_buffer='./output/lib/elig_dates.csv',
+    filepath_or_buffer='./analysis/lib/elig_dates.csv',
     dtype=str
 )
 dict_elig = { elig_dates['date'][i] : elig_dates['description'][i] for i in elig_dates.index }
 ratio_elig = { elig_dates['date'][i] : 1/len(elig_dates.index) for i in elig_dates.index }
 
 #study_parameters
-with open("./output/lib/study_parameters.json") as f:
+with open("./analysis/lib/study_parameters.json") as f:
   study_parameters = json.load(f)
 
 # set seed so that dummy data can be reproduced
