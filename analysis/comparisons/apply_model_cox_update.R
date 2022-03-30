@@ -17,7 +17,7 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   comparison <- "BNT162b2"
-  subgroup_label <- 1
+  subgroup_label <- 2
   outcome <- "postest"
   
 } else{
@@ -62,7 +62,7 @@ for (kk in 1:K) {
     # save empty tibbles to avoid errors
     
     model_glance[[kk]] <- tibble()
-    model_tidy[[k]] <- tibble()
+    model_tidy[[kk]] <- tibble()
     
     readr::write_rds(
       tibble(),
