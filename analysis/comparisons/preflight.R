@@ -14,8 +14,8 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   comparison <- "BNT162b2"
-  subgroup_label <- 4
-  outcome <- "covidadmitted"
+  subgroup_label <- 1
+  outcome <- "anytest"
   
 } else{
   comparison <- args[[1]]
@@ -31,22 +31,22 @@ fs::dir_create(here::here("output", "preflight", "tables"))
 ################################################################################
 # read study parameters
 study_parameters <- readr::read_rds(
-  here::here("output", "lib", "study_parameters.rds"))
-K <- study_parameters$max_comparisons
+  here::here("analysis", "lib", "study_parameters.rds"))
+K <- study_parameters$K
 
 # read subgroups
 subgroups <- readr::read_rds(
-  here::here("output", "lib", "subgroups.rds"))
+  here::here("analysis", "lib", "subgroups.rds"))
 
 # model covariates
 model_varlist <- readr::read_rds(
-  here::here("output", "lib", "model_varlist.rds")
+  here::here("analysis", "lib", "model_varlist.rds")
 )
 vars <- unname(unlist(model_varlist))
 
 # specfiy arms
-arm1 <- if_else(comparison == "ChAdOx", "ChAdOx", "BNT162b2")
-arm2 <- if_else(comparison == "both", "ChAdOx", "unvax")
+arm1 <- if_else(comparison == "ChAdOx1", "ChAdOx1", "BNT162b2")
+arm2 <- if_else(comparison == "both", "ChAdOx1", "unvax")
 
 ## read data
 # covariates data
@@ -73,7 +73,7 @@ data_in <- data_covariates %>%
 # read functions
 
 # redaction functions
-source(here::here("analysis", "lib", "redaction_functions.R"))
+source(here::here("analysis", "functions", "redaction_functions.R"))
 
 ################################################################################
 # join to tte data
@@ -102,13 +102,13 @@ data_00 <- data_0 %>%
   filter(k %in% keep_periods) %>%
   droplevels() 
 
-# do not run if all periods dropped
+# prepare data for each period k
 for (kk in 1:K) {
   
   data_1 <- data_00 %>%
     filter(k == kk)
   
-  # for each period k
+  # do not run if all periods dropped
   if (nrow(data_1) > 0) {
     
     # only keep categorical covariates with > 2 events per level per arm
@@ -119,7 +119,7 @@ for (kk in 1:K) {
     tbl_list <- data_1 %>%
       select(k, status, all_of(vars)) %>%
       select(-age) %>%
-      group_split(k, status)
+      group_split(status)
     
     # names for each element in list
     group_split_labels <- lapply(
@@ -280,7 +280,7 @@ for (kk in 1:K) {
       for (i in rev(seq_along(var_levs))) {
         
         if (event_count_fun(var) > events_threshold) {
-          # no merging required if minimum count is about threshold
+          # no merging required if minimum count is above threshold
           break
         } else if (i > 2) {
           # merge labels i and i-1
@@ -322,8 +322,7 @@ for (kk in 1:K) {
                     ~factor(
                       if_else(arm %in% arm1,
                               as.integer(k),
-                              0L),
-                      levels = 0:K)))
+                              0L))))
     
     ################################################################################
     # create age variables
@@ -459,7 +458,7 @@ for (kk in 1:K) {
     )
     
   } else {
-    # empty outputs to avid errors
+    # empty outputs to avoid errors
     
     readr::write_file(
       x="",
