@@ -325,7 +325,7 @@ actions:
         model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_1_anytest*.rds
         model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_1_anytest*.rds
       moderately_sensitive:
-        model_tidy_txt: output/models_cox/data/modelcox_tidy_BNT162b2_1_anytest.txt
-        model_glance_txt: output/models_cox/data/modelcox_glance_BNT162b2_1_anytest.txt
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_anytest.txt
 
   
