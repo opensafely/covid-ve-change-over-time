@@ -189,7 +189,7 @@ table_events <-
     as.list(data %>% group_split(subgroup)),
     function(y)
       lapply(
-        outcomes[!str_detect(outcomes, "death")],
+        outcomes,
         function(z)
           try(y %>% derive_data_tte(outcome = z))
       )
