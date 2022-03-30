@@ -213,4 +213,30 @@ actions:
       highly_sensitive:
         data_covariates: output/data/data_covariates.rds
 
-  
+  ## min and max follow-up dates for plots 
+
+  data_min_max_fu:
+    run: r:latest analysis/comparisons/data_min_max_fu.R
+    needs:
+    - data_input_process
+    - data_covariates_process
+    outputs:
+      highly_sensitive:
+        data_min_max_fu: output/lib/data_min_max_fu.rds
+
+  ## #################################### 
+  ## subsequent vaccination 
+  ## #################################### 
+  ## plot cumulative incidence of subsequent vaccination 
+
+  plot_cumulative_incidence:
+    run: r:latest analysis/subsequent_vax/plot_cumulative_incidence.R
+    needs:
+    - data_input_process
+    - data_eligible_cde
+    outputs:
+      moderately_sensitive:
+        ci_vax: output/subsequent_vax/images/ci_vax.png
+        survtable: output/subsequent_vax/tables/survtable_redacted.csv
+
+ 
