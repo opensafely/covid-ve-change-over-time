@@ -17,8 +17,8 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   comparison <- "BNT162b2"
-  subgroup_label <- 4
-  outcome <- "covidadmitted"
+  subgroup_label <- 1
+  outcome <- "anytest"
   
 } else{
   comparison <- args[[1]]
@@ -34,15 +34,18 @@ fs::dir_create(here::here("output", "models_cox", "tables"))
 ################################################################################
 # read subgroups
 subgroups <- readr::read_rds(
-  here::here("output", "lib", "subgroups.rds"))
+  here::here("analysis", "lib", "subgroups.rds"))
 subgroup <- subgroups[subgroup_label]
 
 # read study parameters
 study_parameters <- readr::read_rds(
-  here::here("output", "lib", "study_parameters.rds"))
-K <- study_parameters$max_comparisons
+  here::here("analysis", "lib", "study_parameters.rds"))
+K <- study_parameters$K
 
 ################################################################################
+model_glance <- list()
+model_tidy <- list()
+
 for (kk in 1:K) {
   
   # read data
@@ -57,6 +60,10 @@ for (kk in 1:K) {
   if (is.null(model_input)) {
     # model input null if not enough events, see preflight.R for threshold
     # save empty tibbles to avoid errors
+    
+    model_glance[[kk]] <- tibble()
+    model_tidy[[k]] <- tibble()
+    
     readr::write_rds(
       tibble(),
       here::here("output", "models_cox", "data", glue("modelcox_glance_{filename_suffix}.rds"))) 
@@ -73,7 +80,7 @@ for (kk in 1:K) {
   } else {
     
     model_varlist <- readr::read_rds(
-      here::here("output", "lib", "model_varlist.rds")
+      here::here("analysis", "lib", "model_varlist.rds")
     )
     
     data_cox <- model_input$data
@@ -163,19 +170,41 @@ for (kk in 1:K) {
       
     }
     
-    model_glance <- bind_rows(glance)
+    model_glance_out <- bind_rows(glance) 
     readr::write_rds(
-      model_glance,
+      model_glance_out,
       here::here("output", "models_cox", "data", glue("modelcox_glance_{filename_suffix}.rds"))) 
     
-    model_tidy <- bind_rows(tidy)
+    model_glance[[kk]] <- model_glance_out %>%
+      mutate(k = kk) %>%
+      select(k, model, convergence) 
+    
+    model_tidy_out <- bind_rows(tidy)
     readr::write_rds(
       model_tidy,
       here::here("output", "models_cox", "data", glue("modelcox_tidy_{filename_suffix}.rds"))) 
+    
+    model_tidy[[kk]] <- model_tidy_out %>%
+      filter(
+        str_detect(term, "k\\d"),
+        term != "k0"
+        ) %>%
+      select(model, term, estimate, std.error)
+      
   }
   
 }
 
+# for quickly checking that models have run successfully for all k
+model_glance <- tibble(k = 1:6) %>% left_join(bind_rows(model_glance))
+readr::write_rds(
+  model_glance,
+  here::here("output", "models_cox", "data", glue("modelcox_glance_{comparison}_{subgroup_label}_{outcome}.txt"))) 
+
+model_tidy <- tibble(term = str_c("k", 1:6)) %>% left_join(bind_rows(model_tidy))
+readr::write_rds(
+  model_tidy,
+  here::here("output", "models_cox", "data", glue("modelcox_tidy_{comparison}_{subgroup_label}_{outcome}.txt"))) 
 
 
 
