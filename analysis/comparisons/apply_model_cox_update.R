@@ -29,7 +29,7 @@ if(length(args)==0){
 ################################################################################
 # create directories
 fs::dir_create(here::here("output", "models_cox", "data"))
-fs::dir_create(here::here("output", "models_cox", "tables"))
+fs::dir_create(here::here("output", "models_cox", "temp"))
 
 ################################################################################
 # read subgroups
@@ -197,14 +197,18 @@ for (kk in 1:K) {
 
 # for quickly checking that models have run successfully for all k
 model_glance <- tibble(k = 1:6) %>% left_join(bind_rows(model_glance))
-readr::write_rds(
-  model_glance,
-  here::here("output", "models_cox", "data", glue("modelcox_glance_{comparison}_{subgroup_label}_{outcome}.txt"))) 
+capture.output(
+  model_glance %>% kableExtra::kable(format = "pipe"),
+  file = here::here("output", "models_cox", "temp", glue("modelcox_glance_{comparison}_{subgroup_label}_{outcome}.txt")),
+  append = FALSE
+)
 
 model_tidy <- tibble(term = str_c("k", 1:6)) %>% left_join(bind_rows(model_tidy))
-readr::write_rds(
-  model_tidy,
-  here::here("output", "models_cox", "data", glue("modelcox_tidy_{comparison}_{subgroup_label}_{outcome}.txt"))) 
+capture.output(
+  model_tidy %>% kableExtra::kable(format = "pipe"),
+  file = here::here("output", "models_cox", "temp", glue("modelcox_tidy_{comparison}_{subgroup_label}_{outcome}.txt")),
+  append = FALSE
+)
 
 
 
