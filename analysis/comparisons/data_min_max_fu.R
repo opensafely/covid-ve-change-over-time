@@ -12,7 +12,7 @@ fs::dir_create(here::here("output", "lib"))
 
 # read study parameters
 study_parameters <- readr::read_rds(
-  here::here("output", "lib", "study_parameters.rds"))
+  here::here("analysis", "lib", "study_parameters.rds"))
 
 ## read data
 # covariates data
