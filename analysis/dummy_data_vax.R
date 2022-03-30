@@ -30,6 +30,7 @@ jcvi_group_patterns <- readr::read_csv(here::here("analysis", "lib", "jcvi_group
   mutate(across(definition, ~str_extract(.x, "age_. >=\\d{2}"))) %>%
   # add dummy conditions for groups 1 and 6, as longres and atrisk data not available here (done correctly in real data)
   mutate(across(definition, ~case_when(group=="01" ~ "age_1 >=85", 
+                                       group=="04b" ~ "age_1 >=68",
                                        group=="06" ~ "age_1 >=62",
                                        !is.na(.x) ~ .x,
                                        TRUE ~ "TRUE")))
