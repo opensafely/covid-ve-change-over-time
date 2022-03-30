@@ -10,8 +10,7 @@ fs::dir_create(here::here("output", "subsequent_vax", "tables"))
 
 ## import study_parameters
 study_parameters <- readr::read_rds(
-  here::here("output", "lib", "study_parameters.rds"))
-
+  here::here("analysis", "lib", "study_parameters.rds"))
 
 # individuals eligible based on box c criteria
 data_eligible_e_vax <- readr::read_rds(
@@ -36,9 +35,8 @@ data_wide_vax_dates <- readRDS(
 
 # read subgroups
 subgroups <- readr::read_rds(
-  here::here("output", "lib", "subgroups.rds"))
+  here::here("analysis", "lib", "subgroups.rds"))
 subgroup_labels <- seq_along(subgroups)
-subgroup_order <- c(4,1,3,2)
 subgroups_long <- if_else(
   subgroups %in% subgroups[c(2,3)],
   as.character(glue("{subgroups}*")),
@@ -47,7 +45,7 @@ subgroups_long <- if_else(
 subgroups_long_wrap <- str_wrap(subgroups_long, width = 25)
 
 # redaction function for KM curves
-source(here::here("analysis", "lib", "round_km.R"))
+source(here::here("analysis", "functions", "round_km.R"))
 
 ################################################################################
 
@@ -61,16 +59,16 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
     here::here(release_folder, "survtable_redacted.csv")) %>%
     mutate(across(subgroup,
                   ~ case_when(
-                    str_detect(.x, "16-64") ~ 1,
-                    str_detect(.x, "18-39") ~ 2,
+                    str_detect(.x, "65") ~ 1,
+                    str_detect(.x, "16-64") ~ 2,
                     str_detect(.x, "40-64") ~ 3,
-                    str_detect(.x, "65") ~ 4,
+                    str_detect(.x, "18-39") ~ 4,
                     TRUE ~ NA_real_
                   ))) %>%
     mutate(across(subgroup,
                   factor,
-                  levels = subgroup_order,
-                  labels = subgroups_long_wrap[subgroup_order])) 
+                  levels = subgroup_labels,
+                  labels = subgroups_long_wrap)) 
   
 } else { # else derive the data
   
@@ -88,8 +86,8 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
               by = "patient_id") %>%
     mutate(across(subgroup,
                   factor,
-                  levels = subgroups[subgroup_order],
-                  labels = subgroups_long_wrap[subgroup_order])) %>%
+                  levels = subgroups,
+                  labels = subgroups_long_wrap)) %>%
     mutate(
       # start date of comparison 1 
       start_fu_date = if_else(
@@ -98,7 +96,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
         covid_vax_2_date + days(14)
       ),
       # end date of final comparison or end of data availability
-      end_fu_date = pmin(start_fu_date + days(study_parameters$max_comparisons*28),
+      end_fu_date = pmin(start_fu_date + days(study_parameters$K*28),
                          study_parameters$end_date)
     ) %>%
     select(-start_of_period, -covid_vax_2_date) %>%
@@ -157,13 +155,12 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
 
 ################################################################################
 # scale for x-axis
-K <- study_parameters$max_comparisons
+K <- study_parameters$K
 x_breaks <- seq(0,K*4,4)
 x_labels <- x_breaks + 2
 
 # create plot
 plot_out <- survtable_redacted %>%
-  mutate(across(arm, ~str_replace(.x, "ChAdOx", "ChAdOx1"))) %>%
   ggplot(aes(x = time, y = c.inc, colour = subgroup)) +
   geom_step(size=0.8) +
   facet_wrap(~ arm, nrow=2) +
