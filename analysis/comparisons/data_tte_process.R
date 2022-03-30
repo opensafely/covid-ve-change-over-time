@@ -19,19 +19,17 @@ if(length(args)==0){
   comparison <- args[[1]]
 }
 
-arm1 <- if_else(comparison =="ChAdOx", "ChAdOx", "BNT162b2")
-arm2 <- if_else(comparison == "both", "ChAdOx", "unvax")
+arm1 <- if_else(comparison =="ChAdOx1", "ChAdOx1", "BNT162b2")
+arm2 <- if_else(comparison == "both", "ChAdOx1", "unvax")
 
 ################################################################################
 study_parameters <- readr::read_rds(
-  here::here("output", "lib", "study_parameters.rds"))
+  here::here("analysis", "lib", "study_parameters.rds"))
 
 # read outcomes
 outcomes <- readr::read_rds(
-  here::here("output", "lib", "outcomes.rds"))
+  here::here("analysis", "lib", "outcomes.rds"))
 outcomes_death <- outcomes[str_detect(outcomes, "death")]
-outcomes <- c(outcomes_death, "covidadmitted", "covidemergency")
-names(outcomes) <- c(names(outcomes_death), "from APCS", "from ECDS")
 
 # covariates data
 data_covariates <- readr::read_rds(
@@ -44,16 +42,16 @@ data_processed <- readr::read_rds(
 
 # read subgroups
 subgroups <- readr::read_rds(
-  here::here("output", "lib", "subgroups.rds"))
+  here::here("analysis", "lib", "subgroups.rds"))
 subgroup_labels <- seq_along(subgroups)
-if ("ChAdOx" %in% c(arm1, arm2)) {
+if ("ChAdOx1" %in% c(arm1, arm2)) {
   select_subgroups <- subgroups[subgroups != "18-39 years"]
 } else {
   select_subgroups <- subgroups
 }
 
 # redaction functions
-source(here::here("analysis", "lib", "redaction_functions.R"))
+source(here::here("analysis", "functions", "redaction_functions.R"))
 
 fs::dir_create(here::here("output", "tte", "data"))
 fs::dir_create(here::here("output", "tte", "tables"))
