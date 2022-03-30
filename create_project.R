@@ -317,8 +317,12 @@ apply_model_fun <- function(
         glue("preflight_{comparison}_{subgroup_label}_{outcome}")),
       highly_sensitive = list(
         modelnumber = glue("output/models_cox/data/model*_{comparison}_{subgroup_label}_{outcome}*.rds"),
-        model_tidy = glue("output/models_cox/data/modelcox_tidy_{comparison}_{subgroup_label}_{outcome}*.rds"),
-        model_glance = glue("output/models_cox/data/modelcox_glance_{comparison}_{subgroup_label}_{outcome}*.rds")
+        model_tidy_rds = glue("output/models_cox/data/modelcox_tidy_{comparison}_{subgroup_label}_{outcome}*.rds"),
+        model_glance_rds = glue("output/models_cox/data/modelcox_glance_{comparison}_{subgroup_label}_{outcome}*.rds")
+      ),
+      moderately_sensitive = list(
+        model_tidy_txt = glue("output/models_cox/data/modelcox_tidy_{comparison}_{subgroup_label}_{outcome}.txt"),
+        model_glance_txt = glue("output/models_cox/data/modelcox_glance_{comparison}_{subgroup_label}_{outcome}.txt")
       )
     )
     

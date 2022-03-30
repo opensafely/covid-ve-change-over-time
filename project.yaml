@@ -239,4 +239,93 @@ actions:
         ci_vax: output/subsequent_vax/images/ci_vax.png
         survtable: output/subsequent_vax/tables/survtable_redacted.csv
 
- 
+  ## #################################### 
+  ## table 1 for report 
+  ## #################################### 
+  ## create table 1 for all and for each subgroup 
+
+  table1:
+    run: r:latest analysis/report/table1.R
+    needs:
+    - data_input_process
+    - data_eligible_cde
+    - data_covariates_process
+    outputs:
+      moderately_sensitive:
+        eligibility_count_p1: output/tables/eligibility_count_p1.csv
+        table_csv: output/report/tables/table1_*_REDACTED.csv
+        table_html: output/report/tables/table1_*_REDACTED.html
+
+  ## #################################### 
+  ## process time to event data 
+  ## #################################### 
+  ## process tte data 
+
+  data_tte_process_BNT162b2:
+    run: r:latest analysis/comparisons/data_tte_process.R BNT162b2
+    needs:
+    - data_input_process
+    - data_covariates_process
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/tte/data/data_tte_BNT162b2*.rds
+      moderately_sensitive:
+        event_counts: output/tte/tables/event_counts_BNT162b2.csv
+
+  data_tte_process_ChAdOx1:
+    run: r:latest analysis/comparisons/data_tte_process.R ChAdOx1
+    needs:
+    - data_input_process
+    - data_covariates_process
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/tte/data/data_tte_ChAdOx1*.rds
+      moderately_sensitive:
+        event_counts: output/tte/tables/event_counts_ChAdOx1.csv
+
+  data_tte_process_both:
+    run: r:latest analysis/comparisons/data_tte_process.R both
+    needs:
+    - data_input_process
+    - data_covariates_process
+    outputs:
+      highly_sensitive:
+        data_tte_brand_outcome: output/tte/data/data_tte_both*.rds
+      moderately_sensitive:
+        event_counts: output/tte/tables/event_counts_both.csv
+
+  ## #################################### 
+  ## apply models 
+  ## #################################### 
+  ## BNT162b2; 65+ years; anytest 
+  ## preflight checks 
+
+  preflight_BNT162b2_1_anytest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 1 anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_1_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_1_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 1 anytest
+    needs:
+    - preflight_BNT162b2_1_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_1_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_1_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_1_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/data/modelcox_tidy_BNT162b2_1_anytest.txt
+        model_glance_txt: output/models_cox/data/modelcox_glance_BNT162b2_1_anytest.txt
+
+  
