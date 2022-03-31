@@ -181,7 +181,7 @@ for (kk in 1:K) {
     
     model_tidy_out <- bind_rows(tidy)
     readr::write_rds(
-      model_tidy,
+      model_tidy_out,
       here::here("output", "models_cox", "data", glue("modelcox_tidy_{filename_suffix}.rds"))) 
     
     model_tidy[[kk]] <- model_tidy_out %>%
