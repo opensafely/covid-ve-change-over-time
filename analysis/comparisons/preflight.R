@@ -85,6 +85,13 @@ data_0 <- readr::read_rds(
 
 
 events_threshold <- 2
+# reasons for applying the events threshold are twofold:
+# 1. avoids issues with statistical convergence
+# 2. ensuring that >2 events in each cell of the cross-tab of 
+#    exposure variable x categorical covariate also ensures that >5 events per
+#    level of each covariate, and therefore >5 observations per level of each
+#    covariate, satisfying the OpenSAFELY rules for disclosure control 
+
 
 # keep only periods with > 2 events in each arm
 events_per_period <- data_0 %>%
