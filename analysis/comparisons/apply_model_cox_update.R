@@ -196,14 +196,22 @@ for (kk in 1:K) {
 }
 
 # for quickly checking that models have run successfully for all k
-model_glance <- tibble(k = 1:K) %>% left_join(bind_rows(model_glance))
+model_glance <- bind_rows(model_glance)
+if (!is_empty(model_glance)) {
+  model_glance <- tibble(k = 1:K) %>% 
+    left_join(model_glance, by = "k")
+}
 capture.output(
   model_glance %>% kableExtra::kable(format = "pipe"),
   file = here::here("output", "models_cox", "temp", glue("modelcox_glance_{comparison}_{subgroup_label}_{outcome}.txt")),
   append = FALSE
 )
 
-model_tidy <- tibble(term = str_c("k", 1:K)) %>% left_join(bind_rows(model_tidy))
+model_tidy <- bind_rows(model_tidy)
+if (!is_empty(model_tidy)) {
+  model_tidy <- tibble(term = str_c("k", 1:K)) %>% 
+    left_join(model_tidy, by = "term")
+}
 capture.output(
   model_tidy %>% kableExtra::kable(format = "pipe"),
   file = here::here("output", "models_cox", "temp", glue("modelcox_tidy_{comparison}_{subgroup_label}_{outcome}.txt")),
