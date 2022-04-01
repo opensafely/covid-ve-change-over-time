@@ -60,14 +60,16 @@ model_tidy_list <- lapply(
 model_tidy_tibble <- bind_rows(
   model_tidy_list[sapply(model_tidy_list, function(x) is_tibble(x))]
 ) %>%
-  select(subgroup, comparison, outcome, model, period, variable, label, reference_row,
-         n_obs, n_event,
-         estimate, conf.low, conf.high) %>%
   mutate(across(c(estimate, conf.low, conf.high), round, 5)) %>%
   mutate(across(model, 
                 factor, levels = 1:2, labels = c("unadjusted", "adjusted"))) %>%
-  mutate(across(c(n_obs, n_event), round, -1)) %>%
-  arrange(n_obs)
+  group_by(subgroup, comparison, outcome, model, period, variable) %>%
+  mutate(n_obs_model = sum(n_obs)) %>%
+  mutate(across(c(n_obs_model, n_obs, n_event), round, -1)) %>%
+  select(subgroup, comparison, outcome, model, period, variable, label, reference_row,
+         n_obs_model, n_obs_label = n_obs, n_event_label = n_event,
+         estimate, conf.low, conf.high) %>%
+  arrange(n_obs_model)
 
 readr::write_csv(
   model_tidy_tibble,
