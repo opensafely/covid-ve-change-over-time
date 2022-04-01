@@ -717,8 +717,8 @@ actions_list <- splice(
     name = "data_min_max_fu",
     run = "r:latest analysis/comparisons/data_min_max_fu.R",
     needs = list("data_input_process", "data_covariates_process"),
-    highly_sensitive = list(
-      data_min_max_fu = "output/lib/data_min_max_fu.rds"
+    moderately_sensitive = list(
+      data_min_max_fu_csv = "output/lib/data_min_max_fu.csv"
     )
   ),
   

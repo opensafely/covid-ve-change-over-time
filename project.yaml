@@ -221,8 +221,8 @@ actions:
     - data_input_process
     - data_covariates_process
     outputs:
-      highly_sensitive:
-        data_min_max_fu: output/lib/data_min_max_fu.rds
+      moderately_sensitive:
+        data_min_max_fu_csv: output/lib/data_min_max_fu.csv
 
   ## #################################### 
   ## subsequent vaccination 

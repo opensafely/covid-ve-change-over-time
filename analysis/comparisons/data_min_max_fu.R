@@ -38,7 +38,9 @@ data_min_max_fu <- data_covariates %>%
   mutate(across(max_fu_date,
                 ~ pmin(as.Date(study_parameters$end_date), .x)))
 
-readr::write_rds(
+
+# data for release
+readr::write_csv(
   data_min_max_fu,
-  here::here("output", "lib", "data_min_max_fu.rds")
+  here::here("output", "lib", "data_min_max_fu.csv")
 )
