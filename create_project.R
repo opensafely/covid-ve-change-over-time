@@ -827,7 +827,7 @@ actions_list <- splice(
         comparisons,
         function(x)
         {
-          if (x %in% c("ChAdOx", "both")) {
+          if (x %in% c("ChAdOx1", "both")) {
             ys <- subgroup_labels[subgroups != "18-39 years"]
           } else {
             ys <- subgroup_labels
@@ -845,6 +845,20 @@ actions_list <- splice(
       ), recursive = FALSE))),
     moderately_sensitive = list(
       tidy_tables_events = glue("output/models_cox/data/estimates_all.csv")
+    )
+  ),
+  
+  comment("####################################",
+          "plot to check estimates", 
+          "####################################"),
+  action(
+    name = "plot_check",
+    run = "r:latest analysis/comparisons/plot_cox_check.R",
+    needs = list(
+      "combine_estimates"
+      ),
+    moderately_sensitive = list(
+      plot_check = "output/models_cox/plot_check.svg"
     )
   )
   
