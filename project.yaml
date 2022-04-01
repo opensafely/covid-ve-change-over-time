@@ -2236,5 +2236,5 @@ actions:
     - combine_estimates
     outputs:
       moderately_sensitive:
-        plot_check: output/models_cox/plot_check.svg
+        plot_check: output/models_cox/images/plot_check.svg
 

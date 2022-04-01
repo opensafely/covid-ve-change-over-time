@@ -858,7 +858,7 @@ actions_list <- splice(
       "combine_estimates"
       ),
     moderately_sensitive = list(
-      plot_check = "output/models_cox/plot_check.svg"
+      plot_check = "output/models_cox/images/plot_check.svg"
     )
   )
   
