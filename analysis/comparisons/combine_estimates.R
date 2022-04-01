@@ -33,34 +33,28 @@ comparisons <- c("BNT162b2", "ChAdOx1", "both")
 source(here::here("analysis", "functions", "redaction_functions.R"))
 
 ################################################################################
-model_tidy_list <- unlist(lapply(
-  comparisons,
-  function(x)
-    unlist(lapply(
-      subgroup_labels,
-      function(y)
-        unlist(lapply(
-          unname(outcomes),
-          function(z)
-            lapply(
-              1:K,
-              function(kk)
-                try(
-                  readr::read_rds(
-                    here::here("output", "models_cox", "data", glue("modelcox_tidy_{x}_{y}_{z}_{kk}.rds")
-                    )
-                  ) %>%
-                    mutate(comparison = x, subgroup = y, outcome = z, period = kk)
-                )
-            )
-        ),
-        recursive = FALSE
+
+all_files <- list.files(path = here::here("output", "models_cox", "data"), 
+           pattern = "modelcox_tidy_\\w+_\\d_\\w+_\\d.rds",
+           all.files = FALSE,
+           full.names = FALSE, recursive = FALSE,
+           ignore.case = FALSE, include.dirs = FALSE)
+
+
+model_tidy_list <- lapply(
+  all_files,
+  function(filename) {
+    filename_split <- unlist(str_split(str_remove(filename, ".rds"), "_"))
+    readr::read_rds(
+      here::here("output", "models_cox", "data", filename)
+    ) %>%
+      mutate(
+        comparison = filename_split[3],
+        subgroup = filename_split[4],
+        outcome = filename_split[5],
+        period = filename_split[6]
         )
-    ),
-    recursive = FALSE
-    )
-),
-recursive = FALSE
+  }
 )
 
 model_tidy_tibble <- bind_rows(
@@ -69,6 +63,7 @@ model_tidy_tibble <- bind_rows(
   select(subgroup, comparison, outcome, model, period, variable, label, reference_row,
          n_obs, n_event,
          estimate, conf.low, conf.high) %>%
+  mutate(across(c(estimate, conf.low, conf.high), round, 5)) %>%
   mutate(across(model, 
                 factor, levels = 1:2, labels = c("unadjusted", "adjusted")))
 
