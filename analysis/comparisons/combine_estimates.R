@@ -65,7 +65,9 @@ model_tidy_tibble <- bind_rows(
          estimate, conf.low, conf.high) %>%
   mutate(across(c(estimate, conf.low, conf.high), round, 5)) %>%
   mutate(across(model, 
-                factor, levels = 1:2, labels = c("unadjusted", "adjusted")))
+                factor, levels = 1:2, labels = c("unadjusted", "adjusted"))) %>%
+  mutate(across(c(n_obs, n_event), round, -1)) %>%
+  arrange(n_obs)
 
 readr::write_csv(
   model_tidy_tibble,

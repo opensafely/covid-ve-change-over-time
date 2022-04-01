@@ -32,6 +32,7 @@ data_min_max_fu <- data_covariates %>%
   summarise(
     min_fu_date = min(start_k_date),
     max_fu_date = max(end_k_date),
+    n = round(n(), -1),
     .groups = "keep"
   ) %>% 
   ungroup() %>%
