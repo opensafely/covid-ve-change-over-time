@@ -67,7 +67,7 @@ plot_check <- estimates_all %>%
     colour = guide_legend(nrow = 2, byrow=TRUE)
     ) +
   labs(
-    x = "comaprison period",
+    x = "comaprison period"
   ) +
   theme_bw() +
   theme(
