@@ -102,7 +102,12 @@ plot_data <- estimates_all %>%
   mutate(k=as.integer(label)) %>%
   left_join(
     min_max_fu_dates %>%
-      mutate(across(subgroup, ~subgroup_labels[subgroups == .x])), 
+      left_join(
+        tibble(subgroup = subgroups, subgroup_label = subgroup_labels),
+        by = "subgroup"
+      ) %>%
+      select(-subgroup) %>%
+      rename(subgroup = subgroup_label), 
     by = "subgroup"
   ) %>%
   mutate(order1 = 10*k) %>%
@@ -268,7 +273,7 @@ ggsave(plot_vax,
        filename = here::here(release_folder, glue("hr_vax.png")),
        width=page_height, height=page_width, units="cm")
 ggsave(plot_vax,
-       filename = here::here(release_folder, glue("hr_vax.svg")),
+       filename = here::here(release_folder, glue("hr_vax.pdf")),
        width=page_height, height=page_width, units="cm")
 
 ################################################################################
@@ -355,7 +360,7 @@ ggsave(plot_brand,
        filename = here::here(release_folder, glue("hr_brand.png")),
        width=page_width, height=14, units="cm")
 ggsave(plot_brand,
-       filename = here::here(release_folder, glue("hr_brand.svg")),
+       filename = here::here(release_folder, glue("hr_brand.pdf")),
        width=page_width, height=14, units="cm")
 
 ################################################################################
