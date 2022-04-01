@@ -5,21 +5,23 @@ library(glue)
 
 fs::dir_create(here::here("output", "models_cox", "images"))
 
-# read subgroups
+cat("-- read subgroups --")
 subgroups <- readr::read_rds(
   here::here("analysis", "lib", "subgroups.rds"))
 subgroup_labels <- seq_along(subgroups)
 
+cat("-- read estimates_all.csv --")
 estimates_all <- readr::read_csv(here::here("output", "models_cox", "data", "estimates_all.csv")) %>%
   filter(variable == "k", label != "0") %>%
   mutate(across(c(estimate, conf.low, conf.high), exp))
   
-
+cat("-- define gg_color_hue --")
 gg_color_hue <- function(n, transparency = 1) {
   hues = seq(15, 375, length = n + 1)
   hcl(h = hues, l = 65, c = 100, alpha = transparency)[1:n]
 }
 
+cat("-- set parameters for plot --")
 position_dodge_val <- 0.8
 alpha_unadj <- 0.3
 palette_unadj <- c(gg_color_hue(2, transparency = alpha_unadj),
@@ -34,7 +36,7 @@ colour_levs <- c(str_c(comparisons, " unadjusted"), str_c(comparisons, " adjuste
 palette_all <- c(palette_unadj, palette_adj)
 names(palette_all) <- colour_levs
 
-
+cat("-- create plot --")
 plot_check <- estimates_all %>%
   mutate(across(subgroup, factor, levels = subgroup_labels, labels = subgroups)) %>%
   mutate(colourvar = factor(
@@ -99,6 +101,7 @@ plot_check <- estimates_all %>%
     
   ) 
 
+cat("-- save plot --")
 ggsave(plot_check,
        filename = here::here("output", "models_cox", "images", glue("plot_check.svg")),
        width=50, height=35, units="cm")
