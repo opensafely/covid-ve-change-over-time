@@ -63,13 +63,16 @@ model_tidy_tibble <- bind_rows(
   mutate(across(c(estimate, conf.low, conf.high), round, 5)) %>%
   mutate(across(model, 
                 factor, levels = 1:2, labels = c("unadjusted", "adjusted"))) %>%
-  group_by(subgroup, comparison, outcome, model, period, variable) %>%
-  mutate(n_obs_model = sum(n_obs, na.rm = TRUE)) %>%
+  # calculate the total number of observations per model
+  mutate(n_obs_model = if_else(variable == "k", n_obs, NA_real_)) %>%
+  group_by(subgroup, comparison, outcome, model, period) %>%
+  mutate(across(n_obs_model, sum, na.rm=TRUE)) %>%
   ungroup() %>%
   mutate(across(c(n_obs_model, n_obs, n_event), round, -1)) %>%
   select(subgroup, comparison, outcome, model, period, variable, label, reference_row,
          n_obs_model, n_obs_label = n_obs, n_event_label = n_event,
          estimate, conf.low, conf.high) %>%
+  # order so that model with least observations is first
   arrange(n_obs_model)
 
 readr::write_csv(
