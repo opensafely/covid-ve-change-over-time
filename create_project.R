@@ -211,8 +211,7 @@ readr::write_rds(
 ################################################################################
 # create bash script for generating study definitions from template
 create_study_definitions <- 
-  str_c("#!/bin/sh",
-        "# Run this script to create a study_definition for each k",
+  str_c("# Run this script to create a study_definition for each k",
         "",
         str_c("for i in {1..",K,"}; do"),
         "sed -e \"s;%placeholder_k%;$i;g\" ./analysis/study_definition_k.py > ./analysis/study_definition_$i.py;",
