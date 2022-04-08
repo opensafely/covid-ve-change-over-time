@@ -85,11 +85,13 @@ derive_data_tte <- function(
   
   # remove comparisons for which outcome has occurred before the patient's first comparison
   # (if outcome is anytest, only exclude if previous postest)
-  outcome_exclude <- if_else(
-    outcome == "anytest",
-    "postest",
-    outcome)
-  
+  if (outcome == "anytest") {
+    outcome_exclude <- "postest"
+  } else if (outcome == "covidemergency") {
+    outcome_exclude <- "covidadmitted" # to ensure the same sample for the hospitalisations comparison
+  } else {
+    outcome_exclude <- outcome
+  }
   
   # function to be applied in dplyr::filter
   occurs_after_start_date <- function(cov_date, index_date) {
