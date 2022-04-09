@@ -73,8 +73,9 @@ model_tidy_tibble <- bind_rows(
          n_obs_model, n_obs_label = n_obs, n_event_label = n_event,
          estimate, conf.low, conf.high) %>%
   # order so that model with least observations is first
-  arrange(n_obs_model)
+  arrange(n_obs_model) %>%
+  filter(outcome == "covidemergency")
 
 readr::write_csv(
   model_tidy_tibble,
-  here::here("output", "models_cox", "data", "estimates_all.csv"))
+  here::here("output", "models_cox", "data", "estimates_emergency.csv"))
