@@ -2224,7 +2224,7 @@ actions:
     - apply_model_cox_both_3_noncoviddeath
     outputs:
       moderately_sensitive:
-        tidy_tables_events: output/models_cox/data/estimates_all.csv
+        tidy_tables_events: output/models_cox/data/estimates_*.csv
 
   ## #################################### 
   ## plot to check estimates 

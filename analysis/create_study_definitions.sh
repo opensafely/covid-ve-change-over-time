@@ -1,4 +1,3 @@
-#!/bin/sh
 # Run this script to create a study_definition for each k
 
 for i in {1..6}; do

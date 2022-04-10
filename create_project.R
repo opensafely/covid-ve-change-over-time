@@ -843,7 +843,7 @@ actions_list <- splice(
         }
       ), recursive = FALSE))),
     moderately_sensitive = list(
-      tidy_tables_events = glue("output/models_cox/data/estimates_all.csv")
+      tidy_tables_events = glue("output/models_cox/data/estimates_*.csv")
     )
   ),
   
