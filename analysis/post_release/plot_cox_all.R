@@ -9,19 +9,18 @@ library(lubridate)
 library(glue)
 
 ################################################################################
-fs::dir_create(here::here("output", "report", "data"))
-
-release_folder <- "release20220226"
-
-################################################################################
 # read study parameters
 study_parameters <- readr::read_rds(
-  here::here("output", "lib", "study_parameters.rds"))
+  here::here("analysis", "lib", "study_parameters.rds"))
 
 # read outcomes
 outcomes <- readr::read_rds(
-  here::here("output", "lib", "outcomes.rds")
+  here::here("analysis", "lib", "outcomes.rds")
 )
+# outcome for comparing hospitalisation source
+outcomes_hosp <- outcomes[outcomes %in% c("covidadmitted", "covidemergnecy")]
+# original outcomes
+outcomes <- outcomes[outcomes!="covidemergency"]
 outcomes_order <- c(3,4,2,5,1)
 outcomes_long <- names(outcomes)
 outcomes_long[outcomes=="covidadmitted"] <- "COVID-19 hospitalisation"
@@ -30,19 +29,43 @@ rm(outcomes_long)
 
 # read subgroups
 subgroups <- readr::read_rds(
-  here::here("output", "lib", "subgroups.rds"))
+  here::here("analysis", "lib", "subgroups.rds"))
 subgroup_labels <- seq_along(subgroups)
-subgroups_order <- c(4,1,3,2)
 
 # define comparisons
 comparisons <- c("BNT162b2", "ChAdOx1", "both")
 
+# if running locally read extracted data:
+if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
+
+release_folder <- "release20220226"
+
+min_max_fu_dates_path <- release_folder
+estimates_all_path <- release_folder
+metareg_results_path <- 
+
+} else {
+  
+}
+
 # min and max follow-up dates per subgroup
 min_max_fu_dates <- readr::read_rds(
-  here::here("output", "lib", glue("data_min_max_fu.rds"))) %>%
+  here::here(release_folder, glue("data_min_max_fu.rds"))) %>%
   mutate(across(ends_with("date"),
                 ~ str_c(day(.x), " ", month(.x, label=TRUE))))
 
+# read estimates data
+estimates_all <- readr::read_csv(
+  here::here(release_folder, "estimates_all.csv")) %>%
+  mutate(across(model, ~as.integer(str_remove(.x, "unadjusted")))) 
+
+# read metareg data
+metareg_results_k <- readr::read_rds(
+  here::here(release_folder, "metareg_results_k.rds")) %>%
+  select(subgroup, comparison, outcome, k, starts_with("line")) %>%
+  mutate(model=2) 
+
+################################################################################
 # gg plot pallete
 gg_color_hue <- function(n, transparency = 1) {
   hues = seq(15, 375, length = n + 1)
@@ -60,24 +83,13 @@ formatpercent100 <- function(x,accuracy){
 }
 
 # scale for x-axis
-K <- study_parameters$max_comparisons
+K <- study_parameters$K
 ends <- seq(2, (K+1)*4, 4)
 starts <- ends + 1
 weeks_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
 
 ################################################################################
-# read estimates data
-estimates_all <- readr::read_csv(
-  here::here(release_folder, "estimates_all.csv")) %>%
-  mutate(across(model, ~as.integer(str_remove(.x, "unadjusted")))) %>%
-  mutate(across(comparison, ~str_replace(.x, "ChAdOx", "ChAdOx1")))
 
-# read metareg data
-metareg_results_k <- readr::read_rds(
-  here::here(release_folder, "metareg_results_k.rds")) %>%
-  select(subgroup, comparison, outcome, k, starts_with("line")) %>%
-  mutate(model=2) %>%
-  mutate(across(comparison, ~str_replace(.x, "ChAdOx", "ChAdOx1")))
 
 ################################################################################
 
@@ -102,7 +114,12 @@ plot_data <- estimates_all %>%
   mutate(k=as.integer(label)) %>%
   left_join(
     min_max_fu_dates %>%
-      mutate(across(subgroup, ~subgroup_labels[subgroups == .x])), 
+      left_join(
+        tibble(subgroup = subgroups, subgroup_label = subgroup_labels),
+        by = "subgroup"
+        ) %>%
+      select(-subgroup) %>%
+      rename(subgroup = subgroup_label), 
     by = "subgroup"
   ) %>%
   mutate(order1 = 10*k) %>%
@@ -268,7 +285,7 @@ ggsave(plot_vax,
        filename = here::here(release_folder, glue("hr_vax.png")),
        width=page_height, height=page_width, units="cm")
 ggsave(plot_vax,
-       filename = here::here(release_folder, glue("hr_vax.svg")),
+       filename = here::here(release_folder, glue("hr_vax.pdf")),
        width=page_height, height=page_width, units="cm")
 
 ################################################################################
@@ -355,7 +372,7 @@ ggsave(plot_brand,
        filename = here::here(release_folder, glue("hr_brand.png")),
        width=page_width, height=14, units="cm")
 ggsave(plot_brand,
-       filename = here::here(release_folder, glue("hr_brand.svg")),
+       filename = here::here(release_folder, glue("hr_brand.pdf")),
        width=page_width, height=14, units="cm")
 
 ################################################################################
