@@ -1,7 +1,5 @@
 ---
 title: "Comparing sources of COVID-19 hospitalisation data for estimating vaccine effectiveness"
-author: "Elsie Horne"
-date: "07/04/2022"
 output: word_document
 ---
 
@@ -11,32 +9,30 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
 # Background
 Identifying COVID-19 hospitalisations is crucial to the ongoing monitoring of the COVID-19 pandemic.
-COVID-19 hospitalisations can be identified from Admitted Patient Care Spells (APCS), which is part of Hospital Episode Statistics (HES) and is provided to OpenSAFELY via NHS Digital's Secondary Use Service (SUS).
+COVID-19 hospitalisations can be identified from the Admitted Patient Care Spells (APCS) dataset, which is part of Hospital Episode Statistics (HES) and is provided to OpenSAFELY via NHS Digital's Secondary Use Service (SUS).
 However, patients are only included in the APCS dataset if they have been discharged by the data extraction date.
-This means that patients who are currently in hospital will not appear in the extract, and therefore creates a delay in the availability of COVID-19 hospitalisations data.
+This means that patients who are currently in hospital will not appear in the extract, and therefore creates a delay in the availability of COVID-19 hospitalisations data (see the [OpenSAFELY documentation](https://docs.opensafely.org/dataset-apc/)).
 
 Some patients are admitted to hospital with COVID-19 via accident and emergency (A&E).
 COVID-19 hospitalisations that occur via A&E can be identified in the Emergency Care Data Set (ECDS).
-The delay between the true event and the event being captured in the dataset is much shorter for ECDS compared to APCS.
+As patients are typically discharged from A&E (either home or to hospital) within 24 hours, the delay between the true event and the event being captured in the dataset is much shorter for ECDS (see the [OpenSAFELY documentation](https://docs.opensafely.org/dataset-ecds/)).
 Therefore, the use of ECDS may facilitate more up-to-date monitoring of COVID-19 hospitalisations.
 
 # Objective
-We have previously estimated waning effectiveness of BNT162b2 and ChAdOx1 COVID-19 vaccines over six months since second dose.
+We have previously estimated waning effectiveness of BNT162b2 and ChAdOx1 COVID-19 vaccines over six months since second dose (see the [pre-print](https://www.medrxiv.org/content/10.1101/2022.03.23.22272804v1)).
 In this previous study, we derving COVID-19 hospitalisation using APCS data.
-The objective of this report was to extend this study by estimating vaccine effectiveness against COVID-19 hospitalisation derived from the ECDS, and to compare the estimates with those derivde from APCS data.
+The objective of this report was to extend this study by estimating vaccine effectiveness against COVID-19 hospitalisation derived from the ECDS, and to compare the estimates with those derived from APCS data.
 
 # Methods
-The methods used in the previous study are detailed here.
-For the `r scales::comma(4734980+2433990, accuracy=1)` individuals who were eligible for inclusion in comparison period 1 of the previous study, we identified all A&E attendances with SNOMED codes indicating a COVID-19 diagnosis and discharge to hospital.
-We retained only the earliest such attendance for each individual.
-If the date of the earliest attendance occurred before the start of comparison period 1, the individual was excluded from the analysis.
-Otherwise the earliest attendance was treated as the outcome of interest, as described in the statistical analysis section of the previous study.
-
+The methods used in the previous study are detailed in the [pre-print](https://www.medrxiv.org/content/10.1101/2022.03.23.22272804v1).
+For the purposes of this report, we refer to COVID-19 hospitalisation derived as described in the pre-print as “APCS-derived COVID-19 hospitalisation”, and “ECDS-derived COVID-19 hospitalisation” is additionally defined as follows: an A&E attendances with SNOMED codes indicating a COVID-19 diagnosis with discharge to hospital. 
+We retained only the earliest ECDS-derived COVID-19 hospitalisation for each individual. 
+If the date of an individual’s earliest ECDS-derived COVID-19 hospitalisation occurred before the start of comparison period 1, the individual was excluded from the analysis. 
+APCS- and ECDS-derived COVID-19 hospitalisations were the outcomes of interest for Cox regression models, as described in the statistical analysis section of the previous study (see the [pre-print](https://www.medrxiv.org/content/10.1101/2022.03.23.22272804v1)).
 
 ```{r}
 library(tidyverse)
 library(glue)
-# library(kableExtra)
 library(flextable)
 library(viridis)
 ```
@@ -87,6 +83,33 @@ n_for_flow <- estimates_all %>%
 ```
 
 
+# Results
+Figure 1 shows the flow of individuals into the study. 
+Of the `r scales::comma(4734980+2433990, accuracy=1)` individuals who were eligible for inclusion in comparison period 1 of the previous study, `r n_for_flow$n_exc[1]` and `r n_for_flow$n_exc[2]` were excluded from the analyses using APCS- and ECDS-derived outcomes, respectively, due to the occurrence of an outcome event prior to the start date for comparison period 1.
+The reason that the number of patients excluded at this stage was much lower for the analysis using the APCS-derived outcome was because individuals with an APCS-derived outcome occurring prior to eligibility date + 6 weeks had already been excluded, as this was the definition of COVID-19 hospitalisation used in the original study (see the [pre-print](https://www.medrxiv.org/content/10.1101/2022.03.23.22272804v1)).
+Therefore the `r n_for_flow$n_exc[1]` individuals who were excluded are those who experienced an outcome event between eligibility date + 6 weeks and the start of comparison period 1.
+As the original study did not include the ECDS-derived outcome, the `r n_for_flow$n_exc[2]` individuals excluded due to an occurrence of ECDS-derived hospitalisation were those who had experienced the event at any time prior to comparison period 1 (not including those who also had a APCS-derived COVID-19 hospitalisation prior to eligibility date + 6 weeks, as they had already been excluded).
+
+Finally,  `r n_for_flow$n_elig[1]` and `r n_for_flow$n_elig[2]` individuals were included in comparison period 1 for the analysis using the APCS- and ECDS-derived outcomes, respectively. 
+Tables 1-4 show the event counts / the number of individuals during each comparison period (defined by weeks since second dose) for each of the four subgroups.
+
+Figure 2 shows the APCS- and ECDS-derived hazard ratios (HRs) for COVID-19 hospitalisation, estimated using Cox regression.
+Both unadjusted and adjusted HRs are shown (see [pre-print](https://www.medrxiv.org/content/10.1101/2022.03.23.22272804v1) for details regarding adjustment). 
+Due to lower event counts, the confidence intervals were wider for all ECDS-derived HRs.
+The effect of adjustment for potential confounders was minimal in all subgroups with the exception of the 16-64 and clinically vulnerable subgroup, in which adjustment increased both the ACDS- and ECDS-derived estimates of vaccine effectiveness.
+For both BNT162b2 and ChAdOx1 the ECDS-derived adjusted HRs were typically lower than the ACDS-derived adjusted HRs, corresponding to slightly higher estimated vaccine effectiveness.
+
+# Discussion
+These findings suggest that using COVID-19 hospitalisation derived from ECDS may result in a slight overestimation of vaccine effectiveness compared to using COVID-19 hospitalisation derived from APCS.
+The lower number of events derived from ECDS resulted in greater uncertainty in the estimated vaccine effectiveness.
+This was particularly evident in the 18-39 years subgroup, in which there were few COVID-19 hospitalisations.
+
+#### Figure 1. Flow of individuals into study
+```{r flow, include=TRUE,  out.width="50%"}
+knitr::include_graphics(here::here(release_folder, "flow.png"))
+```
+
+
 ```{r}
 table_data <- estimates_all %>%
   filter(variable == "k", model == "unadjusted") %>%
@@ -100,15 +123,7 @@ table_data <- estimates_all %>%
     values_from = value
     ) %>%
   select(subgroup, period, sort(tidyselect::peek_vars()))
-```
 
-#### Figure 1. Flow of individuals into study
-```{r flow, include=TRUE,  out.width="50%"}
-knitr::include_graphics(here::here(release_folder, "flow.png"))
-```
-
-#### Table 1. Event counts for each sources of COVID-19 hospitalisation
-```{r}
 subgroup_lengths <- as.vector(table(table_data$subgroup))
 
 names(subgroup_lengths) <- subgroups
@@ -132,32 +147,49 @@ table_header <- tibble(
     col_keys = "period",
     line2 = "Weeks since 2nd dose",
     line3 = "Weeks since 2nd dose"
-  ) %>%
-  add_row(
-    col_keys = "subgroup",
-    line2 = "Subgroup",
-    line3 = "Subgroup"
-  )
+  ) 
   
 
-table_data %>%
-  mutate(across(subgroup, factor, levels = 1:4, labels = subgroups)) %>%
-  flextable() %>%
-  set_header_df(
-    mapping = table_header,
-    key = "col_keys"
-  ) %>%
-  merge_h(part = "header", i = 1) %>%
-  merge_v(part = "header", j = 1:2) %>%
-  merge_v(part = "body", j = 1) 
-  # kable(
-  #   col.names = c(" ", rep(c("APCS", "ECDS"), 3)),
-  #   align = "l",
-  #   table.attr = "style='width:100%;'"
-  # ) %>%
-  # add_header_above(c(" " = 1, "BNT162b2" = 2, "ChAdOx" = 2, "Unvaccinated" = 2)) %>%
-  # pack_rows(index = subgroup_lengths) 
+table_data_split <- table_data %>%
+  group_split(subgroup)
+
+make_table <- function(data) {
+  
+  data %>%
+    select(-subgroup) %>%
+    flextable() %>%
+    set_header_df(
+      mapping = table_header,
+      key = "col_keys"
+    ) %>%
+    merge_h(part = "header", i = 1) %>%
+    merge_v(part = "header", j = 1) %>%
+    merge_v(part = "body", j = 1) 
+  
+}
+
 ```
+
+#### Table 1. Event counts / number of individuals for each source of COVID-19 hospitalisation in the `r subgroups[1]` subgroup
+```{r}
+make_table(table_data_split[[1]])
+```
+
+#### Table 2. Event counts / number of individuals for each source of COVID-19 hospitalisation in the `r subgroups[2]` subgroup
+```{r}
+make_table(table_data_split[[2]])
+```
+
+#### Table 3. Event counts / number of individuals for each source of COVID-19 hospitalisation in the `r subgroups[3]` subgroup
+```{r}
+make_table(table_data_split[[3]])
+```
+
+#### Table 4. Event counts / number of individuals for each source of COVID-19 hospitalisation in the `r subgroups[4]` subgroup
+```{r}
+make_table(table_data_split[[4]])
+```
+
 
 ```{r}
 position_dodge_val <- 0.8
@@ -174,6 +206,8 @@ names(colour_pal) <- c("APCS unadjusted", "APCS adjusted", "ECDS unadjusted", "E
 
 plot_estimates <- estimates_all %>%
   filter(variable == "k", !reference_row) %>%
+  # remove the estimate for BNT162b2 in 40-64 years, as only one
+  filter(!(comparison == "BNT162b2" & subgroup == 3)) %>%
   select(subgroup, comparison, outcome, model, period, estimate, conf.low, conf.high) %>%
   mutate(across(c(estimate, conf.low, conf.high), exp)) %>%
   mutate(across(outcome, ~if_else(.x == "covidadmitted", "APCS", "ECDS"))) %>%
@@ -199,7 +233,7 @@ plot_estimates <- estimates_all %>%
     values = colour_pal
     ) +
   scale_y_log10(
-    name = "Hazard Ratio",
+    name = "Hazard ratio",
     breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1),
     # limits = c(y_lower, y_upper),
     oob = scales::oob_keep
