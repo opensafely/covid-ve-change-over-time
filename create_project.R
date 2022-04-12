@@ -463,6 +463,17 @@ actions_list <- splice(
     )
   ),
   
+  comment("explore positive tests around COVID-19 hospital admissions"),
+  action(
+    name = "covidadmitted_postest_eda",
+    run = "r:latest analysis/eda/covidadmitted_postest.R",
+    needs = list("generate_ever_data"),
+    moderately_sensitive = list(
+      covidadmitted_postest_summary = "output/eda/covidadmitted_postest.txt",
+      covidadmitted_postest_histograms = "output/eda/covidadmitted_postest*.png"
+    )
+  ),
+  
   splice(unlist(lapply(
     1:K,
     function(k) {
