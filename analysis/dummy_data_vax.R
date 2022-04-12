@@ -15,11 +15,7 @@ set.seed(5476)
 
 # date vars 
 # set these to have occured since start of pandemic
-date_vars_recent <- c("positive_test_0_date", 
-                      "primary_care_covid_case_0_date", 
-                      "covidadmitted_0_date",
-                      "covidemergency_0_date",
-                      "death_date",
+date_vars_recent <- c("death_date",
                       "longres_date", 
                       "endoflife_date", 
                       "midazolam_date",
