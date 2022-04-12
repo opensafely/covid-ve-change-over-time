@@ -20,6 +20,32 @@ end_date=study_parameters["end_date"] # latest date of data
 import numpy as np
 np.random.seed(study_parameters["seed"])
 
+def covid_test_date_X(name, index_date, n, test_result):
+  # covid test date (result can be "any", "positive", or "negative")
+  def var_signature(name, on_or_after, test_result):
+    return {
+      name: patients.with_test_result_in_sgss(
+        pathogen="SARS-CoV-2",
+        test_result=test_result,
+        on_or_after=on_or_after,
+        find_first_match_in_period=True,
+        restrict_to_earliest_specimen_date=False,
+        returning="date",
+        date_format="YYYY-MM-DD"
+      ),
+    }
+  variables = var_signature(
+      name=f"{name}_1_date", 
+      on_or_after=f"{index_date} - 42 days", 
+      test_result=test_result)
+  for i in range(2, n+1):
+    variables.update(var_signature(
+        name=f"{name}_{i}_date", 
+        on_or_after=f"{name}_{i-1}_date + 1 day", 
+        test_result=test_result))
+  return variables
+
+
 ###
 study=StudyDefinition(
 
@@ -204,5 +230,128 @@ study=StudyDefinition(
         ),
         return_expectations={"incidence": 0.5, },
     ),
+
+    ##############
+    ### EVENTS ###
+    ##############
+
+    # positive tesy
+    # date of earliest before start_1_date
+    positive_test_pre_date=patients.with_test_result_in_sgss(
+        pathogen="SARS-CoV-2",
+        test_result="positive",
+        returning="date",
+        date_format="YYYY-MM-DD",
+        on_or_before="start_1_date",
+        find_first_match_in_period=True,
+        restrict_to_earliest_specimen_date=False,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01
+        },
+    ),
+    # date of earliest after start_1_date
+    positive_test_post_date=patients.with_test_result_in_sgss(
+        pathogen="SARS-CoV-2",
+        test_result="positive",
+        returning="date",
+        date_format="YYYY-MM-DD",
+        on_or_after="start_1_date + 1 day",
+        find_first_match_in_period=True,
+        restrict_to_earliest_specimen_date=False,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01
+        },
+    ),
+
+    # probable covid case identified in primary care
+    # date of earliest before start_1_date
+    primary_care_covid_case_pre_date=patients.with_these_clinical_events(
+        covid_primary_care_probable_combined,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        on_or_before="start_1_date",
+        find_first_match_in_period=True,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01
+        },
+    ),
+    # date of earliest after start_1_date
+    primary_care_covid_case_post_date=patients.with_these_clinical_events(
+        covid_primary_care_probable_combined,
+        returning="date",
+        date_format="YYYY-MM-DD",
+        on_or_after="start_1_date + 1 day",
+        find_first_match_in_period=True,
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01
+        },
+    ),
+    
+    # covid hospitalisation:
+    # from ACPS 
+    # date of earliest before start_1_date
+    covidadmitted_pre_date=patients.admitted_to_hospital(
+        returning="date_admitted",
+        with_these_diagnoses=covid_codes,
+        on_or_before="start_1_date",
+        find_first_match_in_period=True,
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01,
+        },
+    ),
+    # date of earliest after start_1_date
+    covidadmitted_post_date=patients.admitted_to_hospital(
+        returning="date_admitted",
+        with_these_diagnoses=covid_codes,
+        on_or_after="start_1_date + 1 day",
+        find_first_match_in_period=True,
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01,
+        },
+    ),
+    # positive tests for investigating hospitalisations
+    # dates of up to 6 positive tests in the period starting 6 weeks before covidadmitted_post_date
+    **covid_test_date_X(
+        name="covidadmitted_postest",
+        index_date="covidadmitted_post_date",
+        n=6,
+        test_result="positive"
+    ),
+
+    # from ECDS
+    # any emergency attendance for covid
+    # date of earliest before start_1_date
+    covidemergency_pre_date=patients.attended_emergency_care(
+        returning="date_arrived",
+        with_these_diagnoses=covid_emergency,
+        discharged_to=discharged_to_hospital,
+        on_or_before="start_1_date",
+        find_first_match_in_period=True,
+        date_format="YYYY-MM-DD",
+    ),
+    # date of earliest after start_1_date
+    covidemergency_post_date=patients.attended_emergency_care(
+        returning="date_arrived",
+        with_these_diagnoses=covid_emergency,
+        discharged_to=discharged_to_hospital,
+        on_or_after="start_1_date + 1 day",
+        find_first_match_in_period=True,
+        date_format="YYYY-MM-DD",
+    ),
+
 
 )
