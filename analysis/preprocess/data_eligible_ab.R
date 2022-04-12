@@ -74,52 +74,7 @@ eligibility_count <- eligibility_count %>%
     n =  n_distinct(data_eligible_a$patient_id)
   )
 
-# remove if evidence of covid infection on or before elig_date + 42 days
-# COVID admission
-data_eligible_a <- data_eligible_a %>%
-  filter(
-    ! (
-      !is.na(covid_any_date) &
-        (covid_any_date <= elig_date + days(42)) &
-        covid_event %in% "covidadmitted"
-    ))
-
-eligibility_count <- eligibility_count %>%
-  add_row(
-    description = "Samples with prior COVID admission removed.",
-    n =  n_distinct(data_eligible_a$patient_id)
-  )
-
-# positive COVID test
-data_eligible_a <- data_eligible_a %>%
-  filter(
-    ! (
-      !is.na(covid_any_date) &
-        (covid_any_date <= elig_date + days(42)) &
-        covid_event %in% "postest"
-    ))
-
-eligibility_count <- eligibility_count %>%
-  add_row(
-    description = "Samples with prior positive COVID test removed.",
-    n =  n_distinct(data_eligible_a$patient_id)
-  )
-
-# probable COVID 
-data_eligible_a <- data_eligible_a %>%
-  filter(
-    ! (
-      !is.na(covid_any_date) &
-        (covid_any_date <= elig_date + days(42)) &
-        covid_event %in% "probable"
-    ))
-
-eligibility_count <- eligibility_count %>%
-  add_row(
-    description = "Samples with prior probable COVID removed.",
-    n =  n_distinct(data_eligible_a$patient_id)
-  )
-
+# remove if evidence of the following before elig_date + 42 days
 # carehome
 data_eligible_a <- data_eligible_a %>%
   filter(

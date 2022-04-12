@@ -35,7 +35,7 @@ second_vax_period_dates <- readr::read_rds(
 # covariate data
 data_processed <- readr::read_rds(
   here::here("output", "data", "data_processed.rds")) %>%
-  select(patient_id, subgroup, endoflife_date, midazolam_date, covid_any_date, longres_date)
+  select(patient_id, subgroup, endoflife_date, midazolam_date, longres_date)
 
 ################################################################################
 # apply eligibility criteria in box c ----
@@ -116,27 +116,17 @@ exclusion_e <- function(group) {
     data <- data_eligible_d
   }
   
-  # remove if any covid before start of period
+  # remove if in long-term residential home before start date
   data <- data %>%
     left_join(data_processed, by = "patient_id") %>%
     filter(
-      no_evidence_of(covid_any_date, start_of_period)) 
+      no_evidence_of(longres_date, start_of_period)
+      )
   
   eligibility_count_e <- tribble(
     ~description, ~n,
-    glue("{group}: Evidence of COVID before SVP."), n_distinct(data$patient_id)
+    glue("{group}: Evidence of longres before SVP."), n_distinct(data$patient_id)
   )
-  
-  # remove if in long-term residential home before start date
-  data <- data %>%
-    filter(
-      no_evidence_of(longres_date, start_of_period))
-  
-  eligibility_count_e <- eligibility_count_e %>%
-    add_row(
-      description = glue("{group}: Evidence of longres before SVP."),
-      n =  n_distinct(data$patient_id)
-    )
   
   # remove if end of life care before start date
   data <- data %>%
