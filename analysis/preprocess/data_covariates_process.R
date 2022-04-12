@@ -15,6 +15,9 @@ model_varlist <- readr::read_rds(
   here::here("analysis", "lib", "model_varlist.rds")
 )
 
+## source functions
+source(here::here("analysis", "functions", "data_process_functions.R"))
+
 # individuals eligible based on box c, d & e criteria 
 # arm and split info
 data_arm <- bind_rows(
@@ -73,6 +76,18 @@ data_covariates <- data_arm %>%
   # join vax for subsequent vax
   left_join(data_wide_vax_dates,
             by = "patient_id") %>%
+  mutate(across(contains("_date"), 
+                ~ floor_date(
+                  as.Date(.x, format="%Y-%m-%d"),
+                  unit = "days"))) %>%
+  mutate(
+    prior_covid_date = pmin(
+      primary_care_covid_case_pre_date,
+      positive_test_pre_date,
+      covidadmitted_pre_date,
+      covidemergency_pre_date,
+      na.rm = TRUE
+      )) %>%
   # subsequent vax date
   mutate(subsequent_vax_date = if_else(
     arm %in% "unvax",
@@ -196,6 +211,20 @@ data_covariates <- data_arm %>%
     var = "longres_date"
   ) %>%
   mutate(
+    # prior covid
+    # 2 categories
+    prior_covid_2 = fct_case_when(
+      (prior_covid_date > start_k_date) | is.na(prior_covid_date) ~ FALSE,
+      TRUE ~ TRUE
+    ),
+    # 4 categories
+    prior_covid_4 = fct_case_when(
+      (prior_covid_date > start_k_date) | is.na(prior_covid_date) ~ "None",
+      as.numeric(start_k_date - prior_covid_date) < 90 ~ "0-89 days",
+      as.numeric(start_k_date - prior_covid_date) < 180 ~ "90-179 days",
+      TRUE ~ "180+ days"
+    ),
+    
     # current immunosuppression medication
     immunosuppression_meds = immrx,
     # chronic kidney disease stages 3-5
@@ -244,10 +273,6 @@ data_covariates <- data_arm %>%
     right=FALSE)
   
   ) %>%
-  mutate(across(contains("_date"), 
-                ~ floor_date(
-                  as.Date(.x, format="%Y-%m-%d"),
-                  unit = "days"))) %>%
   select(patient_id, start_k_date, end_k_date, k,
          arm, split, subsequent_vax_date,
          anytest_date, age, 
