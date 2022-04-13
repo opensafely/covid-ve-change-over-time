@@ -128,6 +128,15 @@ actions:
 
   ## explore positive tests around COVID-19 hospital admissions 
 
+  # rmd_report:
+  #   run: r:latest -e 'rmarkdown::render("analysis/eda/covidadmitted_postest.Rmd",  knit_root_dir
+  #     = "/analysis/eda",  output_dir = "/workspace/output/eda", output_format = c("html_document")   )'
+  #   needs:
+  #   - generate_ever_data
+  #   outputs:
+  #     moderately_sensitive:
+  #       covidadmitted_postest_report: output/eda/covidadmitted_postest.html
+
   covidadmitted_postest_eda:
     run: r:latest analysis/eda/covidadmitted_postest.R
     needs:
@@ -136,5 +145,6 @@ actions:
       moderately_sensitive:
         covidadmitted_postest_summary: output/eda/covidadmitted_postest.txt
         covidadmitted_postest_histograms: output/eda/covidadmitted_postest*.png
+        # covidadmitted_postest_report: output/eda/covidadmitted_postest.html
 
   

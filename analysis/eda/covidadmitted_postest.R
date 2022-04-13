@@ -1,3 +1,11 @@
+# rmarkdown:::with_pandoc_safe_environment(
+#   system(paste(shQuote(Sys.which("pandoc")), "--version"), intern = TRUE)
+# )
+
+# Sys.which("pandoc")
+cat("------check pandoc")
+rmarkdown::find_pandoc()
+
 library(tidyverse)
 library(lubridate)
 library(kableExtra)
@@ -5,6 +13,11 @@ library(kableExtra)
 ################################################################################
 # create output folder
 fs::dir_create(here::here("output", "eda"))
+
+# rmarkdown::render(
+#   "analysis/eda/covidadmitted_postest.Rmd",
+#   output_file="covidadmitted_postest",
+#   output_dir="output/eda")
 
 ################################################################################
 # read data for ever covariates
