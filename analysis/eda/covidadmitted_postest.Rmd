@@ -5,8 +5,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
-knitr::opts_knit$set(root.dir = gsub("/analysis/eda","",getwd()))
-# knitr::opts_knit$set(root.dir = here::here())
+knitr::opts_knit$set(root.dir = here::here())
 ```
 
 ```{r}
@@ -90,7 +89,8 @@ n_tests <- local({
     distinct(patient_id, max_postest_date) %>%
     group_by(max_postest_date) %>%
     count() %>%
-    ungroup()
+    ungroup() %>%
+    mutate(across(c(max_postest_date, n), as.integer))
   
   total <- sum(counts$n)
   
@@ -106,7 +106,7 @@ n_tests <- local({
     arrange(n_postests) %>%
     mutate(across(n_patients, ~if_else(is.na(.x),0L,.x))) %>%
     mutate(percent = round(100*n_patients/sum(n_patients),2)) %>%
-    mutate(across(n_patients, scales::comma, accuracy=1)) 
+    mutate(across(c(n_postests, n_patients), scales::comma, accuracy=1)) 
   
 })
 
