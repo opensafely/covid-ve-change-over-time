@@ -469,8 +469,7 @@ actions_list <- splice(
     run = "r:latest analysis/eda/covidadmitted_postest.R",
     needs = list("generate_ever_data"),
     moderately_sensitive = list(
-      covidadmitted_postest_summary = "output/eda/covidadmitted_postest.txt",
-      covidadmitted_postest_histograms = "output/eda/covidadmitted_postest*.png"
+      covidadmitted_postest_report = "output/eda/covidadmitted_postest.html"
     )
   ),
   
