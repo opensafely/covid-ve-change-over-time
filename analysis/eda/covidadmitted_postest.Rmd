@@ -1,0 +1,41 @@
+---
+title: "Investigating the distribution of positive tests around COVID-19 hospitalisations"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = gsub("/analysis/eda","",getwd()))
+```
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(kableExtra)
+```
+
+```{r}
+# read data for ever covariates
+data_ever <- arrow::read_feather(
+  file = here::here("output", "input_ever.feather")) 
+
+data_0 <- data_ever %>%
+  select(patient_id, covidadmitted_post_date, starts_with("covidadmitted_postest")) %>%
+  mutate(across(contains("_date"), 
+                ~ floor_date(
+                  as.Date(.x, format="%Y-%m-%d"),
+                  unit = "days"))) 
+```
+
+```{r}
+data_0 %>%
+      mutate(covidadmitted = !is.na(covidadmitted_post_date)) %>%
+      group_by(covidadmitted) %>%
+      count() %>%
+      ungroup() %>%
+      mutate(percent = 100*n/sum(n)) %>%
+      kable(
+        "pipe",
+        caption = "Percent of patients with a COVID-19 hospital admission")
+```
+
