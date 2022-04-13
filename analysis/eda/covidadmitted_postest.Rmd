@@ -4,38 +4,169 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_knit$set(root.dir = gsub("/analysis/eda","",getwd()))
+knitr::opts_chunk$set(echo = FALSE)
+# knitr::opts_knit$set(root.dir = gsub("/analysis/eda","",getwd()))
+knitr::opts_knit$set(root.dir = here::here())
 ```
 
 ```{r}
 library(tidyverse)
 library(lubridate)
 library(kableExtra)
+library(glue)
 ```
+
+Our plan is to replace the outcome variable `covidadmitted`, which currently corresponds to the date of a COVID-19 hospitalisation.
+The new variable will correspond to "an episode of COVID-19 resulting in hospitalisation", and will take the date of the first positive test during the episode of COVID-19.
+We have carried out some exploratory data analysis to inform the algorithm that we will use to derive this new variable.
+
+First, Table 1 shows the number of eligible patients who have a COVID-19 hospitalisation in their record.
+For the patients with a COVID-19 hospitalisation, we counted the number of positive tests in their record during the window 6 weeks before and 2 weeks after the date of their COVID-19 hospitalisation. 
+To speed up computation, the number of positive tests was capped at 6.
+These results are given in Table 2.
+
+We used histograms to investigate the distribution of positive test date relative to COVID-19 hospitalisation date.
+Figure 1 shows the distribution of positive test dates for all tests during the window, and Figure 2 shows the distribution of each patients earliest positive test date during the window.
+The y-axes start at 6 to mask bars that correspond to <=5 patients.
 
 ```{r}
 # read data for ever covariates
 data_ever <- arrow::read_feather(
   file = here::here("output", "input_ever.feather")) 
 
+# clean data
 data_0 <- data_ever %>%
   select(patient_id, covidadmitted_post_date, starts_with("covidadmitted_postest")) %>%
   mutate(across(contains("_date"), 
                 ~ floor_date(
                   as.Date(.x, format="%Y-%m-%d"),
-                  unit = "days"))) 
+                  unit = "days"))) %>%
+  # only keep postests in the window
+  mutate(across(starts_with("covidadmitted_postest"),
+                ~ if_else(
+                  is.na(covidadmitted_post_date) | 
+                    as.integer(.x - covidadmitted_post_date) < -42 |
+                    as.integer(.x - covidadmitted_post_date) > 14,
+                  as.Date(NA_character_), 
+                  .x
+                )))
+```
+
+#### Table 1. Patients with a COVID-19 hospital admission
+```{r}
+data_0 %>%
+  mutate(covidadmitted = !is.na(covidadmitted_post_date)) %>%
+  group_by(covidadmitted) %>%
+  count() %>%
+  ungroup() %>%
+  mutate(percent = round(100*n/sum(n), 2)) %>%
+  mutate(across(n, scales::comma, accuracy=1)) %>%
+  kbl() %>%
+  kable_styling(full_width = F)
 ```
 
 ```{r}
-data_0 %>%
-      mutate(covidadmitted = !is.na(covidadmitted_post_date)) %>%
-      group_by(covidadmitted) %>%
-      count() %>%
-      ungroup() %>%
-      mutate(percent = 100*n/sum(n)) %>%
-      kable(
-        "pipe",
-        caption = "Percent of patients with a COVID-19 hospital admission")
+data_1 <- data_0 %>%
+  filter(!is.na(covidadmitted_post_date)) %>%
+  pivot_longer(
+    cols = starts_with("covidadmitted_postest"),
+    names_pattern = "covidadmitted_postest_(.)_date",
+    names_transform = as.integer,
+    values_drop_na = TRUE
+  ) %>%
+  mutate(diff = as.numeric(value - covidadmitted_post_date)) %>%
+  group_by(patient_id) %>%
+  mutate(
+    min_postest_date = min(name),
+    max_postest_date = max(name)
+    ) %>%
+  ungroup()
 ```
+
+#### Table 2. Number of positive tests per patient during the window
+```{r}
+n_tests <- local({
+  counts <- data_1 %>% 
+    distinct(patient_id, max_postest_date) %>%
+    group_by(max_postest_date) %>%
+    count() %>%
+    ungroup()
+  
+  total <- sum(counts$n)
+  
+  counts %>%
+    select(
+      n_postests = max_postest_date,
+      n_patients = n
+    ) %>%
+    add_row(
+      n_postests = 0L, 
+      n_patients = nrow(data_0 %>% filter(!is.na(covidadmitted_post_date))) - total
+    ) %>%
+    arrange(n_postests) %>%
+    mutate(across(n_patients, ~if_else(is.na(.x),0L,.x))) %>%
+    mutate(percent = round(100*n_patients/sum(n_patients),2)) %>%
+    mutate(across(n_patients, scales::comma, accuracy=1)) 
+  
+})
+
+n_tests %>%
+  kbl() %>%
+  kable_styling(full_width = F)
+```
+
+
+```{r}
+my_hist <- function(data, filename) {
+  
+  plot <- data %>%
+  ggplot(aes(x = diff)) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_histogram(
+    center = 0.5,
+    binwidth = 1, 
+    alpha = 0.8) +
+  scale_x_continuous(
+    breaks = seq(-42,14,7),
+    limits = c(-42,14),
+    labels = as.character(seq(-6,2,1))
+  ) +
+  labs(
+    x = "Weeks since COVID-19 hospital admission",
+    y = "Number of positive tests"
+  ) +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(margin = margin(t=10)),
+    axis.title.y = element_text(margin = margin(r=10))
+  ) +
+    coord_cartesian(ylim = c(6,NA))
+  
+# ggsave(
+#   plot = plot,
+#   filename = here::here("output", "eda", glue("{filename}.png"))
+# )
+
+return(plot)
+  
+}
+```
+
+
+#### Figure 1. Distribution of all positive test dates within window relative to date of hospital admission
+```{r}
+# distribution of all positive test dates relative to date of hospital admission
+data_1 %>%
+  my_hist(filename = "covidadmitted_postest_all")
+```
+
+#### Figure 2. Distribution of earliest positive test dates within window relative to date of hospital admission
+```{r}
+# distribution of all positive test dates relative to date of hospital admission
+data_1 %>%
+  filter(name == min_postest_date) %>%
+  my_hist(filename = "covidadmitted_postest_min")
+```
+
+
 
