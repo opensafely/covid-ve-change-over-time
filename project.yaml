@@ -145,6 +145,6 @@ actions:
       moderately_sensitive:
         covidadmitted_postest_summary: output/eda/covidadmitted_postest.txt
         covidadmitted_postest_histograms: output/eda/covidadmitted_postest*.png
-        # covidadmitted_postest_report: output/eda/covidadmitted_postest.html
+        covidadmitted_postest_report: output/eda/covidadmitted_postest.html
 
   
