@@ -153,14 +153,14 @@ return(plot)
 ```
 
 
-#### Figure 1. Distribution of all positive test dates within window relative to date of hospital admission
+#### Figure 1. Distribution of all positive test dates within window relative to date of hospitalisation
 ```{r}
 # distribution of all positive test dates relative to date of hospital admission
 data_1 %>%
   my_hist(filename = "covidadmitted_postest_all")
 ```
 
-#### Figure 2. Distribution of earliest positive test dates within window relative to date of hospital admission
+#### Figure 2. Distribution of earliest positive test dates within window relative to date of hospitalisation
 ```{r}
 # distribution of all positive test dates relative to date of hospital admission
 data_1 %>%
@@ -168,5 +168,31 @@ data_1 %>%
   my_hist(filename = "covidadmitted_postest_min")
 ```
 
+#### Table 2. Number of patients with a positive test 6-4 weeks before hospitalisation and during the window 4 weeks before to 2 weeks after hospitalisation
+```{r}
+postest_after_4wks <- data_1 %>%
+  filter(diff < -28) %>%
+  select(patient_id) %>%
+  left_join(data_1, by = "patient_id") %>%
+  mutate(postest_after_4wks = diff > -28)
 
+postest_after_4wks %>%
+  distinct(patient_id, postest_after_4wks) %>%
+  group_by(postest_after_4wks) %>%
+  count() %>%
+  ungroup() %>%
+  mutate(percent = round(100*n/sum(n), 2)) %>%
+  mutate(across(n, scales::comma, accuracy=1)) %>%
+  kbl() %>%
+  kable_styling(full_width = F)
+```
+
+
+#### Figure 3. Distribution of all positive test dates within window relative to date of hospital admission for those who have a positive test 6-4 weeks before the date of hospitalisation 
+```{r}
+# distribution of all positive test dates relative to date of hospital admission
+postest_after_4wks %>%
+  filter(diff > -28) %>%
+  my_hist(filename = "covidadmitted_postest_min")
+```
 
