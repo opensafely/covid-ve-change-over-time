@@ -138,7 +138,9 @@ clinical <-c(
   "Resident in long-term residential home" = "longres", 
   "Housebound" = "housebound",
   "Number of SARS-CoV-2 tests between 2020-05-18 and min_elig_date" = "test_hist_n",
-  "Pregnancy" = "pregnancy"
+  "Pregnancy" = "pregnancy",
+  "Prior COVID-19 (2 categories)" = "prior_covid_2", 
+  "Prior COVID-19 (4 categories)" = "prior_covid_4"
 )
 
 demographic <- c(
@@ -186,7 +188,7 @@ outcomes <- c(
   "Any SARS-CoV-2 test" = "anytest", 
   "Positive SARS-CoV-2 test" = "postest", 
   "COVID-19 hospitalisation (APCS)" = "covidadmitted",
-  "COVID-19 hospitalisation (ECDS)" = "covidemergency",
+  # "COVID-19 hospitalisation (ECDS)" = "covidemergency",
   "COVID-19 death" = "coviddeath", 
   "Non-COVID-19 death" = "noncoviddeath")
 
@@ -296,7 +298,7 @@ apply_model_fun <- function(
       arguments = c(comparison, subgroup_label, outcome),
       needs = list(
         "data_input_process",
-        "data_covariates_process", 
+        "data_all_process", 
         glue("data_tte_process_{comparison}")
         ),
       highly_sensitive = list(
@@ -473,6 +475,20 @@ actions_list <- splice(
     )
   ),
   
+  comment("create dataset containing postest and covidadmitted outcomes"),
+  action(
+    name = "data_outcomes_process",
+    run = "r:latest analysis/preprocess/data_outcomes_process.R",
+    needs = list("generate_ever_data"),
+    highly_sensitive = list(
+      data_covariates = "output/data/data_outcomes.rds"
+    ),
+    moderately_sensitive = list(
+      counts_postest_covidadmitted = "output/eda/counts_postest_covidadmitted.txt",
+      dist_postest_covidadmitted = "output/eda/dist_postest_covidadmitted.png"
+    )
+  ),
+  
   splice(unlist(lapply(
     1:K,
     function(k) {
@@ -491,24 +507,25 @@ actions_list <- splice(
   ), recursive = FALSE)),
   
   comment("####################################", 
-          "process covariates data",
+          "process all data",
           "####################################"),
   
-  comment("(includes anytest_date)"),
+  comment("process and join all covariates and outcomes"),
   action(
-    name = "data_covariates_process",
-    run = "r:latest analysis/preprocess/data_covariates_process.R",
+    name = "data_all_process",
+    run = "r:latest analysis/preprocess/data_all_process.R",
     needs = splice(
       "data_input_process", 
       "data_eligible_cde", 
       "generate_ever_data",
+      "data_outcomes_process",
       lapply(
         1:K,
         function(k)
         glue("generate_input_{k}")
       )),
     highly_sensitive = list(
-      data_covariates = "output/data/data_covariates.rds"
+      data_covariates = "output/data/data_all.rds"
     )
   ),
   
@@ -516,7 +533,7 @@ actions_list <- splice(
   action(
     name = "data_min_max_fu",
     run = "r:latest analysis/comparisons/data_min_max_fu.R",
-    needs = list("data_input_process", "data_covariates_process"),
+    needs = list("data_input_process", "data_all_process"),
     moderately_sensitive = list(
       data_min_max_fu_csv = "output/lib/data_min_max_fu.csv"
     )
@@ -547,7 +564,7 @@ actions_list <- splice(
     needs = list(
       "data_input_process", 
       "data_eligible_cde",
-      "data_covariates_process"),
+      "data_all_process"),
     moderately_sensitive = list(
       eligibility_count_p1 = "output/tables/eligibility_count_p1.csv",
       table_csv = "output/report/tables/table1_*_REDACTED.csv",
@@ -569,7 +586,7 @@ actions_list <- splice(
         arguments = x,
         needs = list(
           "data_input_process",
-          "data_covariates_process"),
+          "data_all_process"),
         highly_sensitive = list(
           data_tte_brand_outcome = glue("output/tte/data/data_tte_{x}*.rds")
         ),
