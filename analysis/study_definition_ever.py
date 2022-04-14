@@ -296,7 +296,7 @@ study=StudyDefinition(
     ),
     
     # covid hospitalisation:
-    # from ACPS 
+    # from ACPS in any field
     # date of earliest before start_1_date
     covidadmitted_pre_date=patients.admitted_to_hospital(
         returning="date_admitted",
@@ -330,6 +330,34 @@ study=StudyDefinition(
         index_date="covidadmitted_post_date",
         n=6,
         test_result="positive"
+    ),
+
+    # from ACPS in primary field
+    # date of earliest before start_1_date
+    covidadmittedprimary_pre_date=patients.admitted_to_hospital(
+        returning="date_admitted",
+        with_these_primary_diagnoses=covid_codes,
+        on_or_before="start_1_date",
+        find_first_match_in_period=True,
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01,
+        },
+    ),
+    # date of earliest after start_1_date
+    covidadmittedprimary_post_date=patients.admitted_to_hospital(
+        returning="date_admitted",
+        with_these_primary_diagnoses=covid_codes,
+        on_or_after="start_1_date + 1 day",
+        find_first_match_in_period=True,
+        date_format="YYYY-MM-DD",
+        return_expectations={
+            "date": {"earliest": start_date, "latest": end_date},
+            "rate": "exponential_increase",
+            "incidence": 0.01,
+        },
     ),
 
     # from ECDS
