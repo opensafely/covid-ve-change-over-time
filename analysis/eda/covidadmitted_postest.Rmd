@@ -15,24 +15,19 @@ library(kableExtra)
 library(glue)
 ```
 
-```{r}
+```{r functions}
 source(here::here("analysis", "functions", "data_process_functions.R"))
 ```
 
-Our plan is to replace the outcome variable `covidadmitted`, which currently corresponds to the date of a COVID-19 hospitalisation.
-The new variable will correspond to "an episode of COVID-19 resulting in hospitalisation", and will take the date of the first positive test during the episode of COVID-19.
+Our plan is to replace the outcome variable `covidadmitted`, which currently corresponds to the date of hospitalisation with a COVID-19 code in any field.
+The new variable will correspond to "an episode of COVID-19 resulting in hospitalisation", and will take the date of the recorded evidence of the episode of COVID-19 (evidence being a positive COVID-19 test or COVID-19 related hospital admission).
 We have carried out some exploratory data analysis to inform the algorithm that we will use to derive this new variable.
 
-First, Table 1 shows the number of eligible patients who have a COVID-19 hospitalisation in their record.
-For the patients with a COVID-19 hospitalisation, we counted the number of positive tests in their record during the window 6 weeks before and 2 weeks after the date of their COVID-19 hospitalisation. 
-To speed up computation, the number of positive tests was capped at 6.
-These results are given in Table 2.
+First, Table 1 shows the number of eligible patients who have a COVID-19 hospitalisation in their record, and whether this was recorded in the primary field.
+It is possible that someone would have a hospital admission with COVID-19 in a non-primary field, then at a later date have a COVID-19 hospital admission with COVID-19 in a primary field.
+Of the patients with COVID-19 hospital admission in a primary field, Table 2 shows the proportion for whom this occurred on the same date as a COVID-19 hospital admission in any field.
 
-We used histograms to investigate the distribution of positive test date relative to COVID-19 hospitalisation date.
-Figure 1 shows the distribution of positive test dates for all tests during the window, and Figure 2 shows the distribution of each patients earliest positive test date during the window.
-The y-axes start at 6 to mask bars that correspond to <=5 patients.
-
-```{r}
+```{r load-data}
 # read data for ever covariates
 data_ever <- arrow::read_feather(
   file = here::here("output", "input_ever.feather")) 
@@ -43,20 +38,11 @@ data_0 <- data_ever %>%
   mutate(across(contains("_date"), 
                 ~ floor_date(
                   as.Date(.x, format="%Y-%m-%d"),
-                  unit = "days"))) #%>%
-  # # only keep postests in the window
-  # mutate(across(starts_with("covidadmitted_postest"),
-  #               ~ if_else(
-  #                 is.na(covidadmitted_post_date) | 
-  #                   as.integer(.x - covidadmitted_post_date) < -42 |
-  #                   as.integer(.x - covidadmitted_post_date) > 14,
-  #                 as.Date(NA_character_), 
-  #                 .x
-  #               )))
+                  unit = "days"))) 
 ```
 
 #### Table 1. Patients with a COVID-19 hospital admission by recording field
-```{r}
+```{r table1}
 data_0 %>%
   mutate(across(c(covidadmitted_post_date, covidadmittedprimary_post_date),
          ~!is.na(.x))) %>%
@@ -66,13 +52,14 @@ data_0 %>%
   mutate(percent = round(100*n/sum(n), 2)) %>%
   mutate(across(n, scales::comma, accuracy=1)) %>%
   kbl(
-    col.names = c("any field", "primary field", "n", "percent")
+    col.names = c("any", "primary", "n", "percent")
   ) %>%
-  kable_styling(full_width = F)
+  kable_styling(full_width = F) %>%
+  add_header_above(c("field" = 2, " " = 2))
 ```
 
-#### Hospitalistion with COVID in primary and any field on same date
-```{r}
+#### Table 2. Hospitalistion with COVID in primary and any field on same date
+```{r table2}
 data_0 %>%
   filter(
     !is.na(covidadmitted_post_date),
@@ -93,7 +80,7 @@ data_0 %>%
 ```
 
 
-```{r}
+```{r data1}
 data_1 <- data_0 %>%
   filter(!is.na(covidadmitted_post_date)) %>%
   pivot_longer(
@@ -127,8 +114,13 @@ data_1 <- data_0 %>%
   ungroup()
 ```
 
-#### Table 2. Number of positive tests per patient during the window around hospitalisation date
-```{r}
+
+For the patients with a COVID-19 hospitalisation, we counted the number of positive tests in their record during the window 6 weeks before and 2 weeks after the date of their COVID-19 hospitalisation. 
+To speed up computation, the number of positive tests was capped at 6.
+These results (split by field) are given in Table 3.
+
+#### Table 3. Number of positive tests per patient during the window around hospitalisation date
+```{r table3}
 n_tests <- local({
   counts <- data_1 %>% 
     distinct(patient_id, covidadmitted_field, max_postest_date) %>%
@@ -166,7 +158,7 @@ n_tests %>%
 ```
 
 
-```{r}
+```{r myhist-function}
 my_hist <- function(data, filename) {
   
   plot <- data %>%
@@ -205,24 +197,32 @@ return(plot)
 }
 ```
 
+We used histograms to investigate the distribution of positive test date relative to COVID-19 hospitalisation date.
+Figure 1 shows the distribution of positive test dates for all tests during the window, and Figure 2 shows the distribution of each patients earliest positive test date during the window.
+The y-axes start at 6 to mask bars that correspond to <=5 patients.
 
 #### Figure 1. Distribution of all positive test dates within window relative to date of hospitalisation
-```{r}
+```{r figure1}
 # distribution of all positive test dates relative to date of hospital admission
 data_1 %>%
   my_hist(filename = "covidadmitted_postest_all")
 ```
 
 #### Figure 2. Distribution of earliest positive test dates within window relative to date of hospitalisation
-```{r}
+```{r figure2}
 # distribution of all positive test dates relative to date of hospital admission
 data_1 %>%
   filter(sequence == min_postest_date) %>%
   my_hist(filename = "covidadmitted_postest_min")
 ```
 
-#### Table 2. Number of patients with a positive test 6-4 weeks before hospitalisation and during the window 4 weeks before to 2 weeks after hospitalisation
-```{r}
+Although most patients tested positive within two weeks of the hospital admission, some tested positive >2 weeks before.
+To investiagte this, we restricted the sample to those who tested positive 4-6 weeks before their admission date.
+Of these patients, we counted how many also had a positive test 0-4 weeks before their admission date (see Table 4).
+Figure 3 shows the distribution of positive tests in the window 0-4 weeks before and 0-2 weeks after the hospital admission date for patients with a positive test 4-6 weeks before admission date.
+
+#### Table 4. Number of patients with a positive test 4-6 weeks before hospitalisation and during the window 4 weeks before to 2 weeks after hospitalisation
+```{r table4}
 postest_after_4wks <- data_1 %>%
   filter(diff < -28) %>%
   select(patient_id, covidadmitted_field) %>%
@@ -247,8 +247,8 @@ postest_after_4wks %>%
 ```
 
 
-#### Figure 3. Distribution of all positive test dates within window relative to date of hospital admission for those who have a positive test 6-4 weeks before the date of hospitalisation 
-```{r}
+#### Figure 3. Distribution of all positive test dates within window relative to date of hospital admission for those who have a positive test 4-6 weeks before the date of hospitalisation 
+```{r figure3}
 # distribution of all positive test dates relative to date of hospital admission
 postest_after_4wks %>%
   filter(diff > -28) %>%
