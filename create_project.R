@@ -466,7 +466,7 @@ actions_list <- splice(
   comment("explore positive tests around COVID-19 hospital admissions"),
   action(
     name = "covidadmitted_postest_eda",
-    run = "r:latest analysis/eda/covidadmitted_postest.R",
+    run = "r:latest -e 'rmarkdown::render(\"analysis/eda/covidadmitted_postest.Rmd\",  output_dir = \"/workspace/output/eda\")'",
     needs = list("generate_ever_data"),
     moderately_sensitive = list(
       covidadmitted_postest_report = "output/eda/covidadmitted_postest.html"
