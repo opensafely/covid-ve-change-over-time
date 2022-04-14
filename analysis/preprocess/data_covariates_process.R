@@ -15,6 +15,10 @@ model_varlist <- readr::read_rds(
   here::here("analysis", "lib", "model_varlist.rds")
 )
 
+# read outcomes
+outcomes <- readr::read_rds(
+  here::here("analysis", "lib", "outcomes.rds"))
+
 ## source functions
 source(here::here("analysis", "functions", "data_process_functions.R"))
 
@@ -30,13 +34,19 @@ data_arm <- bind_rows(
 )  %>%
   select(patient_id, arm, split)
 
-# sex from data_processed
-data_sex <- readr::read_rds(
+# select vars from from data_processed
+data_processed <- readr::read_rds(
   here::here("output", "data", "data_processed.rds")) %>%
-  select(patient_id, sex)
+  select(patient_id, subgroup,
+         # strata vars
+         region, jcvi_group, elig_date,
+         # demographic vars
+         sex, imd, ethnicity,
+         # outcome or censor vars
+         death_date, dereg_date)
 
 # vax data
-data_wide_vax_dates <- readRDS(
+data_wide_vax_dates <- readr::read_rds(
   here::here("output", "data", "data_wide_vax_dates.rds")) %>%
   select(patient_id, covid_vax_1_date, covid_vax_3_date)
 
@@ -52,6 +62,11 @@ data_k <- bind_rows(lapply(
     mutate(k=k)
 ))
 
+# read data_outcomes for covidadmitted and postest
+data_outcomes <- readr::read_rds(
+  here::here("output", "data", "data_outcomes.rds")) 
+
+# define function
 ever_before <- function(.data, name, var) {
   .data %>%
     mutate(!! sym(name) := if_else(
@@ -70,8 +85,11 @@ data_covariates <- data_arm %>%
   # join period-updating covariates
   left_join(data_k,
             by = "patient_id") %>%
-  # join sex
-  left_join(data_sex,
+  # join covidadmitted and postest outcomes
+  left_join(data_outcomes,
+            by = "patient_id") %>%
+  # join data_processed
+  left_join(data_processed,
             by = "patient_id") %>%
   # join vax for subsequent vax
   left_join(data_wide_vax_dates,
@@ -116,7 +134,7 @@ data_covariates <- data_arm %>%
   mutate(across(bmi_stage_date, 
                 ~ if_else(
                   is.na(bmi_stage),
-                  as.POSIXct(NA_character_),
+                  as.Date(NA_character_),
                   .x))) %>%
   mutate(across(bmi,
                 ~ case_when(
@@ -134,7 +152,7 @@ data_covariates <- data_arm %>%
   mutate(across(bmi_date_measured, 
                 ~ if_else(
                   is.na(bmi),
-                  as.POSIXct(NA_character_),
+                  as.Date(NA_character_),
                   .x))) %>%
   # clean asthma data
   mutate(
@@ -220,9 +238,9 @@ data_covariates <- data_arm %>%
     # 4 categories
     prior_covid_4 = fct_case_when(
       (prior_covid_date > start_k_date) | is.na(prior_covid_date) ~ "None",
-      as.numeric(start_k_date - prior_covid_date) < 90 ~ "0-89 days",
-      as.numeric(start_k_date - prior_covid_date) < 180 ~ "90-179 days",
-      TRUE ~ "180+ days"
+      as.numeric(start_k_date - prior_covid_date) < 90 ~ "0-11 weeks",
+      as.numeric(start_k_date - prior_covid_date) < 180 ~ "12-23 weeks",
+      TRUE ~ "24+ weeks"
     ),
     
     # current immunosuppression medication
@@ -274,15 +292,16 @@ data_covariates <- data_arm %>%
   
   ) %>%
   select(patient_id, start_k_date, end_k_date, k,
-         arm, split, subsequent_vax_date,
-         anytest_date, age, 
-         all_of(unname(model_varlist$clinical)))
-  
+         arm, split, subsequent_vax_date, subgroup, 
+         # strata vars
+         region, elig_date, jcvi_group,
+         # outcomes
+         all_of(str_c(outcomes, "_date")),
+         # covariates
+         all_of(unname(unlist(model_varlist))))
 
 readr::write_rds(
   data_covariates,
   here::here("output", "data", "data_covariates.rds"),
   compress = "gz"
 )
-
-
