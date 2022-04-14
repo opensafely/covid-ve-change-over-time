@@ -23,6 +23,7 @@ arm1 <- if_else(comparison =="ChAdOx1", "ChAdOx1", "BNT162b2")
 arm2 <- if_else(comparison == "both", "ChAdOx1", "unvax")
 
 ################################################################################
+# read metadata
 study_parameters <- readr::read_rds(
   here::here("analysis", "lib", "study_parameters.rds"))
 
@@ -30,15 +31,6 @@ study_parameters <- readr::read_rds(
 outcomes <- readr::read_rds(
   here::here("analysis", "lib", "outcomes.rds"))
 outcomes_death <- outcomes[str_detect(outcomes, "death")]
-
-# covariates data
-data_covariates <- readr::read_rds(
-  here::here("output", "data", "data_covariates.rds")) %>%
-  filter(arm %in% c(arm1, arm2))
-
-# processed data
-data_processed <- readr::read_rds(
-  here::here("output", "data", "data_processed.rds")) 
 
 # read subgroups
 subgroups <- readr::read_rds(
@@ -53,10 +45,30 @@ if ("ChAdOx1" %in% c(arm1, arm2)) {
 # redaction functions
 source(here::here("analysis", "functions", "redaction_functions.R"))
 
+# read datasets
+# covariates data
+data_covariates <- readr::read_rds(
+  here::here("output", "data", "data_covariates.rds")) %>%
+  filter(arm %in% c(arm1, arm2))
+
+# processed data
+data_processed <- readr::read_rds(
+  here::here("output", "data", "data_processed.rds")) 
+
+# ever data for other outcomes
+data_ever <- arrow::read_feather(
+  file = here::here("output", "input_ever.feather")) %>%
+  select(patient_id, positive_test_post_date, covidadmitted_post_date, 
+         matches("covidadmitted_postest_\\d+_date"))
+
+# create output folders
 fs::dir_create(here::here("output", "tte", "data"))
 fs::dir_create(here::here("output", "tte", "tables"))
 
 ################################################################################
+
+
+
 
 data <- data_covariates %>%
   left_join(
@@ -104,22 +116,22 @@ derive_data_tte <- function(
       vars(str_c(unique(c("subsequent_vax", "dereg", "coviddeath", "noncoviddeath", outcome_exclude)), "_date")),
       all_vars(occurs_after_start_date(cov_date = ., index_date = start_k_date))
     ) %>%
-    # only keep periods for which start_k_date < end_date
-    filter(
-      start_k_date < as.Date(study_parameters$end_date) 
-    ) %>%
-    # if end_k_date > end_date, replace with end_date
-    mutate(across(end_k_date,
-                  ~ if_else(as.Date(study_parameters$end_date) < .x,
-                            as.Date(study_parameters$end_date),
-                            .x))) %>%
-    # only keep dates for censoring and outcome variables between start_k_date and end_k_date
-    mutate(across(all_of(str_c(unique(c("dereg", outcomes)), "_date")),
-                  ~ if_else(
-                    !is.na(.x) & (start_k_date < .x) & (.x <= end_k_date),
-                    .x,
-                    as.Date(NA_character_)
-                  ))) %>%
+    # # only keep periods for which start_k_date < end_date
+    # filter(
+    #   start_k_date < as.Date(study_parameters$end_date) 
+    # ) %>%
+    # # if end_k_date > end_date, replace with end_date
+    # mutate(across(end_k_date,
+    #               ~ if_else(as.Date(study_parameters$end_date) < .x,
+    #                         as.Date(study_parameters$end_date),
+    #                         .x))) %>%
+    # # only keep dates for censoring and outcome variables between start_k_date and end_k_date
+    # mutate(across(all_of(str_c(unique(c("dereg", outcomes)), "_date")),
+    #               ~ if_else(
+    #                 !is.na(.x) & (start_k_date < .x) & (.x <= end_k_date),
+    #                 .x,
+    #                 as.Date(NA_character_)
+    #               ))) %>%
     # new time-scale: time since earliest start_fu_date in data
     mutate(across(ends_with("_date"),
                   ~ as.integer(.x - min(start_k_date)))) %>%
