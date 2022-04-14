@@ -8,11 +8,15 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 knitr::opts_knit$set(root.dir = here::here())
 ```
 
-```{r}
+```{r libraries}
 library(tidyverse)
 library(lubridate)
 library(kableExtra)
 library(glue)
+```
+
+```{r}
+source(here::here("analysis", "functions", "data_process_functions.R"))
 ```
 
 Our plan is to replace the outcome variable `covidadmitted`, which currently corresponds to the date of a COVID-19 hospitalisation.
@@ -35,84 +39,130 @@ data_ever <- arrow::read_feather(
 
 # clean data
 data_0 <- data_ever %>%
-  select(patient_id, covidadmitted_post_date, starts_with("covidadmitted_postest")) %>%
+  select(patient_id, covidadmitted_post_date, covidadmittedprimary_post_date, starts_with("covidadmitted_postest")) %>%
   mutate(across(contains("_date"), 
                 ~ floor_date(
                   as.Date(.x, format="%Y-%m-%d"),
-                  unit = "days"))) %>%
-  # only keep postests in the window
-  mutate(across(starts_with("covidadmitted_postest"),
-                ~ if_else(
-                  is.na(covidadmitted_post_date) | 
-                    as.integer(.x - covidadmitted_post_date) < -42 |
-                    as.integer(.x - covidadmitted_post_date) > 14,
-                  as.Date(NA_character_), 
-                  .x
-                )))
+                  unit = "days"))) #%>%
+  # # only keep postests in the window
+  # mutate(across(starts_with("covidadmitted_postest"),
+  #               ~ if_else(
+  #                 is.na(covidadmitted_post_date) | 
+  #                   as.integer(.x - covidadmitted_post_date) < -42 |
+  #                   as.integer(.x - covidadmitted_post_date) > 14,
+  #                 as.Date(NA_character_), 
+  #                 .x
+  #               )))
 ```
 
-#### Table 1. Patients with a COVID-19 hospital admission
+#### Table 1. Patients with a COVID-19 hospital admission by recording field
 ```{r}
 data_0 %>%
-  mutate(covidadmitted = !is.na(covidadmitted_post_date)) %>%
-  group_by(covidadmitted) %>%
+  mutate(across(c(covidadmitted_post_date, covidadmittedprimary_post_date),
+         ~!is.na(.x))) %>%
+  group_by(covidadmitted_post_date, covidadmittedprimary_post_date) %>%
   count() %>%
   ungroup() %>%
   mutate(percent = round(100*n/sum(n), 2)) %>%
   mutate(across(n, scales::comma, accuracy=1)) %>%
-  kbl() %>%
+  kbl(
+    col.names = c("any field", "primary field", "n", "percent")
+  ) %>%
   kable_styling(full_width = F)
 ```
+
+#### Hospitalistion with COVID in primary and any field on same date
+```{r}
+data_0 %>%
+  filter(
+    !is.na(covidadmitted_post_date),
+    !is.na(covidadmittedprimary_post_date)
+    ) %>%
+  mutate(
+    same_date = covidadmitted_post_date == covidadmittedprimary_post_date
+    ) %>%
+  group_by(same_date) %>%
+  count() %>%
+  ungroup() %>%
+  mutate(percent = round(100*n/sum(n), 2)) %>%
+  mutate(across(n, scales::comma, accuracy=1)) %>%
+  kbl(
+    col.names = c("Same date", "n", "percent")
+  ) %>%
+  kable_styling(full_width = F)
+```
+
 
 ```{r}
 data_1 <- data_0 %>%
   filter(!is.na(covidadmitted_post_date)) %>%
+  pivot_longer(
+    cols = c(covidadmitted_post_date, covidadmittedprimary_post_date),
+    values_drop_na = TRUE
+  ) %>%
+  mutate(
+    covidadmitted_field = if_else(
+      name %in% "covidadmittedprimary_post_date",
+      "primary",
+      "any")
+    ) %>%
+  select(-name) %>%
+  rename(covidadmitted_date = value) %>%
   pivot_longer(
     cols = starts_with("covidadmitted_postest"),
     names_pattern = "covidadmitted_postest_(.)_date",
     names_transform = as.integer,
     values_drop_na = TRUE
   ) %>%
-  mutate(diff = as.numeric(value - covidadmitted_post_date)) %>%
-  group_by(patient_id) %>%
+  select(-name) %>%
+  mutate(diff = as.numeric(value - covidadmitted_date)) %>%
+  filter(-42 <= diff, diff <= 14) %>%
+  group_by(patient_id, covidadmitted_field) %>%
+  arrange(value, .by_group = TRUE) %>%
   mutate(
-    min_postest_date = min(name),
-    max_postest_date = max(name)
+    sequence = row_number(),
+    min_postest_date = min(sequence),
+    max_postest_date = max(sequence)
     ) %>%
   ungroup()
 ```
 
-#### Table 2. Number of positive tests per patient during the window
+#### Table 2. Number of positive tests per patient during the window around hospitalisation date
 ```{r}
 n_tests <- local({
   counts <- data_1 %>% 
-    distinct(patient_id, max_postest_date) %>%
-    group_by(max_postest_date) %>%
+    distinct(patient_id, covidadmitted_field, max_postest_date) %>%
+    group_by(max_postest_date, covidadmitted_field) %>%
     count() %>%
     ungroup() %>%
     mutate(across(c(max_postest_date, n), as.integer))
   
-  total <- sum(counts$n)
+  total_any <- sum(counts[counts$covidadmitted_field == "any",]$n)
+  total_primary <- sum(counts[counts$covidadmitted_field == "primary",]$n)
   
   counts %>%
-    select(
-      n_postests = max_postest_date,
-      n_patients = n
+    pivot_wider(
+      names_from = covidadmitted_field,
+      values_from = n
     ) %>%
+    rename(n_postests = max_postest_date) %>%
     add_row(
       n_postests = 0L, 
-      n_patients = nrow(data_0 %>% filter(!is.na(covidadmitted_post_date))) - total
+      any = nrow(data_0 %>% filter(!is.na(covidadmitted_post_date))) - total_any,
+      primary = nrow(data_0 %>% filter(!is.na(covidadmittedprimary_post_date))) - total_primary
     ) %>%
     arrange(n_postests) %>%
-    mutate(across(n_patients, ~if_else(is.na(.x),0L,.x))) %>%
-    mutate(percent = round(100*n_patients/sum(n_patients),2)) %>%
-    mutate(across(c(n_postests, n_patients), scales::comma, accuracy=1)) 
+    mutate(across(c(any, primary), 
+                  ~if_else(is.na(.x),0L,.x))) %>%
+    mutate(across(c(any, primary), 
+                  ~str_c(scales::comma(.x, accuracy = 1), " (", round(100*.x/sum(.x), 2), ")")))
   
 })
 
 n_tests %>%
   kbl() %>%
-  kable_styling(full_width = F)
+  kable_styling(full_width = F) %>%
+  add_header_above(c(" " = 1, "field" = 2))
 ```
 
 
@@ -120,12 +170,14 @@ n_tests %>%
 my_hist <- function(data, filename) {
   
   plot <- data %>%
-  ggplot(aes(x = diff)) +
+    mutate(across(covidadmitted_field,
+                  ~str_c("field = ", .x))) %>%
+  ggplot(aes(x = diff, fill = covidadmitted_field)) +
   geom_vline(xintercept = 0, linetype = "dashed") +
-  geom_histogram(
-    center = 0.5,
-    binwidth = 1, 
-    alpha = 0.8) +
+    stat_count(
+      alpha = 0.8
+    ) +
+    facet_wrap(~covidadmitted_field, ncol=1, scales = "free_y") +
   scale_x_continuous(
     breaks = seq(-42,14,7),
     limits = c(-42,14),
@@ -138,7 +190,8 @@ my_hist <- function(data, filename) {
   theme_bw() +
   theme(
     axis.title.x = element_text(margin = margin(t=10)),
-    axis.title.y = element_text(margin = margin(r=10))
+    axis.title.y = element_text(margin = margin(r=10)),
+    legend.position = "none"
   ) +
     coord_cartesian(ylim = c(6,NA))
   
@@ -164,7 +217,7 @@ data_1 %>%
 ```{r}
 # distribution of all positive test dates relative to date of hospital admission
 data_1 %>%
-  filter(name == min_postest_date) %>%
+  filter(sequence == min_postest_date) %>%
   my_hist(filename = "covidadmitted_postest_min")
 ```
 
@@ -172,19 +225,25 @@ data_1 %>%
 ```{r}
 postest_after_4wks <- data_1 %>%
   filter(diff < -28) %>%
-  select(patient_id) %>%
-  left_join(data_1, by = "patient_id") %>%
+  select(patient_id, covidadmitted_field) %>%
+  left_join(data_1, by = c("patient_id", "covidadmitted_field")) %>%
   mutate(postest_after_4wks = diff > -28)
 
 postest_after_4wks %>%
-  distinct(patient_id, postest_after_4wks) %>%
-  group_by(postest_after_4wks) %>%
+  distinct(patient_id, covidadmitted_field, postest_after_4wks) %>%
+  group_by(covidadmitted_field, postest_after_4wks) %>%
   count() %>%
   ungroup() %>%
-  mutate(percent = round(100*n/sum(n), 2)) %>%
-  mutate(across(n, scales::comma, accuracy=1)) %>%
+  pivot_wider(
+    names_from = covidadmitted_field,
+    values_from = n
+  ) %>%
+  mutate(across(c(any, primary), ~if_else(is.na(.x), 0L, .x))) %>%
+  mutate(across(c(any, primary), 
+                  ~str_c(scales::comma(.x, accuracy = 1), " (", round(100*.x/sum(.x), 2), ")"))) %>%
   kbl() %>%
-  kable_styling(full_width = F)
+  kable_styling(full_width = F) %>%
+  add_header_above(c(" " = 1, "field" = 2))
 ```
 
 
