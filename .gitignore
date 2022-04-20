@@ -23,3 +23,5 @@ manuscript/images/*
 manuscript/appendix.pdf
 manuscript/appendix.tex
 manuscript/appendix.log
+
+hospitalisations_report/*.png
