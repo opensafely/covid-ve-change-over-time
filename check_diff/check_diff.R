@@ -1,6 +1,12 @@
-# check difference in estimates after corresction made to models
+# check difference in estimates after correction made to models
 
+################################################################################
 library(tidyverse)
+
+################################################################################
+# read study parameters
+study_parameters <- readr::read_rds(
+  here::here("analysis", "lib", "study_parameters.rds"))
 
 # read subgroups
 subgroups <- readr::read_rds(
@@ -20,6 +26,7 @@ new_names <- str_remove(new_names, "SARS-CoV-2 ")
 new_names <- str_replace(new_names, "COVID-19", "C-19")
 new_names <- str_wrap(new_names, 15)
 
+################################################################################
 estimates_old <- readr::read_csv(here::here("release20220226", "estimates_all.csv")) %>%
   mutate(across(subgroup, factor, labels = subgroups[c(2,4,3,1)])) %>%
   mutate(across(subgroup, as.character)) %>%
@@ -30,24 +37,59 @@ estimates_old <- readr::read_csv(here::here("release20220226", "estimates_all.cs
   select(subgroup, comparison, outcome, model, label, estimate, conf.low, conf.high) %>%
   arrange(subgroup, comparison, outcome, model, label)
   
-
+################################################################################
 estimates_new <- readr::read_csv(here::here("release_20220401", "estimates_all.csv")) %>%
-  mutate(across(subgroup, factor, levels = 1:4, labels = str_wrap(subgroups, subgroup_width))) %>%
-  filter(variable == "k", !reference_row, outcome != "covidemergency") %>%
-  select(subgroup, comparison, outcome, model, label, estimate, conf.low, conf.high) %>%
   mutate(across(c(estimate, conf.low, conf.high), exp)) %>%
-  arrange(subgroup, comparison, outcome, model, label)
+  filter(variable == "k", outcome != "covidemergency") %>%
+  select(subgroup, comparison, outcome, model, period, label, estimate, conf.low, conf.high, starts_with("n_")) %>%
+  arrange(subgroup, comparison, outcome, model, period, label)
 
+################################################################################
+# scale for x-axis
+K <- study_parameters$K
+ends <- seq(2, (K+1)*4, 4)
+starts <- ends + 1
+weeks_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
 
+################################################################################
+estimates_viewhub <- estimates_new %>%
+  filter(
+    comparison != "both",
+    outcome != "anytest"
+    ) %>%
+  mutate(across(subgroup, factor, levels = 1:4, labels = subgroups)) %>%
+  mutate(across(outcome, 
+                factor, 
+                levels = outcomes, 
+                labels = str_replace_all(new_names, "\\n", " "))) %>%
+  mutate(across(label, 
+                ~if_else(.x == "0", "unvax", "vax"))) %>%
+  mutate(weeks_since_2nd_vax = factor(
+    period,
+    levels = as.character(1:6),
+    labels = weeks_since_2nd_vax)) %>%
+  mutate(across(comparison, ~str_c(.x, " vs unvax"))) %>%
+  rename(comparison_period = period) 
+
+readr::write_csv(
+  estimates_viewhub,
+  here::here("release_20220401", "estimates_viewhub.csv")
+)
+
+################################################################################
 estimates <- bind_rows(
   estimates_old %>%
     mutate(corrected = FALSE),
   estimates_new %>%
+    filter(!reference_row) %>%
+    mutate(across(subgroup, factor, levels = 1:4, labels = str_wrap(subgroups, subgroup_width))) %>%
+    select(subgroup, comparison, outcome, model, label, estimate, conf.low, conf.high) %>%
     mutate(corrected = TRUE)
 ) %>%
   mutate(across(model, factor, levels = c("unadjusted", "adjusted"))) %>%
   mutate(across(outcome, factor, levels = outcomes, labels = new_names))
 
+################################################################################
 gg_color_hue <- function(n, transparency = 1) {
   hues = seq(15, 375, length = n + 1)
   hcl(h = hues, l = 65, c = 100, alpha = transparency)[1:n]
