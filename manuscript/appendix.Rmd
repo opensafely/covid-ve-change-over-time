@@ -877,19 +877,19 @@ tribble(
 elig_dates <-
 tribble(
     ~grouped_date, ~date, ~age_range, ~jcvi_groups, ~source,
-    "2020-12-08", "2020-12-08", "-", "01, 02, 03", "-",
-    "2021-01-18", "2021-01-18", "-", "04", "https://www.bbc.co.uk/news/uk-55698132",
+    "2020-12-08", "2020-12-08", "-", "1, 2", "-",
+    "2021-01-18", "2021-01-18", "-", "3, 4", "https://www.bbc.co.uk/news/uk-55698132",
     ###
-    "2021-02-15", "2021-02-15", "-", "05, 06", "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2021/02/COVID-19-weekly-announced-vaccinations-25-February-2021.pdf",
+    "2021-02-15", "2021-02-15", "-", "5, 6", "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2021/02/COVID-19-weekly-announced-vaccinations-25-February-2021.pdf",
     ###
-    "2021-02-22", "2021-02-22", "64", "07", "https://www.england.nhs.uk/2021/03/nhs-invites-people-aged-60-plus-to-book-life-saving-covid-jab/", 
-    "2021-03-01", "2021-03-01", "60-63", "07", "https://www.england.nhs.uk/2021/03/nhs-invites-people-aged-60-plus-to-book-life-saving-covid-jab/",
+    "2021-02-22", "2021-02-22", "64", "7", "https://www.england.nhs.uk/2021/03/nhs-invites-people-aged-60-plus-to-book-life-saving-covid-jab/", 
+    "2021-03-01", "2021-03-01", "60-63", "7", "https://www.england.nhs.uk/2021/03/nhs-invites-people-aged-60-plus-to-book-life-saving-covid-jab/",
     ###
     # combine 2 rows as < 7 days between elig_dates
-    "2021-03-08", "2021-03-08", "56-59", "08", "https://www.england.nhs.uk/2021/03/56-59/",
-    "2021-03-08", "2021-03-09", "55", "08", "https://web.archive.org/web/20210309005613/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    "2021-03-08", "2021-03-08", "56-59", "8", "https://www.england.nhs.uk/2021/03/56-59/",
+    "2021-03-08", "2021-03-09", "55", "8", "https://web.archive.org/web/20210309005613/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
     ###
-    "2021-03-19", "2021-03-19", "50-54", "09", "https://web.archive.org/web/20210319164659/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    "2021-03-19", "2021-03-19", "50-54", "9", "https://web.archive.org/web/20210319164659/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
     ###
     "2021-04-13", "2021-04-13", "45-49", "10", "https://web.archive.org/web/20210413144439/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
     # combine 3 rows as < 7 days between elig_dates
