@@ -1,30 +1,28 @@
 library(tidyverse)
 
 ################################################################################
-release_folder <- "release20220226"
+release_folder <- "release_20220401"
 
 # read subgroups
 subgroups <- readr::read_rds(
-  here::here("output", "lib", "subgroups.rds"))
+  here::here("analysis", "lib", "subgroups.rds"))
 subgroup_labels <- seq_along(subgroups)
-subgroups_order <- c(4,1,3,2)
 
 ################################################################################
 
 metareg_results_0 <- haven::read_dta(here::here(release_folder, "results.dta"))
-# metareg_results_0 <- readxl::read_excel(here::here("release20220221", "metareg_results.xlsx"))
 
 metareg_results <- metareg_results_0 %>%
   rename(subgroup = stratum, comparison = vaccine) %>%
   mutate(across(subgroup,
                 factor,
-                levels = 0:3,
-                labels = subgroups[c(4,1,3,2)])) %>%
+                levels = 1:4,
+                labels = subgroups)) %>%
   mutate(across(subgroup, ~factor(as.character(.x)))) %>%
   mutate(across(comparison, 
                 factor,
                 levels = 1:3,
-                labels = c("BNT162b2", "ChAdOx", "both")
+                labels = c("BNT162b2", "ChAdOx1", "both")
                 )) %>%
   mutate(across(outcome,
                 factor,
@@ -64,3 +62,14 @@ readr::write_rds(
   metareg_results_k,
   here::here(release_folder, "metareg_results_k.rds")
 )
+
+metareg_results_rhr <- metareg_results %>%
+  distinct(outcome, subgroup, comparison, logrhr, logrhr_lower, logrhr_higher) %>%
+  mutate(across(starts_with("log"), exp)) %>%
+  rename_with(~str_remove(.x, "log"))
+
+readr::write_rds(
+  metareg_results_rhr,
+  here::here(release_folder, "metareg_results_rhr.rds")
+)
+

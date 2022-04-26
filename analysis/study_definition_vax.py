@@ -16,13 +16,13 @@ from grouping_variables import (
 )
 
 # define variables explicitly from study_parameters
-max_comparisons=study_parameters["max_comparisons"]
+max_comparisons=study_parameters["K"]
 start_date=study_parameters["start_date"] # start of phase 1
 end_date=study_parameters["end_date"] # latest date of data
 
 # regions
 regions = pd.read_csv(
-    filepath_or_buffer='./output/lib/regions.csv',
+    filepath_or_buffer='./analysis/lib/regions.csv',
     dtype=str
 )
 ratio_regions = { regions['region'][i] : float(regions['ratio'][i]) for i in regions.index }
@@ -332,7 +332,8 @@ study=StudyDefinition(
         },
     ),
     
-    # covid hospital adamission
+    # covid hospitalisation:
+    # from ACPS 
     covidadmitted_0_date=patients.admitted_to_hospital(
         returning="date_admitted",
         with_these_diagnoses=covid_codes,
@@ -344,6 +345,16 @@ study=StudyDefinition(
             "rate": "exponential_increase",
             "incidence": 0.01,
         },
+    ),
+    # from ECDS
+    # any emergency attendance for covid
+    covidemergency_0_date=patients.attended_emergency_care(
+        returning="date_arrived",
+        on_or_before=end_date,
+        with_these_diagnoses=covid_emergency,
+        discharged_to=discharged_to_hospital,
+        date_format="YYYY-MM-DD",
+        find_first_match_in_period=True,
     ),
     
     # covid death

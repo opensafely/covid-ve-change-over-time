@@ -53,7 +53,8 @@ tribble(
     "01", "longres_group AND age_1 > 65",
     "02", "age_1 >=80",
     "03", "age_1 >=75",
-    "04", "age_1 >=70 OR (cev_group AND age_1 >=16)",
+    "04a", "age_1 >=70",
+    "04b", "cev_group AND age_1 >=16",
     "05", "age_1 >=65",
     "06", "atrisk_group AND age_1 >=16",
     "07", "age_1 >=60",
@@ -73,8 +74,8 @@ readr::write_csv(jcvi_groups, here::here("output", "lib", "jcvi_groups.csv"))
 elig_dates <-
 tribble(
     ~date, ~description, ~jcvi_groups,
-    "2020-12-08", "jcvi_group='01' OR jcvi_group='02' OR jcvi_group='03'", "01, 02, 03", #TODO
-    "2021-01-18", "jcvi_group='04'", "04",
+    "2020-12-08", "jcvi_group='01' OR jcvi_group='02'", "01, 02", 
+    "2021-01-18", "jcvi_group='03' OR jcvi_group='04a' OR jcvi_group='04b'", "03, 04a, 04b",
     ###
     "2021-02-15", "jcvi_group='05' OR jcvi_group='06'", "05, 06",
     ###
@@ -155,31 +156,6 @@ clinical <-c(
   "Number of SARS-CoV-2 tests between 2020-05-18 and min_elig_date" = "test_hist_n",
   "Pregnancy" = "pregnancy"
 )
-
-# clinical <- c(
-#   "BMI" = "bmi",
-#   "Heart failure" = "heart_failure", 
-#   "Other heart disease" = "other_heart_disease", 
-#   "Dialysis" = "dialysis",
-#   "Diabetes" = "diabetes",
-#   "Chronic liver disease" = "chronic_liver_disease", 
-#   "COPD" = "current_copd",
-#   "Other respiratory disease" = "other_respiratory", 
-#   "Lung cancer" = "lung_cancer",
-#   "Haematological cancer" = "haematological_cancer",
-#   "Cancer excl. lung, haemo" = "cancer_excl_lung_and_haem",
-#   "Immunosuppressed" = "any_immunosuppression",
-#   "Dementia"  = "dementia", 
-#   "Other neurological conditions" = "other_neuro_conditions",
-#   "Learning disabilities" = "ld_inc_ds_and_cp",
-#   "Serious mental illness" = "psychosis_schiz_bipolar",
-#   "Morbidity count" = "multimorb",
-#   "Shielding criteria met" = "shielded", 
-#   "Flu vaccine in previous 5 years" = "flu_vaccine",
-#   "Resident in long-term residential home" = "longres", 
-#   "Number of SARS-CoV-2 tests between 2020-05-18 and min_elig_date" = "test_hist_1_n",
-#   "Pregnancy" = "pregnancy"
-# )
 
 demographic <- c(
   "Age" = "age",

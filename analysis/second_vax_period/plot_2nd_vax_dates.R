@@ -52,8 +52,8 @@ plot_2nd_vax_dates_fun <- function(
   # plot histograms by region
   plot_by_region <- ggplot(NULL, aes(x = dose_2)) +
     # overlapping histogram for each brand, binwdith = 1 day
-    geom_bar(data = data %>% filter(brand == "ChAdOx"), 
-             aes(y = n_brand, fill = "ChAdOx"),
+    geom_bar(data = data %>% filter(brand == "ChAdOx1"), 
+             aes(y = n_brand, fill = "ChAdOx1"),
              stat = "identity",  alpha = 0.5, width = 1) +
     geom_bar(data = data %>% filter(brand == "BNT162b2"), 
              aes(y = n_brand, fill = "BNT162b2"), 

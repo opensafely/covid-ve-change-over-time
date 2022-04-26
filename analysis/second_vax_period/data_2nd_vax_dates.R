@@ -18,9 +18,9 @@ library(glue)
 fs::dir_create(here::here("output", "second_vax_period", "data"))
 fs::dir_create(here::here("output", "second_vax_period", "tables"))
 
-study_parameters <- readr::read_rds(here::here("output", "lib", "study_parameters.rds"))
+study_parameters <- readr::read_rds(here::here("analysis", "lib", "study_parameters.rds"))
 
-elig_dates <- readr::read_csv(here::here("output", "lib", "elig_dates.csv"))
+elig_dates <- readr::read_csv(here::here("analysis", "lib", "elig_dates.csv"))
 
 # individuals who are eligible based on criteria in box b of Figure 3 on protocol
 data_eligible_b <- readr::read_rds(
@@ -103,7 +103,7 @@ data_vax_plot <- bind_rows(
   mutate(across(brand, 
                 ~factor(brand, 
                         levels = c("az", "pfizer"),
-                        labels = c("ChAdOx", "BNT162b2")))) %>%
+                        labels = c("ChAdOx1", "BNT162b2")))) %>%
   rename(n_brand = n) %>%
   group_by(jcvi_group, elig_date, region, dose_2) %>%
   mutate(n = sum(n_brand)) %>%
@@ -149,7 +149,7 @@ second_vax_period_dates <- data_vax_plot %>%
     # time between start of first comparison and last date of available data
     days_of_data = as.integer(as.Date(study_parameters$end_date) - start_of_period) + 14,
     # set n_comparisons based on days of available data
-    n_comparisons = pmin(ceiling(days_of_data/28), study_parameters$max_comparisons)
+    n_comparisons = pmin(ceiling(days_of_data/28), study_parameters$K)
     ) %>%
   select(-days_of_data)
 
@@ -170,7 +170,7 @@ brand_counts <- second_vax_period_dates %>%
 second_vax_period_dates <- second_vax_period_dates %>%
   left_join(brand_counts,
             by = c("jcvi_group", "elig_date", "region"))  %>%
-  select(jcvi_group, elig_date, region, n_ChAdOx, n_BNT162b2, cumulative_sum,
+  select(jcvi_group, elig_date, region, n_ChAdOx1, n_BNT162b2, cumulative_sum,
          start_of_period, end_of_period, n_comparisons)
 
 # save for plotting

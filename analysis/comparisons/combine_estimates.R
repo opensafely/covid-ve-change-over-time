@@ -11,67 +11,69 @@ library(glue)
 fs::dir_create(here::here("output", "report", "data"))
 
 ################################################################################
+# read study parameters
+study_parameters <- readr::read_rds(
+  here::here("analysis", "lib", "study_parameters.rds"))
+K <- study_parameters$K
+
 # read outcomes
 outcomes <- readr::read_rds(
-  here::here("output", "lib", "outcomes.rds")
+  here::here("analysis", "lib", "outcomes.rds")
 )
 
 # read subgroups
 subgroups <- readr::read_rds(
-  here::here("output", "lib", "subgroups.rds"))
+  here::here("analysis", "lib", "subgroups.rds"))
 subgroup_labels <- seq_along(subgroups)
 
 # define comparisons
-comparisons <- c("BNT162b2", "ChAdOx", "both")
+comparisons <- c("BNT162b2", "ChAdOx1", "both")
 
 # redaction functions
-source(here::here("analysis", "lib", "redaction_functions.R"))
+source(here::here("analysis", "functions", "redaction_functions.R"))
 
 ################################################################################
-model_tidy_list <- unlist(lapply(
-  comparisons,
-  function(x)
-    unlist(lapply(
-      subgroup_labels,
-      function(y)
-        lapply(
-          unname(outcomes),
-          function(z)
-            try(
-              readr::read_rds(
-                here::here("output", "models_cox", "data", glue("modelcox_tidy_{x}_{y}_{z}.rds")
-                )
-              ) %>%
-                mutate(comparison = x, subgroup = y, outcome = z)
-            )
+
+all_files <- list.files(path = here::here("output", "models_cox", "data"), 
+           pattern = "modelcox_tidy_\\w+_\\d_\\w+_\\d.rds",
+           all.files = FALSE,
+           full.names = FALSE, recursive = FALSE,
+           ignore.case = FALSE, include.dirs = FALSE)
+
+
+model_tidy_list <- lapply(
+  all_files,
+  function(filename) {
+    filename_split <- unlist(str_split(str_remove(filename, ".rds"), "_"))
+    readr::read_rds(
+      here::here("output", "models_cox", "data", filename)
+    ) %>%
+      mutate(
+        comparison = filename_split[3],
+        subgroup = filename_split[4],
+        outcome = filename_split[5],
+        period = filename_split[6]
         )
-    ),
-    recursive = FALSE
-    )
-),
-recursive = FALSE
+  }
 )
 
 model_tidy_tibble <- bind_rows(
   model_tidy_list[sapply(model_tidy_list, function(x) is_tibble(x))]
 ) %>%
-  select(subgroup, comparison, outcome, model, variable, label, reference_row,
-         n_obs, n_event,
-         estimate, conf.low, conf.high) %>%
+  mutate(across(c(estimate, conf.low, conf.high), round, 5)) %>%
   mutate(across(model, 
-                factor, levels = 1:2, labels = "unadjusted", "adjusted")) %>%
-  mutate(across(c(estimate, conf.low, conf.high), exp)) %>%
-  # redact estimates where n_obs <= 5
-  mutate(redact = redactor(n = n_event, threshold = 5)) %>%
-  mutate(across(redact, ~if_else(n_event == 0, TRUE, .x))) %>%
-  mutate(across(c(n_event, n_obs, estimate, conf.low, conf.high), 
-                ~if_else(redact, NA_real_, .x))) 
-  
-cat("\nEstimates redacted for the following:\n")
-model_tidy_tibble %>%
-  filter(redact) %>%
-  distinct(subgroup, comparison, outcome, model, variable, label) %>%
-  print(n=Inf)
+                factor, levels = 1:2, labels = c("unadjusted", "adjusted"))) %>%
+  # calculate the total number of observations per model
+  mutate(n_obs_model = if_else(variable == "k", n_obs, NA_real_)) %>%
+  group_by(subgroup, comparison, outcome, model, period) %>%
+  mutate(across(n_obs_model, sum, na.rm=TRUE)) %>%
+  ungroup() %>%
+  mutate(across(c(n_obs_model, n_obs, n_event), round, -1)) %>%
+  select(subgroup, comparison, outcome, model, period, variable, label, reference_row,
+         n_obs_model, n_obs_label = n_obs, n_event_label = n_event,
+         estimate, conf.low, conf.high) %>%
+  # order so that model with least observations is first
+  arrange(n_obs_model) 
 
 readr::write_csv(
   model_tidy_tibble,

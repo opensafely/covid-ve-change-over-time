@@ -10,11 +10,11 @@ fs::dir_create(here::here("output", "report", "tables"))
 ################################################################################
 # read list of covariates for model
 model_varlist <- readr::read_rds(
-  here::here("output", "lib", "model_varlist.rds"))
+  here::here("analysis", "lib", "model_varlist.rds"))
 
 # read strata_vars
 strata_vars <- readr::read_rds(
-  here::here("output", "lib", "strata_vars.rds"))
+  here::here("analysis", "lib", "strata_vars.rds"))
 strata_vars <- strata_vars[strata_vars!="elig_date"]
 
 # processed data
@@ -27,10 +27,10 @@ data_covariates <- readr::read_rds(
 
 # read subgroups
 subgroups <- readr::read_rds(
-  here::here("output", "lib", "subgroups.rds"))
+  here::here("analysis", "lib", "subgroups.rds"))
 
 # redaction functions
-source(here::here("analysis", "lib", "redaction_functions.R"))
+source(here::here("analysis", "functions", "redaction_functions.R"))
 
 ################################################################################
 # function to be applied in dplyr::filter
@@ -272,7 +272,7 @@ for (i in c(0, seq_along(data_tables))) {
     rename(Variable = variable_label, Characteristic = category, Unvaccinated = unvax) %>%
     select(-variable) %>%
     select(Variable, Characteristic, everything()) %>%
-    mutate(across(c(BNT162b2, ChAdOx, Unvaccinated), 
+    mutate(across(c(BNT162b2, ChAdOx1, Unvaccinated), 
                   ~ if_else(is.na(.x), "- (-%)", .x))) 
   
   # age summary
@@ -303,7 +303,7 @@ for (i in c(0, seq_along(data_tables))) {
     ungroup() %>% 
     pivot_wider(names_from = arm, values_from = n) %>% 
     mutate(Variable = "", Characteristic = "N") %>%
-    mutate(across(c(BNT162b2, ChAdOx, unvax), 
+    mutate(across(c(BNT162b2, ChAdOx1, unvax), 
                   ~ scales::comma(.x, accuracy = 1))) %>%
     bind_rows(
       age_summary

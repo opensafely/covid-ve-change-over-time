@@ -1,0 +1,317 @@
+---
+title: "Comparing sources of COVID-19 hospitalisation data for estimating vaccine effectiveness"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+# Background
+Identifying COVID-19 hospitalisations is crucial to the ongoing monitoring of the COVID-19 pandemic.
+COVID-19 hospitalisations can be identified from the Admitted Patient Care Spells (APCS) dataset, which is part of Hospital Episode Statistics (HES) and is provided to OpenSAFELY via NHS Digital's Secondary Use Service (SUS).
+However, patients are only included in the APCS dataset if they have been discharged by the data extraction date.
+This means that patients who are currently in hospital will not appear in the extract, and therefore creates a delay in the availability of COVID-19 hospitalisations data (see the [OpenSAFELY documentation](https://docs.opensafely.org/dataset-apc/)).
+
+Some patients are admitted to hospital with COVID-19 via accident and emergency (A&E).
+COVID-19 hospitalisations that occur via A&E can be identified in the Emergency Care Data Set (ECDS).
+As patients are typically discharged from A&E (either home or to hospital) within 24 hours, the delay between the true event and the event being captured in the dataset is much shorter for ECDS (see the [OpenSAFELY documentation](https://docs.opensafely.org/dataset-ecds/)).
+Therefore, the use of ECDS may facilitate more up-to-date monitoring of COVID-19 hospitalisations.
+
+# Objective
+We have previously estimated waning effectiveness of BNT162b2 and ChAdOx1 COVID-19 vaccines over six months since second dose (see the [pre-print](https://www.medrxiv.org/content/10.1101/2022.03.23.22272804v1)).
+In this previous study, we derived COVID-19 hospitalisation using APCS data.
+The objective of this report was to extend this study by estimating vaccine effectiveness against COVID-19 hospitalisation derived from the ECDS, and to compare the estimates with those derived from APCS data.
+
+# Methods
+The methods used in the previous study are detailed in the [pre-print](https://www.medrxiv.org/content/10.1101/2022.03.23.22272804v1).
+For the purposes of this report, we refer to COVID-19 hospitalisation derived as described in the pre-print as “APCS-derived COVID-19 hospitalisation”, and additionally define “ECDS-derived COVID-19 hospitalisation” as follows: an A&E attendances with SNOMED codes indicating a COVID-19 diagnosis with discharge to hospital. 
+We retained only the earliest ECDS-derived COVID-19 hospitalisation for each individual. 
+With exactly the same sample of patients used for estimating waning against APCS-derived COVID-19 hospitalisation, we estimated waning against ECDS-derived COVID-19 hospitalisation using Cox regression models (as described in the statistical analysis section of the [pre-print](https://www.medrxiv.org/content/10.1101/2022.03.23.22272804v1)).
+
+```{r}
+library(tidyverse)
+library(glue)
+library(flextable)
+library(viridis)
+```
+
+```{r}
+# read subgroups
+subgroups <- readr::read_rds(
+  here::here("analysis", "lib", "subgroups.rds"))
+
+# read study parameters
+study_parameters <- readr::read_rds(
+  here::here("analysis", "lib", "study_parameters.rds"))
+
+# labels for comparison periods
+K <- study_parameters$K
+ends <- seq(2, (K+1)*4, 4)
+starts <- ends + 1
+weeks_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
+```
+
+```{r}
+estimates_all <- readr::read_csv(
+  here::here("release_20220401", "estimates_all.csv")) %>%
+  filter(
+    outcome %in% "covidadmitted",
+    comparison != "both"
+    ) %>%
+  bind_rows(
+    readr::read_csv(
+  here::here("release_20220411", "estimates_emergency.csv")) %>%
+  filter(
+    outcome %in% "covidemergency",
+    comparison != "both"
+    ) 
+  ) %>%
+    mutate(across(period, 
+                factor, 
+                levels = 1:K,
+                labels = weeks_since_2nd_vax)) 
+```
+
+
+# Results
+Tables 1-4 show the number of individuals during each comparison period (defined by weeks since second dose) for each of the four subgroups, along with event counts for both the APCS- and ECDS-derived hospitalisations.
+
+Figure 2 shows the APCS- and ECDS-derived hazard ratios (HRs) for COVID-19 hospitalisation, estimated using Cox regression.
+Only the adjusted HRs are shown (see [pre-print](https://www.medrxiv.org/content/10.1101/2022.03.23.22272804v1) for details regarding adjustment). 
+Due to lower event counts, the confidence intervals were wider for all ECDS-derived HRs.
+
+# Discussion
+These findings suggest that using COVID-19 hospitalisation derived from ECDS may result in a slight overestimation of vaccine effectiveness compared to using COVID-19 hospitalisation derived from APCS.
+The lower number of events derived from ECDS resulted in greater uncertainty in the estimated vaccine effectiveness.
+This was particularly evident in the 18-39 years subgroup, in which there were few COVID-19 hospitalisations.
+
+```{r}
+table_data_0 <- estimates_all %>%
+  filter(variable == "k", model == "unadjusted") %>%
+  mutate(arm = if_else(label == "0", "Unvaccinated", comparison)) %>%
+  mutate(across(c(n_event_label, n_obs_label), ~scales::comma(.x, accuracy = 1))) %>%
+  # mutate(value = as.character(glue("{n_event_label} / {n_obs_label}"))) %>%
+  distinct(subgroup, arm, outcome, period, n_event_label, n_obs_label) %>%
+  pivot_longer(cols = n_obs_label) %>% 
+  rename(n_patients = value) %>%
+  select(-name) 
+
+table_data_1 <- table_data_0 %>%
+  select(-n_patients) %>%
+  rename(value = n_event_label, label = outcome) %>%
+  distinct() %>%
+  arrange(subgroup, label, period) %>%
+  pivot_wider(
+    names_from = c(arm, label),
+    values_from = value
+  ) %>%
+  left_join(
+    table_data_0 %>%
+      select(-n_event_label, -outcome) %>%
+      rename(value = n_patients) %>%
+      distinct() %>%
+      pivot_wider(
+        names_from = arm,
+        values_from = value,
+        names_glue = "{arm}_n"
+      ),
+    by = c("subgroup", "period")
+  ) %>%
+  select(subgroup, period, sort(tidyselect::peek_vars()))
+
+
+subgroup_lengths <- as.vector(table(table_data_1$subgroup))
+
+names(subgroup_lengths) <- subgroups
+
+table_names <- names(table_data_1)[-c(1:2)]
+split_names <- str_split(table_names, "_")
+
+table_header <- tibble(
+  col_keys = table_names
+) %>%
+  mutate(
+    line2 = sapply(split_names, function(x) x[1]),
+    line3 = sapply(split_names, function(x) x[2])
+    ) %>%
+  mutate(across(line3, 
+                ~case_when(
+                  .x %in% "covidadmitted" ~ "APCS events", 
+                  .x %in% "covidemergency" ~ "ECDS events",
+                  TRUE ~ "N patients"
+                ))) %>%
+  add_row(
+    col_keys = "period",
+    line2 = "Weeks since 2nd dose",
+    line3 = "Weeks since 2nd dose"
+  ) 
+  
+
+table_data_split <- table_data_1 %>%
+  group_split(subgroup)
+
+make_table <- function(data) {
+  
+  data %>%
+    select(-subgroup) %>%
+    flextable() %>%
+    set_header_df(
+      mapping = table_header,
+      key = "col_keys"
+    ) %>%
+    merge_h(part = "header", i = 1) %>%
+    merge_v(part = "header", j = 1) %>%
+    merge_v(part = "body", j = 1) 
+  
+}
+
+```
+
+#### Table 1. Event counts and number of individuals for each source of COVID-19 hospitalisation in the `r subgroups[1]` subgroup
+```{r}
+make_table(table_data_split[[1]])
+```
+
+#### Table 2. Event counts and number of individuals for each source of COVID-19 hospitalisation in the `r subgroups[2]` subgroup
+```{r}
+make_table(table_data_split[[2]])
+```
+
+#### Table 3. Event counts and number of individuals for each source of COVID-19 hospitalisation in the `r subgroups[3]` subgroup
+```{r}
+make_table(table_data_split[[3]])
+```
+
+#### Table 4. Event counts and number of individuals for each source of COVID-19 hospitalisation in the `r subgroups[4]` subgroup
+```{r}
+make_table(table_data_split[[4]])
+```
+
+
+```{r}
+plot_estimates <- function(model_plot) {
+  
+  position_dodge_val <- 0.8
+  
+  vir_length <- 8
+  unadj_alph <- 0.3
+  adj_alph <- 1
+  apcs_pos <- 1
+  ecds_pos <- 7
+  unadj_pal <- viridis(vir_length, alpha = unadj_alph)[c(apcs_pos,ecds_pos)]
+  adj_pal <- viridis(vir_length, alpha = adj_alph)[c(apcs_pos,ecds_pos)]
+  
+  names_colour_pal <- c("APCS unadjusted", "APCS adjusted", "ECDS unadjusted", "ECDS adjusted")
+  
+  if (all(model_plot == "adjusted")) {
+    colour_pal <- c(adj_pal[1], adj_pal[2])
+    names(colour_pal) <- names_colour_pal[str_detect(names_colour_pal, " adjusted")]
+  } else if (all(model_plot == "unadjusted")) {
+    colour_pal <- c(unadj_pal[1], unadj_pal[2])
+    names(colour_pal) <- names_colour_pal[str_detect(names_colour_pal, " unadjusted")]
+  } else {
+    colour_pal <- c(unadj_pal[1], adj_pal[1], unadj_pal[2], adj_pal[2])
+    names(colour_pal) <- names_colour_pal
+  }
+  
+  plot_estimates <- estimates_all %>%
+    filter(model %in% model_plot) %>%
+    filter(variable == "k", !reference_row) %>%
+    # remove the estimate for BNT162b2 in 40-64 years, as only one
+    filter(!(comparison == "BNT162b2" & subgroup == 3)) %>%
+    select(subgroup, comparison, outcome, model, period, estimate, conf.low, conf.high) %>%
+    mutate(across(c(estimate, conf.low, conf.high), exp)) %>%
+    mutate(across(outcome, ~if_else(.x == "covidadmitted", "APCS", "ECDS"))) %>%
+    mutate(across(subgroup, factor, levels = 1:4, labels = str_wrap(subgroups, 25))) %>%
+    mutate(
+      colour_var = factor(
+        str_c(outcome, model, sep = " "),
+        levels = names(colour_pal))
+    ) %>%
+    ggplot(
+      aes(x = period, y = estimate, colour = colour_var)
+    ) +
+    geom_linerange(
+      aes(ymin = conf.low, ymax = conf.high), 
+      position = position_dodge(width = position_dodge_val)
+    ) +
+    geom_point(
+      position = position_dodge(width = position_dodge_val)
+    ) +
+    facet_grid(comparison ~ subgroup) +
+    scale_color_manual(
+      name = NULL,
+      values = colour_pal
+    ) +
+    scale_y_log10(
+      name = "Hazard ratio",
+      breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1),
+      # limits = c(y_lower, y_upper),
+      oob = scales::oob_keep
+    ) +
+    labs(
+      x = "Weeks since second dose"
+    ) +
+    theme_bw() +
+    theme(
+      panel.border = element_blank(),
+      axis.line.y = element_line(colour = "black"),
+      
+      axis.text = element_text(size=8),
+      
+      axis.title.x = element_text(size = 8, margin = margin(t = 10, r = 0, b = 0, l = 0)),
+      axis.title.y = element_text(size = 8, margin = margin(t = 0, r = 10, b = 0, l = 0)),
+      axis.text.x = element_text(size=8, angle = 45, vjust = 0.5),
+      axis.text.y = element_text(size=8),
+      
+      panel.grid.minor.x = element_blank(),
+      panel.grid.minor.y = element_blank(),
+      strip.background = element_blank(),
+      strip.placement = "outside",
+      strip.text.y.left = element_text(angle = 0),
+      strip.text = element_text(size=8),
+      
+      panel.spacing = unit(0.8, "lines"),
+      
+      plot.title = element_text(hjust = 0, size = 8),
+      plot.title.position = "plot",
+      plot.caption.position = "plot",
+      plot.caption = element_text(hjust = 0, face= "italic"),
+      
+      plot.margin = margin(t=10, r=15, b=10, l=10),
+      
+      legend.position = c(0.875,0.2)
+      
+    )
+  
+  ggsave(
+    plot = plot_estimates,
+    filename = here::here("hospitalisations_report", glue("plot_estimates_{str_c(model_plot, collapse = \"_\")}.png")),
+    width = 20, height = 15, units = "cm"
+  )
+  
+}
+
+```
+
+```{r}
+save_plots <- FALSE
+if (save_plots) {
+  models <- c("unadjusted", "adjusted")
+
+lapply(
+  list(1, 2, 1:2),
+  function(x)
+  plot_estimates(models[x])
+)
+}
+```
+
+
+
+#### Figure 2. Hazard ratios for COVID-19 hospitalisations derived APCS and ECDS
+```{r, out.width="100%"}
+knitr::include_graphics(here::here("hospitalisations_report", "plot_estimates_adjusted.png"))
+```
+

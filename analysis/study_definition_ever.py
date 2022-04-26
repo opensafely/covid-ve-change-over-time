@@ -9,7 +9,7 @@ from codelists import *
 # import json module
 import json
 #study_parameters
-with open("./output/lib/study_parameters.json") as f:
+with open("./analysis/lib/study_parameters.json") as f:
   study_parameters = json.load(f)
 
 # define variables explicitly

@@ -1,4 +1,4 @@
-*cd "/Users/eh1415/Documents/covid-change-ve-over-time/release20220226"
+*cd "/Users/eh1415/Documents/covid-change-ve-over-time/release_20220401"
 
 *ssc install metareg
 
@@ -20,9 +20,9 @@ destring confhigh, replace
 replace conflow="" if conflow=="NA"
 destring conflow, replace
 
-gen loghr=log(estimate)
-gen lnu=log(confhigh)
-gen lnl=log(conflow)
+gen loghr=estimate
+gen lnu=confhigh
+gen lnl=conflow
 
 gen se1=(lnu-loghr)/1.96
 gen se2=(loghr-lnl)/1.96
@@ -32,10 +32,10 @@ corr se1 se2
 gen seloghr=(se1+se2)/2
 drop se1 se2 lnu lnl
 
-gen stratum=0 if subgroup=="65+ years"
-replace stratum=1 if subgroup=="16-64 years and clinically vulnerable"
-replace stratum=2 if subgroup=="40-64 years"
-replace stratum=3 if subgroup=="18-39 years"
+gen stratum=1 if subgroup=="65+ years"
+replace stratum=2 if subgroup=="16-64 years and clinically vulnerable"
+replace stratum=3 if subgroup=="40-64 years"
+replace stratum=4 if subgroup=="18-39 years"
 
 rename outcome temp
 
@@ -59,7 +59,7 @@ replace k=k-1
 sort outcome stratum vaccine
 save waning_metareg.dta, replace
 
-metareg loghr k if outcome==1 & stratum==0 & vaccine==3, wsse(seloghr)
+metareg loghr k if outcome==1 & stratum==1 & vaccine==3, wsse(seloghr)
 local a=_b[k]
 local b=_se[k]
 local c=_b[_cons]
@@ -75,7 +75,7 @@ postfile `memhold' outcome stratum vaccine logrhr selogrhr loghr1 seloghr1 using
 
   forvalues i=1/5 {
   	forvalues v=1/3 {
-		forvalues s=0/3 {
+		forvalues s=1/4 {
 				di "A: " `i' `s' `v'
 
 				count if outcome==`i' & stratum==`s' & vaccine==`v' &loghr<.
@@ -132,13 +132,13 @@ describe
 
 reshape wide logrhr selogrhr rhr lci uci, i(subgroup outcome model) j(vaccine)
 
-gen stratum=0 if subgroup=="65+ years"
-replace stratum=1 if subgroup=="16-64 years and clinically vulnerable"
-replace stratum=2 if subgroup=="40-64 years"
-replace stratum=3 if subgroup=="18-39 years"
+gen stratum=1 if subgroup=="65+ years"
+replace stratum=2 if subgroup=="16-64 years and clinically vulnerable"
+replace stratum=3 if subgroup=="40-64 years"
+replace stratum=4 if subgroup=="18-39 years"
 
-label define stratum 0 "65+_years" 1 "16-64_years_&_clinically_vulnerable" ///
-2 "40-64_years" 3 "18-39_years"
+label define stratum 1 "65+_years" 2 "16-64_years_&_clinically_vulnerable" ///
+3 "40-64_years" 4 "18-39_years"
 
 label values stratum stratum
 

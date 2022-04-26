@@ -31,20 +31,21 @@ library(glue)
 ```{r paths}
 # path for released results
 release_folder <- here::here("release20220226")
+release_folder_new <- here::here("release_20220401")
 ```
 
 ```{r read-meta-data}
 # read study parameters
 study_parameters <- readr::read_rds(
-  here::here("output", "lib", "study_parameters.rds"))
+  here::here("analysis", "lib", "study_parameters.rds"))
 
 # read varlist
  model_varlist <- readr::read_rds(
-    here::here("output", "lib", "model_varlist.rds"))
+    here::here("analysis", "lib", "model_varlist.rds"))
 
 # read subgroups
 subgroups <- readr::read_rds(
-  here::here("output", "lib", "subgroups.rds"))
+  here::here("analysis", "lib", "subgroups.rds"))
 subgroup_labels <- seq_along(subgroups)
 subgroup_order <- c(4,1,3,2)
 subgroups_long <- if_else(
@@ -55,7 +56,7 @@ subgroups_long <- if_else(
 
 # outcomes 
 outcomes <- readr::read_rds(
-  here::here("output", "lib", "outcomes.rds"))
+  here::here("analysis", "lib", "outcomes.rds"))
 outcomes_long <- names(outcomes)
 outcomes_long[outcomes=="covidadmitted"] <- "COVID-19 hospitalisation"
 names(outcomes) <- outcomes_long
@@ -68,7 +69,7 @@ outcomes_order <- c(which(outcomes == "covidadmitted"),
 select_outcomes <- unname(outcomes[outcomes_order])
 
 # scale for k
-K <- study_parameters$max_comparisons
+K <- study_parameters$K
 ends <- seq(2, (K+1)*4, 4)
 starts <- ends + 1
 weeks_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
@@ -94,22 +95,22 @@ event_counts <- readr::read_csv(
 
 # read estimates data
 estimates_all <- readr::read_csv(
-  here::here(release_folder, "estimates_all.csv")) %>%
-  mutate(across(model, ~as.integer(str_remove(.x, "unadjusted")))) %>%
-  mutate(across(c(estimate, conf.low, conf.high), 
-                ~format(round(.x, digits=2), nsmall=2, trim = TRUE))) %>%
+  here::here(release_folder_new, "estimates_all.csv")) %>%
+  filter(outcome != "covidemergency") %>%
+  mutate(across(c(estimate, conf.low, conf.high),
+                ~round(exp(.x), 2), nsmall=2)) %>%
   mutate(across(outcome,
                 factor,
                 levels = unname(outcomes[outcomes_order]),
                 labels = names(outcomes[outcomes_order]))) %>%
       mutate(across(comparison,
                   factor,
-                  levels = c("BNT162b2", "ChAdOx", "both"),
+                  levels = c("BNT162b2", "ChAdOx1", "both"),
                   labels = c("BNT162b2 vs unvaccinated", "ChAdOx1 vs unvaccinated", "BNT162b2 vs ChAdOx1"))) 
 
 # read metaregression results
 metareg_results_k <- readr::read_rds(
-  here::here(release_folder, "metareg_results_k.rds")) %>%
+  here::here(release_folder_new, "metareg_results_k.rds")) %>%
   mutate(across(subgroup, as.integer)) %>%
   mutate(across(outcome,
                 factor,
@@ -117,7 +118,7 @@ metareg_results_k <- readr::read_rds(
                 labels = names(outcomes[outcomes_order]))) %>%
       mutate(across(comparison,
                   factor,
-                  levels = c("BNT162b2", "ChAdOx", "both"),
+                  levels = c("BNT162b2", "ChAdOx1", "both"),
                   labels = c("BNT162b2 vs unvaccinated", "ChAdOx1 vs unvaccinated", "BNT162b2 vs ChAdOx1"))) %>%
    mutate(across(c(logrhr, logrhr_lower, logrhr_higher), 
                 ~format(round(exp(.x), digits=2), nsmall=2, trim = TRUE))) %>%
@@ -222,7 +223,7 @@ variable_defs <- local({
   "Eligibility date",
   #
   "Potential confounders (clinical)",
-  "Clinically extremely vulnerable",
+  "Shielding",
   "UK government COVID-19 shielding criteria met.",
   "0; 1.",
   "start\\textsubscript{ki}",
@@ -486,13 +487,11 @@ table_events_ft <- local({
 ```
 
 ```{r prep-table-hrs}
-table_hrs_ft <- function(model){
+table_hrs_ft <- function(m){
   
-  if (model == "unadjusted") {
-    m <- 1 
+  if (m == "unadjusted") {
     caption_string <- "Unadjusted hazard ratios for each comparison period."
-  } else if (model == "adjusted") {
-    m <- 2
+  } else if (m == "adjusted") {
     caption_string <- "Adjusted hazard ratios for each comparison period."
   }
   
@@ -502,6 +501,7 @@ table_hrs_ft <- function(model){
       model == m,
       !reference_row
       ) %>%
+    mutate(across(c(estimate, conf.low, conf.high), ~format(.x, nsmall=2))) %>%
     mutate(
       name = glue("{subgroup}_{comparison}"),
       value = glue("{estimate} ({conf.low}-{conf.high})")
@@ -516,8 +516,8 @@ table_hrs_ft <- function(model){
       names_from = name,
       values_from = value
     ) %>%
-    select(outcome, k, starts_with(as.character(subgroup_order))) %>%
-     mutate(across(starts_with(as.character(subgroup_order)),
+    select(outcome, k, starts_with(as.character(1:4))) %>%
+     mutate(across(starts_with(as.character(1:4)),
                   ~ if_else(
                     str_detect(.x, "NA"),
                     NA_character_,
@@ -877,19 +877,19 @@ tribble(
 elig_dates <-
 tribble(
     ~grouped_date, ~date, ~age_range, ~jcvi_groups, ~source,
-    "2020-12-08", "2020-12-08", "-", "01, 02, 03", "-",
-    "2021-01-18", "2021-01-18", "-", "04", "https://www.bbc.co.uk/news/uk-55698132",
+    "2020-12-08", "2020-12-08", "-", "1, 2", "-",
+    "2021-01-18", "2021-01-18", "-", "3, 4", "https://www.bbc.co.uk/news/uk-55698132",
     ###
-    "2021-02-15", "2021-02-15", "-", "05, 06", "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2021/02/COVID-19-weekly-announced-vaccinations-25-February-2021.pdf",
+    "2021-02-15", "2021-02-15", "-", "5, 6", "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2021/02/COVID-19-weekly-announced-vaccinations-25-February-2021.pdf",
     ###
-    "2021-02-22", "2021-02-22", "64", "07", "https://www.england.nhs.uk/2021/03/nhs-invites-people-aged-60-plus-to-book-life-saving-covid-jab/", 
-    "2021-03-01", "2021-03-01", "60-63", "07", "https://www.england.nhs.uk/2021/03/nhs-invites-people-aged-60-plus-to-book-life-saving-covid-jab/",
+    "2021-02-22", "2021-02-22", "64", "7", "https://www.england.nhs.uk/2021/03/nhs-invites-people-aged-60-plus-to-book-life-saving-covid-jab/", 
+    "2021-03-01", "2021-03-01", "60-63", "7", "https://www.england.nhs.uk/2021/03/nhs-invites-people-aged-60-plus-to-book-life-saving-covid-jab/",
     ###
     # combine 2 rows as < 7 days between elig_dates
-    "2021-03-08", "2021-03-08", "56-59", "08", "https://www.england.nhs.uk/2021/03/56-59/",
-    "2021-03-08", "2021-03-09", "55", "08", "https://web.archive.org/web/20210309005613/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    "2021-03-08", "2021-03-08", "56-59", "8", "https://www.england.nhs.uk/2021/03/56-59/",
+    "2021-03-08", "2021-03-09", "55", "8", "https://web.archive.org/web/20210309005613/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
     ###
-    "2021-03-19", "2021-03-19", "50-54", "09", "https://web.archive.org/web/20210319164659/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
+    "2021-03-19", "2021-03-19", "50-54", "9", "https://web.archive.org/web/20210319164659/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
     ###
     "2021-04-13", "2021-04-13", "45-49", "10", "https://web.archive.org/web/20210413144439/https://www.nhs.uk/conditions/coronavirus-covid-19/coronavirus-vaccination/who-can-get-the-vaccine/",
     # combine 3 rows as < 7 days between elig_dates
@@ -1057,75 +1057,35 @@ landscape(table_metareg_ft)
 \begin{landscape}
 
 ```{r hr-vax-BNT162b2, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for BNT162b2 vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_vax_BNT162b2.png"))
+knitr::include_graphics(file.path(release_folder_new, "hr_vax_BNT162b2.png"))
 ```
 
 ```{r hr-vax-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for ChAdOx1 vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_vax_ChAdOx1.png"))
+knitr::include_graphics(file.path(release_folder_new, "hr_vax_ChAdOx1.png"))
 ```
 
 ```{r hr-vax-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for BNT162b2 vs ChAdOx1", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_vax_both.png"))
+knitr::include_graphics(file.path(release_folder_new, "hr_vax_both.png"))
 ```
 
 \end{landscape}
 
 ```{r hr-vax-anytest-BNT162b2, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_BNT162b2.png"))
+knitr::include_graphics(file.path(release_folder_new, "hr_vax_anytest_BNT162b2.png"))
 ```
 
 ```{r hr-vax-anytest-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for ChAdOx1 vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_ChAdOx1.png"))
+knitr::include_graphics(file.path(release_folder_new, "hr_vax_anytest_ChAdOx1.png"))
 ```
 
 ```{r hr-vax-anytest-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx1", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_both.png"))
+knitr::include_graphics(file.path(release_folder_new, "hr_vax_anytest_both.png"))
 ```
 
 ```{r hr-vax-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 and ChAdOx1 vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_vax_anytest.png"))
+knitr::include_graphics(file.path(release_folder_new, "hr_vax_anytest.png"))
 ```
 
 ```{r hr-brand-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx1", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_brand_anytest.png"))
-```
-
-```{r table-estimates-covs-1, include=TRUE, tab.cap.pre = "Supplementary Table "}
-landscape(table_estimates_covs_ft(1))
-```
-
-```{r table-estimates-covs-2, include=TRUE, tab.cap.pre = "Supplementary Table "}
-landscape(table_estimates_covs_ft(2))
-```
-
-```{r table-estimates-covs-3, include=TRUE, tab.cap.pre = "Supplementary Table "}
-landscape(table_estimates_covs_ft(3))
-```
-
-```{r table-estimates-covs-4, include=TRUE, tab.cap.pre = "Supplementary Table "}
-landscape(table_estimates_covs_ft(4))
-```
-
-```{r table-estimates-covs-5, include=TRUE, tab.cap.pre = "Supplementary Table "}
-landscape(table_estimates_covs_ft(5))
-```
-
-```{r table-estimates-covs-6, include=TRUE, tab.cap.pre = "Supplementary Table "}
-landscape(table_estimates_covs_ft(6))
-```
-
-```{r table-estimates-covs-7, include=TRUE, tab.cap.pre = "Supplementary Table "}
-landscape(table_estimates_covs_ft(7))
-```
-
-```{r table-estimates-covs-8, include=TRUE, tab.cap.pre = "Supplementary Table "}
-landscape(table_estimates_covs_ft(8))
-```
-
-```{r table-estimates-covs-9, include=TRUE, tab.cap.pre = "Supplementary Table "}
-landscape(table_estimates_covs_ft(9))
-```
-
-```{r table-estimates-covs-10, include=TRUE, tab.cap.pre = "Supplementary Table "}
-landscape(table_estimates_covs_ft(10))
+knitr::include_graphics(file.path(release_folder_new, "hr_brand_anytest.png"))
 ```

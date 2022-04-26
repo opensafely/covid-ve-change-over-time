@@ -25,6 +25,9 @@ eligibility_count <- tribble(
   "Extracted using study_definition", n_distinct(data_processed$patient_id)
 )
 
+# create folder for metadata
+fs::dir_create(here::here("output", "lib"))
+
 ################################################################################
 cat("#### apply exclusion criteria from box a to processed data ####\n")
 # remove dummy jcvi_group
