@@ -20,7 +20,7 @@ date_vars_recent <- c("positive_test_0_date",
                       "covidadmitted_0_date",
                       "covidemergency_0_date",
                       "death_date",
-                      "longres_date", 
+                      "longres_date",
                       "endoflife_date", 
                       "midazolam_date",
                       "coviddeath_date", 
@@ -59,6 +59,7 @@ dummy_data_elig <- tibble(patient_id = 1:n) %>%
   var_category(region, categories = regions$region, ratios = regions$ratio) %>%
   # binary vars for exclusion criteria
   mutate(hscworker = rbernoulli(n = nrow(.), p=0.01)) %>%
+  mutate(housebound = rbernoulli(n = nrow(.), p=0.01)) %>%
   # jcvi_group
   var_category(
     name = jcvi_group, 
