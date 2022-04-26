@@ -31,15 +31,6 @@ outcomes <- readr::read_rds(
   here::here("analysis", "lib", "outcomes.rds"))
 outcomes_death <- outcomes[str_detect(outcomes, "death")]
 
-# covariates data
-data_covariates <- readr::read_rds(
-  here::here("output", "data", "data_covariates.rds")) %>%
-  filter(arm %in% c(arm1, arm2))
-
-# processed data
-data_processed <- readr::read_rds(
-  here::here("output", "data", "data_processed.rds")) 
-
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("analysis", "lib", "subgroups.rds"))
@@ -50,9 +41,22 @@ if ("ChAdOx1" %in% c(arm1, arm2)) {
   select_subgroups <- subgroups
 }
 
+################################################################################
+# covariates data
+data_covariates <- readr::read_rds(
+  here::here("output", "data", "data_covariates.rds")) %>%
+  filter(arm %in% c(arm1, arm2))
+
+# processed data
+data_processed <- readr::read_rds(
+  here::here("output", "data", "data_processed.rds")) 
+
+################################################################################
 # redaction functions
 source(here::here("analysis", "functions", "redaction_functions.R"))
 
+################################################################################
+# output directories
 fs::dir_create(here::here("output", "tte", "data"))
 fs::dir_create(here::here("output", "tte", "tables"))
 
