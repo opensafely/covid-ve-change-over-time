@@ -1,28 +1,38 @@
 library(tidyverse)
 
-release_folder <- "release20220226"
+release_folder <- "release_20220401"
 
 # read data
 estimates_all <- readr::read_csv(
   here::here(release_folder, "estimates_all.csv"))
 
+# read outcomes
+outcomes <- readr::read_rds(
+  here::here("analysis", "lib", "outcomes.rds")
+)
+outcomes <- outcomes[outcomes!="covidemergency"]
+
 # read subgroups
 subgroups <- readr::read_rds(
-  here::here("output", "lib", "subgroups.rds"))
+  here::here("analysis", "lib", "subgroups.rds"))
 
-# output folder
-fs::dir_create(here::here("output", "metareg", "data"))
-
-# prcoess
-data_metareg <- estimates_all %>%
+# process
+data_metareg_0 <- estimates_all %>%
   filter(
+    outcome %in% outcomes,
     !reference_row,
     variable %in% "k",
-    model %in% "unadjusted2" # error in the labeling, this corresponds to unadjusted
+    model %in% "adjusted" # error in the labeling, this corresponds to unadjusted
     ) %>%
   mutate(model = "adjusted") %>%
   select(subgroup, comparison, outcome, model, k = label, estimate, conf.low, conf.high) %>%
-  mutate(across(subgroup, factor, levels = 1:4, labels = subgroups))
+  mutate(across(subgroup, factor, levels = 1:4, labels = subgroups)) 
+
+# expand to all combinations
+data_metareg <- data_metareg_0 %>%
+  expand(subgroup, comparison, outcome, model, k) %>%
+  filter(!(subgroup %in% "18-39 years" & comparison != "BNT162b2")) %>%
+  left_join(data_metareg_0)
 
 # save data
 readr::write_csv(
