@@ -106,29 +106,33 @@ study=StudyDefinition(
 	    ),
 
     # most recent numeric BMI
-    bmi=patients.most_recent_bmi(
-        on_or_before="svp_start_date - 1 day",
-        minimum_age_at_measurement=16,
-        include_measurement_date=True,
-        date_format="YYYY-MM-DD",
-        return_expectations={ "float": {"distribution": "normal", "mean": 28, "stddev": 8} },
-        ),
-    # most recent BMI stage
-    bmi_stage=patients.with_these_clinical_events(
-        bmi_stage_primis,
-        on_or_before="svp_start_date - 1 day",
-        returning="category",
-        include_date_of_match=True,
-        date_format="YYYY-MM-DD",
-        find_last_match_in_period=True,
-        return_expectations={
-            "category": {"ratios": {"Obese class I": 0.4, "Obese class II": 0.4, "Obese class III": 0.2,}},
-            "incidence": 0.75,
-        },
-        ),
+    bmi=patients.categorised_as(
+    {
+      "Not obese": "DEFAULT",
+      "Obese I (30-34.9)": """ bmi_value >= 30 AND bmi_value < 35""",
+      "Obese II (35-39.9)": """ bmi_value >= 35 AND bmi_value < 40""",
+      "Obese III (40+)": """ bmi_value >= 40 AND bmi_value < 100""",
+      # set maximum to avoid any impossibly extreme values being classified as obese
+    },
+    bmi_value=patients.most_recent_bmi(
+        between=["svp_start_date - 5 years", "svp_start_date - 1 day"],
+        minimum_age_at_measurement=16
+    ),
+    return_expectations={
+      "rate": "universal",
+      "category": {
+        "ratios": {
+          "Not obese": 0.7,
+          "Obese I (30-34.9)": 0.1,
+          "Obese II (35-39.9)": 0.1,
+          "Obese III (40+)": 0.1,
+        }
+      },
+    },
+  ),
 
     # severe asthma
-    asthma = patients.satisfying(
+    asthma=patients.satisfying(
         """
         astadm OR
         (ast AND astrxm1 AND astrxm2 AND astrxm3)
@@ -165,16 +169,20 @@ study=StudyDefinition(
         ),
     ),
 
-    # Chronic Respiratory Disease other than asthma
-    resp_date=patients.with_these_clinical_events(
-        resp_primis,
-        returning="binary_flag",
-        on_or_before="svp_start_date - 1 day",
-        return_expectations={"incidence": 0.02},
+    # chronic respiratory disease
+    crd=patients.satisfying(
+        "asthma OR resp",
+        # Chronic Respiratory Disease other than asthma
+        resp=patients.with_these_clinical_events(
+            resp_primis,
+            returning="binary_flag",
+            on_or_before="svp_start_date - 1 day",
+            return_expectations={"incidence": 0.02},
+            ),
     ),
 
     # Chronic Neurological Disease including Significant Learning Disorder
-    cns_date=patients.with_these_clinical_events(
+    cns=patients.with_these_clinical_events(
         cns_primis,
         returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
@@ -182,9 +190,9 @@ study=StudyDefinition(
     ),
 
     # Chronic kidney disease diagnostic codes
-    ckd_group=patients.satisfying(
+    ckd=patients.satisfying(
         """
-        ckd OR
+        ckd_any OR
         (ckd15_date AND 
         (ckd35_date >= ckd15_date) OR (ckd35_date AND NOT ckd15_date))
         """,
@@ -205,7 +213,7 @@ study=StudyDefinition(
             date_format="YYYY-MM-DD",
         ),
         # Chronic kidney disease diagnostic codes
-        ckd=patients.with_these_clinical_events(
+        ckd_any=patients.with_these_clinical_events(
             ckd_primis,
             returning="binary_flag",
             on_or_before="svp_start_date - 1 day",
@@ -214,7 +222,7 @@ study=StudyDefinition(
     ),
 
     # Diabetes
-    diab_date=patients.with_these_clinical_events(
+    diabetes=patients.with_these_clinical_events(
         diab_primis,
         returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
@@ -222,7 +230,7 @@ study=StudyDefinition(
         ),
 
     # Severe mental illness
-    sev_mental_date=patients.with_these_clinical_events(
+    sev_mental=patients.with_these_clinical_events(
         sev_mental_primis,
         returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
@@ -230,7 +238,7 @@ study=StudyDefinition(
         ),
 
     # Chronic heart disease codes
-    chd_date=patients.with_these_clinical_events(
+    chd=patients.with_these_clinical_events(
         chd_primis,
         returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
@@ -238,30 +246,33 @@ study=StudyDefinition(
     ),
 
     # Chronic Liver disease codes
-    cld_date=patients.with_these_clinical_events(
+    cld=patients.with_these_clinical_events(
         cld_primis,
         returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
         return_expectations={"incidence": 0.02},
     ),
 
+    # Immunosuppression
+    immunosuppressed=patients.satisfying(
+    "immrx OR immdx",
     # Immunosuppression diagnosis codes
-    immdx_date=patients.with_these_clinical_events(
+    immdx=patients.with_these_clinical_events(
         immdx_primis,
         returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
         return_expectations={"incidence": 0.02},
         ),
-
     # Immunosuppression medication codes
     immrx=patients.with_these_medications(
         immrx_primis,
         returning="binary_flag",
         between=["svp_start_date - 180 days", "svp_start_date - 1 day"],
+        ),
     ),
 
     # Asplenia or Dysfunction of the Spleen codes
-    spln_date=patients.with_these_clinical_events(
+    asplenia=patients.with_these_clinical_events(
         spln_primis,
         returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
@@ -269,7 +280,7 @@ study=StudyDefinition(
     ),
 
     # Learning Disability
-    learndis_date=patients.with_these_clinical_events(
+    learndis=patients.with_these_clinical_events(
         learndis_primis,
         returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
@@ -305,7 +316,7 @@ study=StudyDefinition(
     ),
 
     # pregnancy
-    preg_group=patients.satisfying(
+    pregnancy=patients.satisfying(
         """
         (preg_36wks_date) AND
         (pregdel_pre_date <= preg_36wks_date OR NOT pregdel_pre_date)
