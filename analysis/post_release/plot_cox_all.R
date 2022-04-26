@@ -119,7 +119,7 @@ plot_data <- estimates_all %>%
       left_join(
         tibble(subgroup = subgroups, subgroup_label = subgroup_labels),
         by = "subgroup"
-        ) %>%
+      ) %>%
       select(-subgroup) %>%
       rename(subgroup = subgroup_label), 
     by = "subgroup"
