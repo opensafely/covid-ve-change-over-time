@@ -4,14 +4,16 @@ library(survival)
 library(lubridate)
 
 ################################################################################
-
+# create output directories
 fs::dir_create(here::here("output", "subsequent_vax", "images"))
 fs::dir_create(here::here("output", "subsequent_vax", "tables"))
 
+################################################################################
 ## import study_parameters
 study_parameters <- readr::read_rds(
   here::here("analysis", "lib", "study_parameters.rds"))
 
+################################################################################
 # individuals eligible based on box c criteria
 data_eligible_e_vax <- readr::read_rds(
   here::here("output", "data", "data_eligible_e_vax.rds"))  %>%
@@ -24,6 +26,7 @@ data_eligible_e_unvax <- readr::read_rds(
   mutate(arm = "unvax") %>%
   select(patient_id, start_of_period, arm)
 
+################################################################################
 # processed data
 data_processed <- readr::read_rds(
   here::here("output", "data", "data_processed.rds")) %>%
@@ -33,6 +36,7 @@ data_wide_vax_dates <- readRDS(
   here::here("output", "data", "data_wide_vax_dates.rds")) %>%
   select(patient_id, covid_vax_1_date, covid_vax_3_date)
 
+################################################################################
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("analysis", "lib", "subgroups.rds"))
