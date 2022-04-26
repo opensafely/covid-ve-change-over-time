@@ -113,84 +113,17 @@ actions:
         eligibility_count_cde: output/tables/eligibility_count_cde.csv
 
   ## #################################### 
-  ## study definition ever and k 
+  ## study definition covs 
   ## #################################### 
-  ## study definition ever 
 
-  generate_ever_data:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_ever
+  generate_covs_data:
+    run: cohortextractor:latest generate_cohort --study-definition study_definition_covs
       --output-format feather
     needs:
     - data_eligible_cde
     outputs:
       highly_sensitive:
-        cohort: output/input_ever.feather
-
-  ## study definition for period 1 
-
-  generate_input_1:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_1
-      --output-format feather
-    needs:
-    - data_eligible_cde
-    outputs:
-      highly_sensitive:
-        cohort: output/input_1.feather
-
-  ## study definition for period 2 
-
-  generate_input_2:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_2
-      --output-format feather
-    needs:
-    - data_eligible_cde
-    outputs:
-      highly_sensitive:
-        cohort: output/input_2.feather
-
-  ## study definition for period 3 
-
-  generate_input_3:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_3
-      --output-format feather
-    needs:
-    - data_eligible_cde
-    outputs:
-      highly_sensitive:
-        cohort: output/input_3.feather
-
-  ## study definition for period 4 
-
-  generate_input_4:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_4
-      --output-format feather
-    needs:
-    - data_eligible_cde
-    outputs:
-      highly_sensitive:
-        cohort: output/input_4.feather
-
-  ## study definition for period 5 
-
-  generate_input_5:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_5
-      --output-format feather
-    needs:
-    - data_eligible_cde
-    outputs:
-      highly_sensitive:
-        cohort: output/input_5.feather
-
-  ## study definition for period 6 
-
-  generate_input_6:
-    run: cohortextractor:latest generate_cohort --study-definition study_definition_6
-      --output-format feather
-    needs:
-    - data_eligible_cde
-    outputs:
-      highly_sensitive:
-        cohort: output/input_6.feather
+        cohort: output/input_covs.feather
 
   ## #################################### 
   ## process covariates data 
@@ -202,13 +135,7 @@ actions:
     needs:
     - data_input_process
     - data_eligible_cde
-    - generate_ever_data
-    - generate_input_1
-    - generate_input_2
-    - generate_input_3
-    - generate_input_4
-    - generate_input_5
-    - generate_input_6
+    - generate_covs_data
     outputs:
       highly_sensitive:
         data_covariates: output/data/data_covariates.rds
