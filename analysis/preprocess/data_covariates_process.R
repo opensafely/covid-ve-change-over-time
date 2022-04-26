@@ -38,25 +38,41 @@ data_wide_vax_dates <- readRDS(
   select(patient_id, covid_vax_1_date, covid_vax_3_date)
 
 # read data for ever covariates
-data_ever <- arrow::read_feather(
-  file = here::here("output", "input_ever.feather")) 
-# read data for k covariates
-data_k <- bind_rows(lapply(
-  1:K,
-  function(k)
-  arrow::read_feather(
-    file = here::here("output", glue("input_{k}.feather"))) %>%
-    mutate(k=k)
-))
+data_covariates <- arrow::read_feather(
+  file = here::here("output", "input_covs.feather")) %>%
+  select(patient_id, starts_with("anytest"), any_of(unname(unlist(model_varlist)))) %>%
+  mutate(across(contains("_date"), 
+                ~ floor_date(
+                  as.Date(.x, format="%Y-%m-%d"),
+                  unit = "days"))) %>%
+  mutate(
+    
+    multimorb =
+      as.integer(bmi %in% "Obese III (40+)") +
+      as.integer(chd)  +
+      as.integer(diabetes) +
+      as.integer(cld) +
+      as.integer(ckd) +
+      as.integer(crd) +
+      as.integer(immunosuppressed | asplenia) +
+      as.integer(cns),
+    
+    multimorb = cut(
+      multimorb,
+      breaks = c(0, 1, 2, Inf),
+      labels=c("0", "1", "2+"),
+      right=FALSE)
+    
+  )
 
-ever_before <- function(.data, name, var) {
-  .data %>%
-    mutate(!! sym(name) := if_else(
-      !is.na(!! sym(var)) & (!! sym(var) <= start_k_date),
-      TRUE,
-      FALSE
-    ))
-}
+# ever_before <- function(.data, name, var) {
+#   .data %>%
+#     mutate(!! sym(name) := if_else(
+#       !is.na(!! sym(var)) & (!! sym(var) <= start_k_date),
+#       TRUE,
+#       FALSE
+#     ))
+# }
 
 ################################################################################
 # process covariates data
