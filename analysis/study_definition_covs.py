@@ -168,29 +168,25 @@ study=StudyDefinition(
     # Chronic Respiratory Disease other than asthma
     resp_date=patients.with_these_clinical_events(
         resp_primis,
-        returning="date",
-        date_format="YYYY-MM-DD",
+        returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
-        find_first_match_in_period=True,
         return_expectations={"incidence": 0.02},
     ),
 
     # Chronic Neurological Disease including Significant Learning Disorder
     cns_date=patients.with_these_clinical_events(
         cns_primis,
-        returning="date",
-        date_format="YYYY-MM-DD",
+        returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
-        find_first_match_in_period=True,
         return_expectations={"incidence": 0.02},
     ),
 
     # Chronic kidney disease diagnostic codes
     ckd_group=patients.satisfying(
         """
-            ckd OR
-            (ckd15_date AND 
-            (ckd35_date >= ckd15_date) OR (ckd35_date AND NOT ckd15_date))
+        ckd OR
+        (ckd15_date AND 
+        (ckd35_date >= ckd15_date) OR (ckd35_date AND NOT ckd15_date))
         """,
         # Chronic kidney disease codes - all stages
         ckd15_date=patients.with_these_clinical_events(
@@ -220,50 +216,40 @@ study=StudyDefinition(
     # Diabetes
     diab_date=patients.with_these_clinical_events(
         diab_primis,
-        returning="date",
-        date_format="YYYY-MM-DD",
+        returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
-        find_first_match_in_period=True,
         return_expectations={"incidence": 0.02},
         ),
 
     # Severe mental illness
     sev_mental_date=patients.with_these_clinical_events(
         sev_mental_primis,
-        returning="date",
-        date_format="YYYY-MM-DD",
+        returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
-        find_first_match_in_period=True,
         return_expectations={"incidence": 0.02},
         ),
 
     # Chronic heart disease codes
     chd_date=patients.with_these_clinical_events(
         chd_primis,
-        returning="date",
-        date_format="YYYY-MM-DD",
+        returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
-        find_first_match_in_period=True,
         return_expectations={"incidence": 0.02},
     ),
 
     # Chronic Liver disease codes
     cld_date=patients.with_these_clinical_events(
         cld_primis,
-        returning="date",
-        date_format="YYYY-MM-DD",
+        returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
-        find_first_match_in_period=True,
         return_expectations={"incidence": 0.02},
     ),
 
     # Immunosuppression diagnosis codes
     immdx_date=patients.with_these_clinical_events(
         immdx_primis,
-        returning="date",
-        date_format="YYYY-MM-DD",
+        returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
-        find_first_match_in_period=True,
         return_expectations={"incidence": 0.02},
         ),
 
@@ -277,20 +263,16 @@ study=StudyDefinition(
     # Asplenia or Dysfunction of the Spleen codes
     spln_date=patients.with_these_clinical_events(
         spln_primis,
-        returning="date",
-        date_format="YYYY-MM-DD",
+        returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
-        find_first_match_in_period=True,
         return_expectations={"incidence": 0.02},
     ),
 
     # Learning Disability
     learndis_date=patients.with_these_clinical_events(
         learndis_primis,
-        returning="date",
-        date_format="YYYY-MM-DD",
+        returning="binary_flag",
         on_or_before="svp_start_date - 1 day",
-        find_first_match_in_period=True,
         return_expectations={"incidence": 0.02},
     ),
 
