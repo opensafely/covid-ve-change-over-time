@@ -30,7 +30,8 @@ data_vax_wide <- readr::read_rds(
 
 # read second vax period dates 
 second_vax_period_dates <- readr::read_rds(
-  here::here("output", "second_vax_period", "data", "second_vax_period_dates.rds"))
+  here::here("output", "second_vax_period", "data", "second_vax_period_dates.rds")) %>%
+  rename(svp_start_date = start_of_period, svp_end_date = end_of_period)
 
 # covariate data
 data_processed <- readr::read_rds(
@@ -54,11 +55,11 @@ data_eligible_c <- data_eligible_b %>%
             by = c("jcvi_group", "elig_date", "region")) %>%
   filter(
     # second dose during second vax period
-    start_of_period <= covid_vax_2_date,
-    covid_vax_2_date <= end_of_period) %>%
+    svp_start_date <= covid_vax_2_date,
+    covid_vax_2_date <= svp_end_date) %>%
   select(patient_id, jcvi_group, elig_date, region, ethnicity, 
          covid_vax_2_date, covid_vax_3_date, brand, 
-         start_of_period, end_of_period) %>%
+         svp_start_date, svp_end_date) %>%
   droplevels()
 
 # count the number of patients in the extracted data
@@ -87,10 +88,10 @@ data_eligible_d <- data_eligible_a %>%
              by = c("jcvi_group", "elig_date", "region")) %>%
   # remove individuals who had received any vaccination before the start of the second vax period
   filter(
-    is.na(covid_vax_1_date) | covid_vax_1_date >= start_of_period
+    is.na(covid_vax_1_date) | covid_vax_1_date >= svp_start_date
   ) %>%
   select(patient_id, jcvi_group, elig_date, region, ethnicity, 
-         covid_vax_1_date, start_of_period, end_of_period, split) %>%
+         covid_vax_1_date, svp_start_date, svp_end_date, split) %>%
   droplevels()
 
 eligibility_count <- eligibility_count %>%
@@ -106,7 +107,7 @@ exclusion_e <- function(group) {
   
   # function to be applied in dplyr::filter
   no_evidence_of <- function(cov_date, index_date) {
-    is.na(cov_date) | index_date < cov_date
+    is.na(cov_date) | index_date <= cov_date
   }
   
   # define data based on group
@@ -120,7 +121,7 @@ exclusion_e <- function(group) {
   data <- data %>%
     left_join(data_processed, by = "patient_id") %>%
     filter(
-      no_evidence_of(covid_any_date, start_of_period)) 
+      no_evidence_of(covid_any_date, svp_start_date)) 
   
   eligibility_count_e <- tribble(
     ~description, ~n,
@@ -130,7 +131,7 @@ exclusion_e <- function(group) {
   # remove if in long-term residential home before start date
   data <- data %>%
     filter(
-      no_evidence_of(longres_date, start_of_period))
+      no_evidence_of(longres_date, svp_start_date))
   
   eligibility_count_e <- eligibility_count_e %>%
     add_row(
@@ -141,8 +142,8 @@ exclusion_e <- function(group) {
   # remove if end of life care before start date
   data <- data %>%
     filter(
-      no_evidence_of(endoflife_date, start_of_period),
-      no_evidence_of(midazolam_date, start_of_period)
+      no_evidence_of(endoflife_date, svp_start_date),
+      no_evidence_of(midazolam_date, svp_start_date)
     ) %>%
     select(-all_of(names(data_processed)[!names(data_processed) %in% "patient_id"]))
   
@@ -199,13 +200,15 @@ data_eligible_e <- bind_rows(
   data_eligible_e_vax[[1]] %>% 
     transmute(patient_id, 
               elig_date, 
+              svp_start_date,
               start_1_date = covid_vax_2_date + days(14),
               end_1_date = start_1_date + days(28),
               arm = "vax"),
   data_eligible_e_unvax[[1]] %>% 
     transmute(patient_id, 
               elig_date, 
-              start_1_date = start_of_period + days(14),
+              svp_start_date,
+              start_1_date = svp_start_date + days(14),
               end_1_date = start_1_date + days(56),
               arm = "unvax") 
 ) %>%
