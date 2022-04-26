@@ -17,9 +17,6 @@ study_parameters <- readr::read_rds(
 outcomes <- readr::read_rds(
   here::here("analysis", "lib", "outcomes.rds")
 )
-# outcome for comparing hospitalisation source
-outcomes_hosp <- outcomes[outcomes %in% c("covidadmitted", "covidemergnecy")]
-# original outcomes
 outcomes <- outcomes[outcomes!="covidemergency"]
 outcomes_order <- c(3,4,2,5,1)
 outcomes_long <- names(outcomes)
@@ -35,35 +32,34 @@ subgroup_labels <- seq_along(subgroups)
 # define comparisons
 comparisons <- c("BNT162b2", "ChAdOx1", "both")
 
-# if running locally read extracted data:
-if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
+release_folder <- "release_20220401"
 
-release_folder <- "release20220226"
-
-min_max_fu_dates_path <- release_folder
+min_max_fu_dates_path <- here::here("output", "lib") ## RELEASE UPDATES!!
 estimates_all_path <- release_folder
-metareg_results_path <- 
+metareg_results_path <- release_folder
 
-} else {
-  
-}
+# # if running locally read extracted data:
+# if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
+# 
+# } else {
+#   
+# }
 
 # min and max follow-up dates per subgroup
-min_max_fu_dates <- readr::read_rds(
-  here::here(release_folder, glue("data_min_max_fu.rds"))) %>%
+min_max_fu_dates <- readr::read_csv(
+  here::here(min_max_fu_dates_path, glue("data_min_max_fu.csv"))) %>%
   mutate(across(ends_with("date"),
                 ~ str_c(day(.x), " ", month(.x, label=TRUE))))
 
 # read estimates data
 estimates_all <- readr::read_csv(
-  here::here(release_folder, "estimates_all.csv")) %>%
-  mutate(across(model, ~as.integer(str_remove(.x, "unadjusted")))) 
+  here::here(estimates_all_path, "estimates_all.csv"))
 
 # read metareg data
 metareg_results_k <- readr::read_rds(
-  here::here(release_folder, "metareg_results_k.rds")) %>%
+  here::here(metareg_results_path, "metareg_results_k.rds")) %>%
   select(subgroup, comparison, outcome, k, starts_with("line")) %>%
-  mutate(model=2) 
+  mutate(model="adjusted") 
 
 ################################################################################
 # gg plot pallete
@@ -109,8 +105,14 @@ plot_data <- estimates_all %>%
     !reference_row,
     variable %in% "k"
   ) %>%
-  # remove as very few events
-  filter(!(comparison %in% c("BNT162b2", "both") & subgroup==3 & outcome == "noncoviddeath")) %>%
+  # keep only outcomes of interest
+  filter(outcome %in% outcomes) %>%
+  # remove as too few events
+  filter(
+    !(comparison %in% c("BNT162b2", "both") & subgroup %in% c(3,4) & outcome == "noncoviddeath"),
+    !(comparison %in% c("BNT162b2", "both") & subgroup %in% 3 & outcome == "covidadmitted")
+    ) %>%
+  mutate(across(c(estimate, conf.low, conf.high), exp)) %>%
   mutate(k=as.integer(label)) %>%
   left_join(
     min_max_fu_dates %>%
@@ -130,8 +132,8 @@ plot_data <- estimates_all %>%
                 labels = weeks_since_2nd_vax)) %>%
   mutate(across(subgroup,
                 factor,
-                levels = subgroup_labels[subgroups_order],
-                labels = subgroups[subgroups_order]
+                levels = subgroup_labels,
+                labels = subgroups
                 )) %>%
   mutate(k_labelled_dates = k_labelled) %>%
   mutate(across(k_labelled_dates,
@@ -152,7 +154,7 @@ plot_data <- estimates_all %>%
   ) %>%
   mutate(across(model,
                 factor,
-                levels = 1:2,
+                levels = c("unadjusted", "adjusted"),
                 labels = sapply(c("Stratfied Cox model, no further adjustment", 
                                   "Stratfied Cox model, adjustment for demographic and clinical variables"),
                                 str_wrap, width=100))) %>%
@@ -164,8 +166,8 @@ plot_data <- estimates_all %>%
   )) %>%
   mutate(across(subgroup,
                 factor,
-                levels = subgroups[subgroups_order],
-                labels = str_wrap(subgroup_plot_labels[subgroups_order], 25)
+                levels = subgroups,
+                labels = str_wrap(subgroup_plot_labels, 25)
   )) %>%
   mutate(line_group = str_c(subgroup, comparison, outcome,  model, sep = "; ")) %>%
   # only plot line within range of estimates
@@ -194,8 +196,8 @@ primary_vax_y1 <- list(breaks = c(0.02, 0.05, 0.2, 0.5, 1, 2),
 primary_vax_y2 <- list(breaks = c(0,0.5,0.8, 0.95, 0.98))
 primary_brand_y1 <- list(breaks = c(0.2, 0.5, 1, 2), 
                          limits = c(0.2, 2))
-anytest_y1 <- list(breaks = c(0.5, 1, 2,5,10), 
-                   limits = c(0.5, 10))
+anytest_y1 <- list(breaks = c(0.5, 1, 2,5), 
+                   limits = c(0.5, 5))
   
 ################################################################################
 # vaccine vs unvaccinated
