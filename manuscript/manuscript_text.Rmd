@@ -18,28 +18,27 @@ library(glue)
 
 ```{r paths}
 # path for released results
-release_folder <- here::here("release20220226")
+release_folder <- "release_20220401"
 ```
 
 ```{r read-meta-data}
 # read study parameters
 study_parameters <- readr::read_rds(
-  here::here("output", "lib", "study_parameters.rds"))
+  here::here("analysis", "lib", "study_parameters.rds"))
 
 # read subgroups
 subgroups <- readr::read_rds(
-  here::here("output", "lib", "subgroups.rds"))
+  here::here("analysis", "lib", "subgroups.rds"))
 subgroup_labels <- seq_along(subgroups)
-subgroup_order <- c(4,1,3,2)
-subgroups_long <- if_else(
-    subgroups %in% subgroups[c(2,3)],
-    as.character(glue("{subgroups} and not clinically vulnerable")),
-    subgroups
-  )
+# subgroups_long <- if_else(
+#     subgroups %in% subgroups[c(2,3)],
+#     as.character(glue("{subgroups} and not clinically vulnerable")),
+#     subgroups
+#   )
 
 # outcomes 
 outcomes <- readr::read_rds(
-  here::here("output", "lib", "outcomes.rds"))
+  here::here("analysis", "lib", "outcomes.rds"))
 outcomes_order <- c(which(outcomes == "covidadmitted"),
                     which(outcomes == "coviddeath"),
                     which(outcomes == "postest"),
@@ -50,244 +49,173 @@ select_outcomes <- unname(outcomes[outcomes_order])
 ```
 
 ```{r}
-# read event counts data
-event_counts <- readr::read_csv(
-  here::here(release_folder, "event_counts_BNT162b2.csv")) %>%
-  bind_rows(
-    readr::read_csv(
-  here::here(release_folder, "event_counts_ChAdOx.csv")) %>%
-    filter(arm != "unvax") # because unvax arm same in both datasets
-  ) %>%
-  mutate(across(arm,
-                factor,
-                levels = c("BNT162b2", "ChAdOx", "unvax"),
-                labels = c("BNT162b2", "ChAdOx", "Unvaccinated"))) %>%
-  mutate(across(outcome,
-                factor,
-                levels = unname(outcomes[outcomes_order]),
-                labels = names(outcomes[outcomes_order])))
-
+# read data
 # read estimates data
 estimates_all <- readr::read_csv(
-  here::here(release_folder, "estimates_all.csv")) %>%
-  mutate(across(model, ~as.integer(str_remove(.x, "unadjusted")))) %>%
-  mutate(across(c(estimate, conf.low, conf.high), 
-                ~format(round(.x, digits=2), nsmall=2, trim = TRUE))) %>%
-  mutate(value = glue("{estimate} (95% CI {conf.low}-{conf.high})"))
+  here::here(release_folder, "estimates_all.csv"))
 
-# read metaregression results
-metareg_results_k <- readr::read_rds(
-  here::here(release_folder, "metareg_results_k.rds")) %>%
-  mutate(across(subgroup, as.integer)) %>%
-  mutate(across(outcome,
-                factor,
-                levels = unname(outcomes[outcomes_order]),
-                labels = names(outcomes[outcomes_order]))) %>%
-      mutate(across(comparison,
-                  factor,
-                  levels = c("BNT162b2", "ChAdOx", "both"),
-                  labels = c("BNT162b2 vs unvaccinated", "ChAdOx vs unvaccinated", "BNT162b2 vs ChAdOx"))) %>%
-   mutate(across(c(logrhr, logrhr_lower, logrhr_higher), 
-                ~format(round(exp(.x), digits=2), nsmall=2, trim = TRUE))) %>%
-  select(subgroup, comparison, outcome, k, rhr = logrhr, rhr_lower = logrhr_lower, rhr_higher = logrhr_higher)
+# read metareg data
+metareg_results_rhr <- readr::read_rds(
+  here::here(release_folder, "metareg_results_rhr.rds")) %>%
+  mutate(across(starts_with("rhr"), ~format(round(.x, 2), nmall=2))) %>%
+  mutate(value = glue("{rhr} ({rhr_lower}-{rhr_higher})")) %>%
+  mutate(across(subgroup, factor, levels = subgroups, labels = subgroups)) %>%
+  arrange(outcome, subgroup, comparison) %>%
+  select(outcome, subgroup, comparison, value)
 ```
 
 ```{r}
-event_counts %>%
-  group_by(arm, outcome) %>%
-  summarise(total_events = sum(events, na.rm = TRUE)) %>%
+# scale for x-axis
+K <- study_parameters$K
+ends <- seq(2, (K+1)*4, 4)
+starts <- ends + 1
+weeks_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
+
+print_estimates <- function(sub, comp = c("BNT162b2", "ChAdOx1"), out) {
+  estimates_all %>%
+  filter(
+    variable == "k", model == "adjusted",
+    !reference_row,
+    subgroup %in% sub,
+    comparison %in% comp,
+    outcome %in% out
+    ) %>%
+  mutate(across(subgroup, factor, levels = 1:4, labels = subgroups)) %>%
+  mutate(across(label, factor, levels = as.character(1:6), labels = weeks_since_2nd_vax)) %>%
+  arrange(subgroup, label, comparison) %>%
+  mutate(across(c(estimate, conf.low, conf.high), ~format(round(exp(.x), 2), nsmall = 2))) %>%
+  mutate(value = glue("{estimate} ({conf.low}-{conf.high})")) %>%
+  select(subgroup, outcome, comparison, label, value)
+}
+```
+
+# Abstract
+
+Range of values for ratio of aHRs:
+
+```{r}
+metareg_results_rhr %>%
+  filter(
+    comparison != "both",
+    outcome %in% c("covidadmitted", "coviddeath", "postest")
+    ) %>%
+  arrange(subgroup, comparison, value) %>%
+  print(n=Inf)
+```
+Range of values for postest at 23-26 weeks:
+
+```{r}
+print_estimates(sub=1:4, out = "postest") %>%
+  filter(label == "23-26") %>%
+  arrange(comparison, label, value)
+```
+
+# Results
+## Study population
+
+TODO
+
+## Attrition due to subsequent vaccination
+
+TODO
+
+## Waning vaccine effectiveness
+
+Numbers of events:
+
+```{r}
+estimates_all %>%
+  filter(variable == "k", comparison !="both", model == "adjusted") %>%
+  mutate(group = if_else(label == "0", "unvax", comparison)) %>%
+  distinct(subgroup, group, outcome, period, label, n_obs_label, n_event_label) %>%
+  group_by(outcome, group) %>%
+  summarise(total_events = sum(n_event_label, na.rm = TRUE), .groups = "keep") %>%
   ungroup() %>%
-  arrange(outcome, arm) %>%
-  mutate(across(total_events, ~scales::comma(.x, accuracy = 1)))
+  mutate(across(total_events, ~scales::comma(.x, accuracy = 1))) %>%
+  pivot_wider(
+    names_from = group, values_from = total_events
+  ) %>%
+  mutate(phrase = glue("{BNT162b2}, {ChAdOx1} and {unvax}")) %>%
+  select(outcome, phrase)
+  # arrange(subgroup, outcome, group, period, label)
 ```
 
-
-
+### COVID-19 hospitalisations / deaths
 
 ```{r}
-aHRs <- local({
-  
-  data <- estimates_all %>% 
-    filter(
-      model ==2,
-      variable == "k",
-      !reference_row
-    )
-  
-  data <- data %>%
-    group_split(subgroup) %>%
-    as.list()
-  
-  names(data) <- c("16-64", "18-39", "40-64", "65+")
-  
-  for (i in seq_along(data)) {
-    
-    comparisons <- sort(unique(data[[i]]$comparison))
-    
-    data[[i]] <- data[[i]] %>%
-      group_split(comparison) %>%
-      as.list()
-    
-    names(data[[i]]) <- comparisons
-    
-    for (j in seq_along(data[[i]])) {
-      
-      outcomes <- sort(unique(data[[i]][[j]]$outcome))
-      
-      data[[i]][[j]] <- data[[i]][[j]] %>%
-        group_split(outcome) %>%
-        as.list()
-      
-      names(data[[i]][[j]]) <- outcomes
-      
-      for (k in seq_along(data[[i]][[j]])) {
-        data[[i]][[j]][[k]] <- data[[i]][[j]][[k]] %>%
-          arrange(label) %>%
-          select(value) %>%
-          unlist() %>%
-          unname()
-      }
-      
-    }
-    
-  }
-  
-  return(data)
-  
-})
+for (i in 1:4) {
+  print_estimates(sub=i, out = "coviddeath") %>% print()
+}
 ```
+
+
+### Positive SARS-CoV-2 tests / non-COVID-19 deaths
 
 ```{r}
-ratios <- local({
-  
-  data <- metareg_results_k %>%
-  select(-k) %>%
-  distinct(subgroup, comparison, outcome, .keep_all = TRUE) %>%
-  mutate(across(comparison,
-                factor,
-                levels = c("BNT162b2 vs unvaccinated",
-                           "ChAdOx vs unvaccinated",
-                           "BNT162b2 vs ChAdOx"),
-                labels = c("BNT162b2", "ChAdOx", "both"))) %>%
-  mutate(across(outcome,
-                factor,
-                levels = names(outcomes),
-                labels = unname(outcomes))) %>%
-    mutate(value = glue("{rhr} (95% CI {rhr_lower}-{rhr_higher})"))
-  
-  data <- data %>%
-    group_split(subgroup) %>%
-    as.list()
-  
-  names(data) <- c("16-64", "18-39", "40-64", "65+")
-  
-  for (i in seq_along(data)) {
-    
-    comparisons <- sort(unique(data[[i]]$comparison))
-    
-    data[[i]] <- data[[i]] %>%
-      group_split(comparison) %>%
-      as.list()
-    
-    names(data[[i]]) <- comparisons
-    
-    for (j in seq_along(data[[i]])) {
-      
-      outcomes <- sort(unique(data[[i]][[j]]$outcome))
-      
-      data[[i]][[j]] <- data[[i]][[j]] %>%
-        group_split(outcome) %>%
-        as.list()
-      
-      names(data[[i]][[j]]) <- outcomes
-      
-      for (k in seq_along(data[[i]][[j]])) {
-        data[[i]][[j]][[k]] <- data[[i]][[j]][[k]] %>%
-          select(value) %>%
-          unlist() %>%
-          unname()
-      }
-      
-    }
-    
-  }
-  
-  return(data)
-  
-})
-
+print_estimates(sub=1:4, out = "postest") %>%
+  arrange(comparison, label, value)
 ```
-
-
-# Table 1 totals
 ```{r}
-table1 <- bind_rows(
-    lapply(
-      1:4,
-      function(x) 
-        readr::read_csv(here::here(release_folder, glue("table1_{x}_REDACTED.csv")),
-                        show_col_types = FALSE) %>%
-        mutate(subgroup = x)
-    ) 
-  )
+print_estimates(sub=1:4, comp = "both", out = "postest") %>%
+  arrange(comparison, label, value)
 ```
+
+Range of values for covidadmitted and coviddeath
 
 ```{r}
-table1 %>%
-  filter(is.na(Variable)) %>%
-  select(-Variable, -Characteristic) %>%
-  pivot_longer(cols = -subgroup) %>%
-  mutate(across(value, ~as.numeric(str_remove_all(.x, ",")))) %>%
-  group_by(name) %>%
-  summarise(total = sum(value), .groups = "keep") %>%
-  ungroup() %>%
-  mutate(across(total, ~scales::comma(.x, accuracy = 1)))
+print_estimates(sub=1:4, out = c("covidadmitted", "coviddeath")) %>%
+  arrange(comparison, label, value)
+```
+
+Metareg results:
+
+```{r}
+metareg_results_rhr %>%
+  filter(comparison != "both") %>%
+  print(n=Inf)
+```
+
+# Discussion
+## Findings in context
+
+Comparison with Feikin et al.
+
+```{r}
+print_estimates(sub=1:4, out = c("covidadmitted", "coviddeath", "postest")) %>%
+  filter(label %in% c("3-6", "23-26")) %>%
+  mutate(value_num = 100*(1-as.numeric(str_extract(value, "^\\d{1}\\.\\d{2}")))) %>%
+  select(subgroup, outcome, comparison, label, value_num) %>%
+  pivot_wider(names_from = label, values_from = value_num) %>%
+  mutate(across(`3-6`, ~if_else(is.na(.x), 100, .x))) %>%
+  mutate(diff = `3-6` - `23-26`) %>%
+  arrange(outcome, comparison, subgroup)
 ```
 
 
 
-# vs unvaccinated
-## COVID-19 hospital admission
+Comparison with Andrews et al.
 
-For COVID-19 hospital admission, estimated aHRs comparing BNT162b2 and ChAdOx with unvaccinated in the 65+ subgroup were `r aHRs[["65+"]][["BNT162b2"]][["covidadmitted"]][1]` and `r aHRs[["65+"]][["ChAdOx"]][["covidadmitted"]][1]` respectively at 3-6 weeks, waning to `r aHRs[["65+"]][["BNT162b2"]][["covidadmitted"]][6]` and `r aHRs[["65+"]][["ChAdOx"]][["covidadmitted"]][6]` respectively at 23-26 weeks. 
-The ratios of aHRs per period were `r ratios[["65+"]][["BNT162b2"]][["covidadmitted"]]` for BNT162b2 and `r ratios[["65+"]][["ChAdOx"]][["covidadmitted"]]` for ChAdOx. 
-Estimated aHRs comparing BNT162b2 and ChAdOx with unvaccinated in the 16-64 subgroup were `r aHRs[["16-64"]][["BNT162b2"]][["covidadmitted"]][2]` and `r aHRs[["16-64"]][["ChAdOx"]][["covidadmitted"]][2]` respectively at 7-10 weeks, waning to `r aHRs[["16-64"]][["BNT162b2"]][["covidadmitted"]][6]` and `r aHRs[["16-64"]][["ChAdOx"]][["covidadmitted"]][6]` respectively at 23-26 weeks. 
-The ratios of aHRs per period were `r ratios[["16-64"]][["BNT162b2"]][["covidadmitted"]]` for BNT162b2 and `r ratios[["16-64"]][["ChAdOx"]][["covidadmitted"]]` for ChAdOx. 
-Estimated aHRs comparing ChAdOx with unvaccinated in the 40-64 subgroup were `r aHRs[["40-64"]][["ChAdOx"]][["covidadmitted"]][1]` at 3-6 weeks, waning to `r aHRs[["40-64"]][["ChAdOx"]][["covidadmitted"]][6]` at 23-26 weeks. 
-The ratios of aHRs were `r ratios[["40-64"]][["ChAdOx"]][["covidadmitted"]]` per period. 
-There were not enough COVID-19 hospital admissions in the BNT162b2 group to estimate aHRs.
-Estimated aHRs comparing BNT162b2 with unvaccinated in the 18-39 subgroup were `r aHRs[["18-39"]][["BNT162b2"]][["covidadmitted"]][1]` at 3-6 weeks, waning to `r aHRs[["18-39"]][["BNT162b2"]][["covidadmitted"]][5]` at 19-22 weeks (aHRs could not be estimated at 23-26 weeks as follow-up was cut short in this subgroup due to the last date of available data). 
-The ratios of aHRs were `r ratios[["18-39"]][["BNT162b2"]][["covidadmitted"]]` per period. 
+```{r}
+andrews <- tribble(
+  ~comparison, ~subgroup, ~outcome, ~period, ~value,
+  "ChAdOx1", "65+ years", "covidadmitted", "15-19", "85.8 (82.7–88.4)",
+  "BNT162b2", "65+ years", "covidadmitted", "15-19", "93.4 (91.6–94.7)",
+  "ChAdOx1", "40-64 years", "covidadmitted", "15-19", "94.4 (92.1–96.0)",
+  "BNT162b2", "40-64 years", "covidadmitted", "15-19", "97.3 (94.2–98.7)",
+  "ChAdOx1", "65+ years", "coviddeath", "15-19", "87.9 (82.6–91.5)",
+  "BNT162b2", "65+ years", "coviddeath", "15-19", "93.2 (90.1–95.4)"
+) %>%
+  mutate(value_andrews = as.numeric(str_extract(value, "^\\d{2}\\.\\d{1}")))
 
-## COVID-19 death
+print_estimates(sub=c(1,3), out = c("covidadmitted")) %>%
+  filter(label %in% "15-18") %>%
+  mutate(value_horne = 100*(1-as.numeric(str_extract(value, "^\\d{1}\\.\\d{2}")))) %>%
+  select(subgroup, outcome, comparison, value_horne) %>%
+  left_join(
+    andrews %>% select(-period, -value), 
+    by = c("subgroup", "outcome", "comparison")
+  ) %>%
+  mutate(diff = value_andrews - value_horne)
 
-For COVID-19 death, estimated aHRs comparing BNT162b2 and ChAdOx with unvaccinated in the 65+ subgroup were `r aHRs[["65+"]][["BNT162b2"]][["coviddeath"]][3]` and `r aHRs[["65+"]][["ChAdOx"]][["coviddeath"]][3]` respectively at 11-14 weeks, waning to `r aHRs[["65+"]][["BNT162b2"]][["covidadmitted"]][6]` and `r aHRs[["65+"]][["ChAdOx"]][["covidadmitted"]][6]` respectively at 23-26 weeks. 
-The ratios of aHRs per period were `r ratios[["65+"]][["BNT162b2"]][["coviddeath"]]` for BNT162b2 and `r ratios[["65+"]][["ChAdOx"]][["coviddeath"]]` for ChAdOx. 
-Estimated aHRs comparing BNT162b2 and ChAdOx with unvaccinated in the 16-64 subgroup were `r aHRs[["16-64"]][["BNT162b2"]][["coviddeath"]][4]` and `r aHRs[["16-64"]][["ChAdOx"]][["coviddeath"]][4]` respectively at 11-14 weeks, waning to `r aHRs[["16-64"]][["BNT162b2"]][["coviddeath"]][6]` and `r aHRs[["16-64"]][["ChAdOx"]][["coviddeath"]][6]` respectively at 23-26 weeks. 
-The ratios of aHRs per period were `r ratios[["16-64"]][["BNT162b2"]][["coviddeath"]]` for BNT162b2 and `r ratios[["16-64"]][["ChAdOx"]][["coviddeath"]]` for ChAdOx. 
-Estimated aHRs comparing ChAdOx with unvaccinated in the 40-64 subgroup were `r aHRs[["40-64"]][["ChAdOx"]][["coviddeath"]][4]` at 11-14 weeks, waning to `r aHRs[["40-64"]][["ChAdOx"]][["coviddeath"]][6]` at 23-26 weeks. 
-The ratio of aHRs per period was `r ratios[["40-64"]][["ChAdOx"]][["coviddeath"]]`. 
+```
 
-## Positive SARS-CoV-2 test
-
-For positive SARS-CoV-2 test, aHRs at 3-6 weeks since second dose ranged from `r aHRs[["65+"]][["BNT162b2"]][["postest"]][1]` to `r aHRs[["40-64"]][["BNT162b2"]][["postest"]][1]` for BNT162b2, and `r aHRs[["65+"]][["ChAdOx"]][["postest"]][1]` to `r aHRs[["40-64"]][["ChAdOx"]][["postest"]][1]` for ChAdOx; 
-
-for example, in the 65+ years subgroup the ratio of aHRs was `r ratios[["65+"]][["BNT162b2"]][["postest"]]` for BNT162b2, and `r ratios[["65+"]][["ChAdOx"]][["postest"]]` for ChAdOx
-
-## non-COVID-19 death
-
-For non-COVID-19 death, the aHRs 3-6 weeks since second dose ranged from `r aHRs[["65+"]][["BNT162b2"]][["noncoviddeath"]][1]` to `r aHRs[["16-64"]][["BNT162b2"]][["noncoviddeath"]][1]` for BNT162b2, and `r aHRs[["40-64"]][["ChAdOx"]][["noncoviddeath"]][1]` to `r aHRs[["65+"]][["ChAdOx"]][["noncoviddeath"]][1]` for ChAdOx; 
-
-# BNT162b2 vs ChAdOx
-
-The aHRs consistently favoured BNT162b2 over ChAdOx during the earliest available comparison period.
-The aHRs ranged from `r aHRs[["16-64"]][["both"]][["covidadmitted"]][2]` to `r aHRs[["65+"]][["both"]][["covidadmitted"]][2]` for COVID-19 hospital admission at 7-10 weeks since second dose; `r aHRs[["65+"]][["both"]][["coviddeath"]][4]` to `r aHRs[["16-64"]][["both"]][["coviddeath"]][4]` for COVID-19 death  at 15-18 weeks since second dose; and `r aHRs[["16-64"]][["both"]][["postest"]][1]` to `r aHRs[["65+"]][["both"]][["postest"]][1]` for positive SARS-CoV-2 test  at 3-6 weeks since second dose. 
-However, as the rate of waning was slightly higher for BNT162b2 compared to ChAdOx (range `r ratios[["16-64"]][["both"]][["covidadmitted"]]` to `r ratios[["65+"]][["both"]][["covidadmitted"]]` for COVID-19 hospital admission; `r ratios[["65+"]][["both"]][["coviddeath"]]` to `r ratios[["16-64"]][["both"]][["coviddeath"]]` for COVID-19 death; and `r ratios[["65+"]][["both"]][["postest"]]` to `r ratios[["16-64"]][["both"]][["postest"]]` for positive SARS-CoV-2 test),
-the aHRs were attenuated by 23-26 weeks since second dose (range `r aHRs[["16-64"]][["both"]][["covidadmitted"]][6]` to `r aHRs[["65+"]][["both"]][["covidadmitted"]][6]` for COVID-19 hospital admission; `r aHRs[["16-64"]][["both"]][["coviddeath"]][6]` to `r aHRs[["65+"]][["both"]][["coviddeath"]][6]` for COVID-19 death; and `r aHRs[["40-64"]][["both"]][["postest"]][6]` to `r aHRs[["65+"]][["both"]][["postest"]][6]` for positive SARS-CoV-2 test).
-
-<!-- In this paragraph, we give the estimated aHRs comparing the rate of COVID-19 hospital admission in BNT162b2 and ChAdOx with unvaccinated. -->
-<!-- We give the aHRs estimated in the periods 3-6 weeks and 23-26 weeks since vaccination to demonstrate waning, unless the aHRs could not be estimate in one of these periods due to low event counts, in which case we state the period with the aHR.  -->
-<!-- The estimated aHRs in the 65+ subgroup were `r aHRs[["65+"]][["BNT162b2"]][["covidadmitted"]][1]` and `r aHRs[["65+"]][["ChAdOx"]][["covidadmitted"]][1]`, respectively, waning to `r aHRs[["65+"]][["BNT162b2"]][["covidadmitted"]][6]` and `r aHRs[["65+"]][["ChAdOx"]][["covidadmitted"]][6]`, respectively.  -->
-<!-- The ratios of aHRs were `r ratios[["65+"]][["BNT162b2"]][["covidadmitted"]]` and `r ratios[["65+"]][["ChAdOx"]][["covidadmitted"]]` per period, respectively.  -->
-<!-- The estimated aHRs in the 16-64 subgroup were `r aHRs[["16-64"]][["BNT162b2"]][["covidadmitted"]][2]` (at 7-11 weeks) and `r aHRs[["16-64"]][["ChAdOx"]][["covidadmitted"]][1]` for BNT162b2 and ChAdOx, respectively, waning to `r aHRs[["16-64"]][["BNT162b2"]][["covidadmitted"]][6]` and `r aHRs[["16-64"]][["ChAdOx"]][["covidadmitted"]][6]`, respectively. -->
-<!-- The ratios of aHRs were `r ratios[["16-64"]][["BNT162b2"]][["covidadmitted"]]` and `r ratios[["16-64"]][["ChAdOx"]][["covidadmitted"]]` per period, respectively.  -->
