@@ -123,20 +123,21 @@ readr::write_csv(regions, here::here("analysis", "lib", "regions.csv"))
 
 clinical <-c(
   "BMI" = "bmi",
-  "Chronic respiratory disease" = "chronic_respiratory_disease", 
-  "Chronic heart disease" = "chronic_heart_disease", 
-  "Chronic liver disease" = "chronic_liver_disease", 
+  "Asplenia" = "asplenia",
+  "Chronic respiratory disease" = "crd", 
+  "Chronic heart disease" = "chd", 
+  "Chronic liver disease" = "cld", 
   "Chronic kidney disease" = "ckd", 
-  "Chronic neurological disease" = "chronic_neuro_inc_ld",
+  "Chronic neurological disease" = "cns",
   "Diabetes" = "diabetes",
-  "Immunosuppression" = "any_immunosuppression",
-  "Learning disability" = "ld_inc_ds_and_cp",
-  "Serious mental illness" = "sev_ment",
-  "Shielding criteria met" = "cev", 
+  "Immunosuppressed" = "immunosuppressed",
+  "Learning disability" = "learndis",
+  "Serious mental illness" = "sev_mental",
+  # "Shielding criteria met" = "cev", 
   "Morbidity count" = "multimorb",
   "Flu vaccine in previous 5 years" = "flu_vaccine",
-  "Resident in long-term residential home" = "longres", 
-  "Housebound" = "housebound",
+  # "Resident in long-term residential home" = "longres", 
+  # "Housebound" = "housebound",
   "Number of SARS-CoV-2 tests between 2020-05-18 and min_elig_date" = "test_hist_n",
   "Pregnancy" = "pregnancy"
 )
@@ -208,22 +209,22 @@ readr::write_rds(
   here::here("analysis", "lib", "comparisons.rds")
 )
 
-################################################################################
-# create bash script for generating study definitions from template
-create_study_definitions <- 
-  str_c("# Run this script to create a study_definition for each k",
-        "",
-        str_c("for i in {1..",K,"}; do"),
-        "sed -e \"s;%placeholder_k%;$i;g\" ./analysis/study_definition_k.py > ./analysis/study_definition_$i.py;",
-        "done;", sep = "\n")
-
-create_study_definitions %>%
-  writeLines(here::here("analysis/create_study_definitions.sh"))
-
-# create study definitions from template_study_definition.py
-check_create <- try(processx::run(command="bash", args= "analysis/create_study_definitions.sh"))
-
-if (class(check_create)=="try-error") stop("Study definitions not created.")
+# ################################################################################
+# # create bash script for generating study definitions from template
+# create_study_definitions <- 
+#   str_c("# Run this script to create a study_definition for each k",
+#         "",
+#         str_c("for i in {1..",K,"}; do"),
+#         "sed -e \"s;%placeholder_k%;$i;g\" ./analysis/study_definition_k.py > ./analysis/study_definition_$i.py;",
+#         "done;", sep = "\n")
+# 
+# create_study_definitions %>%
+#   writeLines(here::here("analysis/create_study_definitions.sh"))
+# 
+# # create study definitions from template_study_definition.py
+# check_create <- try(processx::run(command="bash", args= "analysis/create_study_definitions.sh"))
+# 
+# if (class(check_create)=="try-error") stop("Study definitions not created.")
 
 
 ################################################################################
@@ -328,182 +329,6 @@ apply_model_fun <- function(
   )
 }
 
-# table_fun <- function(
-#   comparison,
-#   subgroup_label
-# ) {
-#   
-#   # if (
-#   #   (comparison %in% "BNT162b2" & subgroup_label %in% 2) |
-#   #   (comparison %in% "both" & subgroup_label %in% 3)
-#   #   ) {
-#   #   table_outcomes <- outcomes_model[outcomes_model != "coviddeath"]
-#   # } else {
-#   #   table_outcomes <- outcomes_model
-#   # }
-#   table_outcomes <- outcomes_model
-#   
-#   splice(
-#     comment(glue("tabulate cox model for all outcomes")),
-#     action(
-#       name = glue("tables_model_cox_{comparison}_{subgroup_label}"),
-#       run = "r:latest analysis/comparisons/tables_cox.R",
-#       arguments = c(comparison, subgroup_label),
-#       needs = splice("design", 
-#                      "data_2nd_vax_dates",
-#                      glue("data_tte_process_{comparison}"),
-#                      lapply(
-#                        table_outcomes, 
-#                        function(x) 
-#                          glue("apply_model_cox_{comparison}_{subgroup_label}_{x}"))),
-#       moderately_sensitive = list(
-#         table_glance = glue("output/models_cox/tables/modelcox_glance_{comparison}_{subgroup_label}.txt"),
-#         table_coefficients = glue("output/models_cox/tables/modelcox_coefficients_{comparison}_{subgroup_label}.txt"))
-#     )
-#   )
-#   
-#   
-# }
-
-# plot_fun <- function(
-#   plot
-# ) {
-#   
-#   if (plot %in% c("BNT162b2", "ChAdOx")) {
-#     xs <- plot
-#   } else if (plot %in% "BNT162b2andChAdOx") {
-#     xs <- c("BNT162b2", "ChAdOx")
-#   } else if (plot %in% "BNT162b2vsChAdOx") {
-#     xs <- "both"
-#   }
-#   
-#   splice(
-#     comment(glue("plot anytest {plot}")),
-#     action(
-#       name = glue("plot_hr_anytest_{plot}"),
-#       run = "r:latest analysis/comparisons/plot_cox_anytest.R",
-#       arguments = plot,
-#       needs = splice("design",
-#                      "data_min_max_fu",
-#                      as.list(unlist(lapply(
-#                        xs,
-#                        function(x)
-#                          {
-#                          if (x %in% c("ChAdOx", "both")) {
-#                            ys <- subgroup_labels[subgroups != "18-39 years"]
-#                          } else {
-#                            ys <- subgroup_labels
-#                          }
-#                          unlist(lapply(
-#                            ys,
-#                            function(y)
-#                              unlist(lapply(
-#                                "anytest",
-#                                function(z)
-#                                  glue("apply_model_cox_{x}_{y}_{z}")
-#                              ), recursive = FALSE)
-#                          ), recursive = FALSE)
-#                          }
-#                      ), recursive = FALSE))),
-#       moderately_sensitive = list(
-#         plot_anytest = glue("output/models_cox/images/hr_anytest_{plot}_*.png")
-#         )
-#     ),
-#     comment(glue("plot other outcomes {plot}")),
-#     action(
-#       name = glue("plot_hr_{plot}"),
-#       run = "r:latest analysis/comparisons/plot_cox.R",
-#       arguments = plot,
-#       needs = splice("design",
-#                      "data_min_max_fu",
-#                      as.list(unlist(lapply(
-#                        xs,
-#                        function(x)
-#                          {
-#                          if (x %in% c("ChAdOx", "both")) {
-#                            ys <- subgroup_labels[subgroups != "18-39 years"]
-#                          } else {
-#                            ys <- subgroup_labels
-#                          }
-#                          unlist(lapply(
-#                            ys,
-#                            function(y) {
-#                              
-#                              if (
-#                                (x %in% "BNT162b2" & y %in% 2) 
-#                              ) {
-#                                plot_outcomes <- outcomes_model[outcomes_model != "coviddeath"]
-#                              } else {
-#                                plot_outcomes <- outcomes_model
-#                              }
-#                              
-#                              unlist(lapply(
-#                                plot_outcomes[plot_outcomes != "anytest"],
-#                                function(z)
-#                                  glue("apply_model_cox_{x}_{y}_{z}")
-#                              ), recursive = FALSE)
-#                            }
-#                          ), recursive = FALSE)
-#                          }
-#                      ), recursive = FALSE))),
-#       moderately_sensitive = list(
-#         plot = glue("output/models_cox/images/hr_{plot}_*.png"))
-#     )
-#     
-#   )
-#   
-#   
-# }
-
-# coef_plot_fun <- function(
-#   comparison
-# ) {
-#   
-#   if (comparison %in% "BNT162b2") {
-#     subgroup_labels_plot <- subgroup_labels
-#   } else {
-#     subgroup_labels_plot <- subgroup_labels[subgroups != "18-39 years"]
-#   }
-#   
-#   
-#   splice(
-#     
-#     comment(glue("plot coefficients for {comparison}")),
-#     action(
-#       name = glue("plot_coefs_{comparison}"),
-#       run = "r:latest analysis/comparisons/plot_coefficients.R",
-#       arguments = comparison,
-#       needs = splice("design",
-#                      as.list(unlist(lapply(
-#                            subgroup_labels_plot,
-#                            function(y) {
-#                              
-#                              if (
-#                                (comparison %in% "BNT162b2" & y %in% 2) 
-#                              ) {
-#                                plot_outcomes <- outcomes_model[outcomes_model != "coviddeath"]
-#                              } else {
-#                                plot_outcomes <- outcomes_model
-#                              }
-#                              
-#                              unlist(lapply(
-#                                plot_outcomes,
-#                                function(z)
-#                                  glue("apply_model_cox_{comparison}_{y}_{z}")
-#                              ), recursive = FALSE)
-#                            }
-#                          ), recursive = FALSE)
-#                      )),
-#       moderately_sensitive = list(
-#         plot = glue("output/models_cox/images/coefs_{comparison}_*.png"))
-#     )
-#     
-#   )
-#   
-#   
-# }
-
-    
 # specify project ----
 
 ## defaults ----
@@ -512,21 +337,7 @@ defaults_list <- list(
   expectations= list(population_size=100000L)
 )
 
-
-
-# outcomes <- readr::read_rds(here::here("output", "lib", "outcomes.rds")) %>% unname()
-# outcomes <- unname(outcomes)
-# outcomes <- c("covidadmitted", "covidemergency")
-# subgroups <- readr::read_rds(here::here("output", "lib", "subgroups.rds"))
-# subgroups <- c(readr::read_rds(here::here("output", "lib", "subgroups.rds")), "all")
-
-
-# plots <- c("BNT162b2", "ChAdOx", "BNT162b2andChAdOx", "BNT162b2vsChAdOx")
-# outcomes_model <- outcomes
-
-
 subgroup_labels <- seq_along(subgroups)
-
 
 ## actions ----
 actions_list <- splice(
@@ -539,25 +350,6 @@ actions_list <- splice(
           "study_definition_1-6.py",
           "# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #"
   ),
-  
-  # comment("####################################",
-  #         "preliminaries",
-  #         "####################################"),
-  # action(
-  #   name = "design",
-  #   run = "r:latest analysis/design.R",
-  #   moderately_sensitive = list(
-  #     study_dates_json = "output/lib/study_parameters.json",
-  #     study_dates_rds = "output/lib/study_parameters.rds",
-  #     jcvi_groups = "output/lib/jcvi_groups.csv",
-  #     elig_dates = "output/lib/elig_dates.csv",
-  #     regions = "output/lib/regions.csv",
-  #     model_varlist = "output/lib/model_varlist.rds",
-  #     outcomes = "output/lib/outcomes.rds",
-  #     strata_vars  = "output/lib/strata_vars.rds",
-  #     subgroups = "output/lib/subgroups.rds"
-  #   )
-  # ),
   
   comment("####################################", 
           "study definition",
@@ -659,35 +451,17 @@ actions_list <- splice(
   ),
   
   comment("####################################", 
-          "study definition ever and k",
+          "study definition covs",
           "####################################"),
   
-  comment("study definition ever"),
   action(
-    name = "generate_ever_data",
-    run = "cohortextractor:latest generate_cohort --study-definition study_definition_ever --output-format feather",
+    name = "generate_covs_data",
+    run = "cohortextractor:latest generate_cohort --study-definition study_definition_covs --output-format feather",
     needs = list("data_eligible_cde"),
     highly_sensitive = list(
-      cohort = "output/input_ever.feather"
+      cohort = "output/input_covs.feather"
     )
   ),
-  
-  splice(unlist(lapply(
-    1:K,
-    function(k) {
-      splice(
-        comment(glue("study definition for period {k}")),
-        action(
-          name = glue("generate_input_{k}"),
-          run = glue("cohortextractor:latest generate_cohort --study-definition study_definition_{k} --output-format feather"),
-          needs = list("data_eligible_cde"),
-          highly_sensitive = list(
-            cohort = glue("output/input_{k}.feather")
-          )
-        )
-      )
-    }
-  ), recursive = FALSE)),
   
   comment("####################################", 
           "process covariates data",
@@ -700,12 +474,8 @@ actions_list <- splice(
     needs = splice(
       "data_input_process", 
       "data_eligible_cde", 
-      "generate_ever_data",
-      lapply(
-        1:K,
-        function(k)
-        glue("generate_input_{k}")
-      )),
+      "generate_covs_data"
+      ),
     highly_sensitive = list(
       data_covariates = "output/data/data_covariates.rds"
     )
