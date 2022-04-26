@@ -266,6 +266,31 @@ study=StudyDefinition(
                         "category": {"ratios": {c: 1/320 for c in range(100,32100,100)}}
                         }
                     ),
+
+    # medically housebound
+    housebound = patients.satisfying(
+        """
+        housebound_date
+        AND NOT no_longer_housebound
+        AND NOT moved_into_care_home
+        """,
+        
+    housebound_date=patients.with_these_clinical_events( 
+        housebound, 
+        on_or_before="elig_date + 42 days",
+        find_last_match_in_period = True,
+        returning="date",
+        date_format="YYYY-MM-DD",
+    ),   
+    no_longer_housebound=patients.with_these_clinical_events( 
+        no_longer_housebound, 
+        on_or_after="housebound_date",
+    ),
+    moved_into_care_home=patients.with_these_clinical_events(
+        longres_primis,
+        on_or_after="housebound_date",
+        ),
+    ),
     
     # end of life
     endoflife_date=patients.with_these_clinical_events(
