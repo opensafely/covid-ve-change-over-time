@@ -108,7 +108,8 @@ source(here::here("analysis", "functions", "round_km.R"))
     data = data_tte,
     time = "tte",
     event = "status",
-    strata = c("subgroup", "arm")
+    strata = c("subgroup", "arm"),
+    threshold = 7
   ) %>%
     ungroup() %>%
     mutate(
