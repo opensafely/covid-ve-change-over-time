@@ -84,6 +84,14 @@ data_all <- data_arm %>%
       right=FALSE)
     
   ) %>%
+  mutate(across(test_hist_n,
+                ~ factor(case_when(
+                  is.na(.x) ~ NA_character_,
+                  .x < 1 ~ "0",
+                  .x < 2 ~ "1",
+                  .x < 3 ~ "2",
+                  TRUE ~ "3+"
+                )))) %>%
   # join to data_processed
   left_join(
     data_processed, by = "patient_id"
