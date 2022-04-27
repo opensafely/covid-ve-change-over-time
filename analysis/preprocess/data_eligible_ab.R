@@ -32,31 +32,21 @@ fs::dir_create(here::here("output", "lib"))
 cat("#### apply exclusion criteria from box a to processed data ####\n")
 # remove dummy jcvi_group
 data_eligible_a <- data_processed %>%
-  filter(!(jcvi_group %in% "99"))
+  filter(age_2 >= 18)
 
 eligibility_count <- eligibility_count %>%
   add_row(
-    description = "Samples with JCVI group 99 removed",
+    description = "Samples with age_2 < 18 removed",
     n =  n_distinct(data_eligible_a$patient_id)
   )
 
-# remove jcvi_group=01 (care homes)
+# remove if aged over 120 (to avoid probable errors)
 data_eligible_a <- data_eligible_a %>%
-  filter(!(jcvi_group %in% "01"))
+  filter(age_2 <= 120)
 
 eligibility_count <- eligibility_count %>%
   add_row(
-    description = "Samples with JCVI group 01 removed",
-    n =  n_distinct(data_eligible_a$patient_id)
-  )
-
-# remove if aged under 16 or over 120 (the latter to avoid probable errors)
-data_eligible_a <- data_eligible_a %>%
-  filter(age_1 >= 16, age_1 <= 120)
-
-eligibility_count <- eligibility_count %>%
-  add_row(
-    description = "Samples with age_1 < 16 and > 120 removed.",
+    description = "Samples with age_2 > 120 removed.",
     n =  n_distinct(data_eligible_a$patient_id)
   )
 
@@ -133,6 +123,17 @@ eligibility_count <- eligibility_count %>%
     description = "Samples with record of being in care home removed.",
     n =  n_distinct(data_eligible_a$patient_id)
   )
+
+# housebound
+data_eligible_a <- data_eligible_a %>%
+  filter(!housebound)
+
+eligibility_count <- eligibility_count %>%
+  add_row(
+    description = "Samples with record of being currently housebound removed.",
+    n =  n_distinct(data_eligible_a$patient_id)
+  )
+
 
 readr::write_rds(data_eligible_a %>%
                    select(patient_id, jcvi_group, elig_date, region, ethnicity) %>%
