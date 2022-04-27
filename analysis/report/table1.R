@@ -4,7 +4,7 @@ library(lubridate)
 library(gt)
 
 ################################################################################
-
+fs::dir_create(here::here("output", "tables"))
 fs::dir_create(here::here("output", "report", "tables"))
 
 ################################################################################
@@ -166,7 +166,7 @@ summary_var <- function(.data, var) {
 
 ################################################################################
 # make table1 for all and each subgroup
-for (i in c(0, seq_along(data_tables))) {
+for (i in c(seq_along(data_tables))) {
   cat(glue("---- loop {i} ----"), "\n")
   cat("---- define obejcts ----\n")
   variables <- c(unname(strata_vars), unname(unlist(model_varlist)))
