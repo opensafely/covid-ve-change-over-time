@@ -12,6 +12,11 @@ library(tidyverse)
 library(lubridate)
 library(glue)
 
+################################################################################
+# redaction functions
+source(here::here("analysis", "functions", "redaction_functions.R"))
+
+################################################################################
 # read study parameters
 study_parameters <- readr::read_rds(
   here::here("analysis", "lib", "study_parameters.rds"))
@@ -33,6 +38,7 @@ second_vax_period_dates <- readr::read_rds(
   here::here("output", "second_vax_period", "data", "second_vax_period_dates.rds")) %>%
   rename(svp_start_date = start_of_period, svp_end_date = end_of_period)
 
+################################################################################
 # covariate data
 data_processed <- readr::read_rds(
   here::here("output", "data", "data_processed.rds")) %>%
@@ -183,8 +189,8 @@ eligibility_count <- eligibility_count %>%
 eligibility_count_cde <- eligibility_count %>%
   mutate(group = str_extract(description, "\\w+:")) %>%
   arrange(group) %>%
-  # round to nearest 10
-  mutate(across(n, ~round(.x, -1))) %>%
+  # round up to nearest 7
+  mutate(across(n, ~ceiling_any(.x, to=7))) %>%
   group_by(group) %>%
   mutate(n_removed = lag(n) - n) %>%
   ungroup() %>%

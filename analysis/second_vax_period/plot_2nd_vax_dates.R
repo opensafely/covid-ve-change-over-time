@@ -9,14 +9,23 @@ library(tidyverse)
 library(glue)
 library(lubridate)
 
+################################################################################
 # create folder for plots
 fs::dir_create(here::here("output", "second_vax_period", "images"))
 
+################################################################################
+# redaction functions
+source(here::here("analysis", "functions", "redaction_functions.R"))
+
+################################################################################
+# read data
 data_vax_plot <- readr::read_rds(
-  here::here("output", "second_vax_period", "data", "data_vax_plot.rds"))
+  here::here("output", "second_vax_period", "data", "data_vax_plot.rds")) %>%
+  # round up to nearest 7 for plot
+  mutate(across(n_brand, ~ceiling_any(.x, to=7)))
 
 second_vax_period_dates <- readr::read_rds(
-  here::here("output", "second_vax_period", "data", "second_vax_period_dates.rds"))
+  here::here("output", "second_vax_period", "data", "second_vax_period_dates.rds")) 
 
 # elig_dates info for plot titles
 group_age_ranges <- readr::read_csv(
@@ -26,8 +35,8 @@ group_age_ranges <- readr::read_csv(
 
 plot_2nd_vax_dates_fun <- function(
   data, 
-  subtitle_string = group_age_ranges,
-  plot_threshold = 5) {
+  subtitle_string = group_age_ranges
+  ) {
   
   jcvi_group <- unique(data$jcvi_group)
   elig_date <- unique(data$elig_date)
@@ -76,8 +85,8 @@ plot_2nd_vax_dates_fun <- function(
     scale_x_continuous(breaks = x_breaks,
                        labels = sapply(x_breaks, function(x) str_c(day(x), " ", month(x, label=TRUE)))) +
     scale_y_continuous(expand = expansion(mult = c(0,.05))) +
-    scale_fill_discrete(name = "brand") +
-    labs(x = "date of second vaccination", y = "number of individuals",
+    scale_fill_discrete(name = "Brand") +
+    labs(x = "Date of second vaccination", y = "Number of individuals",
          title = title_string, subtitle = subtitle_string
          # , caption = "Dashed vertical lines show start and end of 28-day second vaccination period."
          ) +
@@ -88,8 +97,7 @@ plot_2nd_vax_dates_fun <- function(
           axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
           axis.text.x = element_text(size = 6),
           plot.caption = element_text(size = 10),
-          plot.margin = margin(t=0.2, r=0.5, b=0.2, l=0.2, "cm")) +
-    coord_cartesian(ylim = c(plot_threshold, NA))
+          plot.margin = margin(t=0.2, r=0.5, b=0.2, l=0.2, "cm")) 
   # caption:
   # X-axes restricted to 6 to 16 weeks after eligibility date.
   # Bars show the number of individuals who received a second dose of the given brand of vaccine on the given date.

@@ -104,8 +104,8 @@ eligibility_count <- eligibility_count %>%
 eligibility_count_p1 <- eligibility_count %>%
   mutate(group = str_extract(description, "\\w+:")) %>%
   arrange(group) %>%
-  # round to nearest 10
-  mutate(across(n, ~round(.x, -1))) %>%
+  # round up to nearest 7
+  mutate(across(n, ~ceiling_any(.x, to=7))) %>%
   group_by(group) %>%
   mutate(n_removed = lag(n) - n) %>%
   ungroup() %>%
@@ -116,6 +116,20 @@ readr::write_csv(
   here::here("output", "tables", "eligibility_count_p1.csv"))
 
 ################################################################################
+# combine eligibility count tables
+eligibility_count_all <- bind_rows(
+  readr::read_csv(here::here("output", "tables", "eligibility_count_ab.csv")) %>%
+    mutate(stage="ab"),
+  readr::read_csv(here::here("output", "tables", "eligibility_count_cde.csv")) %>%
+    mutate(stage="cde"),
+  eligibility_count_p1 %>% mutate(stage="p1")
+)
+
+readr::write_csv(
+  eligibility_count_p1,
+  here::here("output", "tables", "eligibility_count_all.csv"))
+
+################################################################################
 # split data in subgroups
 data_tables <- data_tables %>%
   select(patient_id, arm, region, jcvi_group, subgroup,
@@ -123,7 +137,8 @@ data_tables <- data_tables %>%
   group_split(subgroup)
 
 ################################################################################
-# function to summarise each variable and (within variables) redact values <=5
+# function to summarise each variable and (within variables) 
+# round all frequencies up to nearest 7
 summary_var <- function(.data, var) {
   out <- .data %>%
     group_by(arm, !! sym(var)) %>%
@@ -133,7 +148,7 @@ summary_var <- function(.data, var) {
     ungroup() %>%
     mutate(percent = round(100*n/arm_total,0)) %>%
     group_by(arm, !! sym(var)) %>%
-    mutate(across(n, redactor2)) %>%
+    mutate(across(n, ~ceiling_any(.x, to=7))) %>%
     ungroup() %>%
     mutate(across(percent, 
                   ~if_else(

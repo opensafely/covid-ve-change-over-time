@@ -73,7 +73,7 @@ model_tidy_tibble <- bind_rows(
   group_by(subgroup, comparison, outcome, model, period) %>%
   mutate(across(n_obs_model, sum, na.rm=TRUE)) %>%
   ungroup() %>%
-  mutate(across(c(n_obs_model, n_obs, n_event), round, -1)) %>%
+  mutate(across(c(n_obs_model, n_obs, n_event), ~ceiling_any(.x, to=7))) %>%
   select(subgroup, comparison, outcome, model, period, variable, label, reference_row,
          n_obs_model, n_obs_label = n_obs, n_event_label = n_event,
          estimate, conf.low, conf.high) %>%

@@ -25,6 +25,11 @@ eligibility_count <- tribble(
   "Extracted using study_definition", n_distinct(data_processed$patient_id)
 )
 
+################################################################################
+# redaction functions
+source(here::here("analysis", "functions", "redaction_functions.R"))
+
+################################################################################
 # create folder for metadata
 fs::dir_create(here::here("output", "lib"))
 
@@ -208,8 +213,8 @@ readr::write_rds(data_eligible_b,
 
 # number of people eligible at each stage ----
 eligibility_count <- eligibility_count %>%
-  # round to nearest 10
-  mutate(across(n, ~round(.x, -1))) %>%
+  # round up to nearest 7
+  mutate(across(n, ~ceiling_any(.x, 7))) %>%
   mutate(n_removed = lag(n) - n)
 
 readr::write_csv(

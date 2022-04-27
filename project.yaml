@@ -170,6 +170,8 @@ actions:
   table1:
     run: r:latest analysis/report/table1.R
     needs:
+    - data_eligible_ab
+    - data_eligible_cde
     - data_covariates_process
     outputs:
       moderately_sensitive:

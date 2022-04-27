@@ -510,7 +510,11 @@ actions_list <- splice(
   action(
     name = "table1",
     run = "r:latest analysis/report/table1.R",
-    needs = list("data_covariates_process"),
+    needs = list(
+      "data_eligible_ab",
+      "data_eligible_cde",
+      "data_covariates_process"
+      ),
     moderately_sensitive = list(
       eligibility_count_p1 = "output/tables/eligibility_count_p1.csv",
       table_csv = "output/report/tables/table1_*_REDACTED.csv",
