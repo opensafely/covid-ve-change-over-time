@@ -17,22 +17,19 @@ strata_vars <- readr::read_rds(
   here::here("analysis", "lib", "strata_vars.rds"))
 strata_vars <- strata_vars[strata_vars!="elig_date"]
 
-# processed data
-data_processed <- readr::read_rds(
-  here::here("output", "data", "data_processed.rds")) 
-
-# covariates data
-data_covariates <- readr::read_rds(
-  here::here("output", "data", "data_covariates.rds")) 
-
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("analysis", "lib", "subgroups.rds"))
 
+################################################################################
+# processed data
+data_all <- readr::read_rds(
+  here::here("output", "data", "data_all.rds")) 
+
+################################################################################
 # redaction functions
 source(here::here("analysis", "functions", "redaction_functions.R"))
 
-################################################################################
 # function to be applied in dplyr::filter
 no_evidence_of <- function(cov_date, index_date) {
   is.na(cov_date) | index_date < cov_date
@@ -40,18 +37,11 @@ no_evidence_of <- function(cov_date, index_date) {
 
 ################################################################################
 # prepare data
-data_tables <- data_covariates %>% 
-  filter(k==1) %>%
-  left_join(data_processed %>%
-              select(patient_id, subgroup,
-                     all_of(unname(strata_vars)),
-                     sex, imd, ethnicity, 
-                     death_date, dereg_date),
-            by = "patient_id") %>%
+data_tables_0 <- data_all %>%
   mutate(group = if_else(arm == "unvax", "unvax", "vax"))
 
 # eligible for comparison period 1
-eligibility_count <- data_tables %>% 
+eligibility_count <- data_tables_0 %>% 
   group_by(group) %>%
   count() %>%
   ungroup() %>%
@@ -60,11 +50,11 @@ eligibility_count <- data_tables %>%
     n
   )
 
-# remove if death before start of comparison 1
-data_tables <- data_tables %>%
+# remove if death before start of comparison 1 (includes day 0)
+data_tables <- data_tables_0 %>%
   filter_at(
     vars("death_date"),
-    all_vars(no_evidence_of(., start_k_date))) 
+    all_vars(no_evidence_of(., start_1_date))) 
 
 eligibility_count <- eligibility_count %>%
   bind_rows(
@@ -81,7 +71,7 @@ eligibility_count <- eligibility_count %>%
 data_tables <- data_tables %>%
   filter_at(
     vars("dereg_date"),
-    all_vars(no_evidence_of(., start_k_date))) 
+    all_vars(no_evidence_of(., start_1_date))) 
 
 eligibility_count <- eligibility_count %>%
   bind_rows(
@@ -98,7 +88,7 @@ eligibility_count <- eligibility_count %>%
 data_tables <- data_tables %>%
   filter_at(
     vars("subsequent_vax_date"),
-    all_vars(no_evidence_of(., start_k_date))) 
+    all_vars(no_evidence_of(., start_1_date))) 
 
 eligibility_count <- eligibility_count %>%
   bind_rows(
@@ -126,11 +116,53 @@ readr::write_csv(
   here::here("output", "tables", "eligibility_count_p1.csv"))
 
 ################################################################################
-# split data in subgropus
+# split data in subgroups
 data_tables <- data_tables %>%
   select(patient_id, arm, region, jcvi_group, subgroup,
          all_of(unname(unlist(model_varlist)))) %>% 
   group_split(subgroup)
+
+################################################################################
+# function to summarise each variable and (within variables) redact values <=5
+summary_var <- function(.data, var) {
+  out <- .data %>%
+    group_by(arm, !! sym(var)) %>%
+    count() %>%
+    ungroup(!! sym(var)) %>%
+    mutate(arm_total = sum(n)) %>%
+    ungroup() %>%
+    mutate(percent = round(100*n/arm_total,0)) %>%
+    group_by(arm, !! sym(var)) %>%
+    mutate(across(n, redactor2)) %>%
+    ungroup() %>%
+    mutate(across(percent, 
+                  ~if_else(
+                    is.na(n) | n == 0, 
+                    "-", 
+                    as.character(.x)))) %>%
+    mutate(across(n, 
+                  ~if_else(
+                    is.na(.x) | .x == 0, 
+                    "-", 
+                    scales::comma(.x, accuracy = 1)))) %>%
+    mutate(value = as.character(glue("{n} ({percent}%)"))) %>%
+    select(arm, !! sym(var), value) %>%
+    pivot_wider(
+      names_from = arm, 
+      values_from = value
+    ) %>%
+    mutate(variable = var) %>%
+    rename("category" = var)
+  
+  if (is.logical(out$category)) {
+    out <- out %>%
+      filter(category) %>%
+      mutate(across(category, ~ "yes"))
+  }
+  
+  out %>% mutate(across(category, as.character))
+  
+}
 
 ################################################################################
 # make table1 for all and each subgroup
@@ -172,7 +204,7 @@ for (i in c(0, seq_along(data_tables))) {
     subgroup <- unique(data$subgroup)
     subgroup_label <- which(subgroups == subgroup)
     
-    min_elig_date <- data_processed %>%
+    min_elig_date <- data_all %>%
       filter(subgroup %in% subgroup) %>%
       summarise(min_elig_date = min(elig_date))
     min_elig_date <- min_elig_date$min_elig_date
@@ -198,48 +230,6 @@ for (i in c(0, seq_along(data_tables))) {
     ) %>%
     mutate(across(category, ~ if_else(is.na(.x), "yes", .x)))
   
-  cat("---- summarise variables ----\n")
-  # summarise each variable and (within variables) redact values <=5
-  summary_var <- function(.data, var) {
-    out <- .data %>%
-      group_by(arm, !! sym(var)) %>%
-      count() %>%
-      ungroup(!! sym(var)) %>%
-      mutate(arm_total = sum(n)) %>%
-      ungroup() %>%
-      mutate(percent = round(100*n/arm_total,0)) %>%
-      group_by(arm, !! sym(var)) %>%
-      mutate(across(n, redactor2)) %>%
-      ungroup() %>%
-      mutate(across(percent, 
-                    ~if_else(
-                      is.na(n) | n == 0, 
-                      "-", 
-                      as.character(.x)))) %>%
-      mutate(across(n, 
-                    ~if_else(
-                      is.na(.x) | .x == 0, 
-                      "-", 
-                      scales::comma(.x, accuracy = 1)))) %>%
-      mutate(value = as.character(glue("{n} ({percent}%)"))) %>%
-      select(arm, !! sym(var), value) %>%
-      pivot_wider(
-        names_from = arm, 
-        values_from = value
-      ) %>%
-      mutate(variable = var) %>%
-      rename("category" = var)
-    
-    if (is.logical(out$category)) {
-      out <- out %>%
-        filter(category) %>%
-        mutate(across(category, ~ "yes"))
-    }
-    
-    return(out)
-    
-  }
-  
   cat("---- make table 1 ----\n")
   # make table1
   table1 <- bind_rows(lapply(
@@ -249,17 +239,18 @@ for (i in c(0, seq_along(data_tables))) {
   ))
   
   cat("---- tidy table 1 ----\n")
-  # vairables under "History of" heading
+  # vairables under "Evidence of" heading
   history_of_vars <- c(
-    "chronic_respiratory_disease",
-    "chronic_heart_disease", 
-    "chronic_liver_disease", 
+    "crd",
+    "chd", 
+    "cld", 
     "ckd", 
-    "chronic_neuro_inc_ld",
+    "cns",
     "diabetes",
-    "any_immunosuppression", 
-    "ld_inc_ds_and_cp", 
-    "sev_ment")
+    "immunosuppressed",
+    "asplenia",
+    "learndis", 
+    "sev_mental")
   # tidy table1
   table1_tidy <- var_order %>% 
     left_join(var_labels, by = "variable") %>%
@@ -267,7 +258,7 @@ for (i in c(0, seq_along(data_tables))) {
     mutate(across(category,
                   ~ if_else(variable %in% history_of_vars, variable_label, .x))) %>%
     mutate(across(variable_label,
-                  ~ if_else(variable %in% history_of_vars, "History of", .x))) %>%
+                  ~ if_else(variable %in% history_of_vars, "Evidence of", .x))) %>%
     mutate(across(variable_label, ~ str_replace(.x, "min_elig_date", as.character(min_elig_date)))) %>%
     rename(Variable = variable_label, Characteristic = category, Unvaccinated = unvax) %>%
     select(-variable) %>%
