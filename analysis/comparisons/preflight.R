@@ -14,13 +14,13 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   comparison <- "BNT162b2"
-  subgroup_label <- 1
+  subgroup_label <- "1"
   outcome <- "anytest"
   
 } else{
-  comparison <- args[[1]]
-  subgroup_label <- as.integer(args[[2]])
-  outcome <- args[[3]]
+  comparison <- as.character(args[[1]])
+  subgroup_label <- as.character(args[[2]])
+  outcome <- as.character(args[[3]])
 }
 
 ################################################################################
@@ -44,27 +44,18 @@ model_varlist <- readr::read_rds(
 )
 vars <- unname(unlist(model_varlist))
 
+################################################################################
 # specfiy arms
 arm1 <- if_else(comparison == "ChAdOx1", "ChAdOx1", "BNT162b2")
 arm2 <- if_else(comparison == "both", "ChAdOx1", "unvax")
 
+################################################################################
 ## read data
 # covariates data
-data_covariates <- readr::read_rds(
-  here::here("output", "data", "data_covariates.rds")) %>%
-  filter(arm %in% c(arm1, arm2))
-
-# processed data
-data_processed <- readr::read_rds(
-  here::here("output", "data", "data_processed.rds")) %>%
-  filter(subgroup %in% subgroups[subgroup_label])
-
-data_in <- data_covariates %>%
-  inner_join(
-    data_processed,
-    by = "patient_id"
-  ) %>%
-  select(patient_id, k,
+data_in <- readr::read_rds(
+  here::here("output", "data", "data_all.rds")) %>%
+  filter(arm %in% c(arm1, arm2)) %>%
+  select(patient_id, 
          jcvi_group, elig_date, region,
          unname(model_varlist$demographic),
          unname(model_varlist$clinical))
@@ -79,7 +70,7 @@ source(here::here("analysis", "functions", "redaction_functions.R"))
 # join to tte data
 data_0 <- readr::read_rds(
   here::here("output", "tte", "data", glue("data_tte_{comparison}_{subgroup_label}_{outcome}.rds"))) %>%
-  left_join(data_in, by = c("patient_id", "k")) %>%
+  left_join(data_in, by = "patient_id") %>%
   mutate(strata_var = factor(str_c(jcvi_group, elig_date, region, sep = ", "))) %>%
   droplevels()
 
@@ -333,7 +324,7 @@ for (kk in 1:K) {
     
     ################################################################################
     # create age variables
-    if (subgroup_label == 1) {
+    if (str_detect(subgroup_label, "^1")) {
       
       # age and age^2 for subgroup 16-64 and vulnerable
       data_4 <- data_3 %>%
@@ -424,7 +415,7 @@ for (kk in 1:K) {
     preflight_report <- function(
       dropped_variables,
       merged_variables,
-      subgroup_string = subgroups[subgroup_label]
+      subgroup_string = subgroups[as.integer(str_extract(subgroup_label, "^\\d"))]
     ) {
       ####
       cat(glue("Comparison = {comparison}; Subgroup = {subgroup_string}; Outcome = {outcome}; Comparison period = {kk}"), "\n")
