@@ -130,7 +130,7 @@ clinical <-c(
   "Chronic kidney disease" = "ckd", 
   "Chronic neurological disease" = "cns",
   "Diabetes" = "diabetes",
-  "Immunosuppressed" = "immunosuppressed",
+  "Immunosuppression" = "immunosuppressed",
   "Learning disability" = "learndis",
   "Serious mental illness" = "sev_mental",
   # "Shielding criteria met" = "cev", 
