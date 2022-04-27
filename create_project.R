@@ -343,11 +343,9 @@ subgroup_labels <- seq_along(subgroups)
 actions_list <- splice(
   
   comment("# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #",
-          "DO NOT EDIT project.yaml or study_definition_1-6.py DIRECTLY",
-          "These files are created by create-project.R",
+          "DO NOT EDIT project.yaml",
+          "This file is created by create-project.R",
           "Edit and run create-project.R to update the project.yaml",
-          "Edit study_definition_k.py and run create-project.R to update",
-          "study_definition_1-6.py",
           "# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #"
   ),
   
@@ -477,7 +475,7 @@ actions_list <- splice(
       "generate_covs_data"
       ),
     highly_sensitive = list(
-      data_covariates = "output/data/data_covariates.rds"
+      data_covariates = "output/data/data_all.rds"
     )
   ),
   
@@ -485,7 +483,7 @@ actions_list <- splice(
   action(
     name = "data_min_max_fu",
     run = "r:latest analysis/comparisons/data_min_max_fu.R",
-    needs = list("data_input_process", "data_covariates_process"),
+    needs = list("data_covariates_process"),
     moderately_sensitive = list(
       data_min_max_fu_csv = "output/lib/data_min_max_fu.csv"
     )
@@ -499,7 +497,7 @@ actions_list <- splice(
   action(
     name = "plot_cumulative_incidence",
     run = "r:latest analysis/subsequent_vax/plot_cumulative_incidence.R",
-    needs = list("data_input_process", "data_eligible_cde"),
+    needs = list("data_covariates_process"),
     moderately_sensitive = list(
       ci_vax = "output/subsequent_vax/images/ci_vax.png",
       survtable = "output/subsequent_vax/tables/survtable_redacted.csv"
@@ -513,10 +511,7 @@ actions_list <- splice(
   action(
     name = "table1",
     run = "r:latest analysis/report/table1.R",
-    needs = list(
-      "data_input_process", 
-      "data_eligible_cde",
-      "data_covariates_process"),
+    needs = list("data_covariates_process"),
     moderately_sensitive = list(
       eligibility_count_p1 = "output/tables/eligibility_count_p1.csv",
       table_csv = "output/report/tables/table1_*_REDACTED.csv",
@@ -536,9 +531,7 @@ actions_list <- splice(
         name = glue("data_tte_process_{x}"),
         run = "r:latest analysis/comparisons/data_tte_process.R",
         arguments = x,
-        needs = list(
-          "data_input_process",
-          "data_covariates_process"),
+        needs = list("data_covariates_process"),
         highly_sensitive = list(
           data_tte_brand_outcome = glue("output/tte/data/data_tte_{x}*.rds")
         ),
@@ -561,7 +554,7 @@ actions_list <- splice(
           subgroup_labels <- subgroup_labels[subgroups != "18-39 years"]
         }
         unlist(lapply(
-          subgroup_labels,
+          unname(unlist(lapply(subgroup_labels, function(sub) sapply(c("", "_Female", "_Male"), function(sex) str_c(sub, sex))))),
 
           function(y)
             splice(
@@ -574,11 +567,7 @@ actions_list <- splice(
                 subgroup_label = y,
                 outcome = z)
             ),
-            recursive = FALSE)#,
-            # table_fun(
-            #   comparison = x,
-            #   subgroup_label = y
-            # )
+            recursive = FALSE)
             )
           
         ),
@@ -602,7 +591,7 @@ actions_list <- splice(
             ys <- subgroup_labels
           }
           unlist(lapply(
-            ys,
+            unname(unlist(lapply(ys, function(sub) sapply(c("", "_Female", "_Male"), function(sex) str_c(sub, sex))))),
             function(y)
               unlist(lapply(
                 unname(outcomes_model),
