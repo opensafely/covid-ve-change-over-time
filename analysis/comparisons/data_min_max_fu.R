@@ -7,32 +7,33 @@
 
 library(tidyverse)
 
+################################################################################
 # create output directories ----
 fs::dir_create(here::here("output", "lib"))
 
+################################################################################
 # read study parameters
 study_parameters <- readr::read_rds(
   here::here("analysis", "lib", "study_parameters.rds"))
 
+################################################################################
 ## read data
 # covariates data
-data_covariates <- readr::read_rds(
-  here::here("output", "data", "data_covariates.rds")) 
+data_all <- readr::read_rds(
+  here::here("output", "data", "data_all.rds")) 
 
-# processed data
-data_processed <- readr::read_rds(
-  here::here("output", "data", "data_processed.rds")) 
+################################################################################
+# redaction functions
+source(here::here("analysis", "functions", "redaction_functions.R"))
 
-data_min_max_fu <- data_covariates %>%
-  inner_join(
-    data_processed,
-    by = "patient_id"
-  ) %>%
+################################################################################
+data_min_max_fu <- data_all %>%
   group_by(subgroup) %>%
   summarise(
-    min_fu_date = min(start_k_date),
-    max_fu_date = max(end_k_date),
-    n = round(n(), -1),
+    min_fu_date = min(start_1_date),
+    max_fu_date = max(end_6_date),
+    # round total to nereast 7 for disclosure control
+    n = ceiling_any(n(), to=7),
     .groups = "keep"
   ) %>% 
   ungroup() %>%
