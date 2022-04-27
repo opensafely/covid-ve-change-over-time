@@ -13,7 +13,16 @@ subgroup_labels <- seq_along(subgroups)
 cat("-- read estimates_all.csv --")
 estimates_all <- readr::read_csv(here::here("output", "models_cox", "data", "estimates_all.csv")) %>%
   filter(variable == "k", label != "0") %>%
-  mutate(across(c(estimate, conf.low, conf.high), exp))
+  mutate(across(c(estimate, conf.low, conf.high), exp)) %>%
+  mutate(
+    sex = case_when(
+      str_detect(subgroup, "Female") ~ "Female",
+      str_detect(subgroup, "Male") ~ "Male",
+      TRUE ~ "Both"
+    ),
+    subgroup = as.integer(str_extract(subgroup, "\\d"))
+    ) %>%
+  mutate(across(subgroup, factor, levels = subgroup_labels, labels = subgroups)) 
   
 cat("-- define gg_color_hue --")
 gg_color_hue <- function(n, transparency = 1) {
@@ -36,72 +45,79 @@ colour_levs <- c(str_c(comparisons, " unadjusted"), str_c(comparisons, " adjuste
 palette_all <- c(palette_unadj, palette_adj)
 names(palette_all) <- colour_levs
 
-cat("-- create plot --")
-plot_check <- estimates_all %>%
-  mutate(across(subgroup, factor, levels = subgroup_labels, labels = subgroups)) %>%
-  mutate(colourvar = factor(
-    glue("{comparison} {model}"),
-    levels = colour_levs)) %>%
-  mutate(across(outcome, factor, levels = c("covidemergency", "covidadmitted", "coviddeath", "postest", "noncoviddeath", "anytest"))) %>%
-  ggplot(aes(
-    x = label, 
-    y = estimate,
-    colour = colourvar
-  )) +
-  geom_hline(aes(yintercept=1), colour='grey') +
-  geom_linerange(aes(ymin = conf.low, ymax = conf.high), position = position_dodge(width = position_dodge_val)) +
-  geom_point(
-    position = position_dodge(width = position_dodge_val)
-  ) +
-  facet_grid(subgroup ~ outcome)  +
-  scale_y_log10(
-    name = "HR",
-    breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10),
-    # limits = c(y_lower, y_upper),
-    oob = scales::oob_keep
-  ) +
-  scale_colour_manual(
-    values = palette_all
-  ) +
-  guides(
-    colour = guide_legend(nrow = 2, byrow=TRUE)
+# create function for plot_check
+plot_check <- function(s) {
+  cat(glue("-- create plot for {s} --"))
+  p <- estimates_all %>%
+    filter(sex %in% s) %>%
+    mutate(colourvar = factor(
+      glue("{comparison} {model}"),
+      levels = colour_levs)) %>%
+    mutate(across(outcome, factor, levels = c("covidemergency", "covidadmitted", "coviddeath", "postest", "noncoviddeath", "anytest"))) %>%
+    ggplot(aes(
+      x = label, 
+      y = estimate,
+      colour = colourvar
+    )) +
+    geom_hline(aes(yintercept=1), colour='grey') +
+    geom_linerange(aes(ymin = conf.low, ymax = conf.high), position = position_dodge(width = position_dodge_val)) +
+    geom_point(
+      position = position_dodge(width = position_dodge_val)
     ) +
-  labs(
-    x = "comaprison period"
-  ) +
-  theme_bw() +
-  theme(
-    panel.border = element_blank(),
-    axis.line.y = element_line(colour = "black"),
-    
-    axis.text = element_text(size=8),
-    
-    axis.title.x = element_text(size = 8, margin = margin(t = 0, r = 0, b = 0, l = 0)),
-    axis.title.y = element_text(size = 8, margin = margin(t = 0, r = 10, b = 0, l = 0)),
-    axis.text.x = element_text(size=8),
-    axis.text.y = element_text(size=8),
-    
-    panel.grid.minor.x = element_blank(),
-    panel.grid.minor.y = element_blank(),
-    strip.background = element_blank(),
-    strip.placement = "outside",
-    strip.text.y.left = element_text(angle = 0),
-    strip.text = element_text(size=8),
-    
-    panel.spacing = unit(0.8, "lines"),
-    
-    plot.title = element_text(hjust = 0, size = 8),
-    plot.title.position = "plot",
-    plot.caption.position = "plot",
-    plot.caption = element_text(hjust = 0, face= "italic"),
-    
-    plot.margin = margin(t=10, r=15, b=10, l=10),
-    
-    legend.position = "bottom"
-    
-  ) 
+    facet_grid(outcome ~ subgroup)  +
+    scale_y_log10(
+      name = "HR",
+      breaks = c(0.00, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10),
+      # limits = c(y_lower, y_upper),
+      oob = scales::oob_keep
+    ) +
+    scale_colour_manual(
+      values = palette_all
+    ) +
+    guides(
+      colour = guide_legend(nrow = 2, byrow=TRUE)
+    ) +
+    labs(
+      x = "comaprison period"
+    ) +
+    theme_bw() +
+    theme(
+      panel.border = element_blank(),
+      axis.line.y = element_line(colour = "black"),
+      
+      axis.text = element_text(size=8),
+      
+      axis.title.x = element_text(size = 8, margin = margin(t = 0, r = 0, b = 0, l = 0)),
+      axis.title.y = element_text(size = 8, margin = margin(t = 0, r = 10, b = 0, l = 0)),
+      axis.text.x = element_text(size=8),
+      axis.text.y = element_text(size=8),
+      
+      panel.grid.minor.x = element_blank(),
+      panel.grid.minor.y = element_blank(),
+      strip.background = element_blank(),
+      strip.placement = "outside",
+      strip.text.y.left = element_text(angle = 0),
+      strip.text = element_text(size=8),
+      
+      panel.spacing = unit(0.8, "lines"),
+      
+      plot.title = element_text(hjust = 0, size = 8),
+      plot.title.position = "plot",
+      plot.caption.position = "plot",
+      plot.caption = element_text(hjust = 0, face= "italic"),
+      
+      plot.margin = margin(t=10, r=15, b=10, l=10),
+      
+      legend.position = "bottom"
+      
+    ) 
+  
+  cat("-- save plot --")
+  ggsave(p,
+         filename = here::here("output", "models_cox", "images", glue("plot_check_{s}.svg")),
+         width=50, height=50, units="cm")
+}
 
-cat("-- save plot --")
-ggsave(plot_check,
-       filename = here::here("output", "models_cox", "images", glue("plot_check.svg")),
-       width=50, height=35, units="cm")
+try(plot_check("Both"))
+try(plot_check("Male"))
+try(plot_check("Female"))
