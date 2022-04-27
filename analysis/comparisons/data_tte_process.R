@@ -42,14 +42,10 @@ if ("ChAdOx1" %in% c(arm1, arm2)) {
 }
 
 ################################################################################
-# covariates data
-data_covariates <- readr::read_rds(
-  here::here("output", "data", "data_covariates.rds")) %>%
+# read data
+data_all <- readr::read_rds(
+  here::here("output", "data", "data_all.rds")) %>%
   filter(arm %in% c(arm1, arm2))
-
-# processed data
-data_processed <- readr::read_rds(
-  here::here("output", "data", "data_processed.rds")) 
 
 ################################################################################
 # redaction functions
@@ -62,22 +58,23 @@ fs::dir_create(here::here("output", "tte", "tables"))
 
 ################################################################################
 
-data <- data_covariates %>%
-  left_join(
-    data_processed,
-    by = "patient_id"
-  ) %>%
+data <- data_all %>%
   # filter subgroups
   filter(subgroup %in% select_subgroups) %>%
+  pivot_longer(
+    cols = matches("\\w+_\\d_date"),
+    names_to = c(".value", "k"),
+    names_pattern = "(.*)_(.)_date"
+  ) %>%
+  rename_with(~str_c(.x, "_date"), .cols = all_of(c("start", "end", "anytest"))) %>%
+  mutate(across(k, as.integer)) %>%
   # keep only odd unvax for odd k, equiv. for even
   filter(
     is.na(split) |
       ((k %% 2) == 0 & split == "even") |
       ((k %% 2) != 0 & split == "odd")
   ) %>%
-  select(patient_id, k, arm, subgroup, split,
-         start_k_date, end_k_date, subsequent_vax_date, dereg_date,
-         all_of(str_c(outcomes, "_date"))) 
+  select(patient_id, k, arm, subgroup, ends_with("date"))
 
 ################################################################################
 # generates and saves data_tte and tabulates event counts 
@@ -106,38 +103,38 @@ derive_data_tte <- function(
     # exclude if subsequent_vax, death, dereg or outcome_exclude occurred before start of period
     filter_at(
       vars(str_c(unique(c("subsequent_vax", "dereg", "coviddeath", "noncoviddeath", outcome_exclude)), "_date")),
-      all_vars(occurs_after_start_date(cov_date = ., index_date = start_k_date))
+      all_vars(occurs_after_start_date(cov_date = ., index_date = start_date))
     ) %>%
-    # only keep periods for which start_k_date < end_date
+    # only keep periods for which start_date < end_date
     filter(
-      start_k_date < as.Date(study_parameters$end_date) 
+      start_date < as.Date(study_parameters$end_date) 
     ) %>%
-    # if end_k_date > end_date, replace with end_date
-    mutate(across(end_k_date,
+    # if end_date > study_parameters$end_date, replace with study_parameters$end_date
+    mutate(across(end_date,
                   ~ if_else(as.Date(study_parameters$end_date) < .x,
                             as.Date(study_parameters$end_date),
                             .x))) %>%
-    # only keep dates for censoring and outcome variables between start_k_date and end_k_date
+    # only keep dates for censoring and outcome variables between start_date and end_date
     mutate(across(all_of(str_c(unique(c("dereg", outcomes)), "_date")),
                   ~ if_else(
-                    !is.na(.x) & (start_k_date < .x) & (.x <= end_k_date),
+                    !is.na(.x) & (start_date < .x) & (.x <= end_date),
                     .x,
                     as.Date(NA_character_)
                   ))) %>%
     # new time-scale: time since earliest start_fu_date in data
     mutate(across(ends_with("_date"),
-                  ~ as.integer(.x - min(start_k_date)))) %>%
+                  ~ as.integer(.x - min(start_date)))) %>%
     rename_at(vars(ends_with("_date")),
               ~ str_remove(.x, "_date")) %>%
     mutate(
       # censor follow-up time at first of the following:
-      tte = pmin(!! sym(outcome), dereg, coviddeath, noncoviddeath, end_k, na.rm = TRUE),
+      tte = pmin(!! sym(outcome), dereg, coviddeath, noncoviddeath, end, na.rm = TRUE),
       status = if_else(
         !is.na(!! sym(outcome)) & !! sym(outcome) == tte,
         TRUE,
         FALSE
       )) %>%
-    select(patient_id, arm, k, tstart = start_k, tstop = tte, status) %>%
+    select(patient_id, arm, k, tstart = start, tstop = tte, status) %>%
     arrange(patient_id, k) 
   
   # checks
@@ -164,20 +161,8 @@ derive_data_tte <- function(
       events = sum(status),
       .groups = "keep"
     ) %>%
-    ### REDACT SMALL NUMBERS ###
-    # remove counts <=5 from n and events
-    mutate(across(c(n, events), redactor2)) %>%
-    # also redact 0 counts (not done in redactor2)
-    mutate(across(c(n, events), 
-                  ~if_else(.x==0,
-                           NA_integer_, 
-                           .x))) %>%
-    # also redact person_years if n is redacted
-    # if not redacting, round to 2 d.p.
-    mutate(across(person_years, 
-                  ~if_else(is.na(n),
-                           NA_real_, 
-                           round(.x, 2)))) %>%
+    # round n and events up to nearest 7 for disclosure control
+    mutate(across(c(n, events), ~ceiling_any(.x, to=7))) %>%
     ungroup() %>%
     mutate(outcome = outcome,
            subgroup = subgroup_current_label) %>%
