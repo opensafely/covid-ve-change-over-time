@@ -296,7 +296,6 @@ apply_model_fun <- function(
       run = "r:latest analysis/comparisons/preflight.R",
       arguments = c(comparison, subgroup_label, outcome),
       needs = list(
-        "data_input_process",
         "data_covariates_process", 
         glue("data_tte_process_{comparison}")
         ),
