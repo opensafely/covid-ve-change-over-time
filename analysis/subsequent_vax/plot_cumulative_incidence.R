@@ -13,30 +13,6 @@ fs::dir_create(here::here("output", "subsequent_vax", "tables"))
 study_parameters <- readr::read_rds(
   here::here("analysis", "lib", "study_parameters.rds"))
 
-################################################################################
-# individuals eligible based on box c criteria
-data_eligible_e_vax <- readr::read_rds(
-  here::here("output", "data", "data_eligible_e_vax.rds"))  %>%
-  mutate(arm = brand) %>%
-  select(patient_id, covid_vax_2_date, start_of_period, arm)
-
-# individuals eligible based on box d criteria
-data_eligible_e_unvax <- readr::read_rds(
-  here::here("output", "data", "data_eligible_e_unvax.rds"))  %>%
-  mutate(arm = "unvax") %>%
-  select(patient_id, start_of_period, arm)
-
-################################################################################
-# processed data
-data_processed <- readr::read_rds(
-  here::here("output", "data", "data_processed.rds")) %>%
-  select(patient_id, subgroup, death_date, dereg_date)
-
-data_wide_vax_dates <- readRDS(
-  here::here("output", "data", "data_wide_vax_dates.rds")) %>%
-  select(patient_id, covid_vax_1_date, covid_vax_3_date)
-
-################################################################################
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("analysis", "lib", "subgroups.rds"))
@@ -48,73 +24,64 @@ subgroups_long <- if_else(
 )
 subgroups_long_wrap <- str_wrap(subgroups_long, width = 25)
 
+################################################################################
+# read data
+data_all <- readr::read_rds(
+  here::here("output", "data", "data_all.rds")) %>%
+  select(patient_id, subgroup, arm, start_1_date, end_6_date, subsequent_vax_date, dereg_date, death_date)
+
+################################################################################
 # redaction function for KM curves
 source(here::here("analysis", "functions", "round_km.R"))
 
 ################################################################################
 
 # if running locally read extracted data:
-if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
-  
-  release_folder <- "release20220226"
-  image_path <- here::here(release_folder)
-  
-  survtable_redacted <- readr::read_csv(
-    here::here(release_folder, "survtable_redacted.csv")) %>%
-    mutate(across(subgroup,
-                  ~ case_when(
-                    str_detect(.x, "65") ~ 1,
-                    str_detect(.x, "16-64") ~ 2,
-                    str_detect(.x, "40-64") ~ 3,
-                    str_detect(.x, "18-39") ~ 4,
-                    TRUE ~ NA_real_
-                  ))) %>%
-    mutate(across(subgroup,
-                  factor,
-                  levels = subgroup_labels,
-                  labels = subgroups_long_wrap)) 
-  
-} else { # else derive the data
-  
-  image_path <- here::here("output", "subsequent_vax", "images")
+# if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
+#   
+#   release_folder <- "release20220226"
+#   image_path <- here::here(release_folder)
+#   
+#   survtable_redacted <- readr::read_csv(
+#     here::here(release_folder, "survtable_redacted.csv")) %>%
+#     mutate(across(subgroup,
+#                   ~ case_when(
+#                     str_detect(.x, "65") ~ 1,
+#                     str_detect(.x, "16-64") ~ 2,
+#                     str_detect(.x, "40-64") ~ 3,
+#                     str_detect(.x, "18-39") ~ 4,
+#                     TRUE ~ NA_real_
+#                   ))) %>%
+#     mutate(across(subgroup,
+#                   factor,
+#                   levels = subgroup_labels,
+#                   labels = subgroups_long_wrap)) 
+#   
+# } else { # else derive the data
   
   # function to be applied in dplyr::filter
   no_evidence_of <- function(cov_date, index_date) {
     is.na(cov_date) | index_date < cov_date
   }
   
-  data_tte <- bind_rows(data_eligible_e_vax, data_eligible_e_unvax) %>%
-    left_join(data_processed,
-              by = "patient_id") %>%
-    left_join(data_wide_vax_dates,
-              by = "patient_id") %>%
+  data_tte <- data_all %>%
     mutate(across(subgroup,
                   factor,
                   levels = subgroups,
                   labels = subgroups_long_wrap)) %>%
     mutate(
       # start date of comparison 1 
-      start_fu_date = if_else(
-        arm %in% "unvax",
-        start_of_period + days(14),
-        covid_vax_2_date + days(14)
-      ),
+      start_fu_date = start_1_date,
       # end date of final comparison or end of data availability
-      end_fu_date = pmin(start_fu_date + days(study_parameters$K*28),
-                         study_parameters$end_date)
+      end_fu_date = pmin(end_6_date, study_parameters$end_date)
     ) %>%
-    select(-start_of_period, -covid_vax_2_date) %>%
-    mutate(vax_date = if_else(
-      arm %in% "unvax",
-      covid_vax_1_date,
-      covid_vax_3_date)) %>%
-    select(-covid_vax_1_date, -covid_vax_3_date) %>%
-    # remove if subsequent vaccine, death or dereg before start_of_period
+    select(-start_1_date, -end_6_date) %>%
+    # remove if subsequent vaccine, death or dereg on or before start_of_period
     filter_at(
-      all_of(c("vax_date", "death_date", "dereg_date")),
+      all_of(c("subsequent_vax_date", "death_date", "dereg_date")),
       all_vars(no_evidence_of(., start_fu_date))) %>%
     group_by(start_fu_date) %>%
-    mutate(across(c(end_fu_date, vax_date, death_date, dereg_date),
+    mutate(across(c(end_fu_date, subsequent_vax_date, death_date, dereg_date),
                   # time in weeks between start_fu_date and event
                   ~ as.integer(.x - start_fu_date)/7)) %>%
     ungroup() %>%
@@ -122,9 +89,10 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
     rename_at(vars(ends_with("_date")),
               ~ str_remove(.x, "_date")) %>%
     mutate(
-      tte = pmin(vax, dereg, death, end_fu, na.rm = TRUE),
+      tte = pmin(subsequent_vax, dereg, death, end_fu, na.rm = TRUE),
       status = if_else(
-        !is.na(vax) & vax == tte,
+        # because subsequent_vax must occur before death and dereg if occuring on same day
+        !is.na(subsequent_vax) & subsequent_vax == tte,
         TRUE,
         FALSE
       )) %>%
@@ -155,7 +123,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
     survtable_redacted,
     here::here("output", "subsequent_vax", "tables", "survtable_redacted.csv"))
   
-}
+# }
 
 ################################################################################
 # scale for x-axis
@@ -209,6 +177,6 @@ plot_out <- survtable_redacted %>%
   )
 
 ggsave(plot = plot_out,
-       filename = file.path(image_path, "ci_vax.png"),
+       filename = here::here("output", "subsequent_vax", "images", "ci_vax.png"),
        width=16, height=12, units="cm")
   
