@@ -35,7 +35,7 @@ source(here::here("analysis", "functions", "redaction_functions.R"))
 ################################################################################
 
 all_files <- list.files(path = here::here("output", "models_cox", "data"), 
-           pattern = "modelcox_tidy_\\w+_\\d_\\w+_\\d.rds",
+           pattern = "modelcox_tidy_\\w+_.+_\\w+_\\d.rds",
            all.files = FALSE,
            full.names = FALSE, recursive = FALSE,
            ignore.case = FALSE, include.dirs = FALSE)
@@ -45,6 +45,11 @@ model_tidy_list <- lapply(
   all_files,
   function(filename) {
     filename_split <- unlist(str_split(str_remove(filename, ".rds"), "_"))
+    if (length(filename_split) > 6) {
+      sex <- filename_split[which(str_detect(filename_split, "Female|Male"))]
+      filename_split <- filename_split[filename_split!=sex]
+      filename_split[4] <- str_c(filename_split[4], "_", sex)
+    }
     readr::read_rds(
       here::here("output", "models_cox", "data", filename)
     ) %>%
