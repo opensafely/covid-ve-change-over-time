@@ -35,7 +35,8 @@ data_arm <- bind_rows(
 # vars from data_processed
 data_processed <- readr::read_rds(
   here::here("output", "data", "data_processed.rds")) %>%
-  select(patient_id, jcvi_group, elig_date, region, 
+  select(patient_id, subgroup,
+         jcvi_group, elig_date, region, 
          dereg_date, death_date,
          starts_with(unname(outcomes)),
          any_of(unname(model_varlist$demographic)))
@@ -91,7 +92,12 @@ data_all <- data_arm %>%
   left_join(
     data_wide_vax_dates, 
     by = "patient_id"
-  )
+  ) %>%
+  mutate(subsequent_vax_date = if_else(
+    arm %in% "unvax",
+    covid_vax_1_date,
+    covid_vax_3_date)) %>%
+  select(-covid_vax_1_date, -covid_vax_3_date)
 
 readr::write_rds(
   data_all,
