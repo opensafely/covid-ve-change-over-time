@@ -17,13 +17,13 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   comparison <- "BNT162b2"
-  subgroup_label <- 2
+  subgroup_label <- "1_Female"
   outcome <- "postest"
   
 } else{
-  comparison <- args[[1]]
-  subgroup_label <- as.integer(args[[2]])
-  outcome <- args[[3]]
+  comparison <- as.character(args[[1]])
+  subgroup_label <- as.character(args[[2]])
+  outcome <- as.character(args[[3]])
 }
 
 ################################################################################
@@ -35,7 +35,7 @@ fs::dir_create(here::here("output", "models_cox", "temp"))
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("analysis", "lib", "subgroups.rds"))
-subgroup <- subgroups[subgroup_label]
+subgroup <- subgroups[as.integer(str_extract(subgroup_label, "^\\d"))]
 
 # read study parameters
 study_parameters <- readr::read_rds(
