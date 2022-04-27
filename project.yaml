@@ -7,11 +7,9 @@ expectations:
 actions:
 
   ## # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-  ## DO NOT EDIT project.yaml or study_definition_1-6.py DIRECTLY 
-  ## These files are created by create-project.R 
+  ## DO NOT EDIT project.yaml 
+  ## This file is created by create-project.R 
   ## Edit and run create-project.R to update the project.yaml 
-  ## Edit study_definition_k.py and run create-project.R to update 
-  ## study_definition_1-6.py 
   ## # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   ## #################################### 
   ## study definition 
@@ -138,14 +136,13 @@ actions:
     - generate_covs_data
     outputs:
       highly_sensitive:
-        data_covariates: output/data/data_covariates.rds
+        data_covariates: output/data/data_all.rds
 
   ## min and max follow-up dates for plots 
 
   data_min_max_fu:
     run: r:latest analysis/comparisons/data_min_max_fu.R
     needs:
-    - data_input_process
     - data_covariates_process
     outputs:
       moderately_sensitive:
@@ -159,8 +156,7 @@ actions:
   plot_cumulative_incidence:
     run: r:latest analysis/subsequent_vax/plot_cumulative_incidence.R
     needs:
-    - data_input_process
-    - data_eligible_cde
+    - data_covariates_process
     outputs:
       moderately_sensitive:
         ci_vax: output/subsequent_vax/images/ci_vax.png
@@ -174,8 +170,6 @@ actions:
   table1:
     run: r:latest analysis/report/table1.R
     needs:
-    - data_input_process
-    - data_eligible_cde
     - data_covariates_process
     outputs:
       moderately_sensitive:
@@ -191,7 +185,6 @@ actions:
   data_tte_process_BNT162b2:
     run: r:latest analysis/comparisons/data_tte_process.R BNT162b2
     needs:
-    - data_input_process
     - data_covariates_process
     outputs:
       highly_sensitive:
@@ -202,7 +195,6 @@ actions:
   data_tte_process_ChAdOx1:
     run: r:latest analysis/comparisons/data_tte_process.R ChAdOx1
     needs:
-    - data_input_process
     - data_covariates_process
     outputs:
       highly_sensitive:
@@ -213,7 +205,6 @@ actions:
   data_tte_process_both:
     run: r:latest analysis/comparisons/data_tte_process.R both
     needs:
-    - data_input_process
     - data_covariates_process
     outputs:
       highly_sensitive:
@@ -224,7 +215,7 @@ actions:
   ## #################################### 
   ## apply models 
   ## #################################### 
-  ## BNT162b2; 65+ years; anytest 
+  ## BNT162b2; NA; anytest 
   ## preflight checks 
 
   preflight_BNT162b2_1_anytest:
@@ -255,7 +246,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_anytest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_anytest.txt
 
-  ## BNT162b2; 65+ years; postest 
+  ## BNT162b2; NA; postest 
   ## preflight checks 
 
   preflight_BNT162b2_1_postest:
@@ -286,7 +277,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_postest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_postest.txt
 
-  ## BNT162b2; 65+ years; covidadmitted 
+  ## BNT162b2; NA; covidadmitted 
   ## preflight checks 
 
   preflight_BNT162b2_1_covidadmitted:
@@ -317,7 +308,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_covidadmitted.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_covidadmitted.txt
 
-  ## BNT162b2; 65+ years; covidemergency 
+  ## BNT162b2; NA; covidemergency 
   ## preflight checks 
 
   preflight_BNT162b2_1_covidemergency:
@@ -348,7 +339,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_covidemergency.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_covidemergency.txt
 
-  ## BNT162b2; 65+ years; coviddeath 
+  ## BNT162b2; NA; coviddeath 
   ## preflight checks 
 
   preflight_BNT162b2_1_coviddeath:
@@ -379,7 +370,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_coviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_coviddeath.txt
 
-  ## BNT162b2; 65+ years; noncoviddeath 
+  ## BNT162b2; NA; noncoviddeath 
   ## preflight checks 
 
   preflight_BNT162b2_1_noncoviddeath:
@@ -410,7 +401,385 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_noncoviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_noncoviddeath.txt
 
-  ## BNT162b2; 16-64 years and clinically vulnerable; anytest 
+  ## BNT162b2; NA; anytest 
+  ## preflight checks 
+
+  preflight_BNT162b2_1_Female_anytest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 1_Female anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_1_Female_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_Female_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_Female_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_1_Female_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 1_Female
+      anytest
+    needs:
+    - preflight_BNT162b2_1_Female_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_1_Female_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_1_Female_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_1_Female_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_Female_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_Female_anytest.txt
+
+  ## BNT162b2; NA; postest 
+  ## preflight checks 
+
+  preflight_BNT162b2_1_Female_postest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 1_Female postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_1_Female_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_Female_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_Female_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_1_Female_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 1_Female
+      postest
+    needs:
+    - preflight_BNT162b2_1_Female_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_1_Female_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_1_Female_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_1_Female_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_Female_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_Female_postest.txt
+
+  ## BNT162b2; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_BNT162b2_1_Female_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 1_Female covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_1_Female_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_Female_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_Female_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_1_Female_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 1_Female
+      covidadmitted
+    needs:
+    - preflight_BNT162b2_1_Female_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_1_Female_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_1_Female_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_1_Female_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_Female_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_Female_covidadmitted.txt
+
+  ## BNT162b2; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_BNT162b2_1_Female_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 1_Female covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_1_Female_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_Female_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_Female_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_1_Female_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 1_Female
+      covidemergency
+    needs:
+    - preflight_BNT162b2_1_Female_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_1_Female_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_1_Female_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_1_Female_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_Female_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_Female_covidemergency.txt
+
+  ## BNT162b2; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_1_Female_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 1_Female coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_1_Female_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_Female_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_Female_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_1_Female_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 1_Female
+      coviddeath
+    needs:
+    - preflight_BNT162b2_1_Female_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_1_Female_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_1_Female_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_1_Female_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_Female_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_Female_coviddeath.txt
+
+  ## BNT162b2; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_1_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 1_Female noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_1_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_Female_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_Female_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_1_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 1_Female
+      noncoviddeath
+    needs:
+    - preflight_BNT162b2_1_Female_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_1_Female_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_1_Female_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_1_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_Female_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_Female_noncoviddeath.txt
+
+  ## BNT162b2; NA; anytest 
+  ## preflight checks 
+
+  preflight_BNT162b2_1_Male_anytest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 1_Male anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_1_Male_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_Male_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_Male_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_1_Male_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 1_Male anytest
+    needs:
+    - preflight_BNT162b2_1_Male_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_1_Male_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_1_Male_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_1_Male_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_Male_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_Male_anytest.txt
+
+  ## BNT162b2; NA; postest 
+  ## preflight checks 
+
+  preflight_BNT162b2_1_Male_postest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 1_Male postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_1_Male_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_Male_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_Male_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_1_Male_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 1_Male postest
+    needs:
+    - preflight_BNT162b2_1_Male_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_1_Male_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_1_Male_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_1_Male_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_Male_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_Male_postest.txt
+
+  ## BNT162b2; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_BNT162b2_1_Male_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 1_Male covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_1_Male_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_Male_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_Male_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_1_Male_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 1_Male covidadmitted
+    needs:
+    - preflight_BNT162b2_1_Male_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_1_Male_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_1_Male_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_1_Male_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_Male_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_Male_covidadmitted.txt
+
+  ## BNT162b2; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_BNT162b2_1_Male_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 1_Male covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_1_Male_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_Male_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_Male_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_1_Male_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 1_Male covidemergency
+    needs:
+    - preflight_BNT162b2_1_Male_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_1_Male_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_1_Male_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_1_Male_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_Male_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_Male_covidemergency.txt
+
+  ## BNT162b2; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_1_Male_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 1_Male coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_1_Male_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_Male_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_Male_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_1_Male_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 1_Male coviddeath
+    needs:
+    - preflight_BNT162b2_1_Male_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_1_Male_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_1_Male_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_1_Male_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_Male_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_Male_coviddeath.txt
+
+  ## BNT162b2; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_1_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 1_Male noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_1_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_1_Male_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_1_Male_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_1_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 1_Male noncoviddeath
+    needs:
+    - preflight_BNT162b2_1_Male_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_1_Male_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_1_Male_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_1_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_1_Male_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_1_Male_noncoviddeath.txt
+
+  ## BNT162b2; NA; anytest 
   ## preflight checks 
 
   preflight_BNT162b2_2_anytest:
@@ -441,7 +810,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_anytest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_anytest.txt
 
-  ## BNT162b2; 16-64 years and clinically vulnerable; postest 
+  ## BNT162b2; NA; postest 
   ## preflight checks 
 
   preflight_BNT162b2_2_postest:
@@ -472,7 +841,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_postest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_postest.txt
 
-  ## BNT162b2; 16-64 years and clinically vulnerable; covidadmitted 
+  ## BNT162b2; NA; covidadmitted 
   ## preflight checks 
 
   preflight_BNT162b2_2_covidadmitted:
@@ -503,7 +872,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_covidadmitted.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_covidadmitted.txt
 
-  ## BNT162b2; 16-64 years and clinically vulnerable; covidemergency 
+  ## BNT162b2; NA; covidemergency 
   ## preflight checks 
 
   preflight_BNT162b2_2_covidemergency:
@@ -534,7 +903,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_covidemergency.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_covidemergency.txt
 
-  ## BNT162b2; 16-64 years and clinically vulnerable; coviddeath 
+  ## BNT162b2; NA; coviddeath 
   ## preflight checks 
 
   preflight_BNT162b2_2_coviddeath:
@@ -565,7 +934,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_coviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_coviddeath.txt
 
-  ## BNT162b2; 16-64 years and clinically vulnerable; noncoviddeath 
+  ## BNT162b2; NA; noncoviddeath 
   ## preflight checks 
 
   preflight_BNT162b2_2_noncoviddeath:
@@ -596,7 +965,385 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_noncoviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_noncoviddeath.txt
 
-  ## BNT162b2; 40-64 years; anytest 
+  ## BNT162b2; NA; anytest 
+  ## preflight checks 
+
+  preflight_BNT162b2_2_Female_anytest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 2_Female anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_2_Female_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_2_Female_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_2_Female_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_2_Female_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 2_Female
+      anytest
+    needs:
+    - preflight_BNT162b2_2_Female_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_2_Female_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_2_Female_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_2_Female_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_Female_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_Female_anytest.txt
+
+  ## BNT162b2; NA; postest 
+  ## preflight checks 
+
+  preflight_BNT162b2_2_Female_postest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 2_Female postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_2_Female_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_2_Female_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_2_Female_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_2_Female_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 2_Female
+      postest
+    needs:
+    - preflight_BNT162b2_2_Female_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_2_Female_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_2_Female_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_2_Female_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_Female_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_Female_postest.txt
+
+  ## BNT162b2; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_BNT162b2_2_Female_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 2_Female covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_2_Female_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_2_Female_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_2_Female_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_2_Female_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 2_Female
+      covidadmitted
+    needs:
+    - preflight_BNT162b2_2_Female_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_2_Female_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_2_Female_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_2_Female_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_Female_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_Female_covidadmitted.txt
+
+  ## BNT162b2; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_BNT162b2_2_Female_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 2_Female covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_2_Female_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_2_Female_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_2_Female_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_2_Female_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 2_Female
+      covidemergency
+    needs:
+    - preflight_BNT162b2_2_Female_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_2_Female_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_2_Female_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_2_Female_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_Female_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_Female_covidemergency.txt
+
+  ## BNT162b2; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_2_Female_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 2_Female coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_2_Female_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_2_Female_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_2_Female_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_2_Female_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 2_Female
+      coviddeath
+    needs:
+    - preflight_BNT162b2_2_Female_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_2_Female_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_2_Female_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_2_Female_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_Female_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_Female_coviddeath.txt
+
+  ## BNT162b2; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_2_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 2_Female noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_2_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_2_Female_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_2_Female_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_2_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 2_Female
+      noncoviddeath
+    needs:
+    - preflight_BNT162b2_2_Female_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_2_Female_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_2_Female_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_2_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_Female_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_Female_noncoviddeath.txt
+
+  ## BNT162b2; NA; anytest 
+  ## preflight checks 
+
+  preflight_BNT162b2_2_Male_anytest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 2_Male anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_2_Male_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_2_Male_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_2_Male_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_2_Male_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 2_Male anytest
+    needs:
+    - preflight_BNT162b2_2_Male_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_2_Male_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_2_Male_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_2_Male_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_Male_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_Male_anytest.txt
+
+  ## BNT162b2; NA; postest 
+  ## preflight checks 
+
+  preflight_BNT162b2_2_Male_postest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 2_Male postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_2_Male_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_2_Male_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_2_Male_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_2_Male_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 2_Male postest
+    needs:
+    - preflight_BNT162b2_2_Male_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_2_Male_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_2_Male_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_2_Male_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_Male_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_Male_postest.txt
+
+  ## BNT162b2; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_BNT162b2_2_Male_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 2_Male covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_2_Male_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_2_Male_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_2_Male_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_2_Male_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 2_Male covidadmitted
+    needs:
+    - preflight_BNT162b2_2_Male_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_2_Male_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_2_Male_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_2_Male_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_Male_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_Male_covidadmitted.txt
+
+  ## BNT162b2; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_BNT162b2_2_Male_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 2_Male covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_2_Male_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_2_Male_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_2_Male_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_2_Male_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 2_Male covidemergency
+    needs:
+    - preflight_BNT162b2_2_Male_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_2_Male_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_2_Male_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_2_Male_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_Male_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_Male_covidemergency.txt
+
+  ## BNT162b2; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_2_Male_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 2_Male coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_2_Male_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_2_Male_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_2_Male_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_2_Male_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 2_Male coviddeath
+    needs:
+    - preflight_BNT162b2_2_Male_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_2_Male_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_2_Male_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_2_Male_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_Male_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_Male_coviddeath.txt
+
+  ## BNT162b2; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_2_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 2_Male noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_2_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_2_Male_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_2_Male_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_2_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 2_Male noncoviddeath
+    needs:
+    - preflight_BNT162b2_2_Male_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_2_Male_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_2_Male_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_2_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_2_Male_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_2_Male_noncoviddeath.txt
+
+  ## BNT162b2; NA; anytest 
   ## preflight checks 
 
   preflight_BNT162b2_3_anytest:
@@ -627,7 +1374,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_anytest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_anytest.txt
 
-  ## BNT162b2; 40-64 years; postest 
+  ## BNT162b2; NA; postest 
   ## preflight checks 
 
   preflight_BNT162b2_3_postest:
@@ -658,7 +1405,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_postest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_postest.txt
 
-  ## BNT162b2; 40-64 years; covidadmitted 
+  ## BNT162b2; NA; covidadmitted 
   ## preflight checks 
 
   preflight_BNT162b2_3_covidadmitted:
@@ -689,7 +1436,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_covidadmitted.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_covidadmitted.txt
 
-  ## BNT162b2; 40-64 years; covidemergency 
+  ## BNT162b2; NA; covidemergency 
   ## preflight checks 
 
   preflight_BNT162b2_3_covidemergency:
@@ -720,7 +1467,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_covidemergency.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_covidemergency.txt
 
-  ## BNT162b2; 40-64 years; coviddeath 
+  ## BNT162b2; NA; coviddeath 
   ## preflight checks 
 
   preflight_BNT162b2_3_coviddeath:
@@ -751,7 +1498,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_coviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_coviddeath.txt
 
-  ## BNT162b2; 40-64 years; noncoviddeath 
+  ## BNT162b2; NA; noncoviddeath 
   ## preflight checks 
 
   preflight_BNT162b2_3_noncoviddeath:
@@ -782,7 +1529,385 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_noncoviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_noncoviddeath.txt
 
-  ## BNT162b2; 18-39 years; anytest 
+  ## BNT162b2; NA; anytest 
+  ## preflight checks 
+
+  preflight_BNT162b2_3_Female_anytest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 3_Female anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_3_Female_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_3_Female_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_3_Female_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_3_Female_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 3_Female
+      anytest
+    needs:
+    - preflight_BNT162b2_3_Female_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_3_Female_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_3_Female_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_3_Female_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_Female_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_Female_anytest.txt
+
+  ## BNT162b2; NA; postest 
+  ## preflight checks 
+
+  preflight_BNT162b2_3_Female_postest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 3_Female postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_3_Female_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_3_Female_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_3_Female_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_3_Female_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 3_Female
+      postest
+    needs:
+    - preflight_BNT162b2_3_Female_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_3_Female_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_3_Female_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_3_Female_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_Female_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_Female_postest.txt
+
+  ## BNT162b2; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_BNT162b2_3_Female_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 3_Female covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_3_Female_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_3_Female_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_3_Female_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_3_Female_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 3_Female
+      covidadmitted
+    needs:
+    - preflight_BNT162b2_3_Female_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_3_Female_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_3_Female_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_3_Female_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_Female_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_Female_covidadmitted.txt
+
+  ## BNT162b2; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_BNT162b2_3_Female_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 3_Female covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_3_Female_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_3_Female_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_3_Female_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_3_Female_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 3_Female
+      covidemergency
+    needs:
+    - preflight_BNT162b2_3_Female_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_3_Female_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_3_Female_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_3_Female_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_Female_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_Female_covidemergency.txt
+
+  ## BNT162b2; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_3_Female_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 3_Female coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_3_Female_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_3_Female_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_3_Female_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_3_Female_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 3_Female
+      coviddeath
+    needs:
+    - preflight_BNT162b2_3_Female_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_3_Female_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_3_Female_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_3_Female_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_Female_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_Female_coviddeath.txt
+
+  ## BNT162b2; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_3_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 3_Female noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_3_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_3_Female_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_3_Female_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_3_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 3_Female
+      noncoviddeath
+    needs:
+    - preflight_BNT162b2_3_Female_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_3_Female_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_3_Female_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_3_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_Female_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_Female_noncoviddeath.txt
+
+  ## BNT162b2; NA; anytest 
+  ## preflight checks 
+
+  preflight_BNT162b2_3_Male_anytest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 3_Male anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_3_Male_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_3_Male_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_3_Male_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_3_Male_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 3_Male anytest
+    needs:
+    - preflight_BNT162b2_3_Male_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_3_Male_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_3_Male_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_3_Male_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_Male_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_Male_anytest.txt
+
+  ## BNT162b2; NA; postest 
+  ## preflight checks 
+
+  preflight_BNT162b2_3_Male_postest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 3_Male postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_3_Male_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_3_Male_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_3_Male_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_3_Male_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 3_Male postest
+    needs:
+    - preflight_BNT162b2_3_Male_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_3_Male_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_3_Male_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_3_Male_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_Male_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_Male_postest.txt
+
+  ## BNT162b2; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_BNT162b2_3_Male_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 3_Male covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_3_Male_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_3_Male_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_3_Male_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_3_Male_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 3_Male covidadmitted
+    needs:
+    - preflight_BNT162b2_3_Male_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_3_Male_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_3_Male_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_3_Male_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_Male_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_Male_covidadmitted.txt
+
+  ## BNT162b2; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_BNT162b2_3_Male_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 3_Male covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_3_Male_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_3_Male_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_3_Male_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_3_Male_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 3_Male covidemergency
+    needs:
+    - preflight_BNT162b2_3_Male_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_3_Male_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_3_Male_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_3_Male_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_Male_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_Male_covidemergency.txt
+
+  ## BNT162b2; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_3_Male_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 3_Male coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_3_Male_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_3_Male_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_3_Male_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_3_Male_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 3_Male coviddeath
+    needs:
+    - preflight_BNT162b2_3_Male_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_3_Male_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_3_Male_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_3_Male_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_Male_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_Male_coviddeath.txt
+
+  ## BNT162b2; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_3_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 3_Male noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_3_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_3_Male_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_3_Male_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_3_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 3_Male noncoviddeath
+    needs:
+    - preflight_BNT162b2_3_Male_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_3_Male_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_3_Male_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_3_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_3_Male_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_3_Male_noncoviddeath.txt
+
+  ## BNT162b2; NA; anytest 
   ## preflight checks 
 
   preflight_BNT162b2_4_anytest:
@@ -813,7 +1938,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_anytest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_anytest.txt
 
-  ## BNT162b2; 18-39 years; postest 
+  ## BNT162b2; NA; postest 
   ## preflight checks 
 
   preflight_BNT162b2_4_postest:
@@ -844,7 +1969,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_postest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_postest.txt
 
-  ## BNT162b2; 18-39 years; covidadmitted 
+  ## BNT162b2; NA; covidadmitted 
   ## preflight checks 
 
   preflight_BNT162b2_4_covidadmitted:
@@ -875,7 +2000,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_covidadmitted.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_covidadmitted.txt
 
-  ## BNT162b2; 18-39 years; covidemergency 
+  ## BNT162b2; NA; covidemergency 
   ## preflight checks 
 
   preflight_BNT162b2_4_covidemergency:
@@ -906,7 +2031,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_covidemergency.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_covidemergency.txt
 
-  ## BNT162b2; 18-39 years; coviddeath 
+  ## BNT162b2; NA; coviddeath 
   ## preflight checks 
 
   preflight_BNT162b2_4_coviddeath:
@@ -937,7 +2062,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_coviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_coviddeath.txt
 
-  ## BNT162b2; 18-39 years; noncoviddeath 
+  ## BNT162b2; NA; noncoviddeath 
   ## preflight checks 
 
   preflight_BNT162b2_4_noncoviddeath:
@@ -968,7 +2093,385 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_noncoviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_noncoviddeath.txt
 
-  ## ChAdOx1; 65+ years; anytest 
+  ## BNT162b2; NA; anytest 
+  ## preflight checks 
+
+  preflight_BNT162b2_4_Female_anytest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 4_Female anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_4_Female_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_4_Female_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_4_Female_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_4_Female_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 4_Female
+      anytest
+    needs:
+    - preflight_BNT162b2_4_Female_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_4_Female_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_4_Female_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_4_Female_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_Female_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_Female_anytest.txt
+
+  ## BNT162b2; NA; postest 
+  ## preflight checks 
+
+  preflight_BNT162b2_4_Female_postest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 4_Female postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_4_Female_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_4_Female_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_4_Female_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_4_Female_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 4_Female
+      postest
+    needs:
+    - preflight_BNT162b2_4_Female_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_4_Female_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_4_Female_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_4_Female_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_Female_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_Female_postest.txt
+
+  ## BNT162b2; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_BNT162b2_4_Female_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 4_Female covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_4_Female_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_4_Female_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_4_Female_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_4_Female_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 4_Female
+      covidadmitted
+    needs:
+    - preflight_BNT162b2_4_Female_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_4_Female_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_4_Female_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_4_Female_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_Female_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_Female_covidadmitted.txt
+
+  ## BNT162b2; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_BNT162b2_4_Female_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 4_Female covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_4_Female_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_4_Female_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_4_Female_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_4_Female_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 4_Female
+      covidemergency
+    needs:
+    - preflight_BNT162b2_4_Female_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_4_Female_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_4_Female_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_4_Female_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_Female_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_Female_covidemergency.txt
+
+  ## BNT162b2; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_4_Female_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 4_Female coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_4_Female_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_4_Female_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_4_Female_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_4_Female_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 4_Female
+      coviddeath
+    needs:
+    - preflight_BNT162b2_4_Female_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_4_Female_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_4_Female_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_4_Female_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_Female_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_Female_coviddeath.txt
+
+  ## BNT162b2; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_4_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 4_Female noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_4_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_4_Female_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_4_Female_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_4_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 4_Female
+      noncoviddeath
+    needs:
+    - preflight_BNT162b2_4_Female_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_4_Female_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_4_Female_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_4_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_Female_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_Female_noncoviddeath.txt
+
+  ## BNT162b2; NA; anytest 
+  ## preflight checks 
+
+  preflight_BNT162b2_4_Male_anytest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 4_Male anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_4_Male_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_4_Male_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_4_Male_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_4_Male_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 4_Male anytest
+    needs:
+    - preflight_BNT162b2_4_Male_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_4_Male_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_4_Male_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_4_Male_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_Male_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_Male_anytest.txt
+
+  ## BNT162b2; NA; postest 
+  ## preflight checks 
+
+  preflight_BNT162b2_4_Male_postest:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 4_Male postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_4_Male_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_4_Male_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_4_Male_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_4_Male_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 4_Male postest
+    needs:
+    - preflight_BNT162b2_4_Male_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_4_Male_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_4_Male_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_4_Male_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_Male_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_Male_postest.txt
+
+  ## BNT162b2; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_BNT162b2_4_Male_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 4_Male covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_4_Male_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_4_Male_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_4_Male_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_4_Male_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 4_Male covidadmitted
+    needs:
+    - preflight_BNT162b2_4_Male_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_4_Male_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_4_Male_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_4_Male_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_Male_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_Male_covidadmitted.txt
+
+  ## BNT162b2; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_BNT162b2_4_Male_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 4_Male covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_4_Male_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_4_Male_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_4_Male_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_4_Male_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 4_Male covidemergency
+    needs:
+    - preflight_BNT162b2_4_Male_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_4_Male_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_4_Male_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_4_Male_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_Male_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_Male_covidemergency.txt
+
+  ## BNT162b2; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_4_Male_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 4_Male coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_4_Male_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_4_Male_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_4_Male_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_4_Male_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 4_Male coviddeath
+    needs:
+    - preflight_BNT162b2_4_Male_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_4_Male_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_4_Male_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_4_Male_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_Male_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_Male_coviddeath.txt
+
+  ## BNT162b2; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_BNT162b2_4_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R BNT162b2 4_Male noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_BNT162b2
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_BNT162b2_4_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_BNT162b2_4_Male_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_BNT162b2_4_Male_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_BNT162b2_4_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R BNT162b2 4_Male noncoviddeath
+    needs:
+    - preflight_BNT162b2_4_Male_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_BNT162b2_4_Male_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_BNT162b2_4_Male_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_BNT162b2_4_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_BNT162b2_4_Male_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_BNT162b2_4_Male_noncoviddeath.txt
+
+  ## ChAdOx1; NA; anytest 
   ## preflight checks 
 
   preflight_ChAdOx1_1_anytest:
@@ -999,7 +2502,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_anytest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_anytest.txt
 
-  ## ChAdOx1; 65+ years; postest 
+  ## ChAdOx1; NA; postest 
   ## preflight checks 
 
   preflight_ChAdOx1_1_postest:
@@ -1030,7 +2533,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_postest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_postest.txt
 
-  ## ChAdOx1; 65+ years; covidadmitted 
+  ## ChAdOx1; NA; covidadmitted 
   ## preflight checks 
 
   preflight_ChAdOx1_1_covidadmitted:
@@ -1061,7 +2564,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_covidadmitted.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_covidadmitted.txt
 
-  ## ChAdOx1; 65+ years; covidemergency 
+  ## ChAdOx1; NA; covidemergency 
   ## preflight checks 
 
   preflight_ChAdOx1_1_covidemergency:
@@ -1092,7 +2595,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_covidemergency.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_covidemergency.txt
 
-  ## ChAdOx1; 65+ years; coviddeath 
+  ## ChAdOx1; NA; coviddeath 
   ## preflight checks 
 
   preflight_ChAdOx1_1_coviddeath:
@@ -1123,7 +2626,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_coviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_coviddeath.txt
 
-  ## ChAdOx1; 65+ years; noncoviddeath 
+  ## ChAdOx1; NA; noncoviddeath 
   ## preflight checks 
 
   preflight_ChAdOx1_1_noncoviddeath:
@@ -1154,7 +2657,379 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_noncoviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_noncoviddeath.txt
 
-  ## ChAdOx1; 16-64 years and clinically vulnerable; anytest 
+  ## ChAdOx1; NA; anytest 
+  ## preflight checks 
+
+  preflight_ChAdOx1_1_Female_anytest:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 1_Female anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_1_Female_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_1_Female_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_1_Female_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_1_Female_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 1_Female anytest
+    needs:
+    - preflight_ChAdOx1_1_Female_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_1_Female_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_1_Female_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_1_Female_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_Female_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_Female_anytest.txt
+
+  ## ChAdOx1; NA; postest 
+  ## preflight checks 
+
+  preflight_ChAdOx1_1_Female_postest:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 1_Female postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_1_Female_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_1_Female_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_1_Female_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_1_Female_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 1_Female postest
+    needs:
+    - preflight_ChAdOx1_1_Female_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_1_Female_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_1_Female_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_1_Female_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_Female_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_Female_postest.txt
+
+  ## ChAdOx1; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_ChAdOx1_1_Female_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 1_Female covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_1_Female_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_1_Female_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_1_Female_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_1_Female_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 1_Female covidadmitted
+    needs:
+    - preflight_ChAdOx1_1_Female_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_1_Female_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_1_Female_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_1_Female_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_Female_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_Female_covidadmitted.txt
+
+  ## ChAdOx1; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_ChAdOx1_1_Female_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 1_Female covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_1_Female_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_1_Female_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_1_Female_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_1_Female_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 1_Female covidemergency
+    needs:
+    - preflight_ChAdOx1_1_Female_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_1_Female_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_1_Female_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_1_Female_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_Female_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_Female_covidemergency.txt
+
+  ## ChAdOx1; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_ChAdOx1_1_Female_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 1_Female coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_1_Female_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_1_Female_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_1_Female_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_1_Female_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 1_Female coviddeath
+    needs:
+    - preflight_ChAdOx1_1_Female_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_1_Female_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_1_Female_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_1_Female_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_Female_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_Female_coviddeath.txt
+
+  ## ChAdOx1; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_ChAdOx1_1_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 1_Female noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_1_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_1_Female_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_1_Female_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_1_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 1_Female noncoviddeath
+    needs:
+    - preflight_ChAdOx1_1_Female_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_1_Female_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_1_Female_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_1_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_Female_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_Female_noncoviddeath.txt
+
+  ## ChAdOx1; NA; anytest 
+  ## preflight checks 
+
+  preflight_ChAdOx1_1_Male_anytest:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 1_Male anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_1_Male_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_1_Male_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_1_Male_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_1_Male_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 1_Male anytest
+    needs:
+    - preflight_ChAdOx1_1_Male_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_1_Male_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_1_Male_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_1_Male_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_Male_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_Male_anytest.txt
+
+  ## ChAdOx1; NA; postest 
+  ## preflight checks 
+
+  preflight_ChAdOx1_1_Male_postest:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 1_Male postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_1_Male_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_1_Male_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_1_Male_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_1_Male_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 1_Male postest
+    needs:
+    - preflight_ChAdOx1_1_Male_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_1_Male_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_1_Male_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_1_Male_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_Male_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_Male_postest.txt
+
+  ## ChAdOx1; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_ChAdOx1_1_Male_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 1_Male covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_1_Male_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_1_Male_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_1_Male_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_1_Male_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 1_Male covidadmitted
+    needs:
+    - preflight_ChAdOx1_1_Male_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_1_Male_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_1_Male_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_1_Male_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_Male_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_Male_covidadmitted.txt
+
+  ## ChAdOx1; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_ChAdOx1_1_Male_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 1_Male covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_1_Male_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_1_Male_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_1_Male_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_1_Male_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 1_Male covidemergency
+    needs:
+    - preflight_ChAdOx1_1_Male_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_1_Male_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_1_Male_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_1_Male_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_Male_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_Male_covidemergency.txt
+
+  ## ChAdOx1; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_ChAdOx1_1_Male_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 1_Male coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_1_Male_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_1_Male_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_1_Male_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_1_Male_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 1_Male coviddeath
+    needs:
+    - preflight_ChAdOx1_1_Male_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_1_Male_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_1_Male_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_1_Male_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_Male_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_Male_coviddeath.txt
+
+  ## ChAdOx1; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_ChAdOx1_1_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 1_Male noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_1_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_1_Male_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_1_Male_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_1_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 1_Male noncoviddeath
+    needs:
+    - preflight_ChAdOx1_1_Male_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_1_Male_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_1_Male_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_1_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_1_Male_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_1_Male_noncoviddeath.txt
+
+  ## ChAdOx1; NA; anytest 
   ## preflight checks 
 
   preflight_ChAdOx1_2_anytest:
@@ -1185,7 +3060,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_anytest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_anytest.txt
 
-  ## ChAdOx1; 16-64 years and clinically vulnerable; postest 
+  ## ChAdOx1; NA; postest 
   ## preflight checks 
 
   preflight_ChAdOx1_2_postest:
@@ -1216,7 +3091,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_postest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_postest.txt
 
-  ## ChAdOx1; 16-64 years and clinically vulnerable; covidadmitted 
+  ## ChAdOx1; NA; covidadmitted 
   ## preflight checks 
 
   preflight_ChAdOx1_2_covidadmitted:
@@ -1247,7 +3122,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_covidadmitted.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_covidadmitted.txt
 
-  ## ChAdOx1; 16-64 years and clinically vulnerable; covidemergency 
+  ## ChAdOx1; NA; covidemergency 
   ## preflight checks 
 
   preflight_ChAdOx1_2_covidemergency:
@@ -1278,7 +3153,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_covidemergency.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_covidemergency.txt
 
-  ## ChAdOx1; 16-64 years and clinically vulnerable; coviddeath 
+  ## ChAdOx1; NA; coviddeath 
   ## preflight checks 
 
   preflight_ChAdOx1_2_coviddeath:
@@ -1309,7 +3184,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_coviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_coviddeath.txt
 
-  ## ChAdOx1; 16-64 years and clinically vulnerable; noncoviddeath 
+  ## ChAdOx1; NA; noncoviddeath 
   ## preflight checks 
 
   preflight_ChAdOx1_2_noncoviddeath:
@@ -1340,7 +3215,379 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_noncoviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_noncoviddeath.txt
 
-  ## ChAdOx1; 40-64 years; anytest 
+  ## ChAdOx1; NA; anytest 
+  ## preflight checks 
+
+  preflight_ChAdOx1_2_Female_anytest:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 2_Female anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_2_Female_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_2_Female_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_2_Female_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_2_Female_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 2_Female anytest
+    needs:
+    - preflight_ChAdOx1_2_Female_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_2_Female_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_2_Female_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_2_Female_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_Female_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_Female_anytest.txt
+
+  ## ChAdOx1; NA; postest 
+  ## preflight checks 
+
+  preflight_ChAdOx1_2_Female_postest:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 2_Female postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_2_Female_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_2_Female_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_2_Female_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_2_Female_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 2_Female postest
+    needs:
+    - preflight_ChAdOx1_2_Female_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_2_Female_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_2_Female_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_2_Female_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_Female_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_Female_postest.txt
+
+  ## ChAdOx1; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_ChAdOx1_2_Female_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 2_Female covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_2_Female_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_2_Female_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_2_Female_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_2_Female_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 2_Female covidadmitted
+    needs:
+    - preflight_ChAdOx1_2_Female_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_2_Female_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_2_Female_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_2_Female_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_Female_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_Female_covidadmitted.txt
+
+  ## ChAdOx1; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_ChAdOx1_2_Female_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 2_Female covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_2_Female_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_2_Female_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_2_Female_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_2_Female_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 2_Female covidemergency
+    needs:
+    - preflight_ChAdOx1_2_Female_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_2_Female_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_2_Female_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_2_Female_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_Female_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_Female_covidemergency.txt
+
+  ## ChAdOx1; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_ChAdOx1_2_Female_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 2_Female coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_2_Female_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_2_Female_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_2_Female_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_2_Female_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 2_Female coviddeath
+    needs:
+    - preflight_ChAdOx1_2_Female_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_2_Female_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_2_Female_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_2_Female_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_Female_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_Female_coviddeath.txt
+
+  ## ChAdOx1; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_ChAdOx1_2_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 2_Female noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_2_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_2_Female_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_2_Female_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_2_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 2_Female noncoviddeath
+    needs:
+    - preflight_ChAdOx1_2_Female_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_2_Female_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_2_Female_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_2_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_Female_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_Female_noncoviddeath.txt
+
+  ## ChAdOx1; NA; anytest 
+  ## preflight checks 
+
+  preflight_ChAdOx1_2_Male_anytest:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 2_Male anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_2_Male_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_2_Male_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_2_Male_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_2_Male_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 2_Male anytest
+    needs:
+    - preflight_ChAdOx1_2_Male_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_2_Male_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_2_Male_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_2_Male_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_Male_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_Male_anytest.txt
+
+  ## ChAdOx1; NA; postest 
+  ## preflight checks 
+
+  preflight_ChAdOx1_2_Male_postest:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 2_Male postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_2_Male_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_2_Male_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_2_Male_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_2_Male_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 2_Male postest
+    needs:
+    - preflight_ChAdOx1_2_Male_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_2_Male_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_2_Male_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_2_Male_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_Male_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_Male_postest.txt
+
+  ## ChAdOx1; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_ChAdOx1_2_Male_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 2_Male covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_2_Male_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_2_Male_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_2_Male_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_2_Male_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 2_Male covidadmitted
+    needs:
+    - preflight_ChAdOx1_2_Male_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_2_Male_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_2_Male_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_2_Male_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_Male_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_Male_covidadmitted.txt
+
+  ## ChAdOx1; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_ChAdOx1_2_Male_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 2_Male covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_2_Male_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_2_Male_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_2_Male_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_2_Male_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 2_Male covidemergency
+    needs:
+    - preflight_ChAdOx1_2_Male_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_2_Male_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_2_Male_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_2_Male_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_Male_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_Male_covidemergency.txt
+
+  ## ChAdOx1; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_ChAdOx1_2_Male_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 2_Male coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_2_Male_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_2_Male_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_2_Male_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_2_Male_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 2_Male coviddeath
+    needs:
+    - preflight_ChAdOx1_2_Male_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_2_Male_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_2_Male_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_2_Male_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_Male_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_Male_coviddeath.txt
+
+  ## ChAdOx1; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_ChAdOx1_2_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 2_Male noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_2_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_2_Male_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_2_Male_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_2_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 2_Male noncoviddeath
+    needs:
+    - preflight_ChAdOx1_2_Male_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_2_Male_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_2_Male_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_2_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_2_Male_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_2_Male_noncoviddeath.txt
+
+  ## ChAdOx1; NA; anytest 
   ## preflight checks 
 
   preflight_ChAdOx1_3_anytest:
@@ -1371,7 +3618,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_anytest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_anytest.txt
 
-  ## ChAdOx1; 40-64 years; postest 
+  ## ChAdOx1; NA; postest 
   ## preflight checks 
 
   preflight_ChAdOx1_3_postest:
@@ -1402,7 +3649,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_postest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_postest.txt
 
-  ## ChAdOx1; 40-64 years; covidadmitted 
+  ## ChAdOx1; NA; covidadmitted 
   ## preflight checks 
 
   preflight_ChAdOx1_3_covidadmitted:
@@ -1433,7 +3680,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_covidadmitted.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_covidadmitted.txt
 
-  ## ChAdOx1; 40-64 years; covidemergency 
+  ## ChAdOx1; NA; covidemergency 
   ## preflight checks 
 
   preflight_ChAdOx1_3_covidemergency:
@@ -1464,7 +3711,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_covidemergency.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_covidemergency.txt
 
-  ## ChAdOx1; 40-64 years; coviddeath 
+  ## ChAdOx1; NA; coviddeath 
   ## preflight checks 
 
   preflight_ChAdOx1_3_coviddeath:
@@ -1495,7 +3742,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_coviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_coviddeath.txt
 
-  ## ChAdOx1; 40-64 years; noncoviddeath 
+  ## ChAdOx1; NA; noncoviddeath 
   ## preflight checks 
 
   preflight_ChAdOx1_3_noncoviddeath:
@@ -1526,7 +3773,379 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_noncoviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_noncoviddeath.txt
 
-  ## both; 65+ years; anytest 
+  ## ChAdOx1; NA; anytest 
+  ## preflight checks 
+
+  preflight_ChAdOx1_3_Female_anytest:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 3_Female anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_3_Female_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_3_Female_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_3_Female_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_3_Female_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 3_Female anytest
+    needs:
+    - preflight_ChAdOx1_3_Female_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_3_Female_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_3_Female_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_3_Female_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_Female_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_Female_anytest.txt
+
+  ## ChAdOx1; NA; postest 
+  ## preflight checks 
+
+  preflight_ChAdOx1_3_Female_postest:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 3_Female postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_3_Female_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_3_Female_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_3_Female_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_3_Female_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 3_Female postest
+    needs:
+    - preflight_ChAdOx1_3_Female_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_3_Female_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_3_Female_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_3_Female_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_Female_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_Female_postest.txt
+
+  ## ChAdOx1; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_ChAdOx1_3_Female_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 3_Female covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_3_Female_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_3_Female_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_3_Female_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_3_Female_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 3_Female covidadmitted
+    needs:
+    - preflight_ChAdOx1_3_Female_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_3_Female_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_3_Female_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_3_Female_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_Female_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_Female_covidadmitted.txt
+
+  ## ChAdOx1; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_ChAdOx1_3_Female_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 3_Female covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_3_Female_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_3_Female_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_3_Female_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_3_Female_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 3_Female covidemergency
+    needs:
+    - preflight_ChAdOx1_3_Female_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_3_Female_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_3_Female_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_3_Female_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_Female_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_Female_covidemergency.txt
+
+  ## ChAdOx1; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_ChAdOx1_3_Female_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 3_Female coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_3_Female_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_3_Female_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_3_Female_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_3_Female_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 3_Female coviddeath
+    needs:
+    - preflight_ChAdOx1_3_Female_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_3_Female_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_3_Female_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_3_Female_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_Female_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_Female_coviddeath.txt
+
+  ## ChAdOx1; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_ChAdOx1_3_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 3_Female noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_3_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_3_Female_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_3_Female_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_3_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 3_Female noncoviddeath
+    needs:
+    - preflight_ChAdOx1_3_Female_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_3_Female_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_3_Female_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_3_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_Female_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_Female_noncoviddeath.txt
+
+  ## ChAdOx1; NA; anytest 
+  ## preflight checks 
+
+  preflight_ChAdOx1_3_Male_anytest:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 3_Male anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_3_Male_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_3_Male_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_3_Male_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_3_Male_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 3_Male anytest
+    needs:
+    - preflight_ChAdOx1_3_Male_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_3_Male_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_3_Male_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_3_Male_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_Male_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_Male_anytest.txt
+
+  ## ChAdOx1; NA; postest 
+  ## preflight checks 
+
+  preflight_ChAdOx1_3_Male_postest:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 3_Male postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_3_Male_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_3_Male_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_3_Male_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_3_Male_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 3_Male postest
+    needs:
+    - preflight_ChAdOx1_3_Male_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_3_Male_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_3_Male_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_3_Male_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_Male_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_Male_postest.txt
+
+  ## ChAdOx1; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_ChAdOx1_3_Male_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 3_Male covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_3_Male_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_3_Male_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_3_Male_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_3_Male_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 3_Male covidadmitted
+    needs:
+    - preflight_ChAdOx1_3_Male_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_3_Male_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_3_Male_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_3_Male_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_Male_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_Male_covidadmitted.txt
+
+  ## ChAdOx1; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_ChAdOx1_3_Male_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 3_Male covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_3_Male_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_3_Male_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_3_Male_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_3_Male_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 3_Male covidemergency
+    needs:
+    - preflight_ChAdOx1_3_Male_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_3_Male_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_3_Male_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_3_Male_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_Male_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_Male_covidemergency.txt
+
+  ## ChAdOx1; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_ChAdOx1_3_Male_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 3_Male coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_3_Male_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_3_Male_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_3_Male_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_3_Male_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 3_Male coviddeath
+    needs:
+    - preflight_ChAdOx1_3_Male_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_3_Male_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_3_Male_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_3_Male_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_Male_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_Male_coviddeath.txt
+
+  ## ChAdOx1; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_ChAdOx1_3_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R ChAdOx1 3_Male noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_ChAdOx1
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_ChAdOx1_3_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_ChAdOx1_3_Male_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_ChAdOx1_3_Male_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_ChAdOx1_3_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R ChAdOx1 3_Male noncoviddeath
+    needs:
+    - preflight_ChAdOx1_3_Male_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_ChAdOx1_3_Male_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_ChAdOx1_3_Male_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_ChAdOx1_3_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_ChAdOx1_3_Male_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_ChAdOx1_3_Male_noncoviddeath.txt
+
+  ## both; NA; anytest 
   ## preflight checks 
 
   preflight_both_1_anytest:
@@ -1557,7 +4176,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_anytest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_anytest.txt
 
-  ## both; 65+ years; postest 
+  ## both; NA; postest 
   ## preflight checks 
 
   preflight_both_1_postest:
@@ -1588,7 +4207,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_postest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_postest.txt
 
-  ## both; 65+ years; covidadmitted 
+  ## both; NA; covidadmitted 
   ## preflight checks 
 
   preflight_both_1_covidadmitted:
@@ -1619,7 +4238,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_covidadmitted.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_covidadmitted.txt
 
-  ## both; 65+ years; covidemergency 
+  ## both; NA; covidemergency 
   ## preflight checks 
 
   preflight_both_1_covidemergency:
@@ -1650,7 +4269,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_covidemergency.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_covidemergency.txt
 
-  ## both; 65+ years; coviddeath 
+  ## both; NA; coviddeath 
   ## preflight checks 
 
   preflight_both_1_coviddeath:
@@ -1681,7 +4300,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_coviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_coviddeath.txt
 
-  ## both; 65+ years; noncoviddeath 
+  ## both; NA; noncoviddeath 
   ## preflight checks 
 
   preflight_both_1_noncoviddeath:
@@ -1712,7 +4331,379 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_noncoviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_noncoviddeath.txt
 
-  ## both; 16-64 years and clinically vulnerable; anytest 
+  ## both; NA; anytest 
+  ## preflight checks 
+
+  preflight_both_1_Female_anytest:
+    run: r:latest analysis/comparisons/preflight.R both 1_Female anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_1_Female_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_1_Female_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_both_1_Female_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_1_Female_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 1_Female anytest
+    needs:
+    - preflight_both_1_Female_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_1_Female_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_1_Female_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_1_Female_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_Female_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_Female_anytest.txt
+
+  ## both; NA; postest 
+  ## preflight checks 
+
+  preflight_both_1_Female_postest:
+    run: r:latest analysis/comparisons/preflight.R both 1_Female postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_1_Female_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_1_Female_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_both_1_Female_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_1_Female_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 1_Female postest
+    needs:
+    - preflight_both_1_Female_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_1_Female_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_1_Female_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_1_Female_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_Female_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_Female_postest.txt
+
+  ## both; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_both_1_Female_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R both 1_Female covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_1_Female_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_1_Female_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_both_1_Female_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_1_Female_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 1_Female covidadmitted
+    needs:
+    - preflight_both_1_Female_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_1_Female_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_1_Female_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_1_Female_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_Female_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_Female_covidadmitted.txt
+
+  ## both; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_both_1_Female_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R both 1_Female covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_1_Female_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_1_Female_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_both_1_Female_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_1_Female_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 1_Female covidemergency
+    needs:
+    - preflight_both_1_Female_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_1_Female_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_1_Female_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_1_Female_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_Female_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_Female_covidemergency.txt
+
+  ## both; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_both_1_Female_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R both 1_Female coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_1_Female_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_1_Female_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_both_1_Female_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_1_Female_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 1_Female coviddeath
+    needs:
+    - preflight_both_1_Female_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_1_Female_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_1_Female_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_1_Female_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_Female_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_Female_coviddeath.txt
+
+  ## both; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_both_1_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R both 1_Female noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_1_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_1_Female_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_both_1_Female_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_1_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 1_Female noncoviddeath
+    needs:
+    - preflight_both_1_Female_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_1_Female_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_1_Female_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_1_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_Female_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_Female_noncoviddeath.txt
+
+  ## both; NA; anytest 
+  ## preflight checks 
+
+  preflight_both_1_Male_anytest:
+    run: r:latest analysis/comparisons/preflight.R both 1_Male anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_1_Male_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_1_Male_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_both_1_Male_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_1_Male_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 1_Male anytest
+    needs:
+    - preflight_both_1_Male_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_1_Male_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_1_Male_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_1_Male_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_Male_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_Male_anytest.txt
+
+  ## both; NA; postest 
+  ## preflight checks 
+
+  preflight_both_1_Male_postest:
+    run: r:latest analysis/comparisons/preflight.R both 1_Male postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_1_Male_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_1_Male_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_both_1_Male_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_1_Male_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 1_Male postest
+    needs:
+    - preflight_both_1_Male_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_1_Male_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_1_Male_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_1_Male_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_Male_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_Male_postest.txt
+
+  ## both; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_both_1_Male_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R both 1_Male covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_1_Male_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_1_Male_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_both_1_Male_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_1_Male_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 1_Male covidadmitted
+    needs:
+    - preflight_both_1_Male_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_1_Male_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_1_Male_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_1_Male_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_Male_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_Male_covidadmitted.txt
+
+  ## both; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_both_1_Male_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R both 1_Male covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_1_Male_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_1_Male_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_both_1_Male_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_1_Male_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 1_Male covidemergency
+    needs:
+    - preflight_both_1_Male_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_1_Male_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_1_Male_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_1_Male_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_Male_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_Male_covidemergency.txt
+
+  ## both; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_both_1_Male_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R both 1_Male coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_1_Male_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_1_Male_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_both_1_Male_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_1_Male_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 1_Male coviddeath
+    needs:
+    - preflight_both_1_Male_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_1_Male_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_1_Male_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_1_Male_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_Male_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_Male_coviddeath.txt
+
+  ## both; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_both_1_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R both 1_Male noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_1_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_1_Male_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_both_1_Male_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_1_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 1_Male noncoviddeath
+    needs:
+    - preflight_both_1_Male_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_1_Male_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_1_Male_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_1_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_1_Male_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_1_Male_noncoviddeath.txt
+
+  ## both; NA; anytest 
   ## preflight checks 
 
   preflight_both_2_anytest:
@@ -1743,7 +4734,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_anytest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_anytest.txt
 
-  ## both; 16-64 years and clinically vulnerable; postest 
+  ## both; NA; postest 
   ## preflight checks 
 
   preflight_both_2_postest:
@@ -1774,7 +4765,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_postest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_postest.txt
 
-  ## both; 16-64 years and clinically vulnerable; covidadmitted 
+  ## both; NA; covidadmitted 
   ## preflight checks 
 
   preflight_both_2_covidadmitted:
@@ -1805,7 +4796,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_covidadmitted.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_covidadmitted.txt
 
-  ## both; 16-64 years and clinically vulnerable; covidemergency 
+  ## both; NA; covidemergency 
   ## preflight checks 
 
   preflight_both_2_covidemergency:
@@ -1836,7 +4827,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_covidemergency.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_covidemergency.txt
 
-  ## both; 16-64 years and clinically vulnerable; coviddeath 
+  ## both; NA; coviddeath 
   ## preflight checks 
 
   preflight_both_2_coviddeath:
@@ -1867,7 +4858,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_coviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_coviddeath.txt
 
-  ## both; 16-64 years and clinically vulnerable; noncoviddeath 
+  ## both; NA; noncoviddeath 
   ## preflight checks 
 
   preflight_both_2_noncoviddeath:
@@ -1898,7 +4889,379 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_noncoviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_noncoviddeath.txt
 
-  ## both; 40-64 years; anytest 
+  ## both; NA; anytest 
+  ## preflight checks 
+
+  preflight_both_2_Female_anytest:
+    run: r:latest analysis/comparisons/preflight.R both 2_Female anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_2_Female_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_2_Female_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_both_2_Female_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_2_Female_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 2_Female anytest
+    needs:
+    - preflight_both_2_Female_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_2_Female_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_2_Female_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_2_Female_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_Female_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_Female_anytest.txt
+
+  ## both; NA; postest 
+  ## preflight checks 
+
+  preflight_both_2_Female_postest:
+    run: r:latest analysis/comparisons/preflight.R both 2_Female postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_2_Female_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_2_Female_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_both_2_Female_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_2_Female_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 2_Female postest
+    needs:
+    - preflight_both_2_Female_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_2_Female_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_2_Female_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_2_Female_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_Female_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_Female_postest.txt
+
+  ## both; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_both_2_Female_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R both 2_Female covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_2_Female_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_2_Female_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_both_2_Female_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_2_Female_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 2_Female covidadmitted
+    needs:
+    - preflight_both_2_Female_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_2_Female_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_2_Female_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_2_Female_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_Female_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_Female_covidadmitted.txt
+
+  ## both; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_both_2_Female_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R both 2_Female covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_2_Female_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_2_Female_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_both_2_Female_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_2_Female_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 2_Female covidemergency
+    needs:
+    - preflight_both_2_Female_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_2_Female_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_2_Female_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_2_Female_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_Female_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_Female_covidemergency.txt
+
+  ## both; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_both_2_Female_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R both 2_Female coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_2_Female_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_2_Female_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_both_2_Female_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_2_Female_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 2_Female coviddeath
+    needs:
+    - preflight_both_2_Female_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_2_Female_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_2_Female_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_2_Female_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_Female_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_Female_coviddeath.txt
+
+  ## both; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_both_2_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R both 2_Female noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_2_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_2_Female_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_both_2_Female_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_2_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 2_Female noncoviddeath
+    needs:
+    - preflight_both_2_Female_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_2_Female_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_2_Female_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_2_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_Female_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_Female_noncoviddeath.txt
+
+  ## both; NA; anytest 
+  ## preflight checks 
+
+  preflight_both_2_Male_anytest:
+    run: r:latest analysis/comparisons/preflight.R both 2_Male anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_2_Male_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_2_Male_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_both_2_Male_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_2_Male_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 2_Male anytest
+    needs:
+    - preflight_both_2_Male_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_2_Male_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_2_Male_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_2_Male_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_Male_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_Male_anytest.txt
+
+  ## both; NA; postest 
+  ## preflight checks 
+
+  preflight_both_2_Male_postest:
+    run: r:latest analysis/comparisons/preflight.R both 2_Male postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_2_Male_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_2_Male_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_both_2_Male_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_2_Male_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 2_Male postest
+    needs:
+    - preflight_both_2_Male_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_2_Male_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_2_Male_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_2_Male_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_Male_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_Male_postest.txt
+
+  ## both; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_both_2_Male_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R both 2_Male covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_2_Male_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_2_Male_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_both_2_Male_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_2_Male_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 2_Male covidadmitted
+    needs:
+    - preflight_both_2_Male_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_2_Male_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_2_Male_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_2_Male_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_Male_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_Male_covidadmitted.txt
+
+  ## both; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_both_2_Male_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R both 2_Male covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_2_Male_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_2_Male_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_both_2_Male_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_2_Male_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 2_Male covidemergency
+    needs:
+    - preflight_both_2_Male_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_2_Male_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_2_Male_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_2_Male_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_Male_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_Male_covidemergency.txt
+
+  ## both; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_both_2_Male_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R both 2_Male coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_2_Male_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_2_Male_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_both_2_Male_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_2_Male_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 2_Male coviddeath
+    needs:
+    - preflight_both_2_Male_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_2_Male_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_2_Male_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_2_Male_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_Male_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_Male_coviddeath.txt
+
+  ## both; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_both_2_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R both 2_Male noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_2_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_2_Male_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_both_2_Male_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_2_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 2_Male noncoviddeath
+    needs:
+    - preflight_both_2_Male_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_2_Male_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_2_Male_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_2_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_2_Male_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_2_Male_noncoviddeath.txt
+
+  ## both; NA; anytest 
   ## preflight checks 
 
   preflight_both_3_anytest:
@@ -1929,7 +5292,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_anytest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_anytest.txt
 
-  ## both; 40-64 years; postest 
+  ## both; NA; postest 
   ## preflight checks 
 
   preflight_both_3_postest:
@@ -1960,7 +5323,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_postest.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_postest.txt
 
-  ## both; 40-64 years; covidadmitted 
+  ## both; NA; covidadmitted 
   ## preflight checks 
 
   preflight_both_3_covidadmitted:
@@ -1991,7 +5354,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_covidadmitted.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_covidadmitted.txt
 
-  ## both; 40-64 years; covidemergency 
+  ## both; NA; covidemergency 
   ## preflight checks 
 
   preflight_both_3_covidemergency:
@@ -2022,7 +5385,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_covidemergency.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_covidemergency.txt
 
-  ## both; 40-64 years; coviddeath 
+  ## both; NA; coviddeath 
   ## preflight checks 
 
   preflight_both_3_coviddeath:
@@ -2053,7 +5416,7 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_coviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_coviddeath.txt
 
-  ## both; 40-64 years; noncoviddeath 
+  ## both; NA; noncoviddeath 
   ## preflight checks 
 
   preflight_both_3_noncoviddeath:
@@ -2084,6 +5447,378 @@ actions:
         model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_noncoviddeath.txt
         model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_noncoviddeath.txt
 
+  ## both; NA; anytest 
+  ## preflight checks 
+
+  preflight_both_3_Female_anytest:
+    run: r:latest analysis/comparisons/preflight.R both 3_Female anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_3_Female_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_3_Female_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_both_3_Female_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_3_Female_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 3_Female anytest
+    needs:
+    - preflight_both_3_Female_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_3_Female_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_3_Female_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_3_Female_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_Female_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_Female_anytest.txt
+
+  ## both; NA; postest 
+  ## preflight checks 
+
+  preflight_both_3_Female_postest:
+    run: r:latest analysis/comparisons/preflight.R both 3_Female postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_3_Female_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_3_Female_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_both_3_Female_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_3_Female_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 3_Female postest
+    needs:
+    - preflight_both_3_Female_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_3_Female_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_3_Female_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_3_Female_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_Female_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_Female_postest.txt
+
+  ## both; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_both_3_Female_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R both 3_Female covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_3_Female_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_3_Female_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_both_3_Female_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_3_Female_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 3_Female covidadmitted
+    needs:
+    - preflight_both_3_Female_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_3_Female_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_3_Female_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_3_Female_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_Female_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_Female_covidadmitted.txt
+
+  ## both; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_both_3_Female_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R both 3_Female covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_3_Female_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_3_Female_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_both_3_Female_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_3_Female_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 3_Female covidemergency
+    needs:
+    - preflight_both_3_Female_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_3_Female_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_3_Female_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_3_Female_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_Female_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_Female_covidemergency.txt
+
+  ## both; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_both_3_Female_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R both 3_Female coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_3_Female_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_3_Female_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_both_3_Female_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_3_Female_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 3_Female coviddeath
+    needs:
+    - preflight_both_3_Female_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_3_Female_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_3_Female_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_3_Female_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_Female_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_Female_coviddeath.txt
+
+  ## both; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_both_3_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R both 3_Female noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_3_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_3_Female_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_both_3_Female_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_3_Female_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 3_Female noncoviddeath
+    needs:
+    - preflight_both_3_Female_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_3_Female_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_3_Female_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_3_Female_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_Female_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_Female_noncoviddeath.txt
+
+  ## both; NA; anytest 
+  ## preflight checks 
+
+  preflight_both_3_Male_anytest:
+    run: r:latest analysis/comparisons/preflight.R both 3_Male anytest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_3_Male_anytest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_3_Male_anytest*.html
+        preflight_report: output/preflight/tables/preflight_report_both_3_Male_anytest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_3_Male_anytest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 3_Male anytest
+    needs:
+    - preflight_both_3_Male_anytest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_3_Male_anytest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_3_Male_anytest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_3_Male_anytest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_Male_anytest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_Male_anytest.txt
+
+  ## both; NA; postest 
+  ## preflight checks 
+
+  preflight_both_3_Male_postest:
+    run: r:latest analysis/comparisons/preflight.R both 3_Male postest
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_3_Male_postest*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_3_Male_postest*.html
+        preflight_report: output/preflight/tables/preflight_report_both_3_Male_postest*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_3_Male_postest:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 3_Male postest
+    needs:
+    - preflight_both_3_Male_postest
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_3_Male_postest*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_3_Male_postest*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_3_Male_postest*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_Male_postest.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_Male_postest.txt
+
+  ## both; NA; covidadmitted 
+  ## preflight checks 
+
+  preflight_both_3_Male_covidadmitted:
+    run: r:latest analysis/comparisons/preflight.R both 3_Male covidadmitted
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_3_Male_covidadmitted*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_3_Male_covidadmitted*.html
+        preflight_report: output/preflight/tables/preflight_report_both_3_Male_covidadmitted*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_3_Male_covidadmitted:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 3_Male covidadmitted
+    needs:
+    - preflight_both_3_Male_covidadmitted
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_3_Male_covidadmitted*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_3_Male_covidadmitted*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_3_Male_covidadmitted*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_Male_covidadmitted.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_Male_covidadmitted.txt
+
+  ## both; NA; covidemergency 
+  ## preflight checks 
+
+  preflight_both_3_Male_covidemergency:
+    run: r:latest analysis/comparisons/preflight.R both 3_Male covidemergency
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_3_Male_covidemergency*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_3_Male_covidemergency*.html
+        preflight_report: output/preflight/tables/preflight_report_both_3_Male_covidemergency*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_3_Male_covidemergency:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 3_Male covidemergency
+    needs:
+    - preflight_both_3_Male_covidemergency
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_3_Male_covidemergency*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_3_Male_covidemergency*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_3_Male_covidemergency*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_Male_covidemergency.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_Male_covidemergency.txt
+
+  ## both; NA; coviddeath 
+  ## preflight checks 
+
+  preflight_both_3_Male_coviddeath:
+    run: r:latest analysis/comparisons/preflight.R both 3_Male coviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_3_Male_coviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_3_Male_coviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_both_3_Male_coviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_3_Male_coviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 3_Male coviddeath
+    needs:
+    - preflight_both_3_Male_coviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_3_Male_coviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_3_Male_coviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_3_Male_coviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_Male_coviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_Male_coviddeath.txt
+
+  ## both; NA; noncoviddeath 
+  ## preflight checks 
+
+  preflight_both_3_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/preflight.R both 3_Male noncoviddeath
+    needs:
+    - data_input_process
+    - data_covariates_process
+    - data_tte_process_both
+    outputs:
+      highly_sensitive:
+        model_input: output/preflight/data/model_input_both_3_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        eventcheck_table: output/preflight/tables/eventcheck_both_3_Male_noncoviddeath*.html
+        preflight_report: output/preflight/tables/preflight_report_both_3_Male_noncoviddeath*.txt
+
+  ## apply cox model 
+
+  apply_model_cox_both_3_Male_noncoviddeath:
+    run: r:latest analysis/comparisons/apply_model_cox_update.R both 3_Male noncoviddeath
+    needs:
+    - preflight_both_3_Male_noncoviddeath
+    outputs:
+      highly_sensitive:
+        modelnumber: output/models_cox/data/model*_both_3_Male_noncoviddeath*.rds
+        model_tidy_rds: output/models_cox/data/modelcox_tidy_both_3_Male_noncoviddeath*.rds
+        model_glance_rds: output/models_cox/data/modelcox_glance_both_3_Male_noncoviddeath*.rds
+      moderately_sensitive:
+        model_tidy_txt: output/models_cox/temp/modelcox_tidy_both_3_Male_noncoviddeath.txt
+        model_glance_txt: output/models_cox/temp/modelcox_glance_both_3_Male_noncoviddeath.txt
+
   ## combine all estimates for release 
 
   combine_estimates:
@@ -2095,60 +5830,180 @@ actions:
     - apply_model_cox_BNT162b2_1_covidemergency
     - apply_model_cox_BNT162b2_1_coviddeath
     - apply_model_cox_BNT162b2_1_noncoviddeath
+    - apply_model_cox_BNT162b2_1_Female_anytest
+    - apply_model_cox_BNT162b2_1_Female_postest
+    - apply_model_cox_BNT162b2_1_Female_covidadmitted
+    - apply_model_cox_BNT162b2_1_Female_covidemergency
+    - apply_model_cox_BNT162b2_1_Female_coviddeath
+    - apply_model_cox_BNT162b2_1_Female_noncoviddeath
+    - apply_model_cox_BNT162b2_1_Male_anytest
+    - apply_model_cox_BNT162b2_1_Male_postest
+    - apply_model_cox_BNT162b2_1_Male_covidadmitted
+    - apply_model_cox_BNT162b2_1_Male_covidemergency
+    - apply_model_cox_BNT162b2_1_Male_coviddeath
+    - apply_model_cox_BNT162b2_1_Male_noncoviddeath
     - apply_model_cox_BNT162b2_2_anytest
     - apply_model_cox_BNT162b2_2_postest
     - apply_model_cox_BNT162b2_2_covidadmitted
     - apply_model_cox_BNT162b2_2_covidemergency
     - apply_model_cox_BNT162b2_2_coviddeath
     - apply_model_cox_BNT162b2_2_noncoviddeath
+    - apply_model_cox_BNT162b2_2_Female_anytest
+    - apply_model_cox_BNT162b2_2_Female_postest
+    - apply_model_cox_BNT162b2_2_Female_covidadmitted
+    - apply_model_cox_BNT162b2_2_Female_covidemergency
+    - apply_model_cox_BNT162b2_2_Female_coviddeath
+    - apply_model_cox_BNT162b2_2_Female_noncoviddeath
+    - apply_model_cox_BNT162b2_2_Male_anytest
+    - apply_model_cox_BNT162b2_2_Male_postest
+    - apply_model_cox_BNT162b2_2_Male_covidadmitted
+    - apply_model_cox_BNT162b2_2_Male_covidemergency
+    - apply_model_cox_BNT162b2_2_Male_coviddeath
+    - apply_model_cox_BNT162b2_2_Male_noncoviddeath
     - apply_model_cox_BNT162b2_3_anytest
     - apply_model_cox_BNT162b2_3_postest
     - apply_model_cox_BNT162b2_3_covidadmitted
     - apply_model_cox_BNT162b2_3_covidemergency
     - apply_model_cox_BNT162b2_3_coviddeath
     - apply_model_cox_BNT162b2_3_noncoviddeath
+    - apply_model_cox_BNT162b2_3_Female_anytest
+    - apply_model_cox_BNT162b2_3_Female_postest
+    - apply_model_cox_BNT162b2_3_Female_covidadmitted
+    - apply_model_cox_BNT162b2_3_Female_covidemergency
+    - apply_model_cox_BNT162b2_3_Female_coviddeath
+    - apply_model_cox_BNT162b2_3_Female_noncoviddeath
+    - apply_model_cox_BNT162b2_3_Male_anytest
+    - apply_model_cox_BNT162b2_3_Male_postest
+    - apply_model_cox_BNT162b2_3_Male_covidadmitted
+    - apply_model_cox_BNT162b2_3_Male_covidemergency
+    - apply_model_cox_BNT162b2_3_Male_coviddeath
+    - apply_model_cox_BNT162b2_3_Male_noncoviddeath
     - apply_model_cox_BNT162b2_4_anytest
     - apply_model_cox_BNT162b2_4_postest
     - apply_model_cox_BNT162b2_4_covidadmitted
     - apply_model_cox_BNT162b2_4_covidemergency
     - apply_model_cox_BNT162b2_4_coviddeath
     - apply_model_cox_BNT162b2_4_noncoviddeath
+    - apply_model_cox_BNT162b2_4_Female_anytest
+    - apply_model_cox_BNT162b2_4_Female_postest
+    - apply_model_cox_BNT162b2_4_Female_covidadmitted
+    - apply_model_cox_BNT162b2_4_Female_covidemergency
+    - apply_model_cox_BNT162b2_4_Female_coviddeath
+    - apply_model_cox_BNT162b2_4_Female_noncoviddeath
+    - apply_model_cox_BNT162b2_4_Male_anytest
+    - apply_model_cox_BNT162b2_4_Male_postest
+    - apply_model_cox_BNT162b2_4_Male_covidadmitted
+    - apply_model_cox_BNT162b2_4_Male_covidemergency
+    - apply_model_cox_BNT162b2_4_Male_coviddeath
+    - apply_model_cox_BNT162b2_4_Male_noncoviddeath
     - apply_model_cox_ChAdOx1_1_anytest
     - apply_model_cox_ChAdOx1_1_postest
     - apply_model_cox_ChAdOx1_1_covidadmitted
     - apply_model_cox_ChAdOx1_1_covidemergency
     - apply_model_cox_ChAdOx1_1_coviddeath
     - apply_model_cox_ChAdOx1_1_noncoviddeath
+    - apply_model_cox_ChAdOx1_1_Female_anytest
+    - apply_model_cox_ChAdOx1_1_Female_postest
+    - apply_model_cox_ChAdOx1_1_Female_covidadmitted
+    - apply_model_cox_ChAdOx1_1_Female_covidemergency
+    - apply_model_cox_ChAdOx1_1_Female_coviddeath
+    - apply_model_cox_ChAdOx1_1_Female_noncoviddeath
+    - apply_model_cox_ChAdOx1_1_Male_anytest
+    - apply_model_cox_ChAdOx1_1_Male_postest
+    - apply_model_cox_ChAdOx1_1_Male_covidadmitted
+    - apply_model_cox_ChAdOx1_1_Male_covidemergency
+    - apply_model_cox_ChAdOx1_1_Male_coviddeath
+    - apply_model_cox_ChAdOx1_1_Male_noncoviddeath
     - apply_model_cox_ChAdOx1_2_anytest
     - apply_model_cox_ChAdOx1_2_postest
     - apply_model_cox_ChAdOx1_2_covidadmitted
     - apply_model_cox_ChAdOx1_2_covidemergency
     - apply_model_cox_ChAdOx1_2_coviddeath
     - apply_model_cox_ChAdOx1_2_noncoviddeath
+    - apply_model_cox_ChAdOx1_2_Female_anytest
+    - apply_model_cox_ChAdOx1_2_Female_postest
+    - apply_model_cox_ChAdOx1_2_Female_covidadmitted
+    - apply_model_cox_ChAdOx1_2_Female_covidemergency
+    - apply_model_cox_ChAdOx1_2_Female_coviddeath
+    - apply_model_cox_ChAdOx1_2_Female_noncoviddeath
+    - apply_model_cox_ChAdOx1_2_Male_anytest
+    - apply_model_cox_ChAdOx1_2_Male_postest
+    - apply_model_cox_ChAdOx1_2_Male_covidadmitted
+    - apply_model_cox_ChAdOx1_2_Male_covidemergency
+    - apply_model_cox_ChAdOx1_2_Male_coviddeath
+    - apply_model_cox_ChAdOx1_2_Male_noncoviddeath
     - apply_model_cox_ChAdOx1_3_anytest
     - apply_model_cox_ChAdOx1_3_postest
     - apply_model_cox_ChAdOx1_3_covidadmitted
     - apply_model_cox_ChAdOx1_3_covidemergency
     - apply_model_cox_ChAdOx1_3_coviddeath
     - apply_model_cox_ChAdOx1_3_noncoviddeath
+    - apply_model_cox_ChAdOx1_3_Female_anytest
+    - apply_model_cox_ChAdOx1_3_Female_postest
+    - apply_model_cox_ChAdOx1_3_Female_covidadmitted
+    - apply_model_cox_ChAdOx1_3_Female_covidemergency
+    - apply_model_cox_ChAdOx1_3_Female_coviddeath
+    - apply_model_cox_ChAdOx1_3_Female_noncoviddeath
+    - apply_model_cox_ChAdOx1_3_Male_anytest
+    - apply_model_cox_ChAdOx1_3_Male_postest
+    - apply_model_cox_ChAdOx1_3_Male_covidadmitted
+    - apply_model_cox_ChAdOx1_3_Male_covidemergency
+    - apply_model_cox_ChAdOx1_3_Male_coviddeath
+    - apply_model_cox_ChAdOx1_3_Male_noncoviddeath
     - apply_model_cox_both_1_anytest
     - apply_model_cox_both_1_postest
     - apply_model_cox_both_1_covidadmitted
     - apply_model_cox_both_1_covidemergency
     - apply_model_cox_both_1_coviddeath
     - apply_model_cox_both_1_noncoviddeath
+    - apply_model_cox_both_1_Female_anytest
+    - apply_model_cox_both_1_Female_postest
+    - apply_model_cox_both_1_Female_covidadmitted
+    - apply_model_cox_both_1_Female_covidemergency
+    - apply_model_cox_both_1_Female_coviddeath
+    - apply_model_cox_both_1_Female_noncoviddeath
+    - apply_model_cox_both_1_Male_anytest
+    - apply_model_cox_both_1_Male_postest
+    - apply_model_cox_both_1_Male_covidadmitted
+    - apply_model_cox_both_1_Male_covidemergency
+    - apply_model_cox_both_1_Male_coviddeath
+    - apply_model_cox_both_1_Male_noncoviddeath
     - apply_model_cox_both_2_anytest
     - apply_model_cox_both_2_postest
     - apply_model_cox_both_2_covidadmitted
     - apply_model_cox_both_2_covidemergency
     - apply_model_cox_both_2_coviddeath
     - apply_model_cox_both_2_noncoviddeath
+    - apply_model_cox_both_2_Female_anytest
+    - apply_model_cox_both_2_Female_postest
+    - apply_model_cox_both_2_Female_covidadmitted
+    - apply_model_cox_both_2_Female_covidemergency
+    - apply_model_cox_both_2_Female_coviddeath
+    - apply_model_cox_both_2_Female_noncoviddeath
+    - apply_model_cox_both_2_Male_anytest
+    - apply_model_cox_both_2_Male_postest
+    - apply_model_cox_both_2_Male_covidadmitted
+    - apply_model_cox_both_2_Male_covidemergency
+    - apply_model_cox_both_2_Male_coviddeath
+    - apply_model_cox_both_2_Male_noncoviddeath
     - apply_model_cox_both_3_anytest
     - apply_model_cox_both_3_postest
     - apply_model_cox_both_3_covidadmitted
     - apply_model_cox_both_3_covidemergency
     - apply_model_cox_both_3_coviddeath
     - apply_model_cox_both_3_noncoviddeath
+    - apply_model_cox_both_3_Female_anytest
+    - apply_model_cox_both_3_Female_postest
+    - apply_model_cox_both_3_Female_covidadmitted
+    - apply_model_cox_both_3_Female_covidemergency
+    - apply_model_cox_both_3_Female_coviddeath
+    - apply_model_cox_both_3_Female_noncoviddeath
+    - apply_model_cox_both_3_Male_anytest
+    - apply_model_cox_both_3_Male_postest
+    - apply_model_cox_both_3_Male_covidadmitted
+    - apply_model_cox_both_3_Male_covidemergency
+    - apply_model_cox_both_3_Male_coviddeath
+    - apply_model_cox_both_3_Male_noncoviddeath
     outputs:
       moderately_sensitive:
         tidy_tables_events: output/models_cox/data/estimates_*.csv
