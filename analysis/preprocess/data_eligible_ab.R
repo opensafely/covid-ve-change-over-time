@@ -116,7 +116,9 @@ data_eligible_a <- data_eligible_a %>%
     ! (
       !is.na(longres_date) &
         (longres_date <= elig_date + days(42))
-    ))
+    ),
+    jcvi_group != "01"
+    )
 
 eligibility_count <- eligibility_count %>%
   add_row(
