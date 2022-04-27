@@ -826,36 +826,37 @@ table_estimates_covs_ft <- function(i) {
 
 ```{r jcvi-groups, include=TRUE, tab.cap.pre = "Supplementary Table "}
 tribble(
-  ~priority_group, ~description,
-  "1", "Residents in a care home for older adults",
-  "1", "Staff in a care home for older adults",
-  "2", "All those 80 years of age and over",
-  "2", "Frontline health and social care workers",
-  "3", "All those 75 years of age and over",
-  "4", "All those 70 years of age and over",
-  "4", "Individuals aged 16 to 69 in a high risk group\\textsuperscript{a}",
-  "5", "All those 65 years of age and over",
-  "6", "Individuals aged 16 to 65 years in an at-risk group\\textsuperscript{a}",
-  "7", "All those 60 years of age and over",
-  "8", "All those 55 years of age and over",
-  "9", "All those 50 years of age and over",
-  "10", "All those 40 years of age and over",
-  "11", "All those 30 years of age and over",
-  "12", "All those 18 years of age and over"
+  ~phase, ~priority_group, ~description,
+  "1", "1", "Residents in a care home for older adults",
+  "1", "1", "Staff in a care home for older adults",
+  "1", "2", "All those 80 years of age and over",
+  "1", "2", "Frontline health and social care workers",
+  "1", "3", "All those 75 years of age and over",
+  "1", "4", "All those 70 years of age and over",
+  "1", "4", "Individuals aged 16 to 69 in a high risk group\\textsuperscript{a}",
+  "1", "5", "All those 65 years of age and over",
+  "1", "6", "Individuals aged 16 to 65 years in an at-risk group\\textsuperscript{a}",
+  "1", "7", "All those 60 years of age and over",
+  "1", "8", "All those 55 years of age and over",
+  "1", "9", "All those 50 years of age and over",
+  "2", "", "All those 40 years of age and over",
+  "2", "", "All those 30 years of age and over",
+  "2", "", "All those 18 years of age and over"
 ) %>%
   kable(
       format = "latex",
-      caption = "Priority groups for primary vaccination advised by the Joint Committee on Vaccination and Immunisation",
-      col.names = c("Priority group", "Risk group"),
+      caption = "Vaccination phases and priority groups for primary vaccination advised by the Joint Committee on Vaccination and Immunisation",
+      col.names = c("Vaccination phase", "Priority group", "Risk group"),
       booktabs = TRUE, 
       longtable = TRUE,
       escape = FALSE # manually escape all special characters
     ) %>%
     row_spec(0, bold=TRUE) %>%
-    column_spec(1, width="2cm") %>%
-    column_spec(2, width="10cm") %>%
+    column_spec(1, width="1.5cm") %>%
+  column_spec(2, width="1.5cm") %>%
+    column_spec(3, width="9cm") %>%
     collapse_rows(
-      columns = 1, 
+      columns = 1:2, 
       valign = "top",
       latex_hline = "major"
       ) %>%
