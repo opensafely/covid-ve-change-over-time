@@ -9,6 +9,10 @@ library(lubridate)
 library(glue)
 
 ################################################################################
+# release_folder <- "release_20220401"
+release_folder <- here::here("output", "release_objects")
+
+################################################################################
 # read study parameters
 study_parameters <- readr::read_rds(
   here::here("analysis", "lib", "study_parameters.rds"))
@@ -32,33 +36,30 @@ subgroup_labels <- seq_along(subgroups)
 # define comparisons
 comparisons <- c("BNT162b2", "ChAdOx1", "both")
 
-release_folder <- "release_20220401"
-
-min_max_fu_dates_path <- here::here("output", "lib") 
-estimates_all_path <- release_folder
-metareg_results_path <- release_folder
-
-# # if running locally read extracted data:
-# if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
-# 
-# } else {
-#   
-# }
-
+################################################################################
 # min and max follow-up dates per subgroup
 min_max_fu_dates <- readr::read_csv(
-  here::here(min_max_fu_dates_path, glue("data_min_max_fu.csv"))) %>%
+  here::here(release_folder, glue("data_min_max_fu.csv"))) %>%
   mutate(across(ends_with("date"),
                 ~ str_c(day(.x), " ", month(.x, label=TRUE))))
 
 # read estimates data
 estimates_all <- readr::read_csv(
-  here::here(estimates_all_path, "estimates_all.csv"))
+  here::here(release_folder, "estimates_all.csv")) %>%
+  mutate(
+    model = "adjusted",
+    sex = if_else(
+      str_detect(subgroup, "Female|Male"),
+      str_extract(subgroup, "Female|Male"),
+      "Both"
+    ),
+    subgroup = as.integer(str_extract(subgroup, "\\d"))
+  )
 
 # read metareg data
 metareg_results_k <- readr::read_rds(
-  here::here(metareg_results_path, "metareg_results_k.rds")) %>%
-  select(subgroup, comparison, outcome, k, starts_with("line")) %>%
+  here::here(release_folder, "metareg_results_k.rds")) %>%
+  select(subgroup, comparison, sex, outcome, k, starts_with("line")) %>%
   mutate(model="adjusted") 
 
 ################################################################################
@@ -83,9 +84,6 @@ K <- study_parameters$K
 ends <- seq(2, (K+1)*4, 4)
 starts <- ends + 1
 weeks_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
-
-################################################################################
-
 
 ################################################################################
 
@@ -150,7 +148,7 @@ plot_data <- estimates_all %>%
   mutate(order = order1 + order2) %>%
   left_join(
     metareg_results_k, 
-    by = c("subgroup", "comparison", "outcome", "model", "k")
+    by = c("subgroup", "comparison", "sex", "outcome", "model", "k")
   ) %>%
   mutate(across(model,
                 factor,
@@ -203,6 +201,7 @@ anytest_y1 <- list(breaks = c(0.5, 1, 2,5),
 # vaccine vs unvaccinated
 plot_vax <- plot_data %>%
   filter(
+    sex == "Both",
     comparison != "both",
     outcome_unlabelled != "anytest",
     as.integer(model) == 2
@@ -297,6 +296,7 @@ i <- 2 # green
 
 plot_brand <- plot_data %>%
   filter(
+    sex == "Both",
     comparison == "both",
     outcome_unlabelled != "anytest",
     as.integer(model) == 2
@@ -382,6 +382,7 @@ ggsave(plot_brand,
 # vaccine vs unvaccinated
 plot_vax_anytest <- plot_data %>%
   filter(
+    sex == "Both",
     comparison != "both",
     outcome_unlabelled == "anytest",
     as.integer(model) == 2
@@ -464,6 +465,7 @@ i <- 2 # green
 
 plot_brand_anytest <- plot_data %>%
   filter(
+    sex == "Both",
     comparison == "both",
     outcome_unlabelled == "anytest",
     as.integer(model) == 2
@@ -573,6 +575,7 @@ plot_unadj_adj <- function(plot_comparison) {
   # vaccine vs unvaccinated
   plot_vax_0 <- plot_data %>%
     filter(
+      sex == "Both",
       comparison == plot_comparison,
       outcome_unlabelled != "anytest"
     ) %>%
@@ -667,6 +670,7 @@ plot_unadj_adj <- function(plot_comparison) {
   # plot comparison
   plot_vax_anytest <- plot_data %>%
     filter(
+      sex == "Both",
       comparison == plot_comparison,
       outcome_unlabelled == "anytest"
     ) %>%
