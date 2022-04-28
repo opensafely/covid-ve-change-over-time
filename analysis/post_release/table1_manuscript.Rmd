@@ -1,0 +1,41 @@
+---
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(kableExtra)
+```
+
+
+```{r}
+release_folder <- here::here("output", "release_objects")
+# read data and define objects
+table1_manuscript <- readr::read_rds(
+here::here(release_folder, "table1_manuscript.rds"))
+
+col_names <- table1_manuscript$col_names
+cols_subtype <- table1_manuscript$cols_subtype
+table1_data <- table1_manuscript$data
+```
+
+```{r}
+## flextable??
+table1_data %>%
+    kable(
+      format = "pipe",
+      col.names = col_names
+    ) %>%
+    row_spec(0, bold=TRUE) %>%
+    add_header_above(
+      c(" " = 2, cols_subtype),
+      bold=TRUE
+      ) %>%
+    # column_spec(seq_along(table1_data), width=col_width) #%>%
+    collapse_rows(columns = 1, valign = "top")
+```
+
