@@ -9,53 +9,64 @@ output: word_document
 knitr::opts_chunk$set(echo = FALSE, include = FALSE)
 ```
 
-## R Markdown
-
-```{r}
+```{r libraries}
 library(tidyverse)
 library(glue)
 library(kableExtra)
+```
 
+```{r read-data}
 table1 <- bind_rows(
   lapply(
     1:4,
     function(x) 
-      readr::read_csv(here::here("release20220221", glue("table1_{x}_REDACTED.csv"))) %>%
+      readr::read_csv(glue("table1_{x}_REDACTED.csv")) %>%
       mutate(subgroup = x)
     ) 
   )
 ```
 
-```{r}
+```{r table1-wide}
 table1_wide <- table1 %>%
   pivot_wider(
     names_from = subgroup,
-    values_from = c(BNT162b2, ChAdOx, Unvaccinated),
+    values_from = c(BNT162b2, ChAdOx1, Unvaccinated),
     names_glue = "{subgroup}_{.value}"
   ) %>%
-  select(-`2_ChAdOx`) %>%
-  select(Variable, Characteristic, starts_with("4"), starts_with("1"), starts_with("3"), starts_with("2"))
+  select(-`4_ChAdOx1`) %>%
+  select(Variable, Characteristic, starts_with(as.character(1:4)))
 ```
 
 
-```{r, include = TRUE}
-variable_order <- c(NA_character_, "Age", "Sex", "IMD", "Ethnicity", "BMI", "Morbidity count", "Number of SARS-CoV-2 tests between 2020-05-18 and 2020-12-08", "Pregnancy", "Flu vaccine in previous 5 years", "Shielding criteria met", "Housebound")
+```{r table1-manuscript, include = TRUE}
+variable_order <- c(NA_character_, "Age", "Sex", "IMD", "Ethnicity", "BMI", "Morbidity count", "Number of SARS-CoV-2 tests between 2020-05-18 and 2020-12-08", "Pregnancy", "Flu vaccine in previous 5 years")
+                    # , "Shielding criteria met", "Housebound")
+
+# column names for table
+table_names <- names(table1_wide)
+# remove subgroup label
+col_names <- str_remove(table_names, "\\d_")
+names(col_names) <- table_names
 
 tibble(Variable = variable_order) %>%
   left_join(table1_wide) %>%
   mutate(across(Variable, ~str_remove(.x, " between 2020-05-18 and 2020-12-08"))) %>%
-  mutate(across(Variable, ~str_remove(.x, " criteria met"))) %>%
-  kable("pipe", caption = "Table 1 for manuscript")
+  # mutate(across(Variable, ~str_remove(.x, " criteria met"))) %>%
+  kable(
+    "pipe", 
+    col.names = col_names,
+    caption = "Table 1 for manuscript"
+    )
 ```
 
 ```{r, include = TRUE}
-variable_order_supplement <- c(NA_character_, "Region", "JCVI group", "Resident in long-term residential home", 
-                               "History of")
-                               # "Chronic respiratory disease", "Chronic heart disease", "Chronic liver disease",
-                               # "Chronic kidney disease", "Chronic neurological disease", "Diabetes",
-                               # "Immunosuppression", "Learning disability", "Serious mental illness")
-tibble(Variable = variable_order_supplement) %>%
-  left_join(table1_wide) %>%
-  kable("pipe", caption = "Table for appendix")
+# variable_order_supplement <- c(NA_character_, "Region", "JCVI group", #"Resident in long-term residential home", 
+#                                "Evidence of")
+#                                # "Chronic respiratory disease", "Chronic heart disease", "Chronic liver disease",
+#                                # "Chronic kidney disease", "Chronic neurological disease", "Diabetes",
+#                                # "Immunosuppression", "Learning disability", "Serious mental illness")
+# tibble(Variable = variable_order_supplement) %>%
+#   left_join(table1_wide) %>%
+#   kable("pipe", caption = "Table for appendix")
 ```
 
