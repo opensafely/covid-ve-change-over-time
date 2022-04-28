@@ -32,11 +32,24 @@ corr se1 se2
 gen seloghr=(se1+se2)/2
 drop se1 se2 lnu lnl
 
+* create strata from subgroup
 gen stratum=1 if subgroup=="65+ years"
 replace stratum=2 if subgroup=="16-64 years and clinically vulnerable"
 replace stratum=3 if subgroup=="40-64 years"
 replace stratum=4 if subgroup=="18-39 years"
 
+* create sex
+rename sex temp
+
+gen sex=1 if temp=="Both"
+replace sex=2 if temp=="Female"
+replace sex=3 if temp=="Male"
+
+label define sex 1 "Both" 2 "Female" 3 "Male" 
+label values sex sex
+drop temp
+
+* create outcome
 rename outcome temp
 
 gen outcome=1 if temp=="covidadmitted"
@@ -50,16 +63,17 @@ label define outcome 1 "COVID-19 hospitalisation" 2 "COVID-19 death" 3 "Positive
 label values outcome outcome
 drop temp
 
+* create vaccine from comparison
 encode comparison, gen(vaccine)
 tab vaccine
 label list vaccine
 
 replace k=k-1
 
-sort outcome stratum vaccine
+sort outcome stratum sex vaccine
 save waning_metareg.dta, replace
 
-metareg loghr k if outcome==1 & stratum==1 & vaccine==3, wsse(seloghr)
+metareg loghr k if outcome==1 & stratum==1 & sex==1 & vaccine==3, wsse(seloghr)
 local a=_b[k]
 local b=_se[k]
 local c=_b[_cons]
@@ -76,18 +90,20 @@ postfile `memhold' outcome stratum vaccine logrhr selogrhr loghr1 seloghr1 using
   forvalues i=1/5 {
   	forvalues v=1/3 {
 		forvalues s=1/4 {
-				di "A: " `i' `s' `v'
+			forvalues g=1/3 {
+				di "A: " `i' `s' `g' `v'
 
-				count if outcome==`i' & stratum==`s' & vaccine==`v' &loghr<.
+				count if outcome==`i' & stratum==`s' & sex==`g' & vaccine==`v' &loghr<.
 				if r(N)>2 {
-				di "B: " `i' `s' `v'
-				metareg loghr k if outcome==`i' & stratum==`s' & vaccine==`v', wsse(seloghr)
+				di "B: " `i' `s' `g' `v'
+				metareg loghr k if outcome==`i' & stratum==`s' & sex==`g' & vaccine==`v', wsse(seloghr)
 				local a=_b[k]
 				local b=_se[k]
 				local c=_b[_cons]
 				local d=_se[_cons]
-				post `memhold' (`i') (`s') (`v') (`a') (`b') (`c') (`d')
-				}
+				post `memhold' (`i') (`s') (`g') (`v') (`a') (`b') (`c') (`d')
+				}			
+			}				
 		}
 	}
   }
@@ -96,22 +112,22 @@ postclose `memhold'
 di "`memhold'"
 
 use results, clear
-sort outcome stratum vaccine
+sort outcome stratum sex vaccine
 save results, replace
 
 use waning_metareg.dta, clear
-merge m:1 outcome stratum vaccine using results
+merge m:1 outcome stratum sex vaccine using results
 tab _merge
 
 drop if _merge<3
 drop _merge
 drop estimate conflow confhigh loghr seloghr
-sort outcome stratum vaccine k
-by outcome stratum vaccine: keep if _n==_N
+sort outcome stratum sex vaccine k
+by outcome stratum sex vaccine: keep if _n==_N
 replace k=k+1
 assert k==6
 
-drop stratum k vaccine
+drop stratum sex k vaccine
 
 order subgroup comparison outcome model
 *export excel using metareg_results.xlsx, replace firstrow(variables)
