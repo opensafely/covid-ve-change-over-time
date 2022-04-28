@@ -1,8 +1,7 @@
 library(tidyverse)
 
 ################################################################################
-# release_folder <- "release_20220401"
-release_folder <- here::here("output", "release_objects")
+if (!exists("release_folder")) release_folder <- here::here("output", "release_objects")
 
 # read subgroups
 subgroups <- readr::read_rds(
