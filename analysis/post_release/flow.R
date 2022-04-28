@@ -1,11 +1,17 @@
 library(tidyverse)
 library(glue)
 
+################################################################################
 # path for released results
-release_folder <- here::here("release20220226")
+if (!exists("release_folder")) release_folder <- here::here("output", "release_objects")
 
-eligibility_count_numeric <- readr::read_csv(here::here("output", "tables", "eligibility_count_all.csv")) #%>%
+################################################################################
+# load data
+eligibility_count_numeric <- readr::read_csv(
+  here::here("output", "tables", "eligibility_count_all.csv"))
 
+################################################################################
+# prepare data
 n_groups <- eligibility_count_numeric %>%
   mutate(across(stage, ~str_replace(.x, "-", "_"))) %>%
   group_by(stage) %>%
@@ -24,6 +30,7 @@ eligibility_count <- eligibility_count_numeric %>%
   mutate(across(starts_with("n"),
                 ~ str_c("(n = ", scales::comma(.x, accuracy=1), ")")))
 
+################################################################################
 # create tibble for results
 ncol <- 5
 nrow <- 100
