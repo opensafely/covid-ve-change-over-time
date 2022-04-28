@@ -123,7 +123,7 @@ readr::write_csv(regions, here::here("analysis", "lib", "regions.csv"))
 
 clinical <-c(
   "BMI" = "bmi",
-  "Asplenia" = "asplenia",
+  # "Asplenia" = "asplenia",
   "Chronic respiratory disease" = "crd", 
   "Chronic heart disease" = "chd", 
   "Chronic liver disease" = "cld", 
