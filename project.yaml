@@ -176,6 +176,7 @@ actions:
     outputs:
       moderately_sensitive:
         eligibility_count_p1: output/tables/eligibility_count_p1.csv
+        eligibility_count_all: output/tables/eligibility_count_all.csv
         table_csv: output/report/tables/table1_*_REDACTED.csv
         table_html: output/report/tables/table1_*_REDACTED.html
 
@@ -192,7 +193,7 @@ actions:
       highly_sensitive:
         data_tte_brand_outcome: output/tte/data/data_tte_BNT162b2*.rds
       moderately_sensitive:
-        event_counts: output/tte/tables/event_counts_BNT162b2.csv
+        event_counts: output/tte/tables/event_counts_BNT162b2.txt
 
   data_tte_process_ChAdOx1:
     run: r:latest analysis/comparisons/data_tte_process.R ChAdOx1
@@ -202,7 +203,7 @@ actions:
       highly_sensitive:
         data_tte_brand_outcome: output/tte/data/data_tte_ChAdOx1*.rds
       moderately_sensitive:
-        event_counts: output/tte/tables/event_counts_ChAdOx1.csv
+        event_counts: output/tte/tables/event_counts_ChAdOx1.txt
 
   data_tte_process_both:
     run: r:latest analysis/comparisons/data_tte_process.R both
@@ -212,7 +213,7 @@ actions:
       highly_sensitive:
         data_tte_brand_outcome: output/tte/data/data_tte_both*.rds
       moderately_sensitive:
-        event_counts: output/tte/tables/event_counts_both.csv
+        event_counts: output/tte/tables/event_counts_both.txt
 
   ## #################################### 
   ## apply models 
@@ -5840,5 +5841,22 @@ actions:
     - combine_estimates
     outputs:
       moderately_sensitive:
-        plot_check: output/models_cox/images/plot_check.svg
+        plot_check: output/models_cox/images/plot_check*.svg
+
+  ## #################################### 
+  ## move objects for release 
+  ## #################################### 
+
+  release_objects:
+    run: r:latest analysis/release_objects.R
+    needs:
+    - plot_2nd_vax_dates
+    - data_min_max_fu
+    - plot_cumulative_incidence
+    - table1
+    - combine_estimates
+    outputs:
+      moderately_sensitive:
+        txt: output/files_for_release.txt
+        csv: output/release_objects/*/*.csv
 

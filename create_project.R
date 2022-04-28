@@ -517,6 +517,7 @@ actions_list <- splice(
       ),
     moderately_sensitive = list(
       eligibility_count_p1 = "output/tables/eligibility_count_p1.csv",
+      eligibility_count_all = "output/tables/eligibility_count_all.csv",
       table_csv = "output/report/tables/table1_*_REDACTED.csv",
       table_html = "output/report/tables/table1_*_REDACTED.html"
     )
@@ -539,7 +540,7 @@ actions_list <- splice(
           data_tte_brand_outcome = glue("output/tte/data/data_tte_{x}*.rds")
         ),
         moderately_sensitive = list(
-          event_counts = glue("output/tte/tables/event_counts_{x}.csv")
+          event_counts = glue("output/tte/tables/event_counts_{x}.txt")
         )
       )
   ), recursive = FALSE)),
@@ -619,7 +620,26 @@ actions_list <- splice(
       "combine_estimates"
       ),
     moderately_sensitive = list(
-      plot_check = "output/models_cox/images/plot_check.svg"
+      plot_check = "output/models_cox/images/plot_check*.svg"
+    )
+  ),
+  
+  comment("####################################",
+          "move objects for release", 
+          "####################################"),
+  action(
+    name = "release_objects",
+    run = "r:latest analysis/release_objects.R",
+    needs = list(
+      "plot_2nd_vax_dates",
+      "data_min_max_fu",
+      "plot_cumulative_incidence",
+      "table1",
+      "combine_estimates"
+    ),
+    moderately_sensitive = list(
+      txt = "output/files_for_release.txt",
+      csv = "output/release_objects/*/*.csv"
     )
   )
   
