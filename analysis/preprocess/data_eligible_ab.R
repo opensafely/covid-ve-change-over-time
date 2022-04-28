@@ -21,8 +21,8 @@ data_vax_wide <- readr::read_rds(
 
 # count the number of patients in the extracted data
 eligibility_count <- tribble(
-  ~description, ~n,
-  "Extracted using study_definition", n_distinct(data_processed$patient_id)
+  ~description, ~n, ~stage,
+  "Extracted using study_definition", n_distinct(data_processed$patient_id), "a-in"
 )
 
 ################################################################################
@@ -42,7 +42,8 @@ data_eligible_a <- data_processed %>%
 eligibility_count <- eligibility_count %>%
   add_row(
     description = "Samples with age_2 < 18 removed",
-    n =  n_distinct(data_eligible_a$patient_id)
+    n =  n_distinct(data_eligible_a$patient_id),
+    stage = "a-in"
   )
 
 # remove if aged over 120 (to avoid probable errors)
@@ -52,7 +53,8 @@ data_eligible_a <- data_eligible_a %>%
 eligibility_count <- eligibility_count %>%
   add_row(
     description = "Samples with age_2 > 120 removed.",
-    n =  n_distinct(data_eligible_a$patient_id)
+    n =  n_distinct(data_eligible_a$patient_id),
+    stage = "a-ex"
   )
 
 # remove if any missing data for key variables
@@ -66,7 +68,8 @@ data_eligible_a <- data_eligible_a %>%
 eligibility_count <- eligibility_count %>%
   add_row(
     description = "Samples with missing ethnicity, sex, imd, region removed.",
-    n =  n_distinct(data_eligible_a$patient_id)
+    n =  n_distinct(data_eligible_a$patient_id),
+    stage = "a-ex"
   )
 
 # remove if evidence of covid infection on or before elig_date + 42 days
@@ -82,7 +85,8 @@ data_eligible_a <- data_eligible_a %>%
 eligibility_count <- eligibility_count %>%
   add_row(
     description = "Samples with prior COVID admission removed.",
-    n =  n_distinct(data_eligible_a$patient_id)
+    n =  n_distinct(data_eligible_a$patient_id),
+    stage = "a-ex"
   )
 
 # positive COVID test
@@ -97,7 +101,8 @@ data_eligible_a <- data_eligible_a %>%
 eligibility_count <- eligibility_count %>%
   add_row(
     description = "Samples with prior positive COVID test removed.",
-    n =  n_distinct(data_eligible_a$patient_id)
+    n =  n_distinct(data_eligible_a$patient_id),
+    stage = "a-ex"
   )
 
 # probable COVID 
@@ -112,7 +117,8 @@ data_eligible_a <- data_eligible_a %>%
 eligibility_count <- eligibility_count %>%
   add_row(
     description = "Samples with prior probable COVID removed.",
-    n =  n_distinct(data_eligible_a$patient_id)
+    n =  n_distinct(data_eligible_a$patient_id),
+    stage = "a-ex"
   )
 
 # carehome
@@ -128,7 +134,8 @@ data_eligible_a <- data_eligible_a %>%
 eligibility_count <- eligibility_count %>%
   add_row(
     description = "Samples with record of being in care home removed.",
-    n =  n_distinct(data_eligible_a$patient_id)
+    n =  n_distinct(data_eligible_a$patient_id),
+    stage = "a-ex"
   )
 
 # housebound
@@ -138,7 +145,8 @@ data_eligible_a <- data_eligible_a %>%
 eligibility_count <- eligibility_count %>%
   add_row(
     description = "Samples with record of being currently housebound removed.",
-    n =  n_distinct(data_eligible_a$patient_id)
+    n =  n_distinct(data_eligible_a$patient_id),
+    stage = "a-ex"
   )
 
 
@@ -168,7 +176,8 @@ data_eligible_b <- data_eligible_a %>%
 eligibility_count <- eligibility_count %>%
   add_row(
     description = "Inclusion criteria in box b applied.",
-    n = n_distinct(data_eligible_b$patient_id)
+    n = n_distinct(data_eligible_b$patient_id),
+    stage = "b-in"
   )
 
 ### exclusion
@@ -180,7 +189,8 @@ data_eligible_b <- data_eligible_b %>%
 eligibility_count <- eligibility_count %>%
   add_row(
     description = "Samples with 1st dose before eligibility date removed.",
-    n = n_distinct(data_eligible_b$patient_id)
+    n = n_distinct(data_eligible_b$patient_id),
+    stage = "b-ex"
   )
 
 data_eligible_b <- data_eligible_b %>%
@@ -191,7 +201,8 @@ data_eligible_b <- data_eligible_b %>%
 eligibility_count <- eligibility_count %>%
   add_row(
     description = "Samples with <6 or >=14 weeks between 1st and 2nd dose removed",
-    n = n_distinct(data_eligible_b$patient_id)
+    n = n_distinct(data_eligible_b$patient_id),
+    stage = "b-ex"
   )
 
 data_eligible_b <- data_eligible_b %>%
@@ -204,7 +215,8 @@ data_eligible_b <- data_eligible_b %>%
 eligibility_count <- eligibility_count %>%
   add_row(
     description = "Healthcare workers removed.",
-    n = n_distinct(data_eligible_b$patient_id)
+    n = n_distinct(data_eligible_b$patient_id),
+    stage = "b-ex"
   )
 
 readr::write_rds(data_eligible_b,

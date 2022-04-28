@@ -70,8 +70,8 @@ data_eligible_c <- data_eligible_b %>%
 
 # count the number of patients in the extracted data
 eligibility_count <- tribble(
-  ~description, ~n,
-  "vax: second dose received during SVP.", n_distinct(data_eligible_c$patient_id)
+  ~description, ~n, ~stage,
+  "vax: second dose received during SVP.", n_distinct(data_eligible_c$patient_id), "c-in"
 )
 
 ################################################################################
@@ -103,7 +103,8 @@ data_eligible_d <- data_eligible_a %>%
 eligibility_count <- eligibility_count %>%
   add_row(
     description = "unvax: unvaccinated at start of SVP",
-    n =  n_distinct(data_eligible_d$patient_id)
+    n =  n_distinct(data_eligible_d$patient_id),
+    stage = "d-in"
   )
 
 ################################################################################
@@ -130,7 +131,7 @@ exclusion_e <- function(group) {
       no_evidence_of(covid_any_date, svp_start_date)) 
   
   eligibility_count_e <- tribble(
-    ~description, ~n,
+    ~description, ~n, 
     glue("{group}: Evidence of COVID before SVP."), n_distinct(data$patient_id)
   )
   
@@ -182,7 +183,8 @@ readr::write_rds(
 # eligibility count
 eligibility_count <- eligibility_count %>%
   bind_rows(
-    data_eligible_e_vax[[2]], data_eligible_e_unvax[[2]]
+    data_eligible_e_vax[[2]] %>% mutate(stage = "e-ex"), 
+    data_eligible_e_unvax[[2]] %>% mutate(stage = "e-ex")
   )
 
 # number of people eligible at each stage ----

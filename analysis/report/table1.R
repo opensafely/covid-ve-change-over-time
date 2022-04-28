@@ -118,15 +118,13 @@ readr::write_csv(
 ################################################################################
 # combine eligibility count tables
 eligibility_count_all <- bind_rows(
-  readr::read_csv(here::here("output", "tables", "eligibility_count_ab.csv")) %>%
-    mutate(stage="ab"),
-  readr::read_csv(here::here("output", "tables", "eligibility_count_cde.csv")) %>%
-    mutate(stage="cde"),
+  readr::read_csv(here::here("output", "tables", "eligibility_count_ab.csv")),
+  readr::read_csv(here::here("output", "tables", "eligibility_count_cde.csv")),
   eligibility_count_p1 %>% mutate(stage="p1")
 )
 
 readr::write_csv(
-  eligibility_count_p1,
+  eligibility_count_all,
   here::here("output", "tables", "eligibility_count_all.csv"))
 
 ################################################################################
