@@ -30,8 +30,9 @@ library(glue)
 
 ```{r paths}
 # path for released results
-release_folder <- here::here("release20220226")
-release_folder_new <- here::here("release_20220401")
+# release_folder <- here::here("release20220226")
+# release_folder_new <- here::here("release_20220401")
+release_folder <- here::here("output", "release_objects")
 ```
 
 ```{r read-meta-data}
@@ -95,7 +96,7 @@ event_counts <- readr::read_csv(
 
 # read estimates data
 estimates_all <- readr::read_csv(
-  here::here(release_folder_new, "estimates_all.csv")) %>%
+  here::here(release_folder, "estimates_all.csv")) %>%
   filter(outcome != "covidemergency") %>%
   mutate(across(c(estimate, conf.low, conf.high),
                 ~round(exp(.x), 2), nsmall=2)) %>%
@@ -110,7 +111,7 @@ estimates_all <- readr::read_csv(
 
 # read metaregression results
 metareg_results_k <- readr::read_rds(
-  here::here(release_folder_new, "metareg_results_k.rds")) %>%
+  here::here(release_folder, "metareg_results_k.rds")) %>%
   mutate(across(subgroup, as.integer)) %>%
   mutate(across(outcome,
                 factor,
@@ -156,11 +157,17 @@ variable_defs <- local({
   "Date",
   "First occurence prior to SVP",
   #
+  "Exclusion criteria",
+  "Medically housebound",
+  "Date of most recent code corresponding to medically housebound patient’s record, not superceded by a code indicationg that the patient is no longer housebound.",
+  "Date",
+  "First occurence prior to SVP",
+  #
   "Strata",
   "JCVI group",
   "Priority groups defined by the JCVI expert advisory group",
   "2-12",
-  "Age defined on 31 March 2021 for individuals eligible in phase 1 and 1 July 2021 for individuals eligible in phase 2. Individuals defined as clinically extremely vulnerable on 18 Januray 2021, and at-risk on 15 February 2021.",
+  "Age defined on 31 March 2021 for individuals eligible in phase 1 and 1 July 2021 for individuals eligible in phase 2. Individuals defined as high risk on 18 Januray 2021, and at-risk on 15 February 2021. Priority groups 2-9 are as defined by the JCVI expert advisory group, and we further define groups 10, 11 and 12 are defined as those aged 40-49, 30-39 and 18-29 years, respectively, who were not assigned to JCVI groups 4 (high risk) or 6 (at-risk).",
   #
   "Strata",
   "Eligibility date",
@@ -184,7 +191,7 @@ variable_defs <- local({
   "Age",
   "Age in whole years.",
   "Numeric\\textsuperscript{a}",
-  "start\\textsubscript{1i}",
+  "Start of SVP",
   #
   "Potential confounders (demographic)",
   "Ethnicity",
@@ -194,7 +201,7 @@ variable_defs <- local({
   #
   "Potential confounders (demographic)",
   "Index of Multiple Deprivation (IMD)",
-  "IMD quintile based on patient address",
+  "IMD quintile based on patient address. The IMD is a measure of socioeconomic deprivation based on lower-layer super output area (LSOA; a small geographical area defined by the Office of National Statistics).",
   "1; 2; 3; 4; 5.",
   "Eligibility date + 6 weeks ",
   #
@@ -202,49 +209,49 @@ variable_defs <- local({
   "Body Mass Index (BMI)",
   "Based on numeric BMI data from primary care records.",
   "Under 30kg/m\\textsuperscript{2} or not recorded; 30-34.9; 35-39.9; 40+ kg/m\\textsuperscript{2}.",
-  "start\\textsubscript{ki}",
+  "Start of SVP",
   #
   "Potential confounders (clinical)",
-  "Chronic heart disease; Chronic respiratory disease; Chronic liver disease; Chronic kidney disease; Diabetes; Chronic neurological disease; Immunosuppressed; Learning disability including Down’s syndrome; Serious mental illness.",
+  "Asplenia; Chronic heart disease; Chronic respiratory disease; Chronic liver disease; Chronic kidney disease; Diabetes; Chronic neurological disease; Immunosuppressed; Learning disability including Down’s syndrome; Serious mental illness.",
   "Any code in primary care record before date defined.",
   "0; 1.",
-  "start\\textsubscript{ki}",
+  "Start of SVP",
   #
   "Potential confounders (clinical)",
   "Multimorbidity",
   "Number of comorbid conditions in different organ systems.",
   "0; 1; 2+",
-  "start\\textsubscript{ki}",
+  "Start of SVP",
   #
   "Potential confounders (clinical)",
   "Influenza vaccination",
   "Any record in past 5 years.",
   "0; 1.",
-  "Eligibility date",
+  "Start of SVP",
   #
-  "Potential confounders (clinical)",
-  "Shielding",
-  "UK government COVID-19 shielding criteria met.",
-  "0; 1.",
-  "start\\textsubscript{ki}",
+  # "Potential confounders (clinical)",
+  # "Shielding",
+  # "UK government COVID-19 shielding criteria met.",
+  # "0; 1.",
+  # "start\\textsubscript{ki}",
   #
   "Potential confounders (clinical)",
   "Pregnancy",
   "Pregnancy recorded in 36 weeks prior to date and no delivery code recorded more recently that pregnancy code.",
   "0; 1.",
-  "start\\textsubscript{ki}",
+  "Start of SVP",
   #
-  "Potential confounders (clinical)",
-  "Care home",
-  "Code corresponding to care home in patient’s record before evaluation date.",
-  "0; 1.",
-  "start\\textsubscript{ki}",
+  # "Potential confounders (clinical)",
+  # "Care home",
+  # "Code corresponding to care home in patient’s record before evaluation date.",
+  # "0; 1.",
+  # "start\\textsubscript{ki}",
   #
-  "Potential confounders (clinical)",
-  "Housebound",
-  "Code indicating that the individual is housebound.",
-  "0; 1.",
-  "start\\textsubscript{ki}",
+  # "Potential confounders (clinical)",
+  # "Housebound",
+  # "Code indicating that the individual is housebound.",
+  # "0; 1.",
+  # "start\\textsubscript{ki}",
   #
   "Potential confounders (clinical)",
   "Number of SARS-CoV-2 tests.",
@@ -277,7 +284,7 @@ variable_defs <- local({
       latex_options = c("hold_position", "repeat_header")
       ) %>%
     footnote(
-      general = c("JCVI: Joint Committee on Vaccination and Immunisation; start\\\\textsubscript{ki} is the start date of comparison period \\\\textit{k} for individual \\\\textit{i}.\\\\newline"),
+      general = c("JCVI: Joint Committee on Vaccination and Immunisation; SVP: second vaccination period.\\\\newline"),
       general_title = "",
       alphabet = "Age was modelled separately within each strata. Age within strata was modelled as linear, with quadratic terms additionally included for strata with age range >5 years.",
       footnote_as_chunk=TRUE,
@@ -334,7 +341,8 @@ print_table1 <- local({
     )
    
   # create and save the version for the manuscript
-  variable_order <- c(NA_character_, "Age", "Sex", "IMD", "Ethnicity", "BMI", "Morbidity count", "Number of SARS-CoV-2 tests between 2020-05-18 and 2020-12-08", "Flu vaccine in previous 5 years", "Shielding criteria met")
+  variable_order <- c(NA_character_, "Age", "Sex", "IMD", "Ethnicity", "BMI", "Morbidity count", "Number of SARS-CoV-2 tests between 2020-05-18 and 2020-12-08", "Flu vaccine in previous 5 years")
+                      # , "Shielding criteria met")
   table1_manuscript <- tibble(Variable = variable_order) %>%
     left_join(table_out0, by = "Variable") %>%
     mutate(across(Variable, ~str_remove(.x, " between 2020-05-18 and 2020-12-08"))) %>%
@@ -344,8 +352,9 @@ print_table1 <- local({
     here::here(release_folder, "table1_manuscript.rds"))
   
   # create the version for the appendix
-  variable_order_supplement <- c(NA_character_, "Region", "JCVI group", "Resident in long-term residential home",
-                                 "History of", "Pregnancy", "Housebound")
+  variable_order_supplement <- c(NA_character_, "Region", "JCVI group", 
+                                 # "Resident in long-term residential home", "Housebound",
+                                 "History of", "Pregnancy")
   
   table_out1 <- tibble(Variable = variable_order_supplement) %>%
     left_join(table_out0, by = "Variable") %>%
@@ -1058,35 +1067,35 @@ landscape(table_metareg_ft)
 \begin{landscape}
 
 ```{r hr-vax-BNT162b2, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for BNT162b2 vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder_new, "hr_vax_BNT162b2.png"))
+knitr::include_graphics(file.path(release_folder, "hr_vax_BNT162b2.png"))
 ```
 
 ```{r hr-vax-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for ChAdOx1 vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder_new, "hr_vax_ChAdOx1.png"))
+knitr::include_graphics(file.path(release_folder, "hr_vax_ChAdOx1.png"))
 ```
 
 ```{r hr-vax-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for BNT162b2 vs ChAdOx1", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder_new, "hr_vax_both.png"))
+knitr::include_graphics(file.path(release_folder, "hr_vax_both.png"))
 ```
 
 \end{landscape}
 
 ```{r hr-vax-anytest-BNT162b2, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder_new, "hr_vax_anytest_BNT162b2.png"))
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_BNT162b2.png"))
 ```
 
 ```{r hr-vax-anytest-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for ChAdOx1 vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder_new, "hr_vax_anytest_ChAdOx1.png"))
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_ChAdOx1.png"))
 ```
 
 ```{r hr-vax-anytest-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx1", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder_new, "hr_vax_anytest_both.png"))
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_both.png"))
 ```
 
 ```{r hr-vax-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 and ChAdOx1 vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder_new, "hr_vax_anytest.png"))
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest.png"))
 ```
 
 ```{r hr-brand-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx1", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder_new, "hr_brand_anytest.png"))
+knitr::include_graphics(file.path(release_folder, "hr_brand_anytest.png"))
 ```
