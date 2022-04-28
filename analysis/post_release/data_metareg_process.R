@@ -1,10 +1,11 @@
 library(tidyverse)
 
-release_folder <- "release_20220401"
+# release_folder <- "release_20220401"
+release_folder <- here::here("output", "release_objects")
 
 # read data
 estimates_all <- readr::read_csv(
-  here::here(release_folder, "estimates_all.csv"))
+  file.path(release_folder, "estimates_all.csv"))
 
 # read outcomes
 outcomes <- readr::read_rds(
@@ -24,13 +25,21 @@ data_metareg_0 <- estimates_all %>%
     variable %in% "k",
     model %in% "adjusted" # error in the labeling, this corresponds to unadjusted
     ) %>%
-  mutate(model = "adjusted") %>%
-  select(subgroup, comparison, outcome, model, k = label, estimate, conf.low, conf.high) %>%
+  mutate(
+    model = "adjusted",
+    sex = if_else(
+      str_detect(subgroup, "Female|Male"),
+      str_extract(subgroup, "Female|Male"),
+      "Both"
+      ),
+    subgroup = as.integer(str_extract(subgroup, "\\d"))
+    ) %>%
+  select(subgroup, sex, comparison, outcome, model, k = label, estimate, conf.low, conf.high) %>%
   mutate(across(subgroup, factor, levels = 1:4, labels = subgroups)) 
 
 # expand to all combinations
 data_metareg <- data_metareg_0 %>%
-  expand(subgroup, comparison, outcome, model, k) %>%
+  expand(subgroup, comparison, sex, outcome, model, k) %>%
   filter(!(subgroup %in% "18-39 years" & comparison != "BNT162b2")) %>%
   left_join(data_metareg_0)
 
