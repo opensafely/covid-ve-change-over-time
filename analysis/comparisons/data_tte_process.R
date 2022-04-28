@@ -192,13 +192,13 @@ table_events <-
       )
   )
 
-table_events <- bind_rows(
-  unlist(table_events, recursive = FALSE)
-) 
-
-readr::write_csv(
-  table_events,
-  here::here("output", "tte", "tables", glue("event_counts_{comparison}.csv")))
-  
-
-
+# save for checking
+capture.output(
+  bind_rows(
+    unlist(table_events, recursive = FALSE)
+  ) %>% 
+    arrange(subgroup, outcome, k, arm) %>%
+    kableExtra::kable("pipe"),
+  file = here::here("output", "tte", "tables", glue("event_counts_{comparison}.txt")),
+  append = FALSE
+)
