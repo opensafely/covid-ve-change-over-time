@@ -1,7 +1,6 @@
 library(tidyverse)
 
-# release_folder <- "release_20220401"
-release_folder <- here::here("output", "release_objects")
+if (!exists("release_folder")) release_folder <- here::here("output", "release_objects")
 
 # read data
 estimates_all <- readr::read_csv(
