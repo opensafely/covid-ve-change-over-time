@@ -30,8 +30,6 @@ library(glue)
 
 ```{r paths}
 # path for released results
-# release_folder <- here::here("release20220226")
-# release_folder_new <- here::here("release_20220401")
 release_folder <- here::here("output", "release_objects")
 ```
 
@@ -48,7 +46,6 @@ study_parameters <- readr::read_rds(
 subgroups <- readr::read_rds(
   here::here("analysis", "lib", "subgroups.rds"))
 subgroup_labels <- seq_along(subgroups)
-subgroup_order <- c(4,1,3,2)
 subgroups_long <- if_else(
     subgroups %in% subgroups[c(2,3)],
     as.character(glue("{subgroups} and not clinically vulnerable")),
@@ -58,6 +55,7 @@ subgroups_long <- if_else(
 # outcomes 
 outcomes <- readr::read_rds(
   here::here("analysis", "lib", "outcomes.rds"))
+outcomes <- outcomes[outcomes != "covidemergency"]
 outcomes_long <- names(outcomes)
 outcomes_long[outcomes=="covidadmitted"] <- "COVID-19 hospitalisation"
 names(outcomes) <- outcomes_long
@@ -78,26 +76,33 @@ weeks_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
 
 ```{r read-data}
 # read event counts data
-event_counts <- readr::read_csv(
-  here::here(release_folder, "event_counts_BNT162b2.csv")) %>%
-  bind_rows(
-    readr::read_csv(
-  here::here(release_folder, "event_counts_ChAdOx.csv")) %>%
-    filter(arm != "unvax") # because unvax arm same in both datasets
-  ) %>%
-  mutate(across(arm,
-                factor,
-                levels = c("BNT162b2", "ChAdOx", "unvax"),
-                labels = c("BNT162b2", "ChAdOx1", "Unvaccinated"))) %>%
-  mutate(across(outcome,
-                factor,
-                levels = unname(outcomes[outcomes_order]),
-                labels = names(outcomes[outcomes_order])))
+# event_counts <- readr::read_csv(
+#   here::here(release_folder, "event_counts_BNT162b2.csv")) %>%
+#   bind_rows(
+#     readr::read_csv(
+#   here::here(release_folder, "event_counts_ChAdOx.csv")) %>%
+#     filter(arm != "unvax") # because unvax arm same in both datasets
+#   ) %>%
+#   mutate(across(arm,
+#                 factor,
+#                 levels = c("BNT162b2", "ChAdOx", "unvax"),
+#                 labels = c("BNT162b2", "ChAdOx1", "Unvaccinated"))) %>%
+#   mutate(across(outcome,
+#                 factor,
+#                 levels = unname(outcomes[outcomes_order]),
+#                 labels = names(outcomes[outcomes_order])))
 
 # read estimates data
 estimates_all <- readr::read_csv(
   here::here(release_folder, "estimates_all.csv")) %>%
-  filter(outcome != "covidemergency") %>%
+   mutate(
+    sex = if_else(
+      str_detect(subgroup, "Female|Male"),
+      str_extract(subgroup, "Female|Male"),
+      "Both"
+      ),
+    subgroup = as.integer(str_extract(subgroup, "\\d"))
+    ) %>%
   mutate(across(c(estimate, conf.low, conf.high),
                 ~round(exp(.x), 2), nsmall=2)) %>%
   mutate(across(outcome,
@@ -123,14 +128,13 @@ metareg_results_k <- readr::read_rds(
                   labels = c("BNT162b2 vs unvaccinated", "ChAdOx1 vs unvaccinated", "BNT162b2 vs ChAdOx1"))) %>%
    mutate(across(c(logrhr, logrhr_lower, logrhr_higher), 
                 ~format(round(exp(.x), digits=2), nsmall=2, trim = TRUE))) %>%
-  select(subgroup, comparison, outcome, k, rhr = logrhr, rhr_lower = logrhr_lower, rhr_higher = logrhr_higher)
+  select(subgroup, sex, comparison, outcome, k, rhr = logrhr, rhr_lower = logrhr_lower, rhr_higher = logrhr_higher)
 ```
 
 ```{r kable-opts}
 padding <- 0.5 # this is a guess, couldn't find default
 page_height <- 26 #cm
 page_width <- 16 #cm
-
 ```
 
 ```{r variable-defs}
@@ -299,84 +303,91 @@ variable_defs <- local({
 ```{r prep-table1}
 print_table1 <- local({
   
-  table_out0 <- bind_rows(
-    lapply(
-      1:4,
-      function(x) 
-        readr::read_csv(here::here(release_folder, glue("table1_{x}_REDACTED.csv")),
-                        show_col_types = FALSE) %>%
-        mutate(subgroup = x)
-    ) 
-  ) %>%
-    pivot_wider(
-      names_from = subgroup,
-      values_from = c(BNT162b2, ChAdOx, Unvaccinated),
-      names_glue = "{subgroup}_{.value}"
-    ) %>%
-    select(-`2_ChAdOx`) %>%
-    select(Variable, Characteristic, starts_with(as.character(subgroup_order))) %>%
-    mutate(across(starts_with(as.character(subgroup_order)),
-                  ~ if_else(
-                    is.na(.x),
-                    "-",
-                    .x)))
+  # table_out0 <- bind_rows(
+  #   lapply(
+  #     1:4,
+  #     function(x) 
+  #       readr::read_csv(here::here(release_folder, glue("table1_{x}_REDACTED.csv")),
+  #                       show_col_types = FALSE) %>%
+  #       mutate(subgroup = x)
+  #   ) 
+  # ) %>%
+  #   pivot_wider(
+  #     names_from = subgroup,
+  #     values_from = c(BNT162b2, ChAdOx1, Unvaccinated),
+  #     names_glue = "{subgroup}_{.value}"
+  #   ) %>%
+  #   select(-`4_ChAdOx1`) %>%
+  #   select(Variable, Characteristic, starts_with(as.character(subgroup_labels))) %>%
+  #   mutate(across(starts_with(as.character(subgroup_labels)),
+  #                 ~ if_else(
+  #                   is.na(.x),
+  #                   "-",
+  #                   .x)))
+  # 
+  # # column names for table
+  # table_names <- names(table_out0)
+  # # remove subgroup label
+  # col_names <- str_remove(table_names, "\\d_")
+  # names(col_names) <- table_names
+  # # number of columns for each subgroup
+  # cols_subtype <- sapply(
+  #   as.character(subgroup_labels), 
+  #   function(x) sum(str_detect(table_names, glue("{x}_")))
+  # )
+  # names(cols_subtype) <- subgroups
+  # # reorder
+  # cols_subtype <- cols_subtype[subgroup_labels]
+  # # add footnote marker to not clinically vulnerable subgroups
+  # names(cols_subtype)[3:4] <- str_c(
+  #   names(cols_subtype)[3:4],
+  #   footnote_marker_alphabet(1, format = "latex", double_escape = TRUE)
+  #   )
+  #  
+  # # create and save the version for the manuscript
+  # variable_order <- c(NA_character_, "Age", "Sex", "IMD", "Ethnicity", "BMI", "Morbidity count", "Number of SARS-CoV-2 tests between 2020-05-18 and 2020-12-08", "Flu vaccine in previous 5 years")
+  #                     # , "Shielding criteria met")
+  # table1_manuscript <- tibble(Variable = variable_order) %>%
+  #   left_join(table_out0, by = "Variable") %>%
+  #   mutate(across(Variable, ~str_remove(.x, " between 2020-05-18 and 2020-12-08"))) %>%
+  #   mutate(across(Variable, ~str_remove(.x, " criteria met"))) 
+  # readr::write_rds(
+  #   table1_manuscript,
+  #   here::here(release_folder, "table1_manuscript.rds"))
+  # 
+  # # create the version for the appendix
+  # variable_order_supplement <- c(NA_character_, "Region", "JCVI group", 
+  #                                # "Resident in long-term residential home", "Housebound",
+  #                                "Evidence of", "Pregnancy")
+  # 
+  # table_out1 <- tibble(Variable = variable_order_supplement) %>%
+  #   left_join(table_out0, by = "Variable") %>%
+  #   mutate(tmp = row_number()) %>%
+  #   group_by(Variable) %>%
+  #   mutate(tmp = mean(tmp)) %>%
+  #   arrange(Characteristic,.by_group = TRUE) %>%
+  #   ungroup() %>%
+  #   arrange(tmp) %>%
+  #   select(-tmp) %>%
+  #   mutate(across(Characteristic, 
+  #                 ~if_else(.x == "Immunosuppression",
+  #                          "Immunosupp- ression",
+  #                          .x))) %>%
+  #   mutate(across(Variable, ~if_else(is.na(.x), " ", .x)))
+  # 
   
-  # column names for table
-  table_names <- names(table_out0)
-  # remove subgroup label
-  col_names <- str_remove(table_names, "\\d_")
-  names(col_names) <- table_names
-  # number of columns for each subgroup
-  cols_subtype <- sapply(
-    as.character(subgroup_labels), 
-    function(x) sum(str_detect(table_names, glue("{x}_")))
-  )
-  names(cols_subtype) <- subgroups
-  # reorder
-  cols_subtype <- cols_subtype[subgroup_order]
-  # add footnote marker to not clinically vulnerable subgroups
-  names(cols_subtype)[3:4] <- str_c(
-    names(cols_subtype)[3:4],
-    footnote_marker_alphabet(1, format = "latex", double_escape = TRUE)
-    )
-   
-  # create and save the version for the manuscript
-  variable_order <- c(NA_character_, "Age", "Sex", "IMD", "Ethnicity", "BMI", "Morbidity count", "Number of SARS-CoV-2 tests between 2020-05-18 and 2020-12-08", "Flu vaccine in previous 5 years")
-                      # , "Shielding criteria met")
-  table1_manuscript <- tibble(Variable = variable_order) %>%
-    left_join(table_out0, by = "Variable") %>%
-    mutate(across(Variable, ~str_remove(.x, " between 2020-05-18 and 2020-12-08"))) %>%
-    mutate(across(Variable, ~str_remove(.x, " criteria met"))) 
-  readr::write_rds(
-    table1_manuscript,
-    here::here(release_folder, "table1_manuscript.rds"))
+  table1_supplement <- readr::read_rds(
+  here::here(release_folder, "table1_supplement.rds"))
   
-  # create the version for the appendix
-  variable_order_supplement <- c(NA_character_, "Region", "JCVI group", 
-                                 # "Resident in long-term residential home", "Housebound",
-                                 "History of", "Pregnancy")
+  col_names <- table1_supplement$col_names
+  cols_subtype <- table1_supplement$cols_subtype
+  table1_data <- table1_supplement$data
   
-  table_out1 <- tibble(Variable = variable_order_supplement) %>%
-    left_join(table_out0, by = "Variable") %>%
-    mutate(tmp = row_number()) %>%
-    group_by(Variable) %>%
-    mutate(tmp = mean(tmp)) %>%
-    arrange(Characteristic,.by_group = TRUE) %>%
-    ungroup() %>%
-    arrange(tmp) %>%
-    select(-tmp) %>%
-    mutate(across(Characteristic, 
-                  ~if_else(.x == "Immunosuppression",
-                           "Immunosupp- ression",
-                           .x))) %>%
-    mutate(across(Variable, ~if_else(is.na(.x), " ", .x)))
-  
-  col_width <- (26 - ncol(table_out1)*padding)/ncol(table_out1)
+  col_width <- (26 - ncol(table1_data)*padding)/ncol(table1_data)
   col_width <- as.character(glue("{col_width}cm"))
-  
-  col_names <- str_replace(col_names, "ChAdOx", "ChAdOx1")
-  
-  table_out2 <- table_out1 %>%
+
+
+  table1 <- table1_data %>%
     kable(
       format = "latex",
       col.names = col_names,
@@ -390,7 +401,7 @@ print_table1 <- local({
       bold=TRUE,
       escape = FALSE
       ) %>%
-    column_spec(seq_along(table_out1), width=col_width) %>%
+    column_spec(seq_along(table1_data), width=col_width) %>%
     collapse_rows(columns = 1, valign = "top", latex_hline = "major") %>%
     kable_styling(
       font_size = 6,
@@ -402,7 +413,7 @@ print_table1 <- local({
       escape=FALSE
     )
   
-  return(table_out2)
+  return(table1)
   
 })
 ```
