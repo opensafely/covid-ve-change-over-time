@@ -261,7 +261,7 @@ for (i in c(seq_along(data_tables))) {
     "cns",
     "diabetes",
     "immunosuppressed",
-    "asplenia",
+    # "asplenia",
     "learndis", 
     "sev_mental")
   # tidy table1
