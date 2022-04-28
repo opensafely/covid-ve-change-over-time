@@ -14,6 +14,13 @@ library(tidyverse)
 library(glue)
 library(kableExtra)
 ```
+```{r}
+# read subgroups
+subgroups <- readr::read_rds(
+  here::here("analysis", "lib", "subgroups.rds"))
+subgroup_labels <- seq_along(subgroups)
+```
+
 
 ```{r read-data}
 table1 <- bind_rows(
@@ -47,6 +54,20 @@ table_names <- names(table1_wide)
 # remove subgroup label
 col_names <- str_remove(table_names, "\\d_")
 names(col_names) <- table_names
+
+# number of columns for each subgroup
+cols_subtype <- sapply(
+  as.character(subgroup_labels), 
+  function(x) sum(str_detect(table_names, glue("{x}_")))
+)
+names(cols_subtype) <- subgroups
+# reorder
+cols_subtype <- cols_subtype[subgroup_labels]
+# # add footnote marker to not clinically vulnerable subgroups
+# names(cols_subtype)[3:4] <- str_c(
+#   names(cols_subtype)[3:4],
+#   footnote_marker_alphabet(1, format = "latex", double_escape = TRUE)
+#   )
 
 tibble(Variable = variable_order) %>%
   left_join(table1_wide) %>%
