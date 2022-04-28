@@ -34,7 +34,7 @@ comparisons <- c("BNT162b2", "ChAdOx1", "both")
 
 release_folder <- "release_20220401"
 
-min_max_fu_dates_path <- here::here("output", "lib") ## RELEASE UPDATES!!
+min_max_fu_dates_path <- here::here("output", "lib") 
 estimates_all_path <- release_folder
 metareg_results_path <- release_folder
 
