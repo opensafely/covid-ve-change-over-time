@@ -1,7 +1,8 @@
 library(tidyverse)
 
 ################################################################################
-release_folder <- "release_20220401"
+# release_folder <- "release_20220401"
+release_folder <- here::here("output", "release_objects")
 
 # read subgroups
 subgroups <- readr::read_rds(
@@ -18,7 +19,10 @@ metareg_results <- metareg_results_0 %>%
                 factor,
                 levels = 1:4,
                 labels = subgroups)) %>%
-  mutate(across(subgroup, ~factor(as.character(.x)))) %>%
+  mutate(across(sex,
+                factor,
+                levels = 1:3,
+                labels = c("Both", "Female", "Male"))) %>%
   mutate(across(comparison, 
                 factor,
                 levels = 1:3,
@@ -42,12 +46,12 @@ metareg_results <- metareg_results_0 %>%
     ) 
 
 metareg_results_k <- metareg_results %>%
-  distinct(subgroup, comparison, outcome) %>%
+  distinct(subgroup, sex, comparison, outcome) %>%
   mutate(k=factor(1, levels=1:6)) %>%
-  complete(subgroup, comparison, outcome, k) %>%
+  complete(subgroup, sex, comparison, outcome, k) %>%
   left_join(
     metareg_results,
-    by = c("subgroup", "comparison", "outcome")
+    by = c("subgroup", "sex", "comparison", "outcome")
   ) %>%
   mutate(across(k, ~as.integer(as.character(.x)))) %>%
   mutate(
@@ -64,7 +68,7 @@ readr::write_rds(
 )
 
 metareg_results_rhr <- metareg_results %>%
-  distinct(outcome, subgroup, comparison, logrhr, logrhr_lower, logrhr_higher) %>%
+  distinct(outcome, subgroup, sex, comparison, logrhr, logrhr_lower, logrhr_higher) %>%
   mutate(across(starts_with("log"), exp)) %>%
   rename_with(~str_remove(.x, "log"))
 
