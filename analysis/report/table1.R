@@ -144,20 +144,9 @@ summary_var <- function(.data, var) {
     ungroup(!! sym(var)) %>%
     mutate(arm_total = sum(n)) %>%
     ungroup() %>%
-    mutate(percent = round(100*n/arm_total,0)) %>%
-    group_by(arm, !! sym(var)) %>%
     mutate(across(n, ~ceiling_any(.x, to=7))) %>%
-    ungroup() %>%
-    mutate(across(percent, 
-                  ~if_else(
-                    is.na(n) | n == 0, 
-                    "-", 
-                    as.character(.x)))) %>%
-    mutate(across(n, 
-                  ~if_else(
-                    is.na(.x) | .x == 0, 
-                    "-", 
-                    scales::comma(.x, accuracy = 1)))) %>%
+    mutate(percent = round(100*n/arm_total,0)) %>%
+    mutate(across(n, ~scales::comma(.x, accuracy = 1))) %>%
     mutate(value = as.character(glue("{n} ({percent}%)"))) %>%
     select(arm, !! sym(var), value) %>%
     pivot_wider(
@@ -305,6 +294,7 @@ for (i in c(seq_along(data_tables))) {
     group_by(arm) %>% 
     count() %>% 
     ungroup() %>% 
+    mutate(across(n, ~ceiling_any(.x, to=7))) %>%
     pivot_wider(names_from = arm, values_from = n) %>% 
     mutate(Variable = "", Characteristic = "N") %>%
     mutate(across(c(BNT162b2, ChAdOx1, unvax), 
