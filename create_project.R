@@ -622,26 +622,26 @@ actions_list <- splice(
     moderately_sensitive = list(
       plot_check = "output/models_cox/images/plot_check*.svg"
     )
-  )#,
+  ),
   
-  # comment("####################################",
-  #         "move objects for release", 
-  #         "####################################"),
-  # action(
-  #   name = "release_objects",
-  #   run = "r:latest analysis/release_objects.R",
-  #   needs = list(
-  #     "plot_2nd_vax_dates",
-  #     "data_min_max_fu",
-  #     "plot_cumulative_incidence",
-  #     "table1",
-  #     "combine_estimates"
-  #   ),
-  #   moderately_sensitive = list(
-  #     txt = "output/files_for_release.txt",
-  #     csv = "output/release_objects/*/*.csv"
-  #   )
-  # )
+  comment("####################################",
+          "move objects for release",
+          "####################################"),
+  action(
+    name = "release_objects",
+    run = "r:latest analysis/release_objects.R",
+    needs = list(
+      "plot_2nd_vax_dates",
+      "data_min_max_fu",
+      "plot_cumulative_incidence",
+      "table1",
+      "combine_estimates"
+    ),
+    moderately_sensitive = list(
+      txt = "output/files_for_release.txt",
+      csv = "output/release_objects/*/*.csv"
+    )
+  )
   
 )
 
