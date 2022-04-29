@@ -1,10 +1,13 @@
 library(tidyverse)
 library(glue)
-library(kableExtra)
+library(flextable)
+library(officer)
+library(magrittr)
 
 ################################################################################
 if (!exists("release_folder")) release_folder <- here::here("output", "release_objects")
 
+################################################################################
 # read subgroups
 subgroups <- readr::read_rds(
   here::here("analysis", "lib", "subgroups.rds"))
@@ -33,7 +36,9 @@ table_out0 <- bind_rows(
                 ~ if_else(
                   is.na(.x),
                   "-",
-                  .x)))
+                  .x))) %>%
+  mutate(across(Variable, ~if_else(Characteristic == "N", "N", .x))) %>%
+  mutate(across(Characteristic, ~if_else(.x == "N", "", .x))) 
 
 ################################################################################
 # prepare the column names
@@ -54,30 +59,74 @@ cols_subtype <- cols_subtype[subgroup_labels]
 ################################################################################
 # create and save the version for the manuscript
 variable_order_manuscript <- c(
-  NA_character_, 
-  "Age", 
-  "Sex", 
-  "IMD", 
-  "Ethnicity",
-  "BMI", 
-  "Morbidity count",
-  "Number of SARS-CoV-2 tests between 2020-05-18 and 2020-12-08", 
-  "Flu vaccine in previous 5 years")
+  "N" = "N", 
+  "Age" = "Age", 
+  "Sex" = "Sex", 
+  "IMD" = "IMD (1 is most deprived)", 
+  "Ethnicity" = "Ethnicity",
+  "BMI" = "BMI", 
+  "Morbidity count" = "Morbidity count",
+  "Number of SARS-CoV-2 tests between 2020-05-18 and 2020-12-08" = "Number of SARS-CoV-2 tests", 
+  "Flu vaccine in previous 5 years" = "Flu vaccine")
 
-table1_data_manuscript <- tibble(Variable = variable_order_manuscript) %>%
-  left_join(table_out0, by = "Variable") %>%
-  mutate(across(Variable, ~str_remove(.x, " between 2020-05-18 and 2020-12-08"))) %>%
-  mutate(across(Variable, ~str_remove(.x, " criteria met"))) 
+col_names[1] <- "Characteristic"
 
-table1_manuscript <- list(
-  col_names = col_names,
-  cols_subtype = cols_subtype,
-  data = table1_data_manuscript
-)
+table1_data_manuscript <- tibble(
+  variable_long = names(variable_order_manuscript),
+  variable_short = unname(variable_order_manuscript)
+  ) %>%
+  left_join(table_out0, by = c("variable_long" = "Variable")) %>%
+  select(-variable_long) %>%
+  rename(Variable = variable_short) %>%
+  mutate(across(Characteristic, ~str_remove(.x, "\\s\\w+\\sdeprived"))) %>%
+  mutate(across(Characteristic, 
+                ~if_else(
+                  Variable == "BMI",
+                  str_remove_all(str_extract(.x, "\\(\\d.+\\)"), "\\(|\\)"),
+                  .x
+                  ))) %>%
+  mutate(across(Characteristic, 
+                ~if_else(
+                  Variable == "BMI" & is.na(.x),
+                  "<30",
+                  .x
+                ))) 
 
-readr::write_rds(
-  table1_manuscript,
-  here::here(release_folder, "table1_manuscript.rds"))
+# create table1_manuscript.docx
+page_width_docx <- 26 #cm
+cell_padding <- 0 # this is a guess, not sure what default is
+col1_with <- 1.75
+col2_width <- 1.5
+coli_width <- (page_width_docx - cell_padding*ncol(table1_data_manuscript) - col1_with - col2_width)/(ncol(table1_data_manuscript) - 2)
+
+flextable1 <- table1_data_manuscript %>%
+  flextable() %>%
+  set_header_labels(
+    values = as.list(col_names)
+  ) %>%
+  merge_v(j=1, part = "body") %>%
+  merge_at(i=1,j=1:2, part="header") %>%
+  add_header_row(
+    values = c("", names(cols_subtype)),
+    colwidths = c(2, unname(cols_subtype))
+  ) %>%
+  width(j=1, width = col1_with, unit = "cm") %>%
+  width(j=2, width = col1_with, unit = "cm") %>%
+  width(j=3:ncol(table1_data_manuscript), width = coli_width, unit = "cm") %>%
+  #TODO
+  # footnote() 
+  fontsize(size = 8, part = "all") %>%
+  theme_booktabs() %>%
+  padding(
+    padding.top = 1,
+    padding.bottom = 1,
+    part = "all"
+  )
+
+doc <- read_docx() %>%
+  body_add_flextable(value = flextable1, split = FALSE) %>%
+  body_end_section_landscape() %>% # a landscape section is ending here
+  print(target = here::here(release_folder, "my_table.docx"))
 
 ################################################################################
 # create and save the version for the supplement
@@ -90,7 +139,7 @@ names(cols_subtype)[3:4] <- str_c(
 
 # create the version for the appendix
 variable_order_supplement <- c(
-  NA_character_,
+  "N",
   "Region", 
   "JCVI group", 
   "Evidence of", 
