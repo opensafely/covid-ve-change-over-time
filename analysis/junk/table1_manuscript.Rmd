@@ -8,7 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
-library(kableExtra)
+library(flextable)
 ```
 
 
@@ -26,16 +26,14 @@ table1_data <- table1_manuscript$data
 ```{r}
 ## flextable??
 table1_data %>%
-    kable(
-      format = "pipe",
-      col.names = col_names
+  flextable() %>%
+  set_header_labels(
+    values = as.list(col_names)
     ) %>%
-    row_spec(0, bold=TRUE) %>%
-    add_header_above(
-      c(" " = 2, cols_subtype),
-      bold=TRUE
-      ) %>%
-    # column_spec(seq_along(table1_data), width=col_width) #%>%
-    collapse_rows(columns = 1, valign = "top")
+  add_header_row(
+    values = c("", names(cols_subtype)),
+    colwidths = c(2, unname(cols_subtype))
+  ) %>%
+  merge_v(j=1)
 ```
 
