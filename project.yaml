@@ -5843,20 +5843,3 @@ actions:
       moderately_sensitive:
         plot_check: output/models_cox/images/plot_check*.svg
 
-  ## #################################### 
-  ## move objects for release 
-  ## #################################### 
-
-  release_objects:
-    run: r:latest analysis/release_objects.R
-    needs:
-    - plot_2nd_vax_dates
-    - data_min_max_fu
-    - plot_cumulative_incidence
-    - table1
-    - combine_estimates
-    outputs:
-      moderately_sensitive:
-        txt: output/files_for_release.txt
-        csv: output/release_objects/*/*.csv
-
