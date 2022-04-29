@@ -12,6 +12,7 @@ library(survival)
 release_objects <- "release_objects"
 output_dir <- here("output", release_objects)
 fs::dir_create(output_dir)
+fs::dir_create(here(output_dir, "svp_plots"))
 
 ################################################################################
 svp_plots <- list.files(path = here("output", "second_vax_period", "images"), 
