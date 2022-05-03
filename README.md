@@ -89,9 +89,8 @@ The following scripts contain functions which are used throughout this project:
 
 
 ### `analysis/post_release`
-This folder contains scripts that apply further analyses or post-processing of results that have been released from OpenSAFELY (and therefore are not run via the [`project.yaml`](./project.yaml).
-The run-order of these scripts is given in ``
-
+This folder contains scripts that apply further analyses or post-processing of files that have been released from OpenSAFELY (and therefore are not run via the [`project.yaml`](./project.yaml).
+The run-order of these scripts is given in [instructions.R](analysis/post_release/instructions.R).
 
 ### `manuscript/`
 
