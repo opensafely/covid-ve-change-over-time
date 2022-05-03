@@ -69,7 +69,7 @@ Runs [data_tte_process.R](analysis/comparisons/data_tte_process.R) which derives
 Runs [preflight.R](analysis/comparisons/preflight.R) which preprocesses the data for the Cox models, for each compairson, subgroup and outcome.
 
 #### `apply_cox_{comparison}_{subgroup}_{outcome}`
-Runs [apply_model_update.R](analysis/comparisons/apply_model_update.R) which fits Cox models for each compairson, subgroup and outcome.
+Runs [apply_model_cox_update.R](analysis/comparisons/apply_model_cox_update.R) which fits Cox models for each compairson, subgroup and outcome.
 Each script fits 12 models: unadjusted and adjusted models for each of the six comparison periods.
 
 #### `combine_estimates`
