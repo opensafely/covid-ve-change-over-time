@@ -76,25 +76,31 @@ weeks_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
 
 ```{r read-data}
 # read event counts data
-# event_counts <- readr::read_csv(
-#   here::here(release_folder, "event_counts_BNT162b2.csv")) %>%
-#   bind_rows(
-#     readr::read_csv(
-#   here::here(release_folder, "event_counts_ChAdOx.csv")) %>%
-#     filter(arm != "unvax") # because unvax arm same in both datasets
-#   ) %>%
-#   mutate(across(arm,
-#                 factor,
-#                 levels = c("BNT162b2", "ChAdOx", "unvax"),
-#                 labels = c("BNT162b2", "ChAdOx1", "Unvaccinated"))) %>%
-#   mutate(across(outcome,
-#                 factor,
-#                 levels = unname(outcomes[outcomes_order]),
-#                 labels = names(outcomes[outcomes_order])))
+event_counts <- readr::read_csv(
+  here::here(release_folder, "event_counts_all.csv")) %>%
+  filter(outcome != "covidemergency") %>%
+   mutate(
+    sex = if_else(
+      str_detect(subgroup, "Female|Male"),
+      str_extract(subgroup, "Female|Male"),
+      "Both"
+      ),
+    subgroup = as.integer(str_extract(subgroup, "\\d"))
+    ) %>%
+  mutate(across(arm,
+                factor,
+                levels = c("BNT162b2", "ChAdOx1", "unvax"),
+                labels = c("BNT162b2", "ChAdOx1", "Unvaccinated"))) %>%
+  mutate(across(outcome,
+                factor,
+                levels = unname(outcomes[outcomes_order]),
+                labels = names(outcomes[outcomes_order])))
+
 
 # read estimates data
 estimates_all <- readr::read_csv(
   here::here(release_folder, "estimates_all.csv")) %>%
+  filter(outcome != "covidemergency") %>%
    mutate(
     sex = if_else(
       str_detect(subgroup, "Female|Male"),
@@ -130,6 +136,31 @@ metareg_results_k <- readr::read_rds(
                 ~format(round(exp(.x), digits=2), nsmall=2, trim = TRUE))) %>%
   select(subgroup, sex, comparison, outcome, k, rhr = logrhr, rhr_lower = logrhr_lower, rhr_higher = logrhr_higher)
 ```
+
+```{r}
+# # derive event counts data
+# event_counts <- estimates_all %>%
+#   filter(
+#     variable == "k",
+#     model == "unadjusted",
+#     comparison != "BNT162b2 vs ChAdOx1"
+#   ) %>%
+#   select(
+#     subgroup, sex, comparison, outcome, period, label, 
+#     n_event_label, persondays
+#   ) %>%
+#   mutate(arm = if_else(
+#     label == "0",
+#     "Unvaccinated",
+#     str_remove(comparison, " vs unvaccinated")
+#   )) %>%
+#   select(-comparison, -label) %>%
+#   rename(k=period, events=n_event_label) %>%
+#   distinct() %>%
+#   mutate(person_years = round(persondays/365, 0)) %>%
+#   select(-persondays)
+```
+
 
 ```{r kable-opts}
 padding <- 0.5 # this is a guess, couldn't find default
@@ -303,79 +334,6 @@ variable_defs <- local({
 ```{r prep-table1}
 print_table1 <- local({
   
-  # table_out0 <- bind_rows(
-  #   lapply(
-  #     1:4,
-  #     function(x) 
-  #       readr::read_csv(here::here(release_folder, glue("table1_{x}_REDACTED.csv")),
-  #                       show_col_types = FALSE) %>%
-  #       mutate(subgroup = x)
-  #   ) 
-  # ) %>%
-  #   pivot_wider(
-  #     names_from = subgroup,
-  #     values_from = c(BNT162b2, ChAdOx1, Unvaccinated),
-  #     names_glue = "{subgroup}_{.value}"
-  #   ) %>%
-  #   select(-`4_ChAdOx1`) %>%
-  #   select(Variable, Characteristic, starts_with(as.character(subgroup_labels))) %>%
-  #   mutate(across(starts_with(as.character(subgroup_labels)),
-  #                 ~ if_else(
-  #                   is.na(.x),
-  #                   "-",
-  #                   .x)))
-  # 
-  # # column names for table
-  # table_names <- names(table_out0)
-  # # remove subgroup label
-  # col_names <- str_remove(table_names, "\\d_")
-  # names(col_names) <- table_names
-  # # number of columns for each subgroup
-  # cols_subtype <- sapply(
-  #   as.character(subgroup_labels), 
-  #   function(x) sum(str_detect(table_names, glue("{x}_")))
-  # )
-  # names(cols_subtype) <- subgroups
-  # # reorder
-  # cols_subtype <- cols_subtype[subgroup_labels]
-  # # add footnote marker to not clinically vulnerable subgroups
-  # names(cols_subtype)[3:4] <- str_c(
-  #   names(cols_subtype)[3:4],
-  #   footnote_marker_alphabet(1, format = "latex", double_escape = TRUE)
-  #   )
-  #  
-  # # create and save the version for the manuscript
-  # variable_order <- c(NA_character_, "Age", "Sex", "IMD", "Ethnicity", "BMI", "Morbidity count", "Number of SARS-CoV-2 tests between 2020-05-18 and 2020-12-08", "Flu vaccine in previous 5 years")
-  #                     # , "Shielding criteria met")
-  # table1_manuscript <- tibble(Variable = variable_order) %>%
-  #   left_join(table_out0, by = "Variable") %>%
-  #   mutate(across(Variable, ~str_remove(.x, " between 2020-05-18 and 2020-12-08"))) %>%
-  #   mutate(across(Variable, ~str_remove(.x, " criteria met"))) 
-  # readr::write_rds(
-  #   table1_manuscript,
-  #   here::here(release_folder, "table1_manuscript.rds"))
-  # 
-  # # create the version for the appendix
-  # variable_order_supplement <- c(NA_character_, "Region", "JCVI group", 
-  #                                # "Resident in long-term residential home", "Housebound",
-  #                                "Evidence of", "Pregnancy")
-  # 
-  # table_out1 <- tibble(Variable = variable_order_supplement) %>%
-  #   left_join(table_out0, by = "Variable") %>%
-  #   mutate(tmp = row_number()) %>%
-  #   group_by(Variable) %>%
-  #   mutate(tmp = mean(tmp)) %>%
-  #   arrange(Characteristic,.by_group = TRUE) %>%
-  #   ungroup() %>%
-  #   arrange(tmp) %>%
-  #   select(-tmp) %>%
-  #   mutate(across(Characteristic, 
-  #                 ~if_else(.x == "Immunosuppression",
-  #                          "Immunosupp- ression",
-  #                          .x))) %>%
-  #   mutate(across(Variable, ~if_else(is.na(.x), " ", .x)))
-  # 
-  
   table1_supplement <- readr::read_rds(
   here::here(release_folder, "table1_supplement.rds"))
   
@@ -419,15 +377,19 @@ print_table1 <- local({
 ```
 
 ```{r prep-table-events}
-table_events_ft <- local({
+table_events_ft <- function(s) {
   
-  totals <- event_counts %>%
+  data <- event_counts %>%
+    filter(sex == s) %>%
+    select(-sex)
+  
+  totals <- data %>%
     group_by(subgroup, arm, outcome) %>%
     summarise(across(c(person_years, events), sum, na.rm=TRUE), .groups="keep") %>%
     ungroup() %>%
     mutate(k=7)
   
-  table_out0 <- event_counts %>%
+  table_out0 <- data %>%
     bind_rows(totals) %>%
     arrange(subgroup, outcome, arm, k) %>%
     mutate(across(c(events, person_years), ~scales::comma(.x, accuracy = 1))) %>%
@@ -444,7 +406,7 @@ table_events_ft <- local({
                   factor,
                   levels = 1:7,
                   labels = c(weeks_since_2nd_vax, "Total"))) %>%
-    select(outcome, k, starts_with(as.character(subgroup_order)))
+    select(outcome, k, starts_with(as.character(1:4)))
   
   # column names for table
   table_names <- names(table_out0)
@@ -458,7 +420,7 @@ table_events_ft <- local({
   col_names["k"] <- "Weeks since 2nd dose"
   col_names["outcome"] <- "Outcome"
   
-  cols_subtype <- cols_subtype[subgroup_order]
+  cols_subtype <- cols_subtype
   # add footnote marker to not clinically vulnerable subgroups
   names(cols_subtype)[3:4] <- str_c(
     names(cols_subtype)[3:4],
@@ -503,22 +465,29 @@ table_events_ft <- local({
   
   return(table_out1)
   
-})
+}
 ```
 
 ```{r prep-table-hrs}
-table_hrs_ft <- function(m){
+table_hrs_ft <- function(m, s){
   
   if (m == "unadjusted") {
-    caption_string <- "Unadjusted hazard ratios for each comparison period."
+    caption_string <- "Unadjusted hazard ratios for each comparison period"
   } else if (m == "adjusted") {
-    caption_string <- "Adjusted hazard ratios for each comparison period."
+    caption_string <- "Adjusted hazard ratios for each comparison period"
+  }
+  
+  if (s == "Both") {
+    caption_string <- glue("{caption_string}.")
+  } else {
+    caption_string <- glue("{caption_string} ({str_to_lower(s)} only model).")
   }
   
   table_out0 <- estimates_all %>%
     filter(
       variable == "k",
       model == m,
+      sex == s,
       !reference_row
       ) %>%
     mutate(across(c(estimate, conf.low, conf.high), ~format(.x, nsmall=2))) %>%
@@ -562,7 +531,7 @@ table_hrs_ft <- function(m){
   col_names["k"] <- "Weeks since 2nd dose"
   col_names["outcome"] <- "Outcome"
   
-  cols_subtype <- cols_subtype[subgroup_order]
+  cols_subtype <- cols_subtype
   # add footnote marker to not clinically vulnerable subgroups
   names(cols_subtype)[3:4] <- str_c(
     names(cols_subtype)[3:4],
@@ -574,7 +543,7 @@ table_hrs_ft <- function(m){
   
   table_out1 <- table_out0 %>%
     select(all_of(table_names)) %>%
-    mutate(across(starts_with(as.character(subgroup_order)),
+    mutate(across(starts_with(as.character(subgroup_labels)),
                   ~ if_else(
                     is.na(.x),
                     "-",
@@ -611,22 +580,30 @@ table_hrs_ft <- function(m){
 ```
 
 ```{r prep-table-metareg}
-table_metareg_ft <- local({
+table_metareg_ft <- function(s) {
+    
+  caption_string <- "Ratio of adjusted hazard ratios for each comparison period"
+  if (s == "Both") {
+    caption_string <- glue("{caption_string}.")
+  } else {
+    caption_string <- glue("{caption_string} ({str_to_lower(s)} only model).")
+  }
   
   table_out0 <- metareg_results_k %>%
+    filter(sex == s) %>%
   mutate(
       name = glue("{subgroup}_{comparison}"),
       value = glue("{rhr} ({rhr_lower}-{rhr_higher})")
     ) %>%
     mutate(across(c(name, value), as.character)) %>%
-    arrange(subgroup, comparison, outcome) %>%
+    arrange(subgroup, sex, comparison, outcome) %>%
     distinct(name, outcome, value) %>%
     pivot_wider(
       names_from = name,
       values_from = value
     ) %>%
-    select(outcome, starts_with(as.character(subgroup_order))) %>%
-    mutate(across(starts_with(as.character(subgroup_order)),
+    select(outcome, starts_with(as.character(subgroup_labels))) %>%
+    mutate(across(starts_with(as.character(subgroup_labels)),
                   ~ if_else(
                     str_detect(.x, "NA"),
                     NA_character_,
@@ -650,7 +627,7 @@ table_metareg_ft <- local({
   names(cols_subtype) <- subgroups
   col_names["outcome"] <- "Outcome"
   
-  cols_subtype <- cols_subtype[subgroup_order]
+  cols_subtype <- cols_subtype[subgroup_labels]
   # add footnote marker to not clinically vulnerable subgroups
   names(cols_subtype)[3:4] <- str_c(
     names(cols_subtype)[3:4],
@@ -662,7 +639,7 @@ table_metareg_ft <- local({
   
   table_out1 <- table_out0 %>%
     select(all_of(table_names)) %>%
-    mutate(across(starts_with(as.character(subgroup_order)),
+    mutate(across(starts_with(as.character(subgroup_labels)),
                   ~ if_else(
                     is.na(.x),
                     "-",
@@ -671,7 +648,7 @@ table_metareg_ft <- local({
     kable(
       format = "latex",
       col.names = col_names,
-      caption = "Ratio of adjusted hazard ratios for each comparison period.",
+      caption = caption_string,
       booktabs = TRUE, 
       longtable = TRUE
     ) %>%
@@ -695,150 +672,150 @@ table_metareg_ft <- local({
   
   return(table_out1)
   
-})
+}
 ```
 
 ```{r prep-table-estimates-covs}
-# create estimates_covs
-estimates_covs <- estimates_all %>%
-  filter(variable != "k") %>%
-  mutate(across(subgroup, 
-                factor, 
-                levels = subgroup_order, 
-                labels = subgroups[subgroup_order])) %>%
-  group_split(subgroup, comparison) %>%
-  as.list()
-
-table_estimates_covs_ft <- function(i) {
-  
-  subgroup <- unique(estimates_covs[[i]]$subgroup)
-  subgroup_long <- subgroups_long[subgroups == subgroup]
-  
-  comparison <- unique(estimates_covs[[i]]$comparison)
-  
-  if (subgroup %in% 3:4) {
-    subgroup_longer <- str_c(
-      subgroup_long,
-      " and not clinically vulnerable"
-    )
-  } else {
-    subgroup_longer <- subgroup_long
-  }
-  
-  caption_string <- glue("Hazard ratios corresponding to covariates in the adjusted {comparison} model in the {subgroup_longer} subgroup.")
-  
-  table_out0 <- estimates_covs[[i]] %>%
-    transmute(
-      outcome = outcome,
-      variable = variable,
-      label = label,
-      value = if_else(
-        !reference_row | is.na(reference_row),
-        as.character(glue("{estimate} ({conf.low}-{conf.high})")),
-        "1.00 (ref)"
-      )
-    ) %>%
-    pivot_wider(
-      names_from = outcome,
-      values_from = value
-    ) 
-  
-  # add column for missing outcomes for consistency across tables
-  missing_outcomes <- !(names(outcomes) %in% names(table_out0))
-  if (any(missing_outcomes)) {
-    for (o in names(outcomes)[missing_outcomes]) {
-    table_out0 <- table_out0 %>%
-      mutate(!! sym(o) := NA_character_)
-    }
-  }
-  
-  table_out0 <- table_out0 %>%
-    select(variable, label, all_of(names(outcomes[outcomes_order]))) 
-  
-  age_order <- sort(unique(table_out0$label[str_detect(table_out0$label, "^age")]))
-  age_order <- age_order[age_order!="age"]
-  
-  history_of_vars <- c(
-    "chronic_respiratory_disease",
-    "chronic_heart_disease", 
-    "chronic_liver_disease", 
-    "ckd", 
-    "chronic_neuro_inc_ld",
-    "diabetes",
-    "any_immunosuppression", 
-    "ld_inc_ds_and_cp", 
-    "sev_ment")
-  
-  
-  col_width <- (26 - ncol(table_out0)*padding)/ncol(table_out0)
-  col_width <- as.character(glue("{col_width}cm"))
-  
-  table_out1 <- tibble(
-    Variable = c(age_order, names(c(model_varlist$demographic, model_varlist$clinical))),
-    variable = c(age_order, unname(unlist(model_varlist)))
-  ) %>%
-    inner_join(table_out0, by = "variable") %>%
-    filter(Variable != "Age") %>% # remove this line after new results released
-    select(-variable) %>%
-    mutate(across(Variable, 
-                  ~if_else(
-                    str_detect(label, "^age"), 
-                    "Age\\textsuperscript{a}",
-                    .x))) %>%
-    mutate(label_old = label) %>%
-    mutate(across(label, 
-                  ~if_else(.x %in% glue("{history_of_vars}TRUE"),
-                           Variable,
-                           .x))) %>%
-    mutate(across(Variable, 
-                  ~if_else(label_old %in% glue("{history_of_vars}TRUE"),
-                           "History of",
-                           .x))) %>%
-    mutate(across(label, 
-                  ~if_else(str_detect(.x, "TRUE$"),
-                           "yes",
-                           .x))) %>%
-    mutate(across(Variable, 
-                  ~if_else(str_detect(.x, "Number of SARS-CoV-2 tests"),
-                           "Number of SARS-CoV-2 tests",
-                           .x))) %>%
-    mutate(across(label, 
-                  ~str_replace_all(.x, "\\_", "\\\\_"))) %>%
-    mutate(across(all_of(names(outcomes)), ~if_else(is.na(.x), "-", .x))) %>%
-    select(-label_old) %>%
-    select(Variable, "Category\\textsuperscript{b}" = label, all_of(names(outcomes[outcomes_order])))
-  
-  table_out2 <- table_out1 %>%
-    kable(
-      format = "latex",
-      caption = caption_string,
-      booktabs = TRUE, 
-      longtable = TRUE,
-      escape = FALSE # manually escape all special characters
-    ) %>%
-    row_spec(0, bold=TRUE) %>%
-    column_spec(seq_along(table_out0), width=col_width) %>%
-    collapse_rows(
-      columns = 1, 
-      valign = "top",
-      latex_hline = "major"
-      ) %>%
-    kable_styling(
-      font_size = 6,
-      latex_options = c("hold_position", "repeat_header")
-      ) %>%
-    footnote(
-      alphabet = c(
-        "Categories separated by \" / \" were merged due to low event counts.",
-        "Age terms were fit separately within strata. The age range in the strata is indicated by the suffix following the underscore on the age category label. Strata in which the age range was < 5 years included only a linear age term, otherwise a quadratic age term was included."),
-      footnote_as_chunk=TRUE,
-      escape=FALSE,
-      threeparttable = TRUE # to wrap footnote
-    )
-  
-  return(table_out2)
-    
-}
+# # create estimates_covs
+# estimates_covs <- estimates_all %>%
+#   filter(variable != "k") %>%
+#   mutate(across(subgroup, 
+#                 factor, 
+#                 levels = subgroup_labels, 
+#                 labels = subgroups[subgroup_labels])) %>%
+#   group_split(subgroup, comparison) %>%
+#   as.list()
+# 
+# table_estimates_covs_ft <- function(i) {
+#   
+#   subgroup <- unique(estimates_covs[[i]]$subgroup)
+#   subgroup_long <- subgroups_long[subgroups == subgroup]
+#   
+#   comparison <- unique(estimates_covs[[i]]$comparison)
+#   
+#   if (subgroup %in% 3:4) {
+#     subgroup_longer <- str_c(
+#       subgroup_long,
+#       " and not clinically vulnerable"
+#     )
+#   } else {
+#     subgroup_longer <- subgroup_long
+#   }
+#   
+#   caption_string <- glue("Hazard ratios corresponding to covariates in the adjusted {comparison} model in the {subgroup_longer} subgroup.")
+#   
+#   table_out0 <- estimates_covs[[i]] %>%
+#     transmute(
+#       outcome = outcome,
+#       variable = variable,
+#       label = label,
+#       value = if_else(
+#         !reference_row | is.na(reference_row),
+#         as.character(glue("{estimate} ({conf.low}-{conf.high})")),
+#         "1.00 (ref)"
+#       )
+#     ) %>%
+#     pivot_wider(
+#       names_from = outcome,
+#       values_from = value
+#     ) 
+#   
+#   # add column for missing outcomes for consistency across tables
+#   missing_outcomes <- !(names(outcomes) %in% names(table_out0))
+#   if (any(missing_outcomes)) {
+#     for (o in names(outcomes)[missing_outcomes]) {
+#     table_out0 <- table_out0 %>%
+#       mutate(!! sym(o) := NA_character_)
+#     }
+#   }
+#   
+#   table_out0 <- table_out0 %>%
+#     select(variable, label, all_of(names(outcomes[outcomes_order]))) 
+#   
+#   age_order <- sort(unique(table_out0$label[str_detect(table_out0$label, "^age")]))
+#   age_order <- age_order[age_order!="age"]
+#   
+#   history_of_vars <- c(
+#     "chronic_respiratory_disease",
+#     "chronic_heart_disease", 
+#     "chronic_liver_disease", 
+#     "ckd", 
+#     "chronic_neuro_inc_ld",
+#     "diabetes",
+#     "any_immunosuppression", 
+#     "ld_inc_ds_and_cp", 
+#     "sev_ment")
+#   
+#   
+#   col_width <- (26 - ncol(table_out0)*padding)/ncol(table_out0)
+#   col_width <- as.character(glue("{col_width}cm"))
+#   
+#   table_out1 <- tibble(
+#     Variable = c(age_order, names(c(model_varlist$demographic, model_varlist$clinical))),
+#     variable = c(age_order, unname(unlist(model_varlist)))
+#   ) %>%
+#     inner_join(table_out0, by = "variable") %>%
+#     filter(Variable != "Age") %>% # remove this line after new results released
+#     select(-variable) %>%
+#     mutate(across(Variable, 
+#                   ~if_else(
+#                     str_detect(label, "^age"), 
+#                     "Age\\textsuperscript{a}",
+#                     .x))) %>%
+#     mutate(label_old = label) %>%
+#     mutate(across(label, 
+#                   ~if_else(.x %in% glue("{history_of_vars}TRUE"),
+#                            Variable,
+#                            .x))) %>%
+#     mutate(across(Variable, 
+#                   ~if_else(label_old %in% glue("{history_of_vars}TRUE"),
+#                            "History of",
+#                            .x))) %>%
+#     mutate(across(label, 
+#                   ~if_else(str_detect(.x, "TRUE$"),
+#                            "yes",
+#                            .x))) %>%
+#     mutate(across(Variable, 
+#                   ~if_else(str_detect(.x, "Number of SARS-CoV-2 tests"),
+#                            "Number of SARS-CoV-2 tests",
+#                            .x))) %>%
+#     mutate(across(label, 
+#                   ~str_replace_all(.x, "\\_", "\\\\_"))) %>%
+#     mutate(across(all_of(names(outcomes)), ~if_else(is.na(.x), "-", .x))) %>%
+#     select(-label_old) %>%
+#     select(Variable, "Category\\textsuperscript{b}" = label, all_of(names(outcomes[outcomes_order])))
+#   
+#   table_out2 <- table_out1 %>%
+#     kable(
+#       format = "latex",
+#       caption = caption_string,
+#       booktabs = TRUE, 
+#       longtable = TRUE,
+#       escape = FALSE # manually escape all special characters
+#     ) %>%
+#     row_spec(0, bold=TRUE) %>%
+#     column_spec(seq_along(table_out0), width=col_width) %>%
+#     collapse_rows(
+#       columns = 1, 
+#       valign = "top",
+#       latex_hline = "major"
+#       ) %>%
+#     kable_styling(
+#       font_size = 6,
+#       latex_options = c("hold_position", "repeat_header")
+#       ) %>%
+#     footnote(
+#       alphabet = c(
+#         "Categories separated by \" / \" were merged due to low event counts.",
+#         "Age terms were fit separately within strata. The age range in the strata is indicated by the suffix following the underscore on the age category label. Strata in which the age range was < 5 years included only a linear age term, otherwise a quadratic age term was included."),
+#       footnote_as_chunk=TRUE,
+#       escape=FALSE,
+#       threeparttable = TRUE # to wrap footnote
+#     )
+#   
+#   return(table_out2)
+#     
+# }
 ```
 
 
@@ -989,63 +966,67 @@ knitr::include_graphics(here::here("manuscript", "images", "flow_results.png"))
 \begin{landscape}
 
 ```{r svp-02-2020-12-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 2", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "plot_by_region_02_2020-12-08.png"))
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_02_2020-12-08.png"))
 ```
 
 ```{r svp-03-2020-12-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 3", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "plot_by_region_03_2020-12-08.png"))
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_03_2021-01-18.png"))
 ```
 
-```{r svp-04-2021-01-18, include=TRUE, fig.cap="Second vaccination period for JCVI group 4", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "plot_by_region_04_2021-01-18.png"))
+```{r svp-04a-2021-01-18, include=TRUE, fig.cap="Second vaccination period for JCVI group 4", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_04a_2021-01-18.png"))
+```
+
+```{r svp-04b-2021-01-18, include=TRUE, fig.cap="Second vaccination period for JCVI group 4", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_04b_2021-01-18.png"))
 ```
 
 ```{r svp-05-2021-02-15, include=TRUE, fig.cap="Second vaccination period for JCVI group 5", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "plot_by_region_05_2021-02-15.png"))
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_05_2021-02-15.png"))
 ```
 
 ```{r svp-06-2021-02-15, include=TRUE, fig.cap="Second vaccination period for JCVI group 6", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "plot_by_region_06_2021-02-15.png"))
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_06_2021-02-15.png"))
 ```
 
 ```{r svp-07-2021-02-22, include=TRUE, fig.cap="Second vaccination period for JCVI group 7 and aged 64 years", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "plot_by_region_07_2021-02-22.png"))
+# knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_07_2021-02-22.png"))
 ```
 
 ```{r svp-07-2021-03-01, include=TRUE, fig.cap="Second vaccination period for JCVI group 7 and aged 60-63 years", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "plot_by_region_07_2021-03-01.png"))
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_07_2021-03-01.png"))
 ```
 
 ```{r svp-08-2021-03-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 8", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "plot_by_region_08_2021-03-08.png"))
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_08_2021-03-08.png"))
 ```
 
 ```{r svp-09-2021-03-19, include=TRUE, fig.cap="Second vaccination period for JCVI group 9", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "plot_by_region_09_2021-03-19.png"))
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_09_2021-03-19.png"))
 ```
 
 ```{r svp-10-2021-04-13, include=TRUE, fig.cap="Second vaccination period for JCVI group 10 and aged 45-49 years", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "plot_by_region_10_2021-04-13.png"))
+# knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_10_2021-04-13.png"))
 ```
 
 ```{r svp-10-2021-04-26, include=TRUE, fig.cap="Second vaccination period for JCVI group 10 and aged 40-44 years", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "plot_by_region_10_2021-04-26.png"))
+# knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_10_2021-04-26.png"))
 ```
 
 ```{r svp-11-2021-05-13, include=TRUE, fig.cap="Second vaccination period for JCVI group 11 and aged 36-39 years", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "plot_by_region_11_2021-05-13.png"))
+# knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_11_2021-05-13.png"))
 ```
 
 ```{r svp-11-2021-05-21, include=TRUE, fig.cap="Second vaccination period for JCVI group 11 and aged 30-35 years", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "plot_by_region_11_2021-05-21.png"))
+# knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_11_2021-05-21.png"))
 ```
 
 ```{r svp-12-2021-06-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 12 and aged 25-29 years", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "plot_by_region_12_2021-06-08.png"))
+# knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_12_2021-06-08.png"))
 ```
 
 ```{r svp-12-2021-06-15, include=TRUE, fig.cap="Second vaccination period for JCVI group 12 and aged 18-24 years", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "plot_by_region_12_2021-06-15.png"))
+# knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_12_2021-06-15.png"))
 ```
 
 \end{landscape}
@@ -1059,48 +1040,48 @@ landscape(print_table1)
 ```
 
 ```{r table-events, include=TRUE, tab.cap.pre = "Supplementary Table "}
-landscape(table_events_ft)
+landscape(table_events_ft("Both"))
 ```
 
 
 ```{r table-hrs-ft, include=TRUE, tab.cap.pre = "Supplementary Table "}
-landscape(table_hrs_ft("unadjusted"))
+landscape(table_hrs_ft(m = "unadjusted", s = "Both"))
 ```
 
 ```{r table-ahrs-ft, include=TRUE, tab.cap.pre = "Supplementary Table "}
-landscape(table_hrs_ft("adjusted"))
+landscape(table_hrs_ft(m = "adjusted", s = "Both"))
 ```
 
 ```{r table-ratio-hrs-ft, include=TRUE, tab.cap.pre = "Supplementary Table "}
-landscape(table_metareg_ft)
+landscape(table_metareg_ft(s = "Both"))
 ```
 
 \begin{landscape}
 
 ```{r hr-vax-BNT162b2, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for BNT162b2 vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_vax_BNT162b2.png"))
+knitr::include_graphics(file.path(release_folder, "hr_vax_BNT162b2_unadj.png"))
 ```
 
 ```{r hr-vax-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for ChAdOx1 vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_vax_ChAdOx1.png"))
+knitr::include_graphics(file.path(release_folder, "hr_vax_ChAdOx1_unadj.png"))
 ```
 
 ```{r hr-vax-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for BNT162b2 vs ChAdOx1", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_vax_both.png"))
+knitr::include_graphics(file.path(release_folder, "hr_vax_both_unadj.png"))
 ```
 
 \end{landscape}
 
 ```{r hr-vax-anytest-BNT162b2, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_BNT162b2.png"))
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_BNT162b2_unadj.png"))
 ```
 
 ```{r hr-vax-anytest-ChAdOx, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for ChAdOx1 vs unvaccinated", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_ChAdOx1.png"))
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_ChAdOx1_unadj.png"))
 ```
 
 ```{r hr-vax-anytest-both, include=TRUE, fig.cap="Unadjusted and adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx1", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_both.png"))
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_both_unadj.png"))
 ```
 
 ```{r hr-vax-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 and ChAdOx1 vs unvaccinated", out.width="\\linewidth"}

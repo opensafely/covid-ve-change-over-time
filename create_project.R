@@ -539,10 +539,10 @@ actions_list <- splice(
         arguments = x,
         needs = list("data_covariates_process"),
         highly_sensitive = list(
-          data_tte_brand_outcome = glue("output/tte/data/data_tte_{x}*.rds"),
-          event_counts_rds = glue("output/tte/tables/event_counts_{x}.rds")
+          data_tte_brand_outcome = glue("output/tte/data/data_tte_{x}*.rds")
         ),
         moderately_sensitive = list(
+          event_counts_csv = glue("output/tte/data/event_counts_{x}.csv"),
           event_counts_txt = glue("output/tte/tables/event_counts_{x}.txt")
         )
       )
@@ -588,6 +588,10 @@ actions_list <- splice(
     name = glue("combine_estimates"),
     run = "r:latest analysis/comparisons/combine_estimates.R",
     needs = splice(
+      lapply(
+        comparisons[comparisons != "both"], 
+        function(x) glue("data_tte_process_{x}")
+        ),
       as.list(unlist(lapply(
         comparisons,
         function(x)
@@ -609,7 +613,8 @@ actions_list <- splice(
         }
       ), recursive = FALSE))),
     moderately_sensitive = list(
-      tidy_tables_events = glue("output/models_cox/data/estimates_*.csv")
+      event_counts_all = glue("output/release_objects/event_counts_all.csv"),
+      estimates_all = glue("output/release_objects/estimates_all.csv")
     )
   ),
   
