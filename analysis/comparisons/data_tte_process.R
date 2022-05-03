@@ -160,12 +160,13 @@ derive_data_tte <- function(
     group_by(k, arm) %>%
     summarise(
       n = n(),
-      person_years = round(sum(person_days)/365.25,0),
+      person_days = sum(person_days),
       events = sum(status),
       .groups = "keep"
     ) %>%
     # round n and events up to nearest 7 for disclosure control
     mutate(across(c(n, events), ~ceiling_any(.x, to=7))) %>%
+    mutate(person_years = round(person_days/365, 0)) %>%
     ungroup() %>%
     mutate(outcome = outcome,
            subgroup = as.character(subgroup_current_label)) %>%
@@ -178,7 +179,7 @@ derive_data_tte <- function(
 ################################################################################
 # apply derive_data_tte for all comparisons, and both for all subgroups and split by subgroup
 
-table_events <- 
+table_events_list <- 
   lapply(
     splice(
       as.list(data %>% group_split(subgroup)), 
@@ -192,12 +193,19 @@ table_events <-
       )
   )
 
+table_events <- bind_rows(
+  unlist(table_events_list, recursive = FALSE)
+) %>% 
+  arrange(subgroup, outcome, k, arm) 
+
+# save for releasing
+readr::write_csv(
+  table_events,
+  here::here("output", "tte", "data", glue("event_counts_{comparison}.csv")))
+
 # save for checking
 capture.output(
-  bind_rows(
-    unlist(table_events, recursive = FALSE)
-  ) %>% 
-    arrange(subgroup, outcome, k, arm) %>%
+  table_events %>%
     kableExtra::kable("pipe"),
   file = here::here("output", "tte", "tables", glue("event_counts_{comparison}.txt")),
   append = FALSE
