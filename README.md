@@ -14,10 +14,10 @@ You can run this project via [Gitpod](https://gitpod.io) in a web browser by cli
 
 ### project.yaml
 The [`project.yaml`](./project.yaml) defines run-order and dependencies for all the analysis scripts. 
-**This file should *not* be edited directly**. To make changes to the yaml, edit and run the [`create-project.R`](./create-project.R) script instead.
-The [`create-project.R`](./create-project.R) also creates metadata files and stores them in the [`analysis/lib`](./analysis/lib) folder.
-These metadata files are annotated in [`create-project.R`](./create-project.R).
-There is no need to run [`create_project.yaml`](./create_project.R) if you are simply cloning this repo.
+**This file should *not* be edited directly**. To make changes to the yaml, edit and run the [`create_project.R`](./create_project.R) script instead.
+The [`create_project.R`](./create_project.R) also creates metadata files and stores them in the [`analysis/lib`](./analysis/lib) folder.
+These metadata files are annotated in [`create_project.R`](./create_project.R).
+There is no need to run [`create_project.R`](./create_project.R) if you are simply cloning this repo.
 
 Below is a description of each of the actions in the [`project.yaml`](./project.yaml). Arguments are denoted by {arg} in the action name.
 
