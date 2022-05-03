@@ -64,36 +64,7 @@ model_tidy_list <- lapply(
 
 model_tidy_tibble <- bind_rows(
   model_tidy_list[sapply(model_tidy_list, function(x) is_tibble(x))]
-) 
-
-# event counts for models that didn't run
-table_events <- lapply(
-  comparisons[comparisons!="both"],
-  function(x) 
-    readr::read_rds(
-      here::here("output", "tte", "tables", glue("event_counts_{x}.rds"))) %>%
-    mutate(comparison = x)
 ) %>%
-  bind_rows() %>%
-  rename(period = k) %>%
-  mutate(label = if_else(
-    arm == "unvax",
-    "0",
-    as.character(period)
-    )) %>%
-  select(-k) %>%
-  anti_join(
-    model_tidy_list %>%
-      select(comparison, subgroup, )
-  )
-  
-
-################################################################################
-
-
-
-%>%
-  rename(persondays=exposure) %>%
   mutate(across(c(estimate, conf.low, conf.high), round, 5)) %>%
   mutate(across(model, 
                 factor, levels = 1:2, labels = c("unadjusted", "adjusted"))) %>%
@@ -103,9 +74,9 @@ table_events <- lapply(
   mutate(across(n_obs_model, sum, na.rm=TRUE)) %>%
   ungroup() %>%
   # round n_obs model, n_obs, n_event and exposure up to nearest 7
-  mutate(across(c(n_obs_model, n_obs, n_event, persondays), ~ceiling_any(.x, to=7))) %>%
+  mutate(across(c(n_obs_model, n_obs, n_event, exposure), ~ceiling_any(.x, to=7))) %>%
   select(subgroup, comparison, outcome, model, period, variable, label, reference_row,
-         n_obs_model, n_obs_label = n_obs, n_event_label = n_event, persondays,
+         n_obs_model, n_obs_label = n_obs, n_event_label = n_event, persondays=exposure,
          estimate, conf.low, conf.high) 
 
 # check size of smallest model
