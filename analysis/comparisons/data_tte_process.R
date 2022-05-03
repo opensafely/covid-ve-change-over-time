@@ -156,20 +156,20 @@ derive_data_tte <- function(
   
   # tabulate events per comparison and save
   table_events <- data_tte %>%
-    mutate(persondays = tstop-tstart) %>%
+    mutate(person_days = tstop-tstart) %>%
     group_by(k, arm) %>%
     summarise(
       n = n(),
-      persondays = sum(persondays),
+      person_years = round(sum(person_days)/365.25,0),
       events = sum(status),
       .groups = "keep"
     ) %>%
-    # round n, events, persondays up to nearest 7 for disclosure control
-    mutate(across(c(n, events, persondays), ~ceiling_any(.x, to=7))) %>%
+    # round n and events up to nearest 7 for disclosure control
+    mutate(across(c(n, events), ~ceiling_any(.x, to=7))) %>%
     ungroup() %>%
     mutate(outcome = outcome,
            subgroup = as.character(subgroup_current_label)) %>%
-    select(subgroup, arm, outcome, k, n, persondays, events) 
+    select(subgroup, arm, outcome, k, n, person_years, events) 
   
   return(table_events)
   
@@ -178,7 +178,7 @@ derive_data_tte <- function(
 ################################################################################
 # apply derive_data_tte for all comparisons, and both for all subgroups and split by subgroup
 
-table_events_list <- 
+table_events <- 
   lapply(
     splice(
       as.list(data %>% group_split(subgroup)), 
@@ -192,16 +192,12 @@ table_events_list <-
       )
   )
 
-table_events <- bind_rows(unlist(table_events_list, recursive = FALSE)) %>% 
-  arrange(subgroup, outcome, k, arm) 
-
-readr::write_rds(
-  table_events,
-  here::here("output", "tte", "tables", glue("event_counts_{comparison}.rds")))
-
 # save for checking
 capture.output(
-  table_events %>%
+  bind_rows(
+    unlist(table_events, recursive = FALSE)
+  ) %>% 
+    arrange(subgroup, outcome, k, arm) %>%
     kableExtra::kable("pipe"),
   file = here::here("output", "tte", "tables", glue("event_counts_{comparison}.txt")),
   append = FALSE
