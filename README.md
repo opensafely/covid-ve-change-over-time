@@ -47,7 +47,7 @@ Below is a description of each of the actions in the [`project.yaml`](./project.
   * Runs [`plot_cumulative_incidence.R`](analysis/subsequent_vax/plot_cumulative_incidence.R) which calculates the cumulative incidence of 3rd dose in the groups that received two doses of BNT162b2 or ChAdOx1 during the SVP, and the cumulative incidence of 1st dose in the group that remained unvaccinated at the start of comparison period 1.
   * The cumulative incidence is stored in `survtable_redacted.csv` for release.
 * `table1`
-  * Runs [`plot_cumulative_incidence.R`](analysis/report/table1.R)  which derives the summary statistics for Table 1 of the manuscript. 
+  * Runs [`table1.R`](analysis/report/table1.R)  which derives the summary statistics for Table 1 of the manuscript. 
   * These summary statistics are saved in `table1.csv` for release. his action also combines the eligibility counts that have been generated from previous actions, and stores them in `eligibility_count_all.csv` for release.
 * `data_tte_process_{comparison}`
   * Runs [data_tte_process.R](analysis/comparisons/data_tte_process.R) which derives time to event data for each comparison.
