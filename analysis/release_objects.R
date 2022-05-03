@@ -48,6 +48,10 @@ for (i in 1:4) {
 fs::file_copy(here("output", "tables", "eligibility_count_all.csv"), 
               here("output", release_objects, "eligibility_count_all.csv"), overwrite = TRUE)
 
+# event_counts
+fs::file_copy(here("output", "models_cox", "data", "event_counts_all.csv"), 
+              here("output", release_objects, "event_counts_all.csv"), overwrite = TRUE)
+
 # estimates_all
 fs::file_copy(here("output", "models_cox", "data", "estimates_all.csv"), 
               here("output", release_objects, "estimates_all.csv"), overwrite = TRUE)
