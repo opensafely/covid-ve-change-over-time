@@ -13,7 +13,8 @@ rmarkdown::render(
   knit_root_dir = release_folder,
     output_file = here::here(release_folder, "table1_process.docx"))
 
-
+### subsequent vax
+source(here::here("analysis", "subsequent_vax", "plot_cumulative_incidence.R"))
 
 ### Metaregression
 
