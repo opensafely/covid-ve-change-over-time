@@ -7,15 +7,20 @@ The aim of this study was to comapre rates of COVID-19 hospitalisation, COVID-19
 You can run this project via [Gitpod](https://gitpod.io) in a web browser by clicking on this badge: [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/opensafely/covid-ve-change-over-time)
 
 * The [protocol is in the OpenSAFELY Google drive]()
-* The pre-print is [here]()
+* The pre-print is [here](https://www.medrxiv.org/content/10.1101/2022.03.23.22272804v1)
 * Analysis scripts are in the [`analysis/`](./analysis) directory (see below for details)
 * Non-disclosive model outputs, including tables, figures, etc, are in `released_outputs/`
 * If you are interested in how we defined our code lists, look in the [codelists folder](./codelists/)
-* The [`project.yaml`](./project.yaml) defines run-order and dependencies for all the analysis scripts. **This file should *not* be edited directly**. To make changes to the yaml, edit and run the [`create-project.R`](./create-project.R) script instead.
+
+### project.yaml
+The [`project.yaml`](./project.yaml) defines run-order and dependencies for all the analysis scripts. 
+**This file should *not* be edited directly**. To make changes to the yaml, edit and run the [`create-project.R`](./create-project.R) script instead.
+The [`create-project.R`](./create-project.R) also creates metadata files and stores them in the [`analysis/lib`](./analysis/lib) folder.
+These metadata files are annotated in [`create-project.R`](./create-project.R).
+There is no need to run [`create_project.yaml`](./create_project.R) if you are simply cloning this repo.
 
 ### `analysis/`
 
-* [`design.R`](./analysis/design.R) creates metadata for aspects of the study design
 * The following files outline how we defined our variables:
   * [`study_definition_vax.py`](analysis/study_definition_vax.py) defines the JCVI groups (see [`grouping_variables.py`](analysis/grouping_variables.py)), the vaccine vairables, and the vairables used to apply the initial eligibility criteria
   * [`study_definition_ever.py`](analysis/study_definition_ever.py) defines the covairates for the model that are either based on an "ever" diagnosis, or are not updated at the start of each comparison period
