@@ -2,7 +2,6 @@
 
 *ssc install metareg
 
-capture log close
 log using waning_metareg, replace
 
 set more off
@@ -85,7 +84,7 @@ di `c'
 di `d'
 
 tempname memhold
-postfile `memhold' outcome stratum vaccine logrhr selogrhr loghr1 seloghr1 using results, replace
+postfile `memhold' outcome stratum sex vaccine logrhr selogrhr loghr1 seloghr1 using results, replace
 
   forvalues i=1/5 {
   	forvalues v=1/3 {
@@ -115,69 +114,71 @@ use results, clear
 sort outcome stratum sex vaccine
 save results, replace
 
-use waning_metareg.dta, clear
-merge m:1 outcome stratum sex vaccine using results
-tab _merge
+log close
 
-drop if _merge<3
-drop _merge
-drop estimate conflow confhigh loghr seloghr
-sort outcome stratum sex vaccine k
-by outcome stratum sex vaccine: keep if _n==_N
-replace k=k+1
-assert k==6
-
-drop stratum sex k vaccine
-
-order subgroup comparison outcome model
-*export excel using metareg_results.xlsx, replace firstrow(variables)
-
-gen rhr=exp(logrhr)
-gen lci=exp(logrhr-1.96*selogrhr)
-gen uci=exp(logrhr+1.96*selogrhr)
-
-encode comparison, gen(vaccine)
-tab vaccine
-label list vaccine
-
-
-drop loghr1 seloghr1 comparison
-sort outcome subgroup vaccine
-
-describe
-
-reshape wide logrhr selogrhr rhr lci uci, i(subgroup outcome model) j(vaccine)
-
-gen stratum=1 if subgroup=="65+ years"
-replace stratum=2 if subgroup=="16-64 years and clinically vulnerable"
-replace stratum=3 if subgroup=="40-64 years"
-replace stratum=4 if subgroup=="18-39 years"
-
-label define stratum 1 "65+_years" 2 "16-64_years_&_clinically_vulnerable" ///
-3 "40-64_years" 4 "18-39_years"
-
-label values stratum stratum
-
-sort outcome stratum
-compress
-
-foreach var in "rhr" "lci" "uci" {
-	format `var'1 `var'2 `var'3 %5.2f
-	rename `var'1 `var'_PB
-	rename `var'2 `var'_AZ
-	rename `var'3 `var'_PB_vs_AZ
-}
-
-*foreach vacc in "PB" "AZ" "PV_vs_AZ"
-
-describe
-list outcome stratum rhr_PB lci_PB uci_PB rhr_AZ lci_AZ uci_AZ if outcome<4, noobs nodisp clean
-
-list outcome stratum rhr_PB lci_PB uci_PB rhr_AZ lci_AZ uci_AZ if outcome>3, noobs nodisp clean
-
-list outcome stratum rhr_PB_vs_AZ lci_PB_vs_AZ uci_PB_vs_AZ if outcome<4 & rhr_PB_vs_AZ<., noobs nodisp clean
-
-list outcome stratum rhr_PB_vs_AZ lci_PB_vs_AZ uci_PB_vs_AZ if outcome>3 & rhr_PB_vs_AZ<., noobs nodisp clean
+// use waning_metareg.dta, clear
+// merge m:1 outcome stratum sex vaccine using results
+// tab _merge
+//
+// drop if _merge<3
+// drop _merge
+// drop estimate conflow confhigh loghr seloghr
+// sort outcome stratum sex vaccine k
+// by outcome stratum sex vaccine: keep if _n==_N
+// replace k=k+1
+// assert k==6
+//
+// drop stratum k vaccine
+//
+// order subgroup comparison sex outcome model
+// *export excel using metareg_results.xlsx, replace firstrow(variables)
+//
+// gen rhr=exp(logrhr)
+// gen lci=exp(logrhr-1.96*selogrhr)
+// gen uci=exp(logrhr+1.96*selogrhr)
+//
+// encode comparison, gen(vaccine)
+// tab vaccine
+// label list vaccine
+//
+//
+// drop loghr1 seloghr1 comparison
+// sort outcome subgroup sex vaccine
+//
+// describe
+//
+// reshape wide logrhr selogrhr rhr lci uci, i(subgroup outcome model) j(vaccine)
+//
+// gen stratum=1 if subgroup=="65+ years"
+// replace stratum=2 if subgroup=="16-64 years and clinically vulnerable"
+// replace stratum=3 if subgroup=="40-64 years"
+// replace stratum=4 if subgroup=="18-39 years"
+//
+// label define stratum 1 "65+_years" 2 "16-64_years_&_clinically_vulnerable" ///
+// 3 "40-64_years" 4 "18-39_years"
+//
+// label values stratum stratum
+//
+// sort outcome stratum
+// compress
+//
+// foreach var in "rhr" "lci" "uci" {
+// 	format `var'1 `var'2 `var'3 %5.2f
+// 	rename `var'1 `var'_PB
+// 	rename `var'2 `var'_AZ
+// 	rename `var'3 `var'_PB_vs_AZ
+// }
+//
+// *foreach vacc in "PB" "AZ" "PV_vs_AZ"
+//
+// describe
+// list outcome stratum rhr_PB lci_PB uci_PB rhr_AZ lci_AZ uci_AZ if outcome<4, noobs nodisp clean
+//
+// list outcome stratum rhr_PB lci_PB uci_PB rhr_AZ lci_AZ uci_AZ if outcome>3, noobs nodisp clean
+//
+// list outcome stratum rhr_PB_vs_AZ lci_PB_vs_AZ uci_PB_vs_AZ if outcome<4 & rhr_PB_vs_AZ<., noobs nodisp clean
+//
+// list outcome stratum rhr_PB_vs_AZ lci_PB_vs_AZ uci_PB_vs_AZ if outcome>3 & rhr_PB_vs_AZ<., noobs nodisp clean
 
 
 
