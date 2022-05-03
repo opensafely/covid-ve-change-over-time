@@ -37,27 +37,29 @@ source(here::here("analysis", "functions", "round_km.R"))
 ################################################################################
 
 # if running locally read extracted data:
-# if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
-#   
-#   release_folder <- "release20220226"
-#   image_path <- here::here(release_folder)
-#   
-#   survtable_redacted <- readr::read_csv(
-#     here::here(release_folder, "survtable_redacted.csv")) %>%
-#     mutate(across(subgroup,
-#                   ~ case_when(
-#                     str_detect(.x, "65") ~ 1,
-#                     str_detect(.x, "16-64") ~ 2,
-#                     str_detect(.x, "40-64") ~ 3,
-#                     str_detect(.x, "18-39") ~ 4,
-#                     TRUE ~ NA_real_
-#                   ))) %>%
-#     mutate(across(subgroup,
-#                   factor,
-#                   levels = subgroup_labels,
-#                   labels = subgroups_long_wrap)) 
-#   
-# } else { # else derive the data
+if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
+
+  release_folder <- here::here("output", "release_objects")
+  image_path <- here::here(release_folder)
+
+  survtable_redacted <- readr::read_csv(
+    here::here(release_folder, "survtable_redacted.csv")) %>%
+    mutate(across(subgroup,
+                  ~ case_when(
+                    str_detect(.x, "65") ~ 1,
+                    str_detect(.x, "16-64") ~ 2,
+                    str_detect(.x, "40-64") ~ 3,
+                    str_detect(.x, "18-39") ~ 4,
+                    TRUE ~ NA_real_
+                  ))) %>%
+    mutate(across(subgroup,
+                  factor,
+                  levels = subgroup_labels,
+                  labels = subgroups_long_wrap))
+
+} else { # else derive the data
+  
+  image_path <- here::here("output", "subsequent_vax", "images")
   
   # function to be applied in dplyr::filter
   no_evidence_of <- function(cov_date, index_date) {
@@ -124,7 +126,7 @@ source(here::here("analysis", "functions", "round_km.R"))
     survtable_redacted,
     here::here("output", "subsequent_vax", "tables", "survtable_redacted.csv"))
   
-# }
+}
 
 ################################################################################
 # scale for x-axis
@@ -178,6 +180,6 @@ plot_out <- survtable_redacted %>%
   )
 
 ggsave(plot = plot_out,
-       filename = here::here("output", "subsequent_vax", "images", "ci_vax.png"),
+       filename = here::here(image_path, "ci_vax.png"),
        width=16, height=12, units="cm")
   
