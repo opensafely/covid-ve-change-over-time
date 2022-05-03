@@ -177,8 +177,16 @@ for (i in c(seq_along(data_tables))) {
   
   # tibble for assigning tidy variable names
   var_labels <- tibble(
-    variable = c(strata_vars, model_varlist$clinical, model_varlist$demographic),
-    variable_label = names(c(strata_vars, model_varlist$clinical, model_varlist$demographic))
+    variable = c(
+      strata_vars,
+      model_varlist$clinical, 
+      model_varlist$multimorb, 
+      model_varlist$demographic),
+    variable_label = names(c(
+      strata_vars, 
+      model_varlist$clinical, 
+      model_varlist$multimorb,
+      model_varlist$demographic))
   )
   
   if (i == 0) {

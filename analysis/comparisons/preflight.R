@@ -42,7 +42,7 @@ subgroups <- readr::read_rds(
 model_varlist <- readr::read_rds(
   here::here("analysis", "lib", "model_varlist.rds")
 )
-vars <- unname(unlist(model_varlist))
+vars <- unname(c(model_varlist$demographic, model_varlist$clinical))
 
 ################################################################################
 # specfiy arms

@@ -119,27 +119,29 @@ regions <- tribble(
 readr::write_csv(regions, here::here("analysis", "lib", "regions.csv"))
 
 ################################################################################
-# varlists for cox models
+# varlists
 
-clinical <-c(
+# clinical variables for model
+clinical <- c(
+  "Learning disability" = "learndis",
+  "Serious mental illness" = "sev_mental",
+  "Morbidity count" = "multimorb",
+  "Flu vaccine in previous 5 years" = "flu_vaccine",
+  "Number of SARS-CoV-2 tests between 2020-05-18 and min_elig_date" = "test_hist_n",
+  "Pregnancy" = "pregnancy"
+)
+
+# extra clinical variables for summary table 
+# (those used to define morbidity count)
+multimorb <-c(
   "BMI" = "bmi",
-  # "Asplenia" = "asplenia",
   "Chronic respiratory disease" = "crd", 
   "Chronic heart disease" = "chd", 
   "Chronic liver disease" = "cld", 
   "Chronic kidney disease" = "ckd", 
   "Chronic neurological disease" = "cns",
   "Diabetes" = "diabetes",
-  "Immunosuppression" = "immunosuppressed",
-  "Learning disability" = "learndis",
-  "Serious mental illness" = "sev_mental",
-  # "Shielding criteria met" = "cev", 
-  "Morbidity count" = "multimorb",
-  "Flu vaccine in previous 5 years" = "flu_vaccine",
-  # "Resident in long-term residential home" = "longres", 
-  # "Housebound" = "housebound",
-  "Number of SARS-CoV-2 tests between 2020-05-18 and min_elig_date" = "test_hist_n",
-  "Pregnancy" = "pregnancy"
+  "Immunosuppression" = "immunosuppressed"
 )
 
 demographic <- c(
@@ -150,7 +152,7 @@ demographic <- c(
 )
 
 readr::write_rds(
-  list(demographic = demographic, clinical = clinical),
+  list(demographic = demographic, clinical = clinical, multimorb = multimorb),
   here::here("analysis", "lib", "model_varlist.rds")
 )
 
@@ -537,10 +539,11 @@ actions_list <- splice(
         arguments = x,
         needs = list("data_covariates_process"),
         highly_sensitive = list(
-          data_tte_brand_outcome = glue("output/tte/data/data_tte_{x}*.rds")
+          data_tte_brand_outcome = glue("output/tte/data/data_tte_{x}*.rds"),
+          event_counts_rds = glue("output/tte/tables/event_counts_{x}.rds")
         ),
         moderately_sensitive = list(
-          event_counts = glue("output/tte/tables/event_counts_{x}.txt")
+          event_counts_txt = glue("output/tte/tables/event_counts_{x}.txt")
         )
       )
   ), recursive = FALSE)),
