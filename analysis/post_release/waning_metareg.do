@@ -29,6 +29,7 @@ gen se2=(loghr-lnl)/1.96
 corr se1 se2
 
 gen seloghr=(se1+se2)/2
+// lines 26, 27, and 31 are usually simply coded as: gen seloghr = (lnu - lnl)/(2 * 1.96)
 drop se1 se2 lnu lnl
 
 * create strata from subgroup
