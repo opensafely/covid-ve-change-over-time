@@ -226,7 +226,7 @@ readr::write_rds(
 # # create study definitions from template_study_definition.py
 # check_create <- try(processx::run(command="bash", args= "analysis/create_study_definitions.sh"))
 # 
-# if (class(check_create)=="try-error") stop("Study definitions not created.")
+# if (inherits(check_create, "try-error")) stop("Study definitions not created.")
 
 
 ################################################################################
