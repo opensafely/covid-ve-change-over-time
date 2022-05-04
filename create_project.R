@@ -551,6 +551,17 @@ actions_list <- splice(
       )
   ), recursive = FALSE)),
   
+
+  comment("check distribution of follow-up time in relation to variant dates"),
+  action(
+    name = "check_fu",
+    run = "r:latest analysis/comparisons/check_fu.R",
+    needs = list("data_covariates_process"),
+    moderately_sensitive = list(
+      check_fu_plot = "output/tte/images/check_fu_*.png"
+    )
+  ),
+  
   comment("####################################",
           "apply models", 
           "####################################"),

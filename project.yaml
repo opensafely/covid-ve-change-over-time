@@ -210,6 +210,16 @@ actions:
         event_counts_csv: output/tte/data/event_counts_both.csv
         event_counts_txt: output/tte/tables/event_counts_both.txt
 
+  ## check distribution of follow-up time in relation to variant dates 
+
+  check_fu:
+    run: r:latest analysis/comparisons/check_fu.R
+    needs:
+    - data_covariates_process
+    outputs:
+      moderately_sensitive:
+        check_fu_plot: output/tte/images/check_fu_*.png
+
   ## #################################### 
   ## apply models 
   ## #################################### 
