@@ -47,7 +47,7 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
     mutate(across(subgroup,
                   ~ case_when(
                     str_detect(.x, "65") ~ 1,
-                    str_detect(.x, "16-64") ~ 2,
+                    str_detect(.x, "18-64") ~ 2,
                     str_detect(.x, "40-64") ~ 3,
                     str_detect(.x, "18-39") ~ 4,
                     TRUE ~ NA_real_
