@@ -345,8 +345,8 @@ actions_list <- splice(
   
   comment("# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #",
           "DO NOT EDIT project.yaml",
-          "This file is created by create-project.R",
-          "Edit and run create-project.R to update the project.yaml",
+          "This file is created by create_project.R",
+          "Edit and run create_project.R to update the project.yaml",
           "# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #"
   ),
   
