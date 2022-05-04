@@ -475,20 +475,23 @@ actions_list <- splice(
       "data_eligible_cde", 
       "generate_covs_data"
       ),
+    moderately_sensitive = list(
+      data_min_max_fu_csv = "output/lib/data_min_max_fu.csv"
+    ),
     highly_sensitive = list(
       data_covariates = "output/data/data_all.rds"
     )
   ),
   
-  comment("min and max follow-up dates for plots"),
-  action(
-    name = "data_min_max_fu",
-    run = "r:latest analysis/comparisons/data_min_max_fu.R",
-    needs = list("data_covariates_process"),
-    moderately_sensitive = list(
-      data_min_max_fu_csv = "output/lib/data_min_max_fu.csv"
-    )
-  ),
+  # comment("min and max follow-up dates for plots"),
+  # action(
+  #   name = "data_min_max_fu",
+  #   run = "r:latest analysis/comparisons/data_min_max_fu.R",
+  #   needs = list("data_covariates_process"),
+  #   moderately_sensitive = list(
+  #     data_min_max_fu_csv = "output/lib/data_min_max_fu.csv"
+  #   )
+  # ),
   
   comment("####################################",
           "subsequent vaccination", 

@@ -137,14 +137,6 @@ actions:
     outputs:
       highly_sensitive:
         data_covariates: output/data/data_all.rds
-
-  ## min and max follow-up dates for plots 
-
-  data_min_max_fu:
-    run: r:latest analysis/comparisons/data_min_max_fu.R
-    needs:
-    - data_covariates_process
-    outputs:
       moderately_sensitive:
         data_min_max_fu_csv: output/lib/data_min_max_fu.csv
 
