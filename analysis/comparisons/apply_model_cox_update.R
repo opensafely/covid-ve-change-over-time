@@ -109,14 +109,14 @@ for (kk in 1:K) {
     
     coxmods <- list()
     cat(glue("...... fitting unadjusted model ......"), "\n")
-    coxmods[[1]] <- coxph(
+    coxmods[[1]] <- try(coxph(
       formula = formula_cox_1,
       data = data_cox,
       # robust = TRUE,
       # id = patient_id,
       cluster = patient_id,
       na.action = "na.fail",
-      control = opt_control)
+      control = opt_control))
     
     readr::write_rds(
       coxmods[[1]],
@@ -125,14 +125,14 @@ for (kk in 1:K) {
     )
     
     cat(glue("...... fitting adjusted model ......"), "\n")
-    coxmods[[2]] <- coxph(
+    coxmods[[2]] <- try(coxph(
       formula = formula_cox_2,
       data = data_cox,
       # robust = TRUE,
       # id = patient_id,
       cluster = patient_id,
       na.action = "na.fail",
-      control = opt_control)
+      control = opt_control))
     
     readr::write_rds(
       coxmods[[2]],
@@ -148,27 +148,36 @@ for (kk in 1:K) {
       
       coxmod <- coxmods[[i]]
       
-      glance[[i]] <-
-        broom::glance(coxmod) %>%
-        add_column(
-          model = i,
-          convergence = coxmod$info[["convergence"]],
-          ram = format(object.size(coxmod), units="GB", standard="SI", digits=3L),
-          .before = 1
-        )
-      
-      tidy[[i]] <-
-        broom.helpers::tidy_plus_plus(
-          coxmod,
-          exponentiate = FALSE
-        ) %>%
-        tidy_add_n(
-          coxmod
-        ) %>%
-        add_column(
-          model = i,
-          .before=1
-        )
+      if (!inherits(coxmod, "try-error")) {
+        
+        glance[[i]] <-
+          broom::glance(coxmod) %>%
+          add_column(
+            model = i,
+            convergence = coxmod$info[["convergence"]],
+            ram = format(object.size(coxmod), units="GB", standard="SI", digits=3L),
+            .before = 1
+          )
+        
+        tidy[[i]] <-
+          broom.helpers::tidy_plus_plus(
+            coxmod,
+            exponentiate = FALSE
+          ) %>%
+          tidy_add_n(
+            coxmod
+          ) %>%
+          add_column(
+            model = i,
+            .before=1
+          )
+        
+      } else {
+        
+        glance[[i]] <- tibble()
+        tidy[[i]] <- tibble()
+        
+      }
       
     }
     
@@ -190,9 +199,9 @@ for (kk in 1:K) {
       filter(
         str_detect(term, "k\\d"),
         term != "k0"
-        ) %>%
+      ) %>%
       select(model, term, estimate, std.error)
-      
+    
   }
   
 }
