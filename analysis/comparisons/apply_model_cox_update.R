@@ -52,8 +52,8 @@ for (kk in 1:K) {
   model_input <-  readr::read_rds(
     here::here("output", "preflight", "data", glue("model_input_{comparison}_{subgroup_label}_{outcome}_{kk}.rds"))
   )
-  cat("MODEL INPUT:\n")
-  print(modelmodel_input)
+  cat("is.null(model_input):\n")
+  print(is.null(model_input))
   
   # specify filename_suffix for saving models
   filename_suffix <- glue("{comparison}_{subgroup_label}_{outcome}_{kk}")
