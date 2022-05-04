@@ -180,6 +180,6 @@ plot_out <- survtable_redacted %>%
   )
 
 ggsave(plot = plot_out,
-       filename = here::here(image_path, "ci_vax.png"),
+       filename = file.path(image_path, "ci_vax.png"),
        width=16, height=12, units="cm")
   
