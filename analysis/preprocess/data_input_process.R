@@ -76,7 +76,7 @@ data_processed_0 <- data_extract %>%
     ),
     #Subgroup
     subgroup = fct_case_when(
-      jcvi_group %in% c("04b", "06") & age_1 < 65 ~ "16-64 years and clinically vulnerable",
+      jcvi_group %in% c("04b", "06") & age_1 < 65 ~ "18-64 years and clinically vulnerable",
       jcvi_group %in% c("11", "12") ~ "18-39 years",
       jcvi_group %in% c("07", "08", "09", "10") ~ "40-64 years",
       jcvi_group %in% c("02", "03", "04a", "04b", "05") ~ "65+ years",

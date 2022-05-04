@@ -249,7 +249,7 @@ for (i in c(seq_along(data_tables))) {
   ))
   
   cat("---- tidy table 1 ----\n")
-  # vairables under "Evidence of" heading
+  # variables under "Evidence of" heading
   history_of_vars <- c(
     "crd",
     "chd", 

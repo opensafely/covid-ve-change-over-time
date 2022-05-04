@@ -123,6 +123,7 @@ readr::write_csv(regions, here::here("analysis", "lib", "regions.csv"))
 
 # clinical variables for model
 clinical <- c(
+  "BMI" = "bmi",
   "Learning disability" = "learndis",
   "Serious mental illness" = "sev_mental",
   "Morbidity count" = "multimorb",
@@ -134,7 +135,6 @@ clinical <- c(
 # extra clinical variables for summary table 
 # (those used to define morbidity count)
 multimorb <-c(
-  "BMI" = "bmi",
   "Chronic respiratory disease" = "crd", 
   "Chronic heart disease" = "chd", 
   "Chronic liver disease" = "cld", 
@@ -173,7 +173,7 @@ readr::write_rds(
 # subgroups ----
 subgroups <- c(
   "65+ years",
-  "16-64 years and clinically vulnerable", 
+  "18-64 years and clinically vulnerable", 
   "40-64 years",
   "18-39 years"
   )
@@ -226,7 +226,7 @@ readr::write_rds(
 # # create study definitions from template_study_definition.py
 # check_create <- try(processx::run(command="bash", args= "analysis/create_study_definitions.sh"))
 # 
-# if (class(check_create)=="try-error") stop("Study definitions not created.")
+# if (inherits(check_create, "try-error")) stop("Study definitions not created.")
 
 
 ################################################################################
@@ -345,8 +345,8 @@ actions_list <- splice(
   
   comment("# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #",
           "DO NOT EDIT project.yaml",
-          "This file is created by create-project.R",
-          "Edit and run create-project.R to update the project.yaml",
+          "This file is created by create_project.R",
+          "Edit and run create_project.R to update the project.yaml",
           "# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #"
   ),
   

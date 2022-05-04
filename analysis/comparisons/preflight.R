@@ -325,11 +325,11 @@ for (kk in 1:K) {
     # create age variables
     if (str_detect(subgroup_label, "^1")) {
       
-      # age and age^2 for subgroup 16-64 and vulnerable
+      # age and age^2 for subgroup 18-64 and vulnerable
       data_4 <- data_3 %>%
         mutate(
-          `age_16to64` = age,
-          `age_16to64_squared` = age * age
+          `age_18to64` = age,
+          `age_18to64_squared` = age * age
         ) 
       
     } else {

@@ -9,7 +9,7 @@ from codelists import *
 
 import pandas as pd
 
-# import the vairables for deriving JCVI groups
+# import the variables for deriving JCVI groups
 from grouping_variables import (
     jcvi_variables, 
     study_parameters
