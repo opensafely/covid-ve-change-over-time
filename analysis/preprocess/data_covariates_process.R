@@ -81,7 +81,7 @@ data_all <- data_arm %>%
     immunosuppressed = immunosuppressed | asplenia,
     
     multimorb =
-      as.integer(bmi %in% "Obese III (40+)") +
+      # as.integer(bmi %in% "Obese III (40+)") +
       as.integer(chd)  +
       as.integer(diabetes) +
       as.integer(cld) +
