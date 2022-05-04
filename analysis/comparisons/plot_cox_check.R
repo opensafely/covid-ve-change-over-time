@@ -11,7 +11,7 @@ subgroups <- readr::read_rds(
 subgroup_labels <- seq_along(subgroups)
 
 cat("-- read estimates_all.csv --")
-estimates_all <- readr::read_csv(here::here("output", "models_cox", "data", "estimates_all.csv")) %>%
+estimates_all <- readr::read_csv(here::here("output", "release_objects", "estimates_all.csv")) %>%
   filter(variable == "k", label != "0") %>%
   mutate(across(c(estimate, conf.low, conf.high), exp)) %>%
   mutate(
