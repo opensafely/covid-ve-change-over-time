@@ -63,11 +63,11 @@ Below is a description of each of the actions in the [`project.yaml`](./project.
 
 ### `analysis/functions`
 The following scripts contain functions which are used throughout this project:
-* [`data_process_functions.R`](analysis/lib/data_process_functions.R) contains functions used in data processing
-* [`dummy_data_functions.R`](analysis/lib/dummy_data_functions.R) contains functions used to define the dummy data
-* [`data_properties.R`](analysis/lib/data_properties.R) contains functions to summarise data properties
-* [`redaction_functions.R`](analysis/lib/redaction_functions.R) contains functions for redacting values <= a specified threshold
-* [`round_km.R`](analysis/lib/round_km.R) contains functions for rounding Kaplan-Meier estimates for disclosure control
+* [`data_process_functions.R`](analysis/functions/data_process_functions.R) contains functions used in data processing
+* [`dummy_data_functions.R`](analysis/functions/dummy_data_functions.R) contains functions used to define the dummy data
+* [`data_properties.R`](analysis/functions/data_properties.R) contains functions to summarise data properties
+* [`redaction_functions.R`](analysis/functions/redaction_functions.R) contains functions for redacting values <= a specified threshold
+* [`round_km.R`](analysis/functions/round_km.R) contains functions for rounding Kaplan-Meier estimates for disclosure control
 
 
 ### `analysis/post_release`
