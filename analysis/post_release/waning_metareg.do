@@ -34,7 +34,7 @@ drop se1 se2 lnu lnl
 
 * create strata from subgroup
 gen stratum=1 if subgroup=="65+ years"
-replace stratum=2 if subgroup=="16-64 years and clinically vulnerable"
+replace stratum=2 if subgroup=="18-64 years and clinically vulnerable"
 replace stratum=3 if subgroup=="40-64 years"
 replace stratum=4 if subgroup=="18-39 years"
 
@@ -151,11 +151,11 @@ log close
 // reshape wide logrhr selogrhr rhr lci uci, i(subgroup outcome model) j(vaccine)
 //
 // gen stratum=1 if subgroup=="65+ years"
-// replace stratum=2 if subgroup=="16-64 years and clinically vulnerable"
+// replace stratum=2 if subgroup=="18-64 years and clinically vulnerable"
 // replace stratum=3 if subgroup=="40-64 years"
 // replace stratum=4 if subgroup=="18-39 years"
 //
-// label define stratum 1 "65+_years" 2 "16-64_years_&_clinically_vulnerable" ///
+// label define stratum 1 "65+_years" 2 "18-64_years_&_clinically_vulnerable" ///
 // 3 "40-64_years" 4 "18-39_years"
 //
 // label values stratum stratum
