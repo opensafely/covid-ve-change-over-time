@@ -9,7 +9,6 @@ You can run this project via [Gitpod](https://gitpod.io) in a web browser by cli
 * The [protocol is in the OpenSAFELY Google drive](https://docs.google.com/document/d/10EX8i_IfikInKRD1nkbTkLfHBJ6GdJU7PgQW_p12ibg/edit#)
 * The pre-print is [here](https://www.medrxiv.org/content/10.1101/2022.03.23.22272804v1)
 * Analysis scripts are in the [`analysis/`](./analysis) directory (see below for details)
-* Non-disclosive model outputs, including tables, figures, etc, are in `released_outputs/`
 * If you are interested in how we defined our code lists, look in the [codelists folder](./codelists/)
 
 ### project.yaml
