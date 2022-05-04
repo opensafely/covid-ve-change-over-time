@@ -84,7 +84,7 @@ for (s in levels(min_max$subgroup)) {
     group_by(k, date) %>%
     count() %>%
     ungroup() %>%
-    mutate(across(n, ~ceiling_any(.x, to = 7)))
+    mutate(across(n, ~ceiling_any(.x, to = 7)/1000)) 
   
   xintercepts <- Date()
   names_xintercepts <- character()
@@ -133,8 +133,8 @@ for (s in levels(min_max$subgroup)) {
       aes(xintercept = date, colour = lab_col),
       linetype = "dashed") +
     labs(
-      x = "Date of follow-up", 
-      y = "Number of individuals followed up"
+      x = "Date of follow-up (during 2021)", 
+      y = "Number of individuals followed up (x 1000)"
       ) +
     facet_grid(k~.) +
     geom_label(
@@ -146,11 +146,18 @@ for (s in levels(min_max$subgroup)) {
       values = col_palette[index]
     ) +
     scale_x_date(
+      # breaks = seq(min_date - days(14), max_date + days(14), 28),
+      date_breaks = "1 month",
+      date_labels = "%d %b",
       limits = c(min_date - days(14), max_date + days(14))
     ) +
     theme_bw() +
     theme(
-      axis.title.x = element_text(size=10, margin = margin(t = 10, r = 0, b = 0, l = 0)),
+      axis.text.x = element_text(angle = 45, vjust = 0.5),
+      axis.title.x = element_text(
+        size=10, 
+        margin = margin(t = 10, r = 0, b = 0, l = 0)
+        ),
       axis.title.y = element_text(size=10, margin = margin(t = 0, r = 10, b = 0, l = 0)),
       legend.position = "none"
     )
