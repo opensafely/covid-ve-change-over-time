@@ -17,8 +17,8 @@ args <- commandArgs(trailingOnly=TRUE)
 if(length(args)==0){
   # use for interactive testing
   comparison <- "BNT162b2"
-  subgroup_label <- "1_Female"
-  outcome <- "postest"
+  subgroup_label <- "2"
+  outcome <- "covidadmitted"
   
 } else{
   comparison <- as.character(args[[1]])
@@ -52,6 +52,8 @@ for (kk in 1:K) {
   model_input <-  readr::read_rds(
     here::here("output", "preflight", "data", glue("model_input_{comparison}_{subgroup_label}_{outcome}_{kk}.rds"))
   )
+  cat("MODEL INPUT:\n")
+  print(modelmodel_input)
   
   # specify filename_suffix for saving models
   filename_suffix <- glue("{comparison}_{subgroup_label}_{outcome}_{kk}")
