@@ -323,7 +323,7 @@ for (kk in 1:K) {
     
     ################################################################################
     # create age variables
-    if (str_detect(subgroup_label, "^1")) {
+    if (str_detect(subgroup_label, "^2")) {
       
       # age and age^2 for subgroup 18-64 and vulnerable
       data_4 <- data_3 %>%
