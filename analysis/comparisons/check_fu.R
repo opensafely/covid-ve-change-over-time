@@ -146,7 +146,6 @@ for (s in levels(min_max$subgroup)) {
       values = col_palette[index]
     ) +
     scale_x_date(
-      # breaks = seq(min_date - days(14), max_date + days(14), 28),
       date_breaks = "1 month",
       date_labels = "%d %b",
       limits = c(min_date - days(14), max_date + days(14))
