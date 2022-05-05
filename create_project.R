@@ -644,6 +644,20 @@ actions_list <- splice(
     moderately_sensitive = list(
       plot_check = "output/models_cox/images/plot_check*.svg"
     )
+  ),
+  
+  comment("####################################",
+          "plot to check coefs", 
+          "####################################"),
+  action(
+    name = "plot_check_coefs",
+    run = "r:latest analysis/comparisons/plot_coefs.R",
+    needs = list(
+      "combine_estimates"
+    ),
+    moderately_sensitive = list(
+      plot_coefs = "output/models_cox/images/coefs*.png"
+    )
   )#,
   
   # comment("####################################",

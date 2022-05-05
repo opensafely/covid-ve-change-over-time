@@ -178,4 +178,4 @@ apply_model_cox_both_3_Male_postest   preflight_both_3_Male_covidadmitted
 apply_model_cox_both_3_Male_covidadmitted   preflight_both_3_Male_covidemergency 
 apply_model_cox_both_3_Male_covidemergency   preflight_both_3_Male_coviddeath 
 apply_model_cox_both_3_Male_coviddeath   preflight_both_3_Male_noncoviddeath 
-apply_model_cox_both_3_Male_noncoviddeath  combine_estimates    plot_check
+apply_model_cox_both_3_Male_noncoviddeath  combine_estimates    plot_check    plot_check_coefs

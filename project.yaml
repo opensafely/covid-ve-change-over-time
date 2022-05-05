@@ -5851,3 +5851,15 @@ actions:
       moderately_sensitive:
         plot_check: output/models_cox/images/plot_check*.svg
 
+  ## #################################### 
+  ## plot to check coefs 
+  ## #################################### 
+
+  plot_check_coefs:
+    run: r:latest analysis/comparisons/plot_coefs.R
+    needs:
+    - combine_estimates
+    outputs:
+      moderately_sensitive:
+        plot_coefs: output/models_cox/images/coefs*.png
+
