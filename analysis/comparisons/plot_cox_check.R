@@ -3,13 +3,16 @@
 library(tidyverse)
 library(glue)
 
+################################################################################
 fs::dir_create(here::here("output", "models_cox", "images"))
 
+################################################################################
 cat("-- read subgroups --")
 subgroups <- readr::read_rds(
   here::here("analysis", "lib", "subgroups.rds"))
 subgroup_labels <- seq_along(subgroups)
 
+################################################################################
 cat("-- read estimates_all.csv --")
 estimates_all <- readr::read_csv(here::here("output", "release_objects", "estimates_all.csv")) %>%
   filter(variable == "k", label != "0") %>%
@@ -24,12 +27,14 @@ estimates_all <- readr::read_csv(here::here("output", "release_objects", "estima
     ) %>%
   mutate(across(subgroup, factor, levels = subgroup_labels, labels = subgroups)) 
   
+################################################################################
 cat("-- define gg_color_hue --")
 gg_color_hue <- function(n, transparency = 1) {
   hues = seq(15, 375, length = n + 1)
   hcl(h = hues, l = 65, c = 100, alpha = transparency)[1:n]
 }
 
+################################################################################
 cat("-- set parameters for plot --")
 position_dodge_val <- 0.8
 alpha_unadj <- 0.3
@@ -45,6 +50,7 @@ colour_levs <- c(str_c(comparisons, " unadjusted"), str_c(comparisons, " adjuste
 palette_all <- c(palette_unadj, palette_adj)
 names(palette_all) <- colour_levs
 
+################################################################################
 # create function for plot_check
 plot_check <- function(s, c) {
   cat(glue("-- comparison = {c}, sex = {s} --"))
@@ -124,6 +130,7 @@ plot_check <- function(s, c) {
          width=20, height=20, units="cm")
 }
 
+################################################################################
 try(plot_check(c = c("BNT162b2", "ChAdOx1"), s = "Both"))
 try(plot_check(c = "both", s = "Both"))
 try(plot_check(c = "BNT162b2", s = c("Male", "Female")))
