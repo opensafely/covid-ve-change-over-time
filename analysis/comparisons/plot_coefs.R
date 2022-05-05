@@ -37,16 +37,18 @@ estimates_all <- readr::read_csv(here::here("output", "release_objects", "estima
 
 
 ################################################################################
-plot_coefs <- function(c, i) {
+plot_coefs <- function(c, i, s) {
   
   plot_data <- estimates_all %>%
     filter(
       comparison %in% c,
-      subgroup %in% subgroups[i]
+      subgroup %in% subgroups[i],
+      sex %in% s
     ) %>%
     mutate(
-      comparison = glue("{comparison}: {subgroups[i]}"),
+      comparison = glue("{comparison}: sex={s}, {subgroups[i]}"),
       short_term = variable,
+      period = as.factor(period)
     ) %>%
     mutate(across(short_term, ~str_remove(.x, " \\w+ deprived"))) %>%
     mutate(across(short_term, ~str_remove(.x, "ethnicity"))) %>%
@@ -56,7 +58,7 @@ plot_coefs <- function(c, i) {
   
   # plot
   plot_data %>%
-    ggplot(aes(x = short_term, y = estimate, colour = sex)) +
+    ggplot(aes(x = short_term, y = estimate, colour = period)) +
     geom_hline(yintercept = 1, colour = "black") +
     geom_point(alpha = 0.3) +
     geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 1) +
@@ -78,13 +80,15 @@ plot_coefs <- function(c, i) {
       axis.text.y = element_text(size = 6),
       legend.position = "bottom"
     )
-  ggsave(filename = here::here("output", "models_cox", "images", glue("coefs_{c}_{i}.png")),
+  ggsave(filename = here::here("output", "models_cox", "images", glue("coefs_{c}_{i}_{s}.png")),
          width=20, height=30, units="cm")
   
 }
 
 for (c in c("BNT162b2", "ChAdOx1", "both")) {
   for (i in 1:4) {
-    try(plot_coefs(c=c,i=i))
+    for (s in c("Both", "Male", "Female")) {
+      try(plot_coefs(c=c,i=i,s=s))
+    }
   }
 }
