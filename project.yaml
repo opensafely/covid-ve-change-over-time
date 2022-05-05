@@ -93,6 +93,7 @@ actions:
     outputs:
       moderately_sensitive:
         plots_by_region: output/second_vax_period/images/plot_by_region_*.png
+        plots_by_region_data: output/second_vax_period/images/plot_by_region_*.txt
 
   ## apply eligiblity criteria from boxes c, d and e 
 
@@ -219,6 +220,7 @@ actions:
     outputs:
       moderately_sensitive:
         check_fu_plot: output/tte/images/check_fu_*.png
+        check_fu_plot_data: output/tte/images/check_fu_*.txt
 
   ## #################################### 
   ## apply models 

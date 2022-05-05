@@ -430,7 +430,8 @@ actions_list <- splice(
     run = "r:latest analysis/second_vax_period/plot_2nd_vax_dates.R",
     needs = list("data_eligible_ab", "data_2nd_vax_dates"),
     moderately_sensitive = list(
-      plots_by_region = "output/second_vax_period/images/plot_by_region_*.png"
+      plots_by_region = "output/second_vax_period/images/plot_by_region_*.png",
+      plots_by_region_data = "output/second_vax_period/images/plot_by_region_*.txt"
     )
   ),
   
@@ -558,7 +559,8 @@ actions_list <- splice(
     run = "r:latest analysis/comparisons/check_fu.R",
     needs = list("data_covariates_process"),
     moderately_sensitive = list(
-      check_fu_plot = "output/tte/images/check_fu_*.png"
+      check_fu_plot = "output/tte/images/check_fu_*.png",
+      check_fu_plot_data = "output/tte/images/check_fu_*.txt"
     )
   ),
   

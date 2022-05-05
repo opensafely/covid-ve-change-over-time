@@ -86,6 +86,15 @@ for (s in levels(min_max$subgroup)) {
     ungroup() %>%
     mutate(across(n, ~ceiling_any(.x, to = 7)/1000)) 
   
+  # save data for output checking
+  capture.output(
+    data_tte_long %>%
+      mutate(across(n, ~.x*1000)) %>%
+      kableExtra::kable("pipe"),
+    file = here::here("output", "tte", "images", glue("check_fu_{s}.txt")),
+    append = FALSE
+  )
+  
   xintercepts <- Date()
   names_xintercepts <- character()
   n_mult <- numeric()

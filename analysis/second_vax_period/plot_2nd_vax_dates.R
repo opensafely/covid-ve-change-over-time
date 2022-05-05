@@ -41,6 +41,14 @@ plot_2nd_vax_dates_fun <- function(
   jcvi_group <- unique(data$jcvi_group)
   elig_date <- unique(data$elig_date)
   
+  # save data for output checking
+  capture.output(
+    data %>%
+      kableExtra::kable("pipe"),
+    file = here::here("output",  "second_vax_period", "images", glue("plot_by_region_{jcvi_group}_{elig_date}.txt")),
+    append = FALSE
+  )
+  
   # plot title
   title_string <- glue("Eligible from {elig_date}")
   
