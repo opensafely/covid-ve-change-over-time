@@ -21,6 +21,7 @@ source(here::here("analysis", "functions", "redaction_functions.R"))
 # read data
 data_vax_plot <- readr::read_rds(
   here::here("output", "second_vax_period", "data", "data_vax_plot.rds")) %>%
+  select(-n) %>%
   # round up to nearest 7 for plot
   mutate(across(n_brand, ~ceiling_any(.x, to=7)))
 
