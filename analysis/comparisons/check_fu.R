@@ -84,6 +84,8 @@ for (s in levels(min_max$subgroup)) {
     group_by(k, date) %>%
     count() %>%
     ungroup() %>%
+    # round up to nearest 7
+    # also divide by 1000 to keep the plot tidy (will add note to y-axis)
     mutate(across(n, ~ceiling_any(.x, to = 7)/1000)) 
   
   # save data for output checking
