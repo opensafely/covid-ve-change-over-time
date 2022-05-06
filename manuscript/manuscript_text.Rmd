@@ -18,7 +18,7 @@ library(glue)
 
 ```{r paths}
 # path for released results
-release_folder <- "release_20220401"
+release_folder <- "release20220505"
 ```
 
 ```{r read-meta-data}
@@ -50,9 +50,40 @@ select_outcomes <- unname(outcomes[outcomes_order])
 
 ```{r}
 # read data
+table1 <-  bind_rows(
+  lapply(
+    1:4,
+    function(x) 
+      readr::read_csv(here::here(release_folder, "table1", glue("table1_{x}_REDACTED.csv")),
+                      show_col_types = FALSE) %>%
+      mutate(subgroup = x)
+  ) 
+)
+
+# read event counts data
+event_counts_all <- readr::read_csv(
+  here::here(release_folder, "event_counts_all.csv")) %>%
+  mutate(
+    sex = if_else(
+      str_detect(subgroup, "Female|Male"),
+      str_extract(subgroup, "Female|Male"),
+      "Both"
+    ),
+    subgroup = as.integer(str_extract(subgroup, "\\d"))
+  )
+
+
 # read estimates data
 estimates_all <- readr::read_csv(
-  here::here(release_folder, "estimates_all.csv"))
+  here::here(release_folder, "estimates_all.csv")) %>%
+  mutate(
+    sex = if_else(
+      str_detect(subgroup, "Female|Male"),
+      str_extract(subgroup, "Female|Male"),
+      "Both"
+    ),
+    subgroup = as.integer(str_extract(subgroup, "\\d"))
+  )
 
 # read metareg data
 metareg_results_rhr <- readr::read_rds(
@@ -60,8 +91,8 @@ metareg_results_rhr <- readr::read_rds(
   mutate(across(starts_with("rhr"), ~format(round(.x, 2), nmall=2))) %>%
   mutate(value = glue("{rhr} ({rhr_lower}-{rhr_higher})")) %>%
   mutate(across(subgroup, factor, levels = subgroups, labels = subgroups)) %>%
-  arrange(outcome, subgroup, comparison) %>%
-  select(outcome, subgroup, comparison, value)
+  arrange(outcome, subgroup, sex, comparison) %>%
+  select(outcome, subgroup, sex, comparison, value)
 ```
 
 ```{r}
@@ -71,12 +102,13 @@ ends <- seq(2, (K+1)*4, 4)
 starts <- ends + 1
 weeks_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
 
-print_estimates <- function(sub, comp = c("BNT162b2", "ChAdOx1"), out) {
+print_estimates <- function(sub, comp = c("BNT162b2", "ChAdOx1"), out, s = "Both") {
   estimates_all %>%
   filter(
     variable == "k", model == "adjusted",
     !reference_row,
     subgroup %in% sub,
+    sex %in% s,
     comparison %in% comp,
     outcome %in% out
     ) %>%
@@ -91,17 +123,49 @@ print_estimates <- function(sub, comp = c("BNT162b2", "ChAdOx1"), out) {
 
 # Abstract
 
+Participants:
+
+```{r}
+# table 1 data
+table1 %>%
+  filter(Characteristic == "N") %>%
+  mutate(across(c("BNT162b2", "ChAdOx1", "Unvaccinated"),
+                ~ as.integer(str_remove_all(.x, ",")))) %>%
+  mutate(across(ChAdOx1, 
+                ~if_else(subgroup==4, 0L, .x))) %>%
+  summarise(across(c("BNT162b2", "ChAdOx1", "Unvaccinated"), 
+                   ~scales::comma(sum(.x), accuracy = 1))) 
+```
+
 Range of values for ratio of aHRs:
 
 ```{r}
 metareg_results_rhr %>%
   filter(
     comparison != "both",
+    sex == "Both",
     outcome %in% c("covidadmitted", "coviddeath", "postest")
     ) %>%
   arrange(subgroup, comparison, value) %>%
   print(n=Inf)
 ```
+
+Range of values for covidadmitted at 23-26 weeks:
+
+```{r}
+print_estimates(sub=1:4, out = "covidadmitted") %>%
+  filter(label == "23-26") %>%
+  arrange(comparison, label, value)
+```
+
+Range of values for coviddeath at 23-26 weeks:
+
+```{r}
+print_estimates(sub=1:4, out = "coviddeath") %>%
+  filter(label == "23-26") %>%
+  arrange(comparison, label, value)
+```
+
 Range of values for postest at 23-26 weeks:
 
 ```{r}
@@ -113,34 +177,106 @@ print_estimates(sub=1:4, out = "postest") %>%
 # Results
 ## Study population
 
-TODO
+```{r}
+# table 1 data
+table1 %>%
+  filter(Characteristic == "N") %>%
+  mutate(across(c("BNT162b2", "ChAdOx1", "Unvaccinated"),
+                ~ as.integer(str_remove_all(.x, ",")))) %>%
+  mutate(across(ChAdOx1, 
+                ~if_else(subgroup==4, 0L, .x))) %>%
+  summarise(across(c("BNT162b2", "ChAdOx1", "Unvaccinated"), 
+                   ~scales::comma(sum(.x), accuracy = 1))) 
+```
 
 ## Attrition due to subsequent vaccination
 
-TODO
+```{r}
+survtable_redacted <- readr::read_csv(
+    here::here(release_folder, "survtable_redacted.csv")) 
+```
+
+```{r}
+survtable_redacted %>%
+  filter(time <= 23) %>%
+  group_by(subgroup, arm) %>%
+  arrange(time, .by_group = TRUE) %>%
+  mutate(
+    order = row_number(),
+    keep = max(order)
+    ) %>%
+  ungroup() %>%
+  filter(order==keep) %>%
+  mutate(p.c.inc = round(100*c.inc,0)) %>%
+  select(subgroup, arm, p.c.inc) %>%
+  arrange(arm, subgroup) %>%
+  filter(arm == "Unvaccinated")
+```
+
+```{r}
+survtable_redacted %>%
+  filter(time <= 20) %>%
+  group_by(subgroup, arm) %>%
+  arrange(time, .by_group = TRUE) %>%
+  mutate(
+    order = row_number(),
+    keep = max(order)
+    ) %>%
+  ungroup() %>%
+  filter(order==keep) %>%
+  mutate(p.c.inc = round(100*c.inc,0)) %>%
+  select(subgroup, arm, p.c.inc) %>%
+  arrange(arm, subgroup) %>%
+  filter(arm != "Unvaccinated")
+```
 
 ## Waning vaccine effectiveness
+
+Follow-up dates:
+
+```{r}
+# min and max follow-up dates per subgroup
+min_max_fu_dates <- readr::read_csv(
+  here::here(release_folder, glue("data_min_max_fu.csv"))) %>%
+  mutate(across(ends_with("date"),
+                ~ str_c(day(.x), " ", month(.x, label=TRUE)))) %>% 
+  print()
+```
+
 
 Numbers of events:
 
 ```{r}
-estimates_all %>%
-  filter(variable == "k", comparison !="both", model == "adjusted") %>%
-  mutate(group = if_else(label == "0", "unvax", comparison)) %>%
-  distinct(subgroup, group, outcome, period, label, n_obs_label, n_event_label) %>%
-  group_by(outcome, group) %>%
-  summarise(total_events = sum(n_event_label, na.rm = TRUE), .groups = "keep") %>%
+event_counts_all %>%
+  filter(sex=="Both") %>%
+  group_by(arm, outcome) %>%
+  summarise(total_events = scales::comma(sum(events, na.rm = TRUE), accuracy = 1), .groups = "keep") %>%
   ungroup() %>%
-  mutate(across(total_events, ~scales::comma(.x, accuracy = 1))) %>%
-  pivot_wider(
-    names_from = group, values_from = total_events
+   pivot_wider(
+    names_from = arm, values_from = total_events
   ) %>%
   mutate(phrase = glue("{BNT162b2}, {ChAdOx1} and {unvax}")) %>%
   select(outcome, phrase)
-  # arrange(subgroup, outcome, group, period, label)
 ```
 
 ### COVID-19 hospitalisations / deaths
+
+```{r}
+for (i in 1:4) {
+  print_estimates(sub=i, out = "covidadmitted") %>% print()
+}
+```
+
+```{r}
+metareg_results_rhr %>%
+  filter(
+    comparison != "both",
+    sex == "Both",
+    outcome == "covidadmitted"
+    ) %>%
+  arrange(subgroup, comparison, outcome) %>%
+  print(n=Inf)
+```
 
 ```{r}
 for (i in 1:4) {
@@ -148,17 +284,63 @@ for (i in 1:4) {
 }
 ```
 
+```{r}
+metareg_results_rhr %>%
+  filter(
+    comparison != "both",
+    sex == "Both",
+    outcome == "coviddeath"
+    ) %>%
+  arrange(subgroup, comparison, outcome) %>%
+  print(n=Inf)
+```
 
 ### Positive SARS-CoV-2 tests / non-COVID-19 deaths
+
+```{r}
+metareg_results_rhr %>%
+  filter(
+    comparison != "both",
+    sex == "Both",
+    outcome == "postest"
+    ) %>%
+  arrange(subgroup, comparison, outcome) %>%
+  print(n=Inf)
+```
 
 ```{r}
 print_estimates(sub=1:4, out = "postest") %>%
   arrange(comparison, label, value)
 ```
 ```{r}
-print_estimates(sub=1:4, comp = "both", out = "postest") %>%
+print_estimates(sub=1:4, out = "noncoviddeath") %>%
   arrange(comparison, label, value)
 ```
+
+```{r}
+metareg_results_rhr %>%
+  filter(
+    comparison != "both",
+    sex == "Both"
+    ) %>%
+  select(-sex) %>%
+  arrange(outcome, comparison) %>%
+  pivot_wider(names_from = subgroup, values_from = value)
+```
+
+Anytest:
+
+```{r}
+print_estimates(sub=1:4, out = "anytest") %>%
+  arrange(comparison, label, value)
+```
+Comparative:
+
+```{r}
+print_estimates(sub=1:4, comp = "both", out = "coviddeath") %>%
+  arrange(comparison, label, value)
+```
+
 
 Range of values for covidadmitted and coviddeath
 
@@ -171,7 +353,10 @@ Metareg results:
 
 ```{r}
 metareg_results_rhr %>%
-  filter(comparison != "both") %>%
+  filter(
+    comparison != "both",
+    sex == "Both"
+    ) %>%
   print(n=Inf)
 ```
 
