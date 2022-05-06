@@ -30,7 +30,7 @@ library(glue)
 
 ```{r paths}
 # path for released results
-release_folder <- here::here("output", "release_objects")
+release_folder <- here::here("release20220505")
 ```
 
 ```{r read-meta-data}
@@ -109,6 +109,10 @@ estimates_all <- readr::read_csv(
       ),
     subgroup = as.integer(str_extract(subgroup, "\\d"))
     ) %>%
+  filter(
+    !(comparison %in% c("BNT162b2", "both") & subgroup %in% c(3,4) & outcome == "noncoviddeath"),
+    !(comparison %in% c("BNT162b2", "both") & subgroup %in% 3 & outcome == "covidadmitted")
+    ) %>%
   mutate(across(c(estimate, conf.low, conf.high),
                 ~round(exp(.x), 2), nsmall=2)) %>%
   mutate(across(outcome,
@@ -136,31 +140,6 @@ metareg_results_k <- readr::read_rds(
                 ~format(round(exp(.x), digits=2), nsmall=2, trim = TRUE))) %>%
   select(subgroup, sex, comparison, outcome, k, rhr = logrhr, rhr_lower = logrhr_lower, rhr_higher = logrhr_higher)
 ```
-
-```{r}
-# # derive event counts data
-# event_counts <- estimates_all %>%
-#   filter(
-#     variable == "k",
-#     model == "unadjusted",
-#     comparison != "BNT162b2 vs ChAdOx1"
-#   ) %>%
-#   select(
-#     subgroup, sex, comparison, outcome, period, label, 
-#     n_event_label, persondays
-#   ) %>%
-#   mutate(arm = if_else(
-#     label == "0",
-#     "Unvaccinated",
-#     str_remove(comparison, " vs unvaccinated")
-#   )) %>%
-#   select(-comparison, -label) %>%
-#   rename(k=period, events=n_event_label) %>%
-#   distinct() %>%
-#   mutate(person_years = round(persondays/365, 0)) %>%
-#   select(-persondays)
-```
-
 
 ```{r kable-opts}
 padding <- 0.5 # this is a guess, couldn't find default
@@ -247,14 +226,20 @@ variable_defs <- local({
   "Start of SVP",
   #
   "Potential confounders (clinical)",
-  "Asplenia; Chronic heart disease; Chronic respiratory disease; Chronic liver disease; Chronic kidney disease; Diabetes; Chronic neurological disease; Immunosuppressed; Learning disability including Down’s syndrome; Serious mental illness.",
+  "Learning disability including Down’s syndrome.",
+  "Any code in primary care record before date defined.",
+  "0; 1.",
+  "Start of SVP",
+  #
+  "Potential confounders (clinical)",
+  "Serious mental illness.",
   "Any code in primary care record before date defined.",
   "0; 1.",
   "Start of SVP",
   #
   "Potential confounders (clinical)",
   "Multimorbidity",
-  "Number of comorbid conditions in different organ systems.",
+  "Number of the following comorbid conditions in different organ systems: Chronic heart disease; Chronic respiratory disease; Chronic liver disease; Chronic kidney disease; Diabetes; Chronic neurological disease; Immunosuppressed (diagnosis of permenant immunosuppression or asplenia, or currently taking immunosuppresant medication)",
   "0; 1; 2+",
   "Start of SVP",
   #
@@ -264,29 +249,11 @@ variable_defs <- local({
   "0; 1.",
   "Start of SVP",
   #
-  # "Potential confounders (clinical)",
-  # "Shielding",
-  # "UK government COVID-19 shielding criteria met.",
-  # "0; 1.",
-  # "start\\textsubscript{ki}",
-  #
   "Potential confounders (clinical)",
   "Pregnancy",
   "Pregnancy recorded in 36 weeks prior to date and no delivery code recorded more recently that pregnancy code.",
   "0; 1.",
   "Start of SVP",
-  #
-  # "Potential confounders (clinical)",
-  # "Care home",
-  # "Code corresponding to care home in patient’s record before evaluation date.",
-  # "0; 1.",
-  # "start\\textsubscript{ki}",
-  #
-  # "Potential confounders (clinical)",
-  # "Housebound",
-  # "Code indicating that the individual is housebound.",
-  # "0; 1.",
-  # "start\\textsubscript{ki}",
   #
   "Potential confounders (clinical)",
   "Number of SARS-CoV-2 tests.",
@@ -349,7 +316,7 @@ print_table1 <- local({
     kable(
       format = "latex",
       col.names = col_names,
-      caption = "Additional characteristics summarised across groups.",
+      caption = "Additional characteristics summarised across subgroups.",
       booktabs = TRUE, 
       longtable = TRUE
     ) %>%
@@ -378,6 +345,13 @@ print_table1 <- local({
 
 ```{r prep-table-events}
 table_events_ft <- function(s) {
+  
+  caption_string <- "Event counts / person-years"
+  if (s == "Both") {
+    caption_string <- glue("{caption_string}.")
+  } else {
+    caption_string <- glue("{caption_string} ({str_to_lower(s)} only model).")
+  }
   
   data <- event_counts %>%
     filter(sex == s) %>%
@@ -439,7 +413,7 @@ table_events_ft <- function(s) {
     kable(
       format = "latex",
       col.names = col_names,
-      caption = "Event counts during each comparison period.",
+      caption = caption_string, 
       booktabs = TRUE, 
       longtable = TRUE
     ) %>%
@@ -472,9 +446,9 @@ table_events_ft <- function(s) {
 table_hrs_ft <- function(m, s){
   
   if (m == "unadjusted") {
-    caption_string <- "Unadjusted hazard ratios for each comparison period"
+    caption_string <- "Unadjusted hazard ratios for effect of vaccination"
   } else if (m == "adjusted") {
-    caption_string <- "Adjusted hazard ratios for each comparison period"
+    caption_string <- "Adjusted hazard ratios for effect of vaccination"
   }
   
   if (s == "Both") {
@@ -582,7 +556,7 @@ table_hrs_ft <- function(m, s){
 ```{r prep-table-metareg}
 table_metareg_ft <- function(s) {
     
-  caption_string <- "Ratio of adjusted hazard ratios for each comparison period"
+  caption_string <- "Per-comparison-period ratio of adjusted hazard ratios for effect of vaccination"
   if (s == "Both") {
     caption_string <- glue("{caption_string}.")
   } else {
@@ -676,146 +650,117 @@ table_metareg_ft <- function(s) {
 ```
 
 ```{r prep-table-estimates-covs}
-# # create estimates_covs
-# estimates_covs <- estimates_all %>%
-#   filter(variable != "k") %>%
-#   mutate(across(subgroup, 
-#                 factor, 
-#                 levels = subgroup_labels, 
-#                 labels = subgroups[subgroup_labels])) %>%
-#   group_split(subgroup, comparison) %>%
-#   as.list()
-# 
-# table_estimates_covs_ft <- function(i) {
-#   
-#   subgroup <- unique(estimates_covs[[i]]$subgroup)
-#   subgroup_long <- subgroups_long[subgroups == subgroup]
-#   
-#   comparison <- unique(estimates_covs[[i]]$comparison)
-#   
-#   if (subgroup %in% 3:4) {
-#     subgroup_longer <- str_c(
-#       subgroup_long,
-#       " and not clinically vulnerable"
-#     )
-#   } else {
-#     subgroup_longer <- subgroup_long
-#   }
-#   
-#   caption_string <- glue("Hazard ratios corresponding to covariates in the adjusted {comparison} model in the {subgroup_longer} subgroup.")
-#   
-#   table_out0 <- estimates_covs[[i]] %>%
-#     transmute(
-#       outcome = outcome,
-#       variable = variable,
-#       label = label,
-#       value = if_else(
-#         !reference_row | is.na(reference_row),
-#         as.character(glue("{estimate} ({conf.low}-{conf.high})")),
-#         "1.00 (ref)"
-#       )
-#     ) %>%
-#     pivot_wider(
-#       names_from = outcome,
-#       values_from = value
-#     ) 
-#   
-#   # add column for missing outcomes for consistency across tables
-#   missing_outcomes <- !(names(outcomes) %in% names(table_out0))
-#   if (any(missing_outcomes)) {
-#     for (o in names(outcomes)[missing_outcomes]) {
-#     table_out0 <- table_out0 %>%
-#       mutate(!! sym(o) := NA_character_)
-#     }
-#   }
-#   
-#   table_out0 <- table_out0 %>%
-#     select(variable, label, all_of(names(outcomes[outcomes_order]))) 
-#   
-#   age_order <- sort(unique(table_out0$label[str_detect(table_out0$label, "^age")]))
-#   age_order <- age_order[age_order!="age"]
-#   
-#   history_of_vars <- c(
-#     "chronic_respiratory_disease",
-#     "chronic_heart_disease", 
-#     "chronic_liver_disease", 
-#     "ckd", 
-#     "chronic_neuro_inc_ld",
-#     "diabetes",
-#     "any_immunosuppression", 
-#     "ld_inc_ds_and_cp", 
-#     "sev_ment")
-#   
-#   
-#   col_width <- (26 - ncol(table_out0)*padding)/ncol(table_out0)
-#   col_width <- as.character(glue("{col_width}cm"))
-#   
-#   table_out1 <- tibble(
-#     Variable = c(age_order, names(c(model_varlist$demographic, model_varlist$clinical))),
-#     variable = c(age_order, unname(unlist(model_varlist)))
-#   ) %>%
-#     inner_join(table_out0, by = "variable") %>%
-#     filter(Variable != "Age") %>% # remove this line after new results released
-#     select(-variable) %>%
-#     mutate(across(Variable, 
-#                   ~if_else(
-#                     str_detect(label, "^age"), 
-#                     "Age\\textsuperscript{a}",
-#                     .x))) %>%
-#     mutate(label_old = label) %>%
-#     mutate(across(label, 
-#                   ~if_else(.x %in% glue("{history_of_vars}TRUE"),
-#                            Variable,
-#                            .x))) %>%
-#     mutate(across(Variable, 
-#                   ~if_else(label_old %in% glue("{history_of_vars}TRUE"),
-#                            "History of",
-#                            .x))) %>%
-#     mutate(across(label, 
-#                   ~if_else(str_detect(.x, "TRUE$"),
-#                            "yes",
-#                            .x))) %>%
-#     mutate(across(Variable, 
-#                   ~if_else(str_detect(.x, "Number of SARS-CoV-2 tests"),
-#                            "Number of SARS-CoV-2 tests",
-#                            .x))) %>%
-#     mutate(across(label, 
-#                   ~str_replace_all(.x, "\\_", "\\\\_"))) %>%
-#     mutate(across(all_of(names(outcomes)), ~if_else(is.na(.x), "-", .x))) %>%
-#     select(-label_old) %>%
-#     select(Variable, "Category\\textsuperscript{b}" = label, all_of(names(outcomes[outcomes_order])))
-#   
-#   table_out2 <- table_out1 %>%
-#     kable(
-#       format = "latex",
-#       caption = caption_string,
-#       booktabs = TRUE, 
-#       longtable = TRUE,
-#       escape = FALSE # manually escape all special characters
-#     ) %>%
-#     row_spec(0, bold=TRUE) %>%
-#     column_spec(seq_along(table_out0), width=col_width) %>%
-#     collapse_rows(
-#       columns = 1, 
-#       valign = "top",
-#       latex_hline = "major"
-#       ) %>%
-#     kable_styling(
-#       font_size = 6,
-#       latex_options = c("hold_position", "repeat_header")
-#       ) %>%
-#     footnote(
-#       alphabet = c(
-#         "Categories separated by \" / \" were merged due to low event counts.",
-#         "Age terms were fit separately within strata. The age range in the strata is indicated by the suffix following the underscore on the age category label. Strata in which the age range was < 5 years included only a linear age term, otherwise a quadratic age term was included."),
-#       footnote_as_chunk=TRUE,
-#       escape=FALSE,
-#       threeparttable = TRUE # to wrap footnote
-#     )
-#   
-#   return(table_out2)
-#     
-# }
+
+variable_order <- c(model_varlist$demographic, model_varlist$clinical)
+  names(variable_order)[variable_order == "test_hist_n"] <- "Number of SARS-CoV-2 tests"
+  names(variable_order)[variable_order == "flu_vaccine"] <- "Flu vaccine"
+  
+names_key <- tibble(
+  names_long = names(variable_order),
+  variable = variable_order
+)
+
+tables_data <- names_key %>%
+  left_join(estimates_all %>%
+              mutate(across(variable, ~if_else(str_detect(.x, "^age"), "age", .x))), 
+            by = "variable") %>%
+  filter(variable != "k", model == "adjusted") %>%
+  mutate(across(c(estimate, conf.low, conf.high), format, trim = TRUE, nsmall = 2, scientific = FALSE)) %>%
+  mutate(value = glue("{estimate} ({conf.low}-{conf.high})")) %>%
+  mutate(across(value, ~str_remove(.x, "\\(NA-NA\\)"))) %>%
+  mutate(across(label, ~str_remove(.x, "^age_"))) %>%
+  mutate(across(label, ~str_replace(.x, "plus", "+"))) %>%
+  mutate(across(label, ~str_replace(.x, "to", "-"))) %>%
+  mutate(across(label, ~str_replace(.x, "_", " "))) %>%
+  mutate(across(label, ~str_remove(.x, "\\s\\w+\\sdeprived"))) %>%
+  mutate(across(label, ~str_remove_all(.x, "Obese\\s\\w+\\s"))) %>%
+  mutate(across(label, ~str_replace(.x, "Not obese", "<30 or missing"))) %>%
+  mutate(across(label,
+                ~if_else(
+                  variable == "bmi",
+                  str_remove_all(.x, "\\(|\\)"),
+                  .x
+                  ))) %>%
+  mutate(across(label,
+                ~if_else(
+                  str_detect(.x, "TRUE"),
+                  "",
+                  .x
+                ))) %>%
+  select(comparison, subgroup, sex, outcome, period, variable = names_long, label, value) %>%
+  mutate(across(variable, ~if_else(.x == "Age", "Age*", .x))) %>%
+  pivot_wider(names_from = period, values_from = value) %>%
+  mutate(across(starts_with(as.character(1:6)), ~if_else(is.na(.x), "-", .x)))  
+
+table_coef_hrs <- function(comp, sub, s, o){
+  
+  data <- tables_data %>%
+    filter(
+      comparison == comp,
+      subgroup == sub,
+      sex == s,
+      outcome == names(outcomes)[outcomes == o]
+    ) %>%
+    select(-comparison, -subgroup, -sex, -outcome)
+  
+  age_order <- data %>% 
+  filter(variable == "Age") %>%
+  distinct(variable, label) %>%
+  arrange(label)
+  
+  table_out0 <- age_order %>%
+    full_join(data, by = c("variable", "label"))
+  
+  caption_string <- glue("Covariate hazard ratios for each outcome and comparison period in the {subgroups[sub]} subgroup")
+
+  if (s == "Both") {
+    caption_string <- glue("{caption_string}.")
+  } else {
+    caption_string <- glue("{caption_string} ({str_to_lower(s)} only model).")
+  }
+  
+  caption_string <- glue("{caption_string} [*Provide some explanation for age categories.]")
+  
+  # column names for table
+  table_names <- names(table_out0)
+  col_names <- str_to_title(table_names)
+  col_names[col_names == "Label"] <- "Category"
+  names(col_names) <- table_names
+  
+  col_width <- (26 - ncol(table_out0)*padding)/ncol(table_out0)
+  col_width <- as.character(glue("{col_width}cm"))
+  
+  table_out1 <- table_out0 %>%
+    select(all_of(table_names)) %>%
+    kable(
+      format = "latex",
+      col.names = col_names,
+      caption = caption_string,
+      booktabs = TRUE, 
+      longtable = TRUE
+    ) %>%
+    row_spec(0, bold=TRUE) %>%
+    add_header_above(
+      c(" " = 2, "Comparison period" = 6),
+      bold=TRUE,
+      escape = FALSE
+      ) %>%
+    column_spec(seq_along(table_out0), width=col_width) %>%
+    collapse_rows(columns = 1, valign = "top") %>%
+    kable_styling(
+      font_size = 6,
+      latex_options = c("hold_position", "repeat_header")
+      ) #%>%
+    # footnote(
+    #   alphabet = c("And not clinically vulnerable"),
+    #   footnote_as_chunk=TRUE,
+    #   escape=FALSE
+    # )
+  
+  return(table_out1)
+  
+}
+
 ```
 
 
@@ -829,16 +774,16 @@ tribble(
   "1", "2", "All those 80 years of age and over",
   "1", "2", "Frontline health and social care workers",
   "1", "3", "All those 75 years of age and over",
-  "1", "4", "All those 70 years of age and over",
-  "1", "4", "Individuals aged 16 to 69 in a high risk group\\textsuperscript{a}",
+  "1", "4a", "All those 70 years of age and over",
+  "1", "4b", "Individuals aged 16 to 69 in a high risk group\\textsuperscript{a}",
   "1", "5", "All those 65 years of age and over",
   "1", "6", "Individuals aged 16 to 65 years in an at-risk group\\textsuperscript{a}",
   "1", "7", "All those 60 years of age and over",
   "1", "8", "All those 55 years of age and over",
   "1", "9", "All those 50 years of age and over",
-  "2", "", "All those 40 years of age and over",
-  "2", "", "All those 30 years of age and over",
-  "2", "", "All those 18 years of age and over"
+  "2", "10", "All those 40 years of age and over",
+  "2", "11", "All those 30 years of age and over",
+  "2", "12", "All those 18 years of age and over"
 ) %>%
   kable(
       format = "latex",
@@ -876,7 +821,7 @@ elig_dates <-
 tribble(
     ~grouped_date, ~date, ~age_range, ~jcvi_groups, ~source,
     "2020-12-08", "2020-12-08", "-", "1, 2", "-",
-    "2021-01-18", "2021-01-18", "-", "3, 4", "https://www.bbc.co.uk/news/uk-55698132",
+    "2021-01-18", "2021-01-18", "-", "3, 4a, 4b", "https://www.bbc.co.uk/news/uk-55698132",
     ###
     "2021-02-15", "2021-02-15", "-", "5, 6", "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2021/02/COVID-19-weekly-announced-vaccinations-25-February-2021.pdf",
     ###
@@ -958,6 +903,7 @@ knitr::include_graphics(here::here("manuscript", "images", "eligibility_criteria
 
 # Supplementary Results
 <!-- Test some text referring to \figref{fig:svp-10-2021-04-13} and \tabref{tab:table1}. -->
+## Study population
 
 ```{r flow-diagram, include=TRUE, fig.cap="Flow of individuals into study", out.width="\\linewidth"}
 knitr::include_graphics(here::here("manuscript", "images", "flow_results.png"))
@@ -990,7 +936,7 @@ knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_0
 ```
 
 ```{r svp-07-2021-02-22, include=TRUE, fig.cap="Second vaccination period for JCVI group 7 and aged 64 years", out.width="\\linewidth"}
-# knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_07_2021-02-22.png"))
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_07_2021-02-22.png"))
 ```
 
 ```{r svp-07-2021-03-01, include=TRUE, fig.cap="Second vaccination period for JCVI group 7 and aged 60-63 years", out.width="\\linewidth"}
@@ -1006,43 +952,65 @@ knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_0
 ```
 
 ```{r svp-10-2021-04-13, include=TRUE, fig.cap="Second vaccination period for JCVI group 10 and aged 45-49 years", out.width="\\linewidth"}
-# knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_10_2021-04-13.png"))
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_10_2021-04-13.png"))
 ```
 
 ```{r svp-10-2021-04-26, include=TRUE, fig.cap="Second vaccination period for JCVI group 10 and aged 40-44 years", out.width="\\linewidth"}
-# knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_10_2021-04-26.png"))
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_10_2021-04-26.png"))
 ```
 
 ```{r svp-11-2021-05-13, include=TRUE, fig.cap="Second vaccination period for JCVI group 11 and aged 36-39 years", out.width="\\linewidth"}
-# knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_11_2021-05-13.png"))
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_11_2021-05-13.png"))
 ```
 
 ```{r svp-11-2021-05-21, include=TRUE, fig.cap="Second vaccination period for JCVI group 11 and aged 30-35 years", out.width="\\linewidth"}
-# knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_11_2021-05-21.png"))
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_11_2021-05-21.png"))
 ```
 
 ```{r svp-12-2021-06-08, include=TRUE, fig.cap="Second vaccination period for JCVI group 12 and aged 25-29 years", out.width="\\linewidth"}
-# knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_12_2021-06-08.png"))
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_12_2021-06-08.png"))
 ```
 
 ```{r svp-12-2021-06-15, include=TRUE, fig.cap="Second vaccination period for JCVI group 12 and aged 18-24 years", out.width="\\linewidth"}
-# knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_12_2021-06-15.png"))
+knitr::include_graphics(file.path(release_folder, "svp_plots", "plot_by_region_12_2021-06-15.png"))
 ```
 
 \end{landscape}
-
-```{r ci-vax, include=TRUE, fig.cap="Cumulative incidence of subsequent vaccination. *And not clinically vulnerable.", out.width="\\linewidth"}
-knitr::include_graphics(file.path(release_folder, "ci_vax.png"))
-```
 
 ```{r table1, include=TRUE, tab.cap.pre = "Supplementary Table "}
 landscape(print_table1)
 ```
 
+## Attrition due to subsequent vaccination
+
+```{r ci-vax, include=TRUE, fig.cap="Cumulative incidence of subsequent vaccination. *And not clinically vulnerable.", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "ci_vax.png"))
+```
+
+## Distribution of follow-up time
+
+```{r check-fu-65, include=TRUE, fig.cap="Distribution of follow-up time across the six comparison periods in the 65+ years subgroup. [add reference for dates]", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "variants", "check_fu_65+ years.png"))
+```
+
+```{r check-fu-18-64, include=TRUE, fig.cap="Distribution of follow-up time across the six comparison periods in the 18-64 years and clinically vulnerable subgroup. [add reference for dates]", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "variants", "check_fu_18-64 years and clinically vulnerable.png"))
+```
+
+```{r check-fu-40-64, include=TRUE, fig.cap="Distribution of follow-up time across the six comparison periods in the 40-64 years subgroup. [add reference for dates]", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "variants", "check_fu_40-64 years.png"))
+```
+
+```{r check-fu-18-39, include=TRUE, fig.cap="Distribution of follow-up time across the six comparison periods in the 18-39 years subgroup. [add reference for dates]", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "variants", "check_fu_18-39 years.png"))
+```
+
+## Waning vaccine effectiveness in risk-based subgroups
+[Add some text to describe what is in section.]
+
 ```{r table-events, include=TRUE, tab.cap.pre = "Supplementary Table "}
 landscape(table_events_ft("Both"))
 ```
-
 
 ```{r table-hrs-ft, include=TRUE, tab.cap.pre = "Supplementary Table "}
 landscape(table_hrs_ft(m = "unadjusted", s = "Both"))
@@ -1091,3 +1059,69 @@ knitr::include_graphics(file.path(release_folder, "hr_vax_anytest.png"))
 ```{r hr-brand-anytest, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs ChAdOx1", out.width="\\linewidth"}
 knitr::include_graphics(file.path(release_folder, "hr_brand_anytest.png"))
 ```
+
+```{r coef-BN-1-B-postest, include=TRUE}
+landscape(
+  table_coef_hrs(
+    comp = "BNT162b2 vs unvaccinated",
+    sub = 1,
+    s = "Both",
+    o = "postest"
+    ))
+```
+
+## Waning vaccine effectiveness in risk- and sex-based subgroups
+[Add some text to describe what is in section.]
+
+```{r table-events-female, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_events_ft("Female"))
+```
+
+```{r table-events-male, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_events_ft("Male"))
+```
+
+```{r table-hrs-ft-female, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_hrs_ft(m = "unadjusted", s = "Female"))
+```
+
+```{r table-hrs-ft-male, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_hrs_ft(m = "unadjusted", s = "Male"))
+```
+
+```{r table-ahrs-ft-female, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_hrs_ft(m = "adjusted", s = "Female"))
+```
+
+```{r table-ahrs-ft-male, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_hrs_ft(m = "adjusted", s = "Male"))
+```
+
+```{r table-ratio-hrs-ft-female, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_metareg_ft(s = "Female"))
+```
+
+```{r table-ratio-hrs-ft-male, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_metareg_ft(s = "Male"))
+```
+
+\begin{landscape}
+
+```{r hr-vax-BNT162b2-sex, include=TRUE, fig.cap="Adjusted hazard ratios for BNT162b2 vs unvaccinated in males and females separately.", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "hr_vax_BNT162b2_sex.png"))
+```
+
+```{r hr-vax-ChAdOx1-sex, include=TRUE, fig.cap="Adjusted hazard ratios for ChAdOx1 vs unvaccinated in males and females separately.", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "hr_vax_ChAdOx1_sex.png"))
+```
+
+\end{landscape}
+
+```{r hr-vax-anytest-BNT162b2-sex, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs unvaccinated in males and females separately.", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_BNT162b2_sex.png"))
+```
+
+```{r hr-vax-anytest-ChAdOx-sex, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for ChAdOx1 vs unvaccinated in males and females separately.", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_ChAdOx1_sex.png"))
+```
+
