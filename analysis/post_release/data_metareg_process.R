@@ -40,7 +40,12 @@ data_metareg_0 <- estimates_all %>%
 data_metareg <- data_metareg_0 %>%
   expand(subgroup, comparison, sex, outcome, model, k) %>%
   filter(!(subgroup %in% "18-39 years" & comparison != "BNT162b2")) %>%
-  left_join(data_metareg_0)
+  left_join(data_metareg_0) %>%
+  # following lines because in a few instances seloghr=0, and this is breaking the metareg code 
+  mutate(seloghr = (conf.high - conf.low)/(2*1.96)) %>%
+  mutate(across(c(estimate, conf.low, conf.high),
+                ~if_else(near(seloghr, 0), NA_real_, .x))) %>%
+  select(-seloghr)
 
 # save data
 readr::write_csv(
