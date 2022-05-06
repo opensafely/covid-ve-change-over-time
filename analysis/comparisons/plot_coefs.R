@@ -61,7 +61,7 @@ plot_coefs <- function(c, i, s) {
     ggplot(aes(x = short_term, y = estimate, colour = period)) +
     geom_hline(yintercept = 1, colour = "black") +
     geom_point(alpha = 0.3) +
-    geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 1) +
+    geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 1, alpha = 0.5) +
     facet_grid(outcome ~ comparison, scales = "free_x") +
     scale_y_log10(
       name = "hazard ratio",
@@ -73,6 +73,7 @@ plot_coefs <- function(c, i, s) {
     labs(
       x = NULL
       ) +
+    guides(colour = guide_legend(nrow = 1)) +
     coord_flip() +
     theme_bw() +
     theme(
