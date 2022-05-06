@@ -1,4 +1,4 @@
-*cd "/Users/eh1415/Documents/covid-change-ve-over-time/release_20220401"
+*cd "/Users/eh1415/Documents/covid-change-ve-over-time/release20220505"
 
 *ssc install metareg
 
