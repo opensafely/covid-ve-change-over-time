@@ -1,5 +1,5 @@
 # define release folder
-release_folder <- here::here("output", "release_objects")
+release_folder <- here::here("release20220505")
 
 ### Flow chart
 # process data for flow chart
