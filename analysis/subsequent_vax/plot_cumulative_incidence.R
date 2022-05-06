@@ -39,7 +39,7 @@ source(here::here("analysis", "functions", "round_km.R"))
 # if running locally read extracted data:
 if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
 
-  release_folder <- here::here("output", "release_objects")
+  if (!exists("release_folder")) release_folder <- here::here("output", "release_objects")
   image_path <- here::here(release_folder)
 
   survtable_redacted <- readr::read_csv(
