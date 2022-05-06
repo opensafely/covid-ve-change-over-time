@@ -8,7 +8,7 @@ if (!exists("release_folder")) release_folder <- here::here("output", "release_o
 ################################################################################
 # load data
 eligibility_count_numeric <- readr::read_csv(
-  here::here("output", "tables", "eligibility_count_all.csv"))
+  here::here(release_folder, "eligibility_count_all.csv"))
 
 ################################################################################
 # prepare data
@@ -55,7 +55,7 @@ i <- 1
 flow[i,3] <- glue("Meeting inclusion criteria A: Aged 18 years or over and registered for at least 1 year {eligibility_count[2,]$n}")
 i <- i+2
 # A ex.
-flow[i,5] <- glue("Meeting exclusion criteria A: aged >120 {eligibility_count[3,]$n_removed}; missing  sex, ethnicity, region, or IMD {eligibility_count[4,]$n_removed}; evidence of prior COVID-19 {prior_covid}; in care home {eligibility_count[8,]$n_removed}; meically housebound {eligibility_count[9,]$n_removed}")
+flow[i,5] <- glue("Meeting exclusion criteria A: aged >120 {eligibility_count[3,]$n_removed}; missing  sex, ethnicity, region, or IMD {eligibility_count[4,]$n_removed}; evidence of prior COVID-19 {prior_covid}; in care home {eligibility_count[8,]$n_removed}; medically housebound {eligibility_count[9,]$n_removed}")
 i <- i+2
 # A remaining
 flow[i,3] <- glue("Remaining: {eligibility_count[9,]$n}")
@@ -75,7 +75,7 @@ i <- i+2
 flow[i,1] <- glue("Not meeting inclusion criteria C: {not_c}") 
 i <- i+2
 # C inc.
-flow[i,2] <- glue("Meeting inclusion criteria C: first dose received during SVP {eligibility_count[18,]$n}")
+flow[i,2] <- glue("Meeting inclusion criteria C: second dose received during SVP {eligibility_count[18,]$n}")
 ###
 # D inc
 flow[i,4] <- glue("Meeting inclusion criteria D: unvaccinated at start of SVP {eligibility_count[14,]$n}")
