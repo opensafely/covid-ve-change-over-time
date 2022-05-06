@@ -3,6 +3,7 @@ library(glue)
 library(flextable)
 library(officer)
 library(magrittr)
+library(kableExtra)
 
 ################################################################################
 if (!exists("release_folder")) release_folder <- here::here("output", "release_objects")
@@ -20,7 +21,7 @@ table_out0 <- bind_rows(
   lapply(
     1:4,
     function(x) 
-      readr::read_csv(here::here(release_folder, glue("table1_{x}_REDACTED.csv")),
+      readr::read_csv(here::here(release_folder, "table1", glue("table1_{x}_REDACTED.csv")),
                       show_col_types = FALSE) %>%
       mutate(subgroup = x)
   ) 
