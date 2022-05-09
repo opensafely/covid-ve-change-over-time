@@ -46,7 +46,7 @@ event_counts_all <- bind_rows(
 
 readr::write_csv(
   event_counts_all,
-  here::here("output", "release_objects", "event_counts_all.csv"))
+  here::here("output", "release_objects", "event_counts_6575.csv"))
 
 ################################################################################
 # model estimates
@@ -99,4 +99,4 @@ print(min(model_tidy_tibble$n_obs_model, na.rm=TRUE))
 
 readr::write_csv(
   model_tidy_tibble,
-  here::here("output", "release_objects", "estimates_all.csv"))
+  here::here("output", "release_objects", "estimates_6575.csv"))
