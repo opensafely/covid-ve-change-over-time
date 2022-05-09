@@ -62,9 +62,9 @@ model_tidy_list <- lapply(
   function(filename) {
     filename_split <- unlist(str_split(str_remove(filename, ".rds"), "_"))
     if (length(filename_split) > 6) {
-      sex <- filename_split[which(str_detect(filename_split, "Female|Male"))]
-      filename_split <- filename_split[filename_split!=sex]
-      filename_split[4] <- str_c(filename_split[4], "_", sex)
+      extra_group <- filename_split[which(str_detect(filename_split, "Female|Male|65|75"))]
+      filename_split <- filename_split[filename_split!=extra_group]
+      filename_split[4] <- str_c(filename_split[4], "_", extra_group)
     }
     readr::read_rds(
       here::here("output", "models_cox", "data", filename)
