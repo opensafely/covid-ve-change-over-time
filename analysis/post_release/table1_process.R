@@ -159,7 +159,8 @@ table1_data_supplement <- tibble(Variable = variable_order_supplement) %>%
                 ~if_else(.x == "Immunosuppression",
                          "Immunosupp- ression",
                          .x))) %>%
-  mutate(across(Variable, ~if_else(is.na(.x), " ", .x)))
+  mutate(across(Variable, ~if_else(is.na(.x), " ", .x))) %>%
+  mutate(across(starts_with(as.character(1:4)), ~str_replace(.x, "- \\(-\\%\\)", "-")))
 
 
 table1_supplement <- list(
