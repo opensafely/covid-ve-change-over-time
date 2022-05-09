@@ -291,7 +291,7 @@ apply_model_fun <- function(
   subgroup <- subgroups[subgroup_label]
   
   splice(
-    comment(glue("{comparison}; {subgroup}; {outcome}")),
+    comment(glue("{comparison}; {subgroup_label}; {outcome}")),
     comment("preflight checks"),
     action(
       name = glue("preflight_{comparison}_{subgroup_label}_{outcome}"),
@@ -577,8 +577,14 @@ actions_list <- splice(
           subgroup_labels <- subgroup_labels[subgroups != "18-39 years"]
         }
         unlist(lapply(
-          unname(unlist(lapply(subgroup_labels, function(sub) sapply(c("", "_Female", "_Male"), function(sex) str_c(sub, sex))))),
-
+          unname(c(
+            unlist(lapply(
+              subgroup_labels, function(sub) 
+                sapply(c("", "_Female", "_Male"), 
+                       function(sex) glue("{sub}{sex}")
+                ))),
+            sapply(c("65", "75"), function(age_band) glue("1_{age_band}"))
+          )),
           function(y)
             splice(
             unlist(lapply(
@@ -618,7 +624,14 @@ actions_list <- splice(
             ys <- subgroup_labels
           }
           unlist(lapply(
-            unname(unlist(lapply(ys, function(sub) sapply(c("", "_Female", "_Male"), function(sex) str_c(sub, sex))))),
+            unname(c(
+              unlist(lapply(
+                ys, function(sub) 
+                  sapply(c("", "_Female", "_Male"), 
+                         function(sex) glue("{sub}{sex}")
+                  ))),
+              sapply(c("65", "75"), function(age_band) glue("1_{age_band}"))
+            )),
             function(y)
               unlist(lapply(
                 unname(outcomes_model),
@@ -629,8 +642,8 @@ actions_list <- splice(
         }
       ), recursive = FALSE))),
     moderately_sensitive = list(
-      event_counts_all = glue("output/release_objects/event_counts_all.csv"),
-      estimates_all = glue("output/release_objects/estimates_all.csv")
+      event_counts_all = glue("output/release_objects/event_counts*.csv"),
+      estimates_all = glue("output/release_objects/estimates*.csv")
     )
   ),
   
