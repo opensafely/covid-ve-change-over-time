@@ -74,7 +74,7 @@ data <- data_all %>%
       ((k %% 2) == 0 & split == "even") |
       ((k %% 2) != 0 & split == "odd")
   ) %>%
-  select(patient_id, k, arm, subgroup, sex, ends_with("date"))
+  select(patient_id, k, age, arm, subgroup, sex, ends_with("date"))
 
 ################################################################################
 # generates and saves data_tte and tabulates event counts 
@@ -145,8 +145,12 @@ derive_data_tte <- function(
   subgroup_current <- unique(as.character(.data$subgroup))
   subgroup_current_label <- subgroup_labels[subgroups == subgroup_current]
   # sex in .data
-  sex_current_label <- unique(as.character(.data$sex))
-  if (length(sex_current_label)==1) subgroup_current_label <- glue("{subgroup_current_label}_{sex_current_label}")
+  sex_label <- unique(as.character(.data$sex))
+  if (length(sex_label)==1) subgroup_current_label <- glue("{subgroup_current_label}_{sex_label}")
+  if ("age_band" %in% names(.data)) {
+    age_label <- str_extract(unique(as.character(.data$age_band)), "\\d{2}")
+    subgroup_current_label <- glue("{subgroup_current_label}_{age_label}")
+  }
   
   # save data_tte
   readr::write_rds(
@@ -182,8 +186,17 @@ derive_data_tte <- function(
 table_events_list <- 
   lapply(
     splice(
-      as.list(data %>% group_split(subgroup)), 
-      as.list(data %>% group_split(subgroup, sex))
+      # 4 risk-based subgroups
+      as.list(data %>% group_split(subgroup)),
+      # additionally split by sex
+      as.list(data %>% group_split(subgroup, sex)),
+      # 65+ subgroup split into 65-74 and 75+
+      as.list(data %>% 
+                filter(subgroup %in% "65+ years") %>%
+                mutate(age_band = factor(
+                  if_else(age >= 75, "75+", "65-74"),
+                  levels = c("65-74", "75+"))) %>%
+                group_split(subgroup, age_band))
       ),
     function(y)
       lapply(
