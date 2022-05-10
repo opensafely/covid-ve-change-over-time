@@ -15,11 +15,7 @@ set.seed(5476)
 
 # date vars 
 # set these to have occured since start of pandemic
-date_vars_recent <- c("positive_test_0_date", 
-                      "primary_care_covid_case_0_date", 
-                      "covidadmitted_0_date",
-                      "covidemergency_0_date",
-                      "death_date",
+date_vars_recent <- c("death_date",
                       "longres_date",
                       "endoflife_date", 
                       "midazolam_date",
@@ -156,6 +152,12 @@ dummy_data_covs <- dummy_data_vax %>%
           latest="2021-12-31",
           keep_vars = FALSE
         ))) %>%
+  # add event counts
+  mutate(
+    postest_n = rpois(nrow(.),3),
+    covidadmitted_n = rpois(nrow(.),1),
+    primary_care_covid_case_n = rpois(nrow(.),2)
+  ) %>%
   # add death_date if coviddeath_date
   mutate(across(death_date, 
                 ~if_else(
