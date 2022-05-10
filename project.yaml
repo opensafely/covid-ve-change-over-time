@@ -50,6 +50,7 @@ actions:
         data_processed: output/data/data_processed.rds
       moderately_sensitive:
         data_properties: output/tables/data_*_tabulate.txt
+        outcomes_n: output/eda/outcomes_n.png
 
   ## apply eligiblity criteria from boxes a and b 
 

@@ -387,7 +387,8 @@ actions_list <- splice(
       data_processed = "output/data/data_processed.rds"
     ),
     moderately_sensitive = list(
-      data_properties = "output/tables/data_*_tabulate.txt"
+      data_properties = "output/tables/data_*_tabulate.txt",
+      outcomes_n = "output/eda/outcomes_n.png"
     )
   ),
   
