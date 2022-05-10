@@ -14,6 +14,7 @@ with open("./analysis/lib/study_parameters.json") as f:
 
 # define variables explicitly
 K=study_parameters["K"]
+pandemic_start_date=study_parameters["pandemic_start"]
 start_date=study_parameters["start_date"] # start of phase 1
 end_date=study_parameters["end_date"] # latest date of data
 
@@ -55,6 +56,28 @@ def anytest_X_date(n):
   for i in range(1, n+1):
     variables.update(var_signature(name=f"anytest_{i}_date", k=i))
   return variables
+
+# all outcomes before end_date, latest first
+# positive tests
+def postest_X_date(n):
+  def var_signature(index_date, k):
+    return {
+      f"postest_{k}_date": patients.with_test_result_in_sgss(
+        pathogen="SARS-CoV-2",
+        test_result="positive",
+        on_or_before=index_date,
+        restrict_to_earliest_specimen_date=False,
+        find_last_match_in_period=True,
+        returning="date",
+        date_format = "YYYY-MM-DD",
+	    ),
+    }
+  variables=var_signature(index_date=end_date, k=1)
+  for i in range(2, n+1):
+    variables.update(var_signature(index_date=f"postest_{i-1}_date", k=i))
+  return variables
+
+# positive tests, hospitalisations, probable covid
 
 ###
 study=StudyDefinition(
@@ -341,5 +364,8 @@ study=StudyDefinition(
 
     # first occurence of any covid test in each comparison period
     **anytest_X_date(K),
+
+    # all postitive tests, going backwards from end date
+    **postest_X_date(3)
 
 )
