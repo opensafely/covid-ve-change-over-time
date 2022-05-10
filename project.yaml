@@ -6954,8 +6954,10 @@ actions:
     - apply_model_cox_both_1_75_noncoviddeath
     outputs:
       moderately_sensitive:
-        event_counts_all: output/release_objects/event_counts*.csv
-        estimates_all: output/release_objects/estimates*.csv
+        event_counts_all: output/release_objects/event_counts_all.csv
+        event_counts_6575: output/release_objects/event_counts_6575.csv
+        estimates_all: output/release_objects/estimates_all.csv
+        estimates_6575: output/release_objects/estimates_6575.csv
 
   ## #################################### 
   ## plot to check estimates 
