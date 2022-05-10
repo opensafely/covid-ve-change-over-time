@@ -14,7 +14,10 @@ subgroup_labels <- seq_along(subgroups)
 
 ################################################################################
 cat("-- read estimates_all.csv --")
-estimates_all <- readr::read_csv(here::here("output", "release_objects", "estimates_all.csv")) %>%
+estimates_all <- bind_rows(
+  readr::read_csv(here::here("output", "release_objects", "estimates_6575.csv")),
+  readr::read_csv(here::here("output", "release_objects", "estimates_all.csv"))
+  ) %>%
   filter(variable == "k", label != "0") %>%
   mutate(across(c(estimate, conf.low, conf.high), exp)) %>%
   mutate(
@@ -23,7 +26,13 @@ estimates_all <- readr::read_csv(here::here("output", "release_objects", "estima
       str_detect(subgroup, "Male") ~ "Male",
       TRUE ~ "Both"
     ),
-    subgroup = as.integer(str_extract(subgroup, "\\d"))
+    age_band = as.integer(str_extract(subgroup, "\\d{2}$")),
+    age_band = case_when(
+      is.na(age_band) ~ "all",
+      age_band == 65 ~ "65-74",
+      age_band == 75 ~ "75+"
+    ),
+    subgroup = as.integer(str_extract(subgroup, "^\\d{1}"))
     ) %>%
   mutate(across(subgroup, factor, levels = subgroup_labels, labels = subgroups)) 
   
@@ -52,13 +61,26 @@ names(palette_all) <- colour_levs
 
 ################################################################################
 # create function for plot_check
-plot_check <- function(s, c) {
-  cat(glue("-- comparison = {c}, sex = {s} --"))
-  p <- estimates_all %>%
+plot_check <- function(s, c, a = NA_integer_) {
+  cat(glue("-- comparison = {c}, sex = {s}, age_band = {a} --"))
+  
+  data_plot <- estimates_all %>%
     filter(
       sex %in% s,
-      comparison %in% c
-      ) %>%
+      comparison %in% c,
+      age_band %in% a
+      ) 
+  
+  if (length(s) > 1 & length(a) == 1) {
+    data_plot <- data_plot %>% rename(shapevar = sex)
+  } else if (length(s) == 1 & length(a) > 1) {
+    data_plot <- data_plot %>% rename(shapevar = age_band)
+  } else {
+    stop("Only sex or age_band can have multiple values.")
+  }
+  
+  
+  p <- data_plot %>%
     mutate(colourvar = factor(
       glue("{comparison} {model}"),
       levels = colour_levs)) %>%
@@ -67,7 +89,7 @@ plot_check <- function(s, c) {
       x = label, 
       y = estimate,
       colour = colourvar,
-      shape = sex
+      shape = shapevar
     )) +
     geom_hline(aes(yintercept=1), colour='grey') +
     geom_linerange(aes(ymin = conf.low, ymax = conf.high), position = position_dodge(width = position_dodge_val)) +
@@ -136,3 +158,6 @@ try(plot_check(c = "both", s = "Both"))
 try(plot_check(c = "BNT162b2", s = c("Male", "Female")))
 try(plot_check(c = "ChAdOx1", s = c("Male", "Female")))
 try(plot_check(c = "both", s = c("Male", "Female")))
+try(plot_check(c = "BNT162b2", s = "Both", a = c("65-74", "75+")))
+try(plot_check(c = "ChAdOx1", s = "Both", a = c("65-74", "75+")))
+try(plot_check(c = "both", s = "Both", a = c("65-74", "75+")))
