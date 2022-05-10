@@ -74,7 +74,7 @@ data <- data_all %>%
       ((k %% 2) == 0 & split == "even") |
       ((k %% 2) != 0 & split == "odd")
   ) %>%
-  select(patient_id, k, age, arm, subgroup, sex, ends_with("date"))
+  select(patient_id, k, jcvi_group, arm, subgroup, sex, ends_with("date"))
 
 ################################################################################
 # generates and saves data_tte and tabulates event counts 
@@ -191,10 +191,14 @@ table_events_list <-
       # additionally split by sex
       as.list(data %>% group_split(subgroup, sex)),
       # 65+ subgroup split into 65-74 and 75+
+      # based on age at eligiblity for 1st dose
+      # so split on JCVI group rather than age, otherwise may end up with
+      # small numbers of individuals in some strata 
+      # (i.e. those who turned 75 between eligibility for 1st dose and SVP)
       as.list(data %>% 
                 filter(subgroup %in% "65+ years") %>%
                 mutate(age_band = factor(
-                  if_else(age >= 75, "75+", "65-74"),
+                  if_else(jcvi_group %in% c("02", "03"), "75+", "65-74"),
                   levels = c("65-74", "75+"))) %>%
                 group_split(subgroup, age_band))
       ),
