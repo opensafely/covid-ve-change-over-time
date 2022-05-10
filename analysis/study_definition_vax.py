@@ -17,6 +17,7 @@ from grouping_variables import (
 
 # define variables explicitly from study_parameters
 max_comparisons=study_parameters["K"]
+pandemic_start_date=study_parameters["pandemic_start"]
 start_date=study_parameters["start_date"] # start of phase 1
 end_date=study_parameters["end_date"] # latest date of data
 
@@ -324,63 +325,63 @@ study=StudyDefinition(
     ### EVENTS ###
     ##############
     
-    # positive covid test
-    positive_test_0_date=patients.with_test_result_in_sgss(
-        pathogen="SARS-CoV-2",
-        test_result="positive",
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before=f"elig_date + {112 + 14 + (max_comparisons + 1)*28} days",
-        find_first_match_in_period=True,
-        restrict_to_earliest_specimen_date=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
+    # # positive covid test
+    # positive_test_0_date=patients.with_test_result_in_sgss(
+    #     pathogen="SARS-CoV-2",
+    #     test_result="positive",
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before=f"elig_date + {112 + 14 + (max_comparisons + 1)*28} days",
+    #     find_first_match_in_period=True,
+    #     restrict_to_earliest_specimen_date=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
 
-    # probable covid case identified in primary care
-    # Will also had 'covid in primary care', but as far as I can see it was the same as this probable definition.
-    # I have used _0_ in these in case the study design changes to no longer exclude anyone with
-    # previous COVID, in which case the outcome variables must become recurrent
-    primary_care_covid_case_0_date=patients.with_these_clinical_events(
-        covid_primary_care_probable_combined,
-        returning="date",
-        date_format="YYYY-MM-DD",
-        on_or_before=f"elig_date + {112 + 14 + (max_comparisons + 1)*28} days",
-        find_first_match_in_period=True,
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01
-        },
-    ),
+    # # probable covid case identified in primary care
+    # # Will also had 'covid in primary care', but as far as I can see it was the same as this probable definition.
+    # # I have used _0_ in these in case the study design changes to no longer exclude anyone with
+    # # previous COVID, in which case the outcome variables must become recurrent
+    # primary_care_covid_case_0_date=patients.with_these_clinical_events(
+    #     covid_primary_care_probable_combined,
+    #     returning="date",
+    #     date_format="YYYY-MM-DD",
+    #     on_or_before=f"elig_date + {112 + 14 + (max_comparisons + 1)*28} days",
+    #     find_first_match_in_period=True,
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01
+    #     },
+    # ),
     
-    # covid hospitalisation:
-    # from ACPS 
-    covidadmitted_0_date=patients.admitted_to_hospital(
-        returning="date_admitted",
-        with_these_diagnoses=covid_codes,
-        on_or_before=f"elig_date + {112 + 14 + (max_comparisons + 1)*28} days",
-        find_first_match_in_period=True,
-        date_format="YYYY-MM-DD",
-        return_expectations={
-            "date": {"earliest": start_date, "latest": end_date},
-            "rate": "exponential_increase",
-            "incidence": 0.01,
-        },
-    ),
-    # from ECDS
-    # any emergency attendance for covid
-    covidemergency_0_date=patients.attended_emergency_care(
-        returning="date_arrived",
-        on_or_before=end_date,
-        with_these_diagnoses=covid_emergency,
-        discharged_to=discharged_to_hospital,
-        date_format="YYYY-MM-DD",
-        find_first_match_in_period=True,
-    ),
+    # # covid hospitalisation:
+    # # from ACPS 
+    # covidadmitted_0_date=patients.admitted_to_hospital(
+    #     returning="date_admitted",
+    #     with_these_diagnoses=covid_codes,
+    #     on_or_before=f"elig_date + {112 + 14 + (max_comparisons + 1)*28} days",
+    #     find_first_match_in_period=True,
+    #     date_format="YYYY-MM-DD",
+    #     return_expectations={
+    #         "date": {"earliest": start_date, "latest": end_date},
+    #         "rate": "exponential_increase",
+    #         "incidence": 0.01,
+    #     },
+    # ),
+    # # from ECDS
+    # # any emergency attendance for covid
+    # covidemergency_0_date=patients.attended_emergency_care(
+    #     returning="date_arrived",
+    #     on_or_before=end_date,
+    #     with_these_diagnoses=covid_emergency,
+    #     discharged_to=discharged_to_hospital,
+    #     date_format="YYYY-MM-DD",
+    #     find_first_match_in_period=True,
+    # ),
     
     # covid death
     coviddeath_date=patients.with_these_codes_on_death_certificate(
@@ -412,4 +413,28 @@ study=StudyDefinition(
             "incidence": 0.001
         }
     ),
+
+    # Number of SARS-CoV-2 positive tests between pandemic_start_date and end_date
+    postest_n=patients.with_test_result_in_sgss(
+        pathogen="SARS-CoV-2",
+        test_result="positive",
+        returning="number_of_matches_in_period",
+        between=[pandemic_start_date, end_date],
+        restrict_to_earliest_specimen_date=False,
+    ),
+
+    # Number of COVID-19 hospitalisations between pandemic_start_date and end_date
+    covidadmitted_n=patients.admitted_to_hospital(
+        returning="number_of_matches_in_period",
+        with_these_diagnoses=covid_codes,
+        between=[pandemic_start_date, end_date],
+    ),
+
+    # Number of probable COVID recordings between pandemic_start_date and end_date
+    primary_care_covid_case_n=patients.with_these_clinical_events(
+        covid_primary_care_probable_combined,
+        returning="number_of_matches_in_period",
+        between=[pandemic_start_date, end_date],
+    ),
+
 )
