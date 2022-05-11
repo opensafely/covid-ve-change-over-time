@@ -62,7 +62,8 @@ names(palette_all) <- colour_levs
 ################################################################################
 # create function for plot_check
 plot_check <- function(s, c, a = "all") {
-  cat(glue("-- comparison = {c}, sex = {s}, age_band = {a} --"))
+  
+  cat(glue("-- comparison = {c}, sex = {str_c(s, collapse = \", \")}, age_band(s) = {str_c(a, collapse = \", \")} --"))
   
   data_plot <- estimates_all %>%
     filter(
@@ -147,6 +148,7 @@ plot_check <- function(s, c, a = "all") {
   cat("-- save plot --")
   c<-str_c(c, collapse = "_")
   s<-str_c(s, collapse = "_")
+  a<-str_c(a, collapse = "_")
   ggsave(p,
          filename = here::here("output", "models_cox", "images", glue("plot_check_{c}_{s}_{a}.svg")),
          width=20, height=20, units="cm")
