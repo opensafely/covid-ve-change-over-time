@@ -49,7 +49,7 @@ readr::write_csv(
   here::here("output", "release_objects", "event_counts_all.csv"))
 
 readr::write_csv(
-  event_counts_all %>% filter(str_detect(subgroup, "65|76")),
+  event_counts_all %>% filter(str_detect(subgroup, "65|75")),
   here::here("output", "release_objects", "event_counts_6575.csv"))
 
 ################################################################################
@@ -106,5 +106,5 @@ readr::write_csv(
   here::here("output", "release_objects", "estimates_all.csv"))
 
 readr::write_csv(
-  model_tidy_tibble %>% filter(str_detect(subgroup, "65|76")),
+  model_tidy_tibble %>% filter(str_detect(subgroup, "65|75")),
   here::here("output", "release_objects", "estimates_6575.csv"))
