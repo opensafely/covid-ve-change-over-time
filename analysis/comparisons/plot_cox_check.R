@@ -14,10 +14,7 @@ subgroup_labels <- seq_along(subgroups)
 
 ################################################################################
 cat("-- read estimates_all.csv --")
-estimates_all <- bind_rows(
-  readr::read_csv(here::here("output", "release_objects", "estimates_6575.csv")),
-  readr::read_csv(here::here("output", "release_objects", "estimates_all.csv"))
-  ) %>%
+estimates_all <- readr::read_csv(here::here("output", "release_objects", "estimates_6575.csv")) %>%
   filter(variable == "k", label != "0") %>%
   mutate(across(c(estimate, conf.low, conf.high), exp)) %>%
   mutate(
@@ -155,11 +152,11 @@ plot_check <- function(s, c, a = "all") {
 }
 
 ################################################################################
-try(plot_check(c = c("BNT162b2", "ChAdOx1"), s = "Both"))
-try(plot_check(c = "both", s = "Both"))
-try(plot_check(c = "BNT162b2", s = c("Male", "Female")))
-try(plot_check(c = "ChAdOx1", s = c("Male", "Female")))
-try(plot_check(c = "both", s = c("Male", "Female")))
+# try(plot_check(c = c("BNT162b2", "ChAdOx1"), s = "Both"))
+# try(plot_check(c = "both", s = "Both"))
+# try(plot_check(c = "BNT162b2", s = c("Male", "Female")))
+# try(plot_check(c = "ChAdOx1", s = c("Male", "Female")))
+# try(plot_check(c = "both", s = c("Male", "Female")))
 try(plot_check(c = "BNT162b2", s = "Both", a = c("65-74", "75+")))
 try(plot_check(c = "ChAdOx1", s = "Both", a = c("65-74", "75+")))
 try(plot_check(c = "both", s = "Both", a = c("65-74", "75+")))
