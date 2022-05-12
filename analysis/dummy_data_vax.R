@@ -156,7 +156,9 @@ dummy_data_covs <- dummy_data_vax %>%
   mutate(
     postest_n = rpois(nrow(.),3),
     covidadmitted_n = rpois(nrow(.),1),
-    primary_care_covid_case_n = rpois(nrow(.),2)
+    covid_primary_care_positive_test_n = rpois(nrow(.),1),
+    covid_primary_care_code_n = rpois(nrow(.),1),
+    covid_primary_care_sequalae_n = rpois(nrow(.),1)
   ) %>%
   # add death_date if coviddeath_date
   mutate(across(death_date, 
