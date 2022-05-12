@@ -20,7 +20,6 @@ source(here::here("analysis", "functions", "data_properties.R"))
 ## create folders for outputs
 fs::dir_create(here::here("output", "data"))
 fs::dir_create(here::here("output", "tables"))
-fs::dir_create(here::here("output", "eda"))
 
 ## import study_parameters
 study_parameters <- readr::read_rds(
