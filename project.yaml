@@ -42,7 +42,7 @@ actions:
   data_input_process:
     run: r:latest analysis/preprocess/data_input_process.R
     needs:
-    - dummy_data_vax
+    # - dummy_data_vax
     - generate_study_population
     outputs:
       highly_sensitive:
