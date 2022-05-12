@@ -190,8 +190,25 @@ plot_data <- estimates_all %>%
 
 # spacing of points on plot
 position_dodge_val <- 0.6
+
 # shape of points
-point_shapes <- c(22,24)
+comparison_shapes <- c(16,17,15)
+names(comparison_shapes) <- comparisons
+hollow_shapes <- c(21,24,22)
+names(hollow_shapes) <- comparisons
+
+comparison_linetypes <- c("dashed", "dotted", "dotdash")
+names(comparison_linetypes) <- comparisons
+
+# colours of points
+palette_adj <- c(gg_color_hue(n=2), gg_color_hue(n=3)[2])
+names(palette_adj) <- comparisons
+palette_unadj <- c(gg_color_hue(n=2, transparency=0.3),
+                   gg_color_hue(n=3, transparency=0.3)[2])
+names(palette_adj) <- comparisons
+
+
+# point_shapes <- c(22,24)
 # breaks and lims for y-axes
 primary_vax_y1 <- list(breaks = c(0.02, 0.05, 0.2, 0.5, 1, 2), 
                        limits = c(0.02, 2))
@@ -214,14 +231,15 @@ plot_vax <- plot_data %>%
   ggplot(aes(
     x = reorder(k_labelled_dates, order), 
     colour = comparison, 
+    shape = comparison,
     fill = comparison
     )) +
   geom_hline(aes(yintercept=1), colour='grey') +
   geom_line(
     aes(y = line, 
-        colour=comparison, 
+        colour = comparison, 
+        linetype = comparison,
         group = line_group), 
-    linetype = "dashed",
     alpha = 0.6
     ) +
   geom_linerange(
@@ -248,8 +266,14 @@ plot_vax <- plot_data %>%
   labs(
     x = x_lab
   ) +
-  scale_colour_discrete(name = NULL) +
   scale_fill_discrete(guide = "none") +
+  scale_shape_manual(values = comparison_shapes[1:2], name = NULL) +
+  scale_color_manual(values = palette_adj[1:2], name = NULL) +
+  scale_linetype_manual(values = comparison_linetypes[1:2], name = NULL) +
+  guides(shape = guide_legend(
+    title = NULL, 
+    override.aes = list(colour = palette_adj[1:2], fill = comparison_shapes[1:2])
+  )) +
   theme_bw() +
   theme(
     panel.border = element_blank(),
@@ -279,6 +303,7 @@ plot_vax <- plot_data %>%
     legend.position = c(0.87, 0.14),
     # big margins to cover up grid lines
     legend.margin = margin(t = 30, r = 47, b = 30, l = 40),
+    legend.key.width = unit(2, 'cm'),
     # legend.position = "bottom",
     legend.text = element_text(size=10)
   ) 
@@ -293,9 +318,6 @@ ggsave(plot_vax,
 
 ################################################################################
 # brand comparison
-palette_adj <- gg_color_hue(3, transparency = 1)
-i <- 2 # green
-
 plot_brand <- plot_data %>%
   filter(
     sex == "Both",
@@ -312,21 +334,22 @@ plot_brand <- plot_data %>%
   geom_line(
     aes(y = line, 
         group = line_group), 
-    linetype = "dashed",
-    colour=palette_adj[i],
+    linetype = comparison_linetypes[3],
+    colour=palette_adj[3],
     alpha = 0.6
   ) +
   geom_linerange(
     aes(ymin = conf.low, ymax = conf.high), 
     position = position_dodge(width = position_dodge_val),
-    color = palette_adj[i],
-    fill = palette_adj[i]
+    color = palette_adj[3],
+    fill = palette_adj[3]
     ) +
   geom_point(
     aes(y = estimate),
     position = position_dodge(width = position_dodge_val),
-    color = palette_adj[i],
-    fill = palette_adj[i]
+    color = palette_adj[3],
+    fill = palette_adj[3],
+    shape = comparison_shapes[3]
     ) +
   facet_grid(outcome ~ subgroup, switch = "y", scales = "free", space = "free_x") +
   scale_y_log10(
@@ -334,6 +357,9 @@ plot_brand <- plot_data %>%
     breaks = primary_brand_y1[["breaks"]],
     limits = primary_brand_y1[["limits"]],
     oob = scales::oob_keep) +
+  guides(
+    color = guide_legend(override.aes = list(linetype = 0))
+  ) +
   labs(
     x = x_lab
   ) +
@@ -385,13 +411,14 @@ plot_vax_anytest <- plot_data %>%
     x = reorder(k_labelled_dates, order), 
     y = estimate, 
     colour = comparison, 
+    shape = comparison,
     fill = comparison)) +
   geom_hline(aes(yintercept=1), colour='grey') +
   geom_line(
     aes(y = line, 
         colour=comparison, 
+        linetype = comparison,
         group = line_group), 
-    linetype = "dashed",
     alpha = 0.6
   ) +
   geom_linerange(
@@ -411,8 +438,14 @@ plot_vax_anytest <- plot_data %>%
     x = x_lab,
     title = "Any SARS-CoV-2 test"
   ) +
-  scale_colour_discrete(name = NULL) +
+  scale_shape_manual(values = comparison_shapes[1:2], name = NULL) +
+  scale_color_manual(values = palette_adj[1:2], name = NULL) +
   scale_fill_discrete(guide = "none") +
+  scale_linetype_manual(values = comparison_linetypes[1:2], name = NULL) +
+  guides(shape = guide_legend(
+    title = NULL, 
+    override.aes = list(colour = palette_adj[1:2], fill = comparison_shapes[1:2])
+  )) +
   theme_bw() +
   theme(
     panel.border = element_blank(),
@@ -440,6 +473,7 @@ plot_vax_anytest <- plot_data %>%
     plot.caption = element_text(hjust = 0, face= "italic"),
     
     legend.position = "bottom",
+    legend.key.width = unit(2, 'cm'),
     legend.text = element_text(size=10)
   ) 
 
@@ -451,9 +485,6 @@ ggsave(plot_vax_anytest,
 ################################################################################
 # anytest
 # brand comparison
-palette_adj <- gg_color_hue(3, transparency = 1)
-i <- 2 # green
-
 plot_brand_anytest <- plot_data %>%
   filter(
     sex == "Both",
@@ -469,20 +500,21 @@ plot_brand_anytest <- plot_data %>%
   geom_line(
     aes(y = line, 
         group = line_group), 
-    colour = palette_adj[i],
-    linetype="dashed", 
+    colour = palette_adj[3],
+    linetype=comparison_linetypes[3], 
     alpha = 0.6
   ) +
   geom_linerange(
     aes(ymin = conf.low, ymax = conf.high), 
     position = position_dodge(width = position_dodge_val),
-    color = palette_adj[i],
-    fill = palette_adj[i]
+    color = palette_adj[3],
+    fill = palette_adj[3]
   ) +
   geom_point(
     position = position_dodge(width = position_dodge_val),
-    color = palette_adj[i],
-    fill = palette_adj[i]
+    color = palette_adj[3],
+    fill = palette_adj[3],
+    shape = comparison_shapes[3]
   ) +
   facet_wrap( ~ subgroup, scales = "free", ncol=2) +
   scale_y_log10(
@@ -495,10 +527,6 @@ plot_brand_anytest <- plot_data %>%
     x = x_lab,
     title = "Any SARS-CoV-2 test"
   ) +
-  scale_shape_manual(name = "Subgroup:\n \n HR estimate", values = point_shapes, drop = FALSE) +
-  scale_linetype_manual(name=" \n \n Meta-regression line", values = c("solid", "longdash", "dotted")) +
-  guides(shape = guide_legend(order = 1), 
-         linetype = guide_legend(order = 2)) +
   theme_bw() +
   theme(
     panel.border = element_blank(),
@@ -523,12 +551,7 @@ plot_brand_anytest <- plot_data %>%
     plot.title = element_text(hjust = 0, size=10),
     plot.title.position = "plot",
     plot.caption.position = "plot",
-    plot.caption = element_text(hjust = 0, face= "italic"),
-    
-    legend.position = "right",
-    legend.box = "horizontal",
-    legend.title = element_text(size=10),
-    legend.text = element_text(size=10)
+    plot.caption = element_text(hjust = 0, face= "italic")
   ) 
 ggsave(plot_brand_anytest,
        filename = here::here(release_folder, glue("hr_brand_anytest.png")),
@@ -539,28 +562,10 @@ ggsave(plot_brand_anytest,
 
 plot_unadj_adj <- function(plot_comparison) {
   
-  alpha_unadj <- 0.3
-  
-  # colour palette 
-  if (plot_comparison == "both") {
-    
-    palette_unadj <- gg_color_hue(3, transparency = alpha_unadj)
-    palette_adj <- gg_color_hue(3, transparency = 1)
-    i <- 2 # green
-    
-  } else {
-    
-    palette_unadj <- gg_color_hue(2, transparency = alpha_unadj)
-    palette_adj <- gg_color_hue(2, transparency = 1)
-    i <- case_when(
-      plot_comparison %in% "BNT162b2" ~ 1,  # red 
-      plot_comparison %in% "ChAdOx1" ~ 2, # blue
-      TRUE ~ NA_real_
-    )
-    
-  }
-  
-  palette <- c(palette_unadj[i], palette_adj[i])
+  i <- which(comparisons == plot_comparison)
+  palette <- unname(c(palette_unadj[i], palette_adj[i]))
+  names(palette) <- levels(plot_data$model)
+  point_shapes <- unname(comparison_shapes[i])
   
   # vaccine vs unvaccinated
   plot_vax_0 <- plot_data %>%
@@ -579,7 +584,8 @@ plot_unadj_adj <- function(plot_comparison) {
       aes(ymin = conf.low, ymax = conf.high),
       position = position_dodge(width = position_dodge_val)) +
     geom_point(
-      position = position_dodge(width = position_dodge_val)
+      position = position_dodge(width = position_dodge_val),
+      shape = point_shapes
     ) +
     facet_grid(outcome ~ subgroup, switch = "y", scales = "free", space = "free_x") 
   
@@ -671,7 +677,8 @@ plot_unadj_adj <- function(plot_comparison) {
       aes(ymin = conf.low, ymax = conf.high),
       position = position_dodge(width = position_dodge_val)) +
     geom_point(
-      position = position_dodge(width = position_dodge_val)
+      position = position_dodge(width = position_dodge_val),
+      shape = point_shapes
     ) +
     facet_wrap( ~ subgroup, scales = "free", nrow=2) +
     scale_y_log10(
@@ -733,45 +740,56 @@ for (i in c("BNT162b2", "ChAdOx1", "both")) {
 ################################################################################
 # sex stratified results for each comparison
 
-plot_sex <- function(plot_comparison) {
+plot_sex <- function(plot_comparison, strata = "sex") {
   
-  # colour palette 
-  if (plot_comparison == "both") {
-    
-    palette_adj <- gg_color_hue(3, transparency = 1)
-    i <- 2 # green
-    
-  } else {
-    
-    palette_adj <- gg_color_hue(2, transparency = 1)
-    i <- case_when(
-      plot_comparison %in% "BNT162b2" ~ 1,  # red 
-      plot_comparison %in% "ChAdOx1" ~ 2, # blue
-      TRUE ~ NA_real_
+  plot_data_0 <- plot_data %>%
+    filter(
+      comparison == plot_comparison,
+      as.integer(model) == 2
     )
-    
+  
+  if (strata == "sex") {
+    strata_labs <- c("Female", "Male")
+    plot_data_1 <- plot_data_0 %>%
+      filter(
+        sex != "Both"
+      ) %>%
+      rename(strata_var = !! strata)
+  } else if( strata == "age") {
+    # TODO
+    # strata_labs <- c("65-74 years", "75+ years")
+    # plot_data_1 <- plot_data_0 %>%
+    #   filter(
+    #     age != "all"
+    #   )
+  } else {
+    stop("strata must be sex or age")
   }
   
+  i <- which(comparisons == plot_comparison)
   palette <- palette_adj[i]
+  point_shapes <- unname(c(comparison_shapes[i], hollow_shapes[i]))
+  names(point_shapes) <- strata_labs
+  fill_shapes <- c(palette, "white")
+  names(fill_shapes) <- strata_labs
+  line_types <- c("dashed", "dotted")
+  names(line_types) <- strata_labs
   
   # vaccine vs unvaccinated
-  plot_vax_0 <- plot_data %>%
+  plot_vax_0 <- plot_data_1 %>%
     filter(
-      sex != "Both",
-      comparison == plot_comparison,
-      outcome_unlabelled != "anytest",
-      as.integer(model) == 2
+      outcome_unlabelled != "anytest"
     ) %>%
     ggplot(aes(
       x = reorder(k_labelled_dates, order), 
       y = estimate,
       colour = comparison,
-      fill = comparison,
-      shape = sex)) +
+      fill = strata_var,
+      shape = strata_var)) +
     geom_hline(aes(yintercept=1), colour='grey') +
     geom_line(
       aes(y = line, 
-          linetype = sex,
+          linetype = strata_var,
           group = line_group), 
       colour = palette,
       alpha = 0.6
@@ -818,7 +836,7 @@ plot_sex <- function(plot_comparison) {
     ) +
     scale_linetype_manual(
       name = NULL,
-      values = c("Female" = "dashed", "Male" = "dotted")
+      values = line_types
     ) +
     scale_shape_manual(
       values = point_shapes
@@ -826,11 +844,13 @@ plot_sex <- function(plot_comparison) {
     scale_colour_manual(guide = "none",
                         values = palette) +
     scale_fill_manual(guide = "none",
-                      values = "white") +
-    guides(shape = guide_legend(
-      title = NULL, 
-      override.aes = list(colour = palette, fill = "white")
-      )) +
+                      values = fill_shapes) +
+    guides(
+      shape = guide_legend(
+        title = NULL, 
+        override.aes = list(colour = palette, fill = fill_shapes)
+        )
+      ) +
     theme_bw() +
     theme(
       panel.border = element_blank(),
@@ -868,23 +888,20 @@ plot_sex <- function(plot_comparison) {
          width=page_height, height=page_width, units="cm")
   
   # plot comparison
-  plot_vax_anytest <- plot_data %>%
+  plot_vax_anytest <- plot_data_1 %>%
     filter(
-      sex != "Both",
-      comparison == plot_comparison,
-      outcome_unlabelled == "anytest",
-      as.integer(model) == 2
+      outcome_unlabelled == "anytest"
     ) %>%
     ggplot(aes(
       x = reorder(k_labelled_dates, order), 
       y = estimate, 
-      shape = sex,
+      shape = strata_var,
       colour = comparison, 
-      fill = comparison)) +
+      fill = strata_var)) +
     geom_hline(aes(yintercept=1), colour='grey') +
     geom_line(
       aes(y = line, 
-          linetype = sex,
+          linetype = strata_var,
           group = line_group), 
       colour = palette,
       alpha = 0.6
@@ -916,10 +933,10 @@ plot_sex <- function(plot_comparison) {
     scale_colour_manual(guide = "none",
                         values = palette) +
     scale_fill_manual(guide = "none",
-                      values = "white") +
+                      values = fill_shapes) +
     guides(shape = guide_legend(
       title = NULL, 
-      override.aes = list(colour = palette, fill = "white")
+      override.aes = list(colour = palette, fill = fill_shapes)
     )) +
     theme_bw() +
     theme(
@@ -962,4 +979,4 @@ plot_sex <- function(plot_comparison) {
 for (i in c("BNT162b2", "ChAdOx1", "both")) {
   plot_sex(i)
 }
-
+ 
