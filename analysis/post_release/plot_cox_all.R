@@ -302,7 +302,7 @@ plot_vax <- plot_data %>%
     
     legend.position = c(0.87, 0.14),
     # big margins to cover up grid lines
-    legend.margin = margin(t = 30, r = 47, b = 30, l = 40),
+    # legend.margin = margin(t = 30, r = 47, b = 30, l = 40),
     legend.key.width = unit(2, 'cm'),
     # legend.position = "bottom",
     legend.text = element_text(size=10)
