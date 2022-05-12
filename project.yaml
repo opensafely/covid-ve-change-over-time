@@ -16,18 +16,18 @@ actions:
   ## #################################### 
   ## generate dummy data for study_definition 
 
-  dummy_data_vax:
-    run: r:latest analysis/dummy_data_vax.R
-    outputs:
-      moderately_sensitive:
-        dummy_data: analysis/dummy_data_vax.feather
+  # dummy_data_vax:
+  #   run: r:latest analysis/dummy_data_vax.R
+  #   outputs:
+  #     moderately_sensitive:
+  #       dummy_data: analysis/dummy_data_vax.feather
 
   ## study definition 
 
   generate_study_population:
     run: cohortextractor:latest generate_cohort --study-definition study_definition_vax
       --output-format feather
-    dummy_data_file: analysis/dummy_data_vax.feather
+    # dummy_data_file: analysis/dummy_data_vax.feather
     needs:
     - dummy_data_vax
     outputs:
