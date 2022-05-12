@@ -430,9 +430,19 @@ study=StudyDefinition(
         between=[pandemic_start_date, end_date],
     ),
 
-    # Number of probable COVID recordings between pandemic_start_date and end_date
-    primary_care_covid_case_n=patients.with_these_clinical_events(
-        covid_primary_care_probable_combined,
+    # Number of COVID recordings in primary care between pandemic_start_date and end_date
+    covid_primary_care_positive_test_n=patients.with_these_clinical_events(
+        covid_primary_care_positive_test,
+        returning="number_of_matches_in_period",
+        between=[pandemic_start_date, end_date],
+    ),
+    covid_primary_care_code_n=patients.with_these_clinical_events(
+        covid_primary_care_code,
+        returning="number_of_matches_in_period",
+        between=[pandemic_start_date, end_date],
+    ),
+    covid_primary_care_sequalae_n=patients.with_these_clinical_events(
+        covid_primary_care_sequalae,
         returning="number_of_matches_in_period",
         between=[pandemic_start_date, end_date],
     ),
