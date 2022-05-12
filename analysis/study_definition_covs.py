@@ -77,7 +77,39 @@ def postest_X_date(n):
     variables.update(var_signature(index_date=f"postest_{i-1}_date", k=i))
   return variables
 
-# positive tests, hospitalisations, probable covid
+# probable covid
+# def primary_care_covid_case_X_date(n):
+#   def var_signature(index_date, k):
+#     return {
+#       f"primary_care_covid_case_{k}_date": patients.with_these_clinical_events(
+#         covid_primary_care_probable_combined,
+#         on_or_before=index_date,
+#         find_last_match_in_period=True,
+#         returning="date",
+#         date_format = "YYYY-MM-DD",
+# 	    ),
+#     }
+#   variables=var_signature(index_date=end_date, k=1)
+#   for i in range(2, n+1):
+#     variables.update(var_signature(index_date=f"primary_care_covid_case_{i-1}_date", k=i))
+#   return variables
+
+# hospital admission
+def covidadmitted_X_date(n):
+  def var_signature(index_date, k):
+    return {
+      f"covidadmitted_{k}_date": patients.admitted_to_hospital(
+        with_these_diagnoses=covid_codes,
+        on_or_before=index_date,
+        find_last_match_in_period=True,
+        returning="date_admitted",
+        date_format = "YYYY-MM-DD",
+	    ),
+    }
+  variables=var_signature(index_date=end_date, k=1)
+  for i in range(2, n+1):
+    variables.update(var_signature(index_date=f"covidadmitted_{i-1}_date", k=i))
+  return variables
 
 ###
 study=StudyDefinition(
@@ -366,6 +398,19 @@ study=StudyDefinition(
     **anytest_X_date(K),
 
     # all postitive tests, going backwards from end date
-    **postest_X_date(3)
+    **postest_X_date(3),
+
+    # **primary_care_covid_case_X_date(3),
+
+    **covidadmitted_X_date(3),
+
+    # only use first primary care covid case
+    primary_care_covid_case_1_date = patients.with_these_clinical_events(
+        covid_primary_care_probable_combined,
+        on_or_before=end_date,
+        find_first_match_in_period=True,
+        returning="date",
+        date_format = "YYYY-MM-DD",
+	    ),
 
 )
