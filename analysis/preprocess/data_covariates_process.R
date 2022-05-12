@@ -51,6 +51,13 @@ data_covariates <- arrow::read_feather(
   file = here::here("output", "input_covs.feather")) 
 
 ################################################################################
+# covid infection episodes
+
+data_covariates %>%
+  select(patient_id, starts_with(c("postest", "covidadmitted", "primary_care_covid"))) %>%
+  filter()
+
+################################################################################
 data_all <- data_arm %>%
   # join to covariates data
   left_join(
