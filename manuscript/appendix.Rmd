@@ -178,11 +178,29 @@ variable_defs <- local({
   "Date",
   "First occurence prior to SVP",
   #
+  "JCVI group definitions",
+  "Age",
+  "-",
+  "Numeric",
+  "31 March 2021 for individuals eligible in phase 1 and 1 July 2021 for individuals eligible in phase 2",
+  #
+  "JCVI group definitions",
+  "High risk",
+  "A code in the primary care record indicating that the patient was at high risk of developing complications from COVID-19, not superseded by a code indicating that they were at low or moderate risk.",
+  "0; 1.",
+  "18 January 2021 (eligibility date for high risk individuals).",
+  #
+  "JCVI group definitions",
+  "At-risk",
+  "A code corresponding to one or more of the following: severe obesity (BMI 40+ kg/m\\textsuperscript{2}); learning disability including Down's syndrome; serious mental illness; chronic heart disease; chronic respiratory disease; chronic liver disease; chronic kidney disease; chronic neurological disease; diabetes; immunosuppressed (diagnosis of permenant immunosuppression or asplenia, or currently taking immunosuppresant medication).",
+  "0; 1.",
+  "15 February 2021 (eligibility date for at-rosk individuals).",
+  #
   "Strata",
   "JCVI group",
-  "Priority groups defined by the JCVI expert advisory group",
+  "Priority groups 2-9 are as defined by the JCVI expert advisory group, and we further define groups 10, 11 and 12 are defined as those aged 40-49, 30-39 and 18-29 years, respectively, who were not assigned to JCVI groups 4 (high risk) or 6 (at-risk).",
   "2-12",
-  "Age defined on 31 March 2021 for individuals eligible in phase 1 and 1 July 2021 for individuals eligible in phase 2. Individuals defined as high risk on 18 Januray 2021, and at-risk on 15 February 2021. Priority groups 2-9 are as defined by the JCVI expert advisory group, and we further define groups 10, 11 and 12 are defined as those aged 40-49, 30-39 and 18-29 years, respectively, who were not assigned to JCVI groups 4 (high risk) or 6 (at-risk).",
+  "-",
   #
   "Strata",
   "Eligibility date",
@@ -265,6 +283,7 @@ variable_defs <- local({
     mutate(across(type, factor, 
                   levels = c(
                     "Exclusion criteria",
+                    "JCVI group definitions",
                     "Strata", 
                     "Potential confounders (demographic)", 
                     "Potential confounders (clinical)")))
