@@ -1,4 +1,4 @@
-# In out main analysis we have quantified waning in terms of ratios of hazard ratio.
+# In our main analysis we have quantified waning in terms of ratios of hazard ratio.
 # As previous studies (e.g. Feikin et al.) have done so using the percentage point different in 
 # vaccine effectiveness between time-points, we would like to quantify waning 
 # in this way to facilitate cross-study comparisons.
@@ -7,7 +7,7 @@ library(tidyverse)
 
 estimates_all <- readr::read_csv(here::here("release20220505", "estimates_all.csv"))
 
-# calculate 95% CI for percentge point difference in vaccine effectiveness
+# calculate 95% CI for percentage point difference in vaccine effectiveness
 data <- estimates_all %>%
   filter(
     variable=="k",
