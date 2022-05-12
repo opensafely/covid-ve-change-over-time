@@ -4,6 +4,9 @@
 
 library(tidyverse)
 
+# create output directory
+fs::dir_create(here::here("output", "eda"))
+
 # redaction functions
 source(here::here("analysis", "functions", "redaction_functions.R"))
 
