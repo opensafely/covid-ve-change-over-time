@@ -113,7 +113,7 @@ plot_data <- estimates_all %>%
   filter(
     !(comparison %in% c("BNT162b2", "both") & subgroup %in% c(3,4) & outcome == "noncoviddeath"),
     !(comparison %in% c("BNT162b2", "both") & subgroup %in% 3 & outcome == "covidadmitted")
-    ) %>%
+  ) %>%
   mutate(across(c(estimate, conf.low, conf.high), exp)) %>%
   mutate(k=as.integer(label)) %>%
   left_join(
@@ -136,7 +136,7 @@ plot_data <- estimates_all %>%
                 factor,
                 levels = subgroup_labels,
                 labels = subgroups
-                )) %>%
+  )) %>%
   mutate(k_labelled_dates = k_labelled) %>%
   mutate(across(k_labelled_dates,
                 ~ case_when(
@@ -226,14 +226,14 @@ plot_vax <- plot_data %>%
     comparison != "both",
     outcome_unlabelled != "anytest",
     as.integer(model) == 2
-    ) %>%
+  ) %>%
   droplevels() %>%
   ggplot(aes(
     x = reorder(k_labelled_dates, order), 
     colour = comparison, 
     shape = comparison,
     fill = comparison
-    )) +
+  )) +
   geom_hline(aes(yintercept=1), colour='grey') +
   geom_line(
     aes(y = line, 
@@ -241,15 +241,15 @@ plot_vax <- plot_data %>%
         linetype = comparison,
         group = line_group), 
     alpha = 0.6
-    ) +
+  ) +
   geom_linerange(
     aes(ymin = conf.low, ymax = conf.high),
     position = position_dodge(width = position_dodge_val)
-    ) +
+  ) +
   geom_point(
     aes(y = estimate),
     position = position_dodge(width = position_dodge_val)
-    ) +
+  ) +
   facet_grid(outcome ~ subgroup, switch = "y", scales = "free", space = "free_x") +
   scale_y_log10(
     name = y_lab_adj,
@@ -300,9 +300,9 @@ plot_vax <- plot_data %>%
     plot.caption.position = "plot",
     plot.caption = element_text(hjust = 0, face= "italic"),
     
-    legend.position = c(0.87, 0.14),
+    legend.position = c(0.88, 0.14),
     # big margins to cover up grid lines
-    # legend.margin = margin(t = 30, r = 47, b = 30, l = 40),
+    legend.margin = margin(t = 30, r = 20, b = 30, l = 10),
     legend.key.width = unit(2, 'cm'),
     # legend.position = "bottom",
     legend.text = element_text(size=10)
@@ -329,7 +329,7 @@ plot_brand <- plot_data %>%
   # complete(subgroup, comparison, outcome, k_labelled) %>%
   ggplot(aes(
     x = reorder(k_labelled_dates, order)
-    )) +
+  )) +
   geom_hline(aes(yintercept=1), colour='grey') +
   geom_line(
     aes(y = line, 
@@ -343,14 +343,14 @@ plot_brand <- plot_data %>%
     position = position_dodge(width = position_dodge_val),
     color = palette_adj[3],
     fill = palette_adj[3]
-    ) +
+  ) +
   geom_point(
     aes(y = estimate),
     position = position_dodge(width = position_dodge_val),
     color = palette_adj[3],
     fill = palette_adj[3],
     shape = comparison_shapes[3]
-    ) +
+  ) +
   facet_grid(outcome ~ subgroup, switch = "y", scales = "free", space = "free_x") +
   scale_y_log10(
     name = y_lab_adj,
@@ -849,8 +849,8 @@ plot_sex <- function(plot_comparison, strata = "sex") {
       shape = guide_legend(
         title = NULL, 
         override.aes = list(colour = palette, fill = fill_shapes)
-        )
-      ) +
+      )
+    ) +
     theme_bw() +
     theme(
       panel.border = element_blank(),
@@ -979,4 +979,4 @@ plot_sex <- function(plot_comparison, strata = "sex") {
 for (i in c("BNT162b2", "ChAdOx1", "both")) {
   plot_sex(i)
 }
- 
+
