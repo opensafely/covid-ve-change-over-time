@@ -43,21 +43,29 @@ min_max_fu_dates <- readr::read_csv(
                 ~ str_c(day(.x), " ", month(.x, label=TRUE))))
 
 # read estimates data
-estimates_all <- readr::read_csv(
-  here::here(release_folder, "estimates_all.csv")) %>%
+estimates_all <- 
+  bind_rows(
+    readr::read_csv(here::here(release_folder, "estimates_all.csv")),
+    readr::read_csv(here::here(release_folder, "estimates_6575.csv"))
+  ) %>%
   mutate(
     sex = if_else(
       str_detect(subgroup, "Female|Male"),
       str_extract(subgroup, "Female|Male"),
       "Both"
     ),
-    subgroup = as.integer(str_extract(subgroup, "\\d"))
+    ageband = case_when(
+      str_detect(subgroup, "_65") ~ "65-74 years",
+      str_detect(subgroup, "_75") ~ "75+ years",
+      TRUE ~ "all"
+    ),
+    subgroup = as.integer(str_extract(subgroup, "^\\d"))
   )
 
 # read metareg data
 metareg_results_k <- readr::read_rds(
   here::here(release_folder, "metareg_results_k.rds")) %>%
-  select(subgroup, comparison, sex, outcome, k, starts_with("line")) %>%
+  select(subgroup, comparison, sex, ageband, outcome, k, starts_with("line")) %>%
   mutate(model="adjusted") 
 
 ################################################################################
@@ -146,13 +154,13 @@ plot_data <- estimates_all %>%
                   ~ str_c(.x, "\n(to\n", max_fu_date, ")"),
                   TRUE ~ as.character(.x)))) %>%
   arrange(k) %>%
-  group_by(k, subgroup, outcome, comparison) %>%
+  group_by(k, subgroup, sex, ageband, outcome, comparison) %>%
   mutate(order2 = row_number()) %>%
   ungroup() %>%
   mutate(order = order1 + order2) %>%
   left_join(
     metareg_results_k, 
-    by = c("subgroup", "comparison", "sex", "outcome", "model", "k")
+    by = c("subgroup", "comparison", "sex", "ageband", "outcome", "model", "k")
   ) %>%
   mutate(across(model,
                 factor,
@@ -171,7 +179,7 @@ plot_data <- estimates_all %>%
                 levels = subgroups,
                 labels = str_wrap(subgroup_plot_labels, 25)
   )) %>%
-  mutate(line_group = str_c(subgroup, sex, comparison, outcome,  model, sep = "; ")) %>%
+  mutate(line_group = str_c(subgroup, sex, ageband, comparison, outcome,  model, sep = "; ")) %>%
   # only plot line within range of estimates
   mutate(k_nonmiss = if_else(!is.na(estimate), k, NA_integer_)) %>%
   group_by(line_group) %>%
@@ -740,7 +748,7 @@ for (i in c("BNT162b2", "ChAdOx1", "both")) {
 ################################################################################
 # sex stratified results for each comparison
 
-plot_sex <- function(plot_comparison, strata = "sex") {
+plot_strata <- function(plot_comparison, strata) {
   
   plot_data_0 <- plot_data %>%
     filter(
@@ -748,6 +756,7 @@ plot_sex <- function(plot_comparison, strata = "sex") {
       as.integer(model) == 2
     )
   
+  leg_pos <- "bottom"
   if (strata == "sex") {
     strata_labs <- c("Female", "Male")
     plot_data_1 <- plot_data_0 %>%
@@ -755,15 +764,21 @@ plot_sex <- function(plot_comparison, strata = "sex") {
         sex != "Both"
       ) %>%
       rename(strata_var = !! strata)
-  } else if( strata == "age") {
-    # TODO
-    # strata_labs <- c("65-74 years", "75+ years")
-    # plot_data_1 <- plot_data_0 %>%
-    #   filter(
-    #     age != "all"
-    #   )
+    leg_rows <- 1
+    strata_page_width <- 27
+    strata_page_height <- 16
+  } else if( strata == "ageband") {
+    strata_labs <- c("65-74 years", "75+ years")
+    plot_data_1 <- plot_data_0 %>%
+      filter(
+        ageband != "all"
+      ) %>%
+      rename(strata_var = !! strata)
+    leg_rows <- 2
+    strata_page_height <- 16
+    strata_page_width <- 14
   } else {
-    stop("strata must be sex or age")
+    stop("strata must be sex or ageband")
   }
   
   i <- which(comparisons == plot_comparison)
@@ -848,7 +863,8 @@ plot_sex <- function(plot_comparison, strata = "sex") {
     guides(
       shape = guide_legend(
         title = NULL, 
-        override.aes = list(colour = palette, fill = fill_shapes)
+        override.aes = list(colour = palette, fill = fill_shapes),
+        nrow=leg_rows, byrow=TRUE
       )
     ) +
     theme_bw() +
@@ -877,17 +893,24 @@ plot_sex <- function(plot_comparison, strata = "sex") {
       plot.caption.position = "plot",
       plot.caption = element_text(hjust = 0, face= "italic"),
       
-      legend.position = "bottom",
+      legend.position = leg_pos,
       legend.key.width = unit(2, 'cm'),
       legend.text = element_text(size=8)
     ) 
   
   # save the plot
   ggsave(plot_vax_2,
-         filename = here::here(release_folder, glue("hr_vax_{plot_comparison}_sex.png")),
-         width=page_height, height=page_width, units="cm")
+         filename = here::here(release_folder, glue("hr_vax_{plot_comparison}_{strata}.png")),
+         width=strata_page_width, height=strata_page_height, units="cm")
   
-  # plot comparison
+  
+  strata_page_width <- 16
+  strata_page_height <- 12
+  if (strata=="ageband") {
+    strata_page_height <- 8
+    leg_pos <- "right"
+  }
+  # plot comparison anytest
   plot_vax_anytest <- plot_data_1 %>%
     filter(
       outcome_unlabelled == "anytest"
@@ -925,7 +948,7 @@ plot_sex <- function(plot_comparison, strata = "sex") {
     ) +
     scale_linetype_manual(
       name = NULL,
-      values = c("Female" = "dashed", "Male" = "dotted")
+      values = line_types
     ) +
     scale_shape_manual(
       values = point_shapes
@@ -934,10 +957,12 @@ plot_sex <- function(plot_comparison, strata = "sex") {
                         values = palette) +
     scale_fill_manual(guide = "none",
                       values = fill_shapes) +
-    guides(shape = guide_legend(
+    guides(
+      shape = guide_legend(
       title = NULL, 
-      override.aes = list(colour = palette, fill = fill_shapes)
-    )) +
+      override.aes = list(colour = palette, fill = fill_shapes),
+      nrow=leg_rows, byrow=TRUE)
+    ) +
     theme_bw() +
     theme(
       panel.border = element_blank(),
@@ -964,19 +989,20 @@ plot_sex <- function(plot_comparison, strata = "sex") {
       plot.caption.position = "plot",
       plot.caption = element_text(hjust = 0, face= "italic"),
       
-      legend.position = "bottom",
+      legend.position = leg_pos,
       legend.key.width = unit(2, 'cm'),
       legend.text = element_text(size=10)
     ) 
   
   # save the plot
   ggsave(plot_vax_anytest,
-         filename = here::here(release_folder, glue("hr_vax_anytest_{plot_comparison}_sex.png")),
-         width=page_width, height=12, units="cm")
+         filename = here::here(release_folder, glue("hr_vax_anytest_{plot_comparison}_{strata}.png")),
+         width=strata_page_width, height=strata_page_height, units="cm")
   
 }
 
 for (i in c("BNT162b2", "ChAdOx1", "both")) {
-  plot_sex(i)
+  plot_strata(i, strata = "sex")
+  plot_strata(i, strata = "ageband")
 }
 
