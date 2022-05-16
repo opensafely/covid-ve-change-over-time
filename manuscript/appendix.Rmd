@@ -77,8 +77,10 @@ weeks_since_2nd_vax <- str_c(starts[-(K+1)], ends[-1], sep = "-")
 
 ```{r read-data}
 # read event counts data
-event_counts <- readr::read_csv(
-  here::here(release_folder, "event_counts_all.csv")) %>%
+event_counts <- bind_rows(
+  readr::read_csv(here::here(release_folder, "event_counts_all.csv")),
+  readr::read_csv(here::here(release_folder, "event_counts_6575.csv"))
+  ) %>%
   filter(outcome != "covidemergency") %>%
    mutate(
     sex = if_else(
@@ -86,6 +88,11 @@ event_counts <- readr::read_csv(
       str_extract(subgroup, "Female|Male"),
       "Both"
       ),
+    ageband = case_when(
+      str_detect(subgroup, "_65") ~ "65-74 years",
+      str_detect(subgroup, "_75") ~ "75+ years",
+      TRUE ~ "all"
+    ),
     subgroup = as.integer(str_extract(subgroup, "\\d"))
     ) %>%
   mutate(across(arm,
@@ -99,8 +106,10 @@ event_counts <- readr::read_csv(
 
 
 # read estimates data
-estimates_all <- readr::read_csv(
-  here::here(release_folder, "estimates_all.csv")) %>%
+estimates_all <- bind_rows(
+  readr::read_csv(here::here(release_folder, "estimates_all.csv")),
+  readr::read_csv(here::here(release_folder, "estimates_6575.csv"))
+  )%>%
   filter(outcome != "covidemergency") %>%
    mutate(
     sex = if_else(
@@ -108,6 +117,11 @@ estimates_all <- readr::read_csv(
       str_extract(subgroup, "Female|Male"),
       "Both"
       ),
+    ageband = case_when(
+      str_detect(subgroup, "_65") ~ "65-74 years",
+      str_detect(subgroup, "_75") ~ "75+ years",
+      TRUE ~ "all"
+    ),
     subgroup = as.integer(str_extract(subgroup, "\\d"))
     ) %>%
   filter(
@@ -139,7 +153,7 @@ metareg_results_k <- readr::read_rds(
                   labels = c("BNT162b2 vs unvaccinated", "ChAdOx1 vs unvaccinated", "BNT162b2 vs ChAdOx1"))) %>%
    mutate(across(c(logrhr, logrhr_lower, logrhr_higher), 
                 ~format(round(exp(.x), digits=2), nsmall=2, trim = TRUE))) %>%
-  select(subgroup, sex, comparison, outcome, k, rhr = logrhr, rhr_lower = logrhr_lower, rhr_higher = logrhr_higher)
+  select(subgroup, sex, ageband, comparison, outcome, k, rhr = logrhr, rhr_lower = logrhr_lower, rhr_higher = logrhr_higher)
 ```
 
 ```{r kable-opts}
@@ -384,18 +398,42 @@ print_table1 <- local({
 ```
 
 ```{r prep-table-events}
-table_events_ft <- function(s) {
+table_events_ft <- function(s="Both", a=FALSE) {
   
-  caption_string <- "Event counts / person-years"
-  if (s == "Both") {
-    caption_string <- glue("{caption_string}.")
-  } else {
-    caption_string <- glue("{caption_string} ({str_to_lower(s)}s only).")
-  }
-  
-  data <- event_counts %>%
+  data0 <- event_counts %>%
     filter(sex == s) %>%
     select(-sex)
+  
+  page_width <- 26
+  
+  caption_string <- "Event counts / person-years"
+  if (s == "Both" & !a) {
+    
+    data <- data0 %>%
+      filter(ageband == "all")
+    
+    caption_string <- glue("{caption_string}.")
+    
+  } else if (s != "Both") {
+    
+    data <- data0 %>%
+      filter(ageband == "all")
+    
+    caption_string <- glue("{caption_string} ({str_to_lower(s)}s only).")
+    
+  } else if (a) {
+    
+    data <- data0 %>%
+      filter(ageband != "all") %>%
+      mutate(
+        subgroup = if_else(ageband == "65-74 years", "1", "2")) %>%
+      select(-ageband)
+    
+    caption_string <- glue("{caption_string} (older adults).")
+    
+    page_width <- 16
+    
+  }
   
   totals <- data %>%
     group_by(subgroup, arm, outcome) %>%
@@ -431,21 +469,32 @@ table_events_ft <- function(s) {
     as.character(subgroup_labels), 
     function(x) sum(str_detect(table_names, glue("{x}_")))
   )
-  names(cols_subtype) <- subgroups
+  
+  keep <- cols_subtype != 0
+  cols_subtype <- cols_subtype[keep]
+  
+  if (a) {
+    
+    names(cols_subtype) <- c("65-74 years", "75+ years")
+    
+  } else {
+    
+    names(cols_subtype) <- subgroups
+    
+    # cols_subtype <- cols_subtype
+    # add footnote marker to not clinically vulnerable subgroups
+    names(cols_subtype)[3:4] <- str_c(
+      names(cols_subtype)[3:4],
+      footnote_marker_alphabet(1, format = "latex", double_escape = TRUE)
+    )
+    
+  }
   col_names["k"] <- "Weeks since 2nd dose"
   col_names["outcome"] <- "Outcome"
   
-  cols_subtype <- cols_subtype
-  # add footnote marker to not clinically vulnerable subgroups
-  names(cols_subtype)[3:4] <- str_c(
-    names(cols_subtype)[3:4],
-    footnote_marker_alphabet(1, format = "latex", double_escape = TRUE)
-    )
-  
-  
   col_1_width <- 1
   col_2_width <- 0.8
-  col_width <- (26 - col_1_width - col_2_width - ncol(table_out0)*padding)/(ncol(table_out0) - 2)
+  col_width <- (page_width - col_1_width - col_2_width - ncol(table_out0)*padding)/(ncol(table_out0) - 2)
   col_1_width <- as.character(glue("{col_1_width}cm"))
   col_2_width <- as.character(glue("{col_2_width}cm"))
   col_width <- as.character(glue("{col_width}cm"))
@@ -463,7 +512,7 @@ table_events_ft <- function(s) {
       c(" " = 2, cols_subtype),
       bold=TRUE,
       escape = FALSE
-      ) %>%
+    ) %>%
     column_spec(1, width=col_1_width) %>%
     column_spec(2, width=col_2_width) %>%
     column_spec(3:ncol(table_out0), width=col_width) %>%
@@ -471,14 +520,24 @@ table_events_ft <- function(s) {
     kable_styling(
       font_size = 6,
       latex_options = c("hold_position", "repeat_header")
-      ) %>%
-    footnote(
-      alphabet = c("And not clinically vulnerable"),
-      footnote_as_chunk=TRUE,
-      escape=FALSE
-    )
+    ) 
   
-  return(table_out1)
+  if (a) {
+    
+    return(table_out1)
+    
+  } else {
+    
+    return(
+      table_out1 %>%
+        footnote(
+          alphabet = c("And not clinically vulnerable"),
+          footnote_as_chunk=TRUE,
+          escape=FALSE
+        )
+    )
+    
+  }
   
 }
 ```
@@ -503,6 +562,7 @@ table_hrs_ft <- function(m, s){
       variable == "k",
       model == m,
       sex == s,
+      ageband == "all",
       !reference_row
       ) %>%
     mutate(across(c(estimate, conf.low, conf.high), ~format(.x, nsmall=2))) %>%
@@ -595,7 +655,7 @@ table_hrs_ft <- function(m, s){
 ```
 
 ```{r prep-table-metareg}
-table_metareg_ft <- function(s) {
+table_metareg_ft <- function(s, a=FALSE) {
     
   caption_string <- "Per-comparison-period ratio of adjusted hazard ratios for effect of vaccination"
   if (s == "Both") {
@@ -605,7 +665,7 @@ table_metareg_ft <- function(s) {
   }
   
   table_out0 <- metareg_results_k %>%
-    filter(sex == s) %>%
+    filter(sex == s, ageband == "all") %>%
   mutate(
       name = glue("{subgroup}_{comparison}"),
       value = glue("{rhr} ({rhr_lower}-{rhr_higher})")
@@ -728,7 +788,7 @@ tables_data <- names_key %>%
                   "",
                   .x
                 ))) %>%
-  select(comparison, subgroup, sex, outcome, period, variable = names_long, label, value) %>%
+  select(comparison, subgroup, sex, ageband, outcome, period, variable = names_long, label, value) %>%
   mutate(across(period, 
                 ~factor(as.integer(.x),
                         levels = 1:K,
@@ -737,16 +797,17 @@ tables_data <- names_key %>%
   pivot_wider(names_from = period, values_from = value) %>%
   mutate(across(starts_with(weeks_since_2nd_vax), ~if_else(is.na(.x), "-", .x)))  
 
-table_coef_hrs <- function(comp, sub, s, o){
+table_coef_hrs <- function(comp, sub, s = "Both", a = "all", o){
   
   data <- tables_data %>%
     filter(
       comparison == comp,
       subgroup == sub,
       sex == s,
+      ageband == a,
       outcome == names(outcomes)[outcomes == o]
     ) %>%
-    select(-comparison, -subgroup, -sex, -outcome)
+    select(-comparison, -subgroup, -sex, -ageband, -outcome)
   
   age_order <- data %>% 
   filter(variable == "Age") %>%
@@ -1631,3 +1692,38 @@ knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_BNT162b2_sex.p
 knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_ChAdOx1_sex.png"))
 ```
 
+## Waning vaccine effectiveness in older adults
+
+```{r table-events-ageband, include=TRUE, tab.cap.pre = "Supplementary Table "}
+table_events_ft(a=TRUE)
+```
+
+# TODO - remove landscape commands
+
+```{r table-hrs-ft-ageband, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_hrs_ft(m = "unadjusted", s = "Female"))
+```
+
+```{r table-ahrs-ft-ageband, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_hrs_ft(m = "adjusted", s = "Female"))
+```
+
+```{r table-ratio-hrs-ft-ageband, include=TRUE, tab.cap.pre = "Supplementary Table "}
+landscape(table_metareg_ft(s = "Female"))
+```
+
+```{r hr-vax-BNT162b2-ageband, include=TRUE, fig.cap="Adjusted hazard ratios for BNT162b2 vs unvaccinated from the 65-74 years and 75+ years models.", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "hr_vax_BNT162b2_ageband.png"))
+```
+
+```{r hr-vax-ChAdOx1-ageband, include=TRUE, fig.cap="Adjusted hazard ratios for ChAdOx1 vs unvaccinated from the 65-74 years and 75+ years models.", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "hr_vax_ChAdOx1_ageband.png"))
+```
+
+```{r hr-vax-anytest-BNT162b2-ageband, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for BNT162b2 vs unvaccinated from the 65-74 years and 75+ years models.", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_BNT162b2_ageband.png"))
+```
+
+```{r hr-vax-anytest-ChAdOx1-ageband, include=TRUE, fig.cap="Adjusted hazard ratios for any SARS-CoV-2 test for ChAdOx1 vs unvaccinated from the 65-74 years and 75+ years models.", out.width="\\linewidth"}
+knitr::include_graphics(file.path(release_folder, "hr_vax_anytest_ChAdOx1_ageband.png"))
+```
