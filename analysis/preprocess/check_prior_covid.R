@@ -24,14 +24,14 @@ data_processed %>%
   mutate(
     cml_n = cumsum(n),
     thresh_value = if_else(
-      # choose threshold to keep at least 95% of samples
-      cml_n > 0.05*nrow(data_processed),
+      # choose threshold to keep all tests for at least 99.9% of participants
+      cml_n > 0.001*nrow(data_processed),
       value,
       NA_integer_
       )
     ) %>%
   mutate(across(thresh_value, max, na.rm = TRUE))  %>%
-  ungroup %>%
+  ungroup() %>%
   mutate(across(n, ~log(ceiling_any(.x, to = 7)))) %>%
   filter(value <=20) %>% # to avoid very large numbers messing up the scales.
   ggplot(aes(x = value, y = n)) +
