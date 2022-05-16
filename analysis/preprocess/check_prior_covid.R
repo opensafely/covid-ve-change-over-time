@@ -19,11 +19,12 @@ data_processed %>%
   group_by(name, value) %>%
   count() %>%
   ungroup() %>%
-  mutate(across(n, ~ceiling_any(.x, to = 7))) %>%
-  # filter(value < 50) %>% # to avoid very large numbers messing up the scales.
+  mutate(across(n, ~log(ceiling_any(.x, to = 7)))) %>%
+  filter(value <=20) %>% # to avoid very large numbers messing up the scales.
   ggplot(aes(x = value, y = n)) +
   geom_bar(stat = "identity", width = 1) +
-  facet_wrap(~name, nrow=5, scales = "free")
+  facet_wrap(~name, nrow=5) +
+  labs(x = "n tests (truncated at 20)", y = "log(n) patients")
 
 ggsave(
   filename = here::here("output", "eda", "prior_covid_outcomes_n.png"),
