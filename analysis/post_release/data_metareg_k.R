@@ -22,6 +22,10 @@ metareg_results <- metareg_results_0 %>%
                 factor,
                 levels = 1:3,
                 labels = c("Both", "Female", "Male"))) %>%
+  mutate(across(ageband,
+                factor,
+                levels = 1:3,
+                labels = c("all", "65-74 years", "75+ years"))) %>%
   mutate(across(comparison, 
                 factor,
                 levels = 1:3,
@@ -45,12 +49,12 @@ metareg_results <- metareg_results_0 %>%
     ) 
 
 metareg_results_k <- metareg_results %>%
-  distinct(subgroup, sex, comparison, outcome) %>%
+  distinct(subgroup, sex, ageband, comparison, outcome) %>%
   mutate(k=factor(1, levels=1:6)) %>%
-  complete(subgroup, sex, comparison, outcome, k) %>%
+  complete(subgroup, sex, ageband, comparison, outcome, k) %>%
   left_join(
     metareg_results,
-    by = c("subgroup", "sex", "comparison", "outcome")
+    by = c("subgroup", "sex", "ageband", "comparison", "outcome")
   ) %>%
   mutate(across(k, ~as.integer(as.character(.x)))) %>%
   mutate(
@@ -67,7 +71,7 @@ readr::write_rds(
 )
 
 metareg_results_rhr <- metareg_results %>%
-  distinct(outcome, subgroup, sex, comparison, logrhr, logrhr_lower, logrhr_higher) %>%
+  distinct(outcome, subgroup, sex, ageband, comparison, logrhr, logrhr_lower, logrhr_higher) %>%
   mutate(across(starts_with("log"), exp)) %>%
   rename_with(~str_remove(.x, "log"))
 
