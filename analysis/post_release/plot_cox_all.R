@@ -405,7 +405,7 @@ plot_brand <- plot_data %>%
 ggsave(plot_brand,
        filename = here::here(release_folder, glue("hr_brand.png")),
        width=page_height, height=page_width, units="cm")
-ggsave(plot_brand,
+ggsave(plot_brand + theme(plot.margin = margin(2, 2, 2, 2, "cm")),
        filename = here::here(release_folder, glue("hr_brand.pdf")),
        width=page_height, height=page_width, units="cm")
 
@@ -967,9 +967,9 @@ plot_strata <- function(plot_comparison, strata) {
                       values = fill_shapes) +
     guides(
       shape = guide_legend(
-      title = NULL, 
-      override.aes = list(colour = palette, fill = fill_shapes),
-      nrow=leg_rows, byrow=TRUE)
+        title = NULL, 
+        override.aes = list(colour = palette, fill = fill_shapes),
+        nrow=leg_rows, byrow=TRUE)
     ) +
     theme_bw() +
     theme(
