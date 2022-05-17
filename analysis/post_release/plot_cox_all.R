@@ -232,6 +232,7 @@ plot_vax <- plot_data %>%
   filter(
     sex == "Both",
     comparison != "both",
+    ageband == "all",
     outcome_unlabelled != "anytest",
     as.integer(model) == 2
   ) %>%
@@ -320,7 +321,9 @@ plot_vax <- plot_data %>%
 ggsave(plot_vax,
        filename = here::here(release_folder, glue("hr_vax.png")),
        width=page_height, height=page_width, units="cm")
-ggsave(plot_vax,
+
+
+ggsave(plot_vax + theme(plot.margin = margin(2, 2, 2, 2, "cm")),
        filename = here::here(release_folder, glue("hr_vax.pdf")),
        width=page_height, height=page_width, units="cm")
 
@@ -329,6 +332,7 @@ ggsave(plot_vax,
 plot_brand <- plot_data %>%
   filter(
     sex == "Both",
+    ageband == "all",
     comparison == "both",
     outcome_unlabelled != "anytest",
     as.integer(model) == 2
@@ -411,6 +415,7 @@ ggsave(plot_brand,
 plot_vax_anytest <- plot_data %>%
   filter(
     sex == "Both",
+    ageband == "all",
     comparison != "both",
     outcome_unlabelled == "anytest",
     as.integer(model) == 2
@@ -496,6 +501,7 @@ ggsave(plot_vax_anytest,
 plot_brand_anytest <- plot_data %>%
   filter(
     sex == "Both",
+    ageband == "all",
     comparison == "both",
     outcome_unlabelled == "anytest",
     as.integer(model) == 2
@@ -563,7 +569,7 @@ plot_brand_anytest <- plot_data %>%
   ) 
 ggsave(plot_brand_anytest,
        filename = here::here(release_folder, glue("hr_brand_anytest.png")),
-       width=page_width, height=7, units="cm")
+       width=page_width, height=12, units="cm")
 
 ################################################################################
 # unadjusted and adjusted estimates for each comparison
@@ -579,6 +585,7 @@ plot_unadj_adj <- function(plot_comparison) {
   plot_vax_0 <- plot_data %>%
     filter(
       sex == "Both",
+      ageband == "all",
       comparison == plot_comparison,
       outcome_unlabelled != "anytest"
     ) %>%
@@ -672,6 +679,7 @@ plot_unadj_adj <- function(plot_comparison) {
   plot_vax_anytest <- plot_data %>%
     filter(
       sex == "Both",
+      ageband == "all",
       comparison == plot_comparison,
       outcome_unlabelled == "anytest"
     ) %>%
