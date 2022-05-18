@@ -54,8 +54,11 @@ data_covariates <- arrow::read_feather(
 # covid infection episodes
 
 # covid events within 90 days of each other grouped into one covid epidose
+# BTW it may be useful to reduce this threshold (e.g. to 30)  when verifying
+# that the below code works as desired
 episode_length <- 90
 
+### REVIEW UP TO LINE 130
 data_episodes0 <- data_covariates %>%
   select(
     patient_id, 

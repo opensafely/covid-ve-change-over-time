@@ -356,6 +356,7 @@ study=StudyDefinition(
         }
     ),
 
+    ### REVIEW UP TO LINE 393
     # Number of SARS-CoV-2 positive tests between pandemic_start_date and end_date
     postest_n=patients.with_test_result_in_sgss(
         pathogen="SARS-CoV-2",
