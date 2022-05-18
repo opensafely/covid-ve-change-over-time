@@ -211,24 +211,6 @@ readr::write_rds(
   here::here("analysis", "lib", "comparisons.rds")
 )
 
-# ################################################################################
-# # create bash script for generating study definitions from template
-# create_study_definitions <- 
-#   str_c("# Run this script to create a study_definition for each k",
-#         "",
-#         str_c("for i in {1..",K,"}; do"),
-#         "sed -e \"s;%placeholder_k%;$i;g\" ./analysis/study_definition_k.py > ./analysis/study_definition_$i.py;",
-#         "done;", sep = "\n")
-# 
-# create_study_definitions %>%
-#   writeLines(here::here("analysis/create_study_definitions.sh"))
-# 
-# # create study definitions from template_study_definition.py
-# check_create <- try(processx::run(command="bash", args= "analysis/create_study_definitions.sh"))
-# 
-# if (inherits(check_create, "try-error")) stop("Study definitions not created.")
-
-
 ################################################################################
 # create action functions ----
 
@@ -396,6 +378,9 @@ actions_list <- splice(
     name = "check_prior_covid",
     run = "r:latest analysis/preprocess/check_prior_covid.R",
     needs = list("data_input_process"),
+    highly_sensitive = list(
+      prior_covid_n = "output/lib/prior_covid_n.json"
+    ),
     moderately_sensitive = list(
       prior_covid_outcomes_n = "output/eda/prior_covid_outcomes_n.png"
     )
@@ -467,7 +452,7 @@ actions_list <- splice(
   action(
     name = "generate_covs_data",
     run = "cohortextractor:latest generate_cohort --study-definition study_definition_covs --output-format feather",
-    needs = list("data_eligible_cde"),
+    needs = list("check_prior_covid", "data_eligible_cde"),
     highly_sensitive = list(
       cohort = "output/input_covs.feather"
     )
@@ -494,15 +479,6 @@ actions_list <- splice(
     )
   ),
   
-  # comment("min and max follow-up dates for plots"),
-  # action(
-  #   name = "data_min_max_fu",
-  #   run = "r:latest analysis/comparisons/data_min_max_fu.R",
-  #   needs = list("data_covariates_process"),
-  #   moderately_sensitive = list(
-  #     data_min_max_fu_csv = "output/lib/data_min_max_fu.csv"
-  #   )
-  # ),
   
   comment("####################################",
           "subsequent vaccination", 
