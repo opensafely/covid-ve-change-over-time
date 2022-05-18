@@ -8,15 +8,22 @@ from codelists import *
 
 # import json module
 import json
-#study_parameters
+
+# study_parameters
 with open("./analysis/lib/study_parameters.json") as f:
   study_parameters = json.load(f)
 
-# define variables explicitly
+# define variables
 K=study_parameters["K"]
 pandemic_start_date=study_parameters["pandemic_start"]
 start_date=study_parameters["start_date"] # start of phase 1
 end_date=study_parameters["end_date"] # latest date of data
+
+# prior_covid_n
+# number of times each prior covid event should recur
+# **note that you need to manually check if and of the values are zero**
+with open("./output/lib/prior_covid_n.json") as f:
+  prior_covid_n = json.load(f)
 
 # set seed so that dummy data can be reproduced
 import numpy as np
@@ -77,22 +84,22 @@ def postest_X_date(n):
     variables.update(var_signature(index_date=f"postest_{i-1}_date", k=i))
   return variables
 
-# probable covid
-# def primary_care_covid_case_X_date(n):
-#   def var_signature(index_date, k):
-#     return {
-#       f"primary_care_covid_case_{k}_date": patients.with_these_clinical_events(
-#         covid_primary_care_probable_combined,
-#         on_or_before=index_date,
-#         find_last_match_in_period=True,
-#         returning="date",
-#         date_format = "YYYY-MM-DD",
-# 	    ),
-#     }
-#   variables=var_signature(index_date=end_date, k=1)
-#   for i in range(2, n+1):
-#     variables.update(var_signature(index_date=f"primary_care_covid_case_{i-1}_date", k=i))
-#   return variables
+# primary care covid code
+def primary_care_covid_X_date(n, primary_care_codelist, name):
+  def var_signature(index_date, k):
+    return {
+      f"{name}_{k}_date": patients.with_these_clinical_events(
+        primary_care_codelist,
+        on_or_before=index_date,
+        find_last_match_in_period=True,
+        returning="date",
+        date_format = "YYYY-MM-DD",
+	    ),
+    }
+  variables=var_signature(index_date=end_date, k=1)
+  for i in range(2, n+1):
+    variables.update(var_signature(index_date=f"{name}_{i-1}_date", k=i))
+  return variables
 
 # hospital admission
 def covidadmitted_X_date(n):
@@ -397,20 +404,16 @@ study=StudyDefinition(
     # first occurence of any covid test in each comparison period
     **anytest_X_date(K),
 
-    # all postitive tests, going backwards from end date
-    **postest_X_date(3),
-
-    # **primary_care_covid_case_X_date(3),
-
-    **covidadmitted_X_date(3),
-
-    # only use first primary care covid case
-    primary_care_covid_case_1_date = patients.with_these_clinical_events(
-        covid_primary_care_probable_combined,
-        on_or_before=end_date,
-        find_first_match_in_period=True,
-        returning="date",
-        date_format = "YYYY-MM-DD",
-	    ),
+    # all events, going backwards from end date
+    # n selected to get all events from >=99.9% of patients
+    # i.e., for <0.1% of patients, we might miss some early events
+    ## positive test in SGSS
+    **postest_X_date(prior_covid_n["postest_n"]),
+    ## primary care covid code 
+    **primary_care_covid_X_date(prior_covid_n["covid_primary_care_code_n"], covid_primary_care_code, "covid_primary_care_code"),
+    ## primary care covid test
+    **primary_care_covid_X_date(prior_covid_n["covid_primary_care_positive_test_n"], covid_primary_care_positive_test, "covid_primary_care_positive_test"),
+    ## hospital admission
+    **covidadmitted_X_date(prior_covid_n["covidadmitted_n"]),
 
 )
