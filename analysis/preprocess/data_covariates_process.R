@@ -53,9 +53,78 @@ data_covariates <- arrow::read_feather(
 ################################################################################
 # covid infection episodes
 
-data_covariates %>%
-  select(patient_id, starts_with(c("postest", "covidadmitted", "primary_care_covid"))) %>%
-  filter()
+# covid events within 90 days of each other grouped into one covid epidose
+episode_length <- 90
+
+data_episodes0 <- data_covariates %>%
+  select(
+    patient_id, 
+    # select recurring events
+    starts_with(c("postest", "covidadmitted", "covid_primary_care"))
+    ) %>%
+  # clean dates variables
+  mutate(across(contains("_date"), 
+                ~ floor_date(
+                  as.Date(.x, format="%Y-%m-%d"),
+                  unit = "days"))) %>%
+  # reshape
+  pivot_longer(
+    cols = -patient_id, 
+    values_drop_na = TRUE
+    ) %>%
+  mutate(across(name, ~str_remove(.x, "_\\d+_date"))) %>%
+  arrange(patient_id, value) %>%
+  # by patient_id, calculate lag of date
+  group_by(patient_id) %>%
+  mutate(value_lag = lag(value)) %>%
+  ungroup() %>%
+  # calculate difference in date between subsequent events
+  mutate(diff = as.integer(value - value_lag))
+
+data_episodes_2plus <- data_episodes0 %>%
+  # only keep events that occured > episode_length days after previous event
+  filter(diff > episode_length) %>%
+  select(patient_id, name, value) %>%
+  arrange(patient_id, value) %>%
+  group_by(patient_id) %>%
+  # assign episode number, starting at 2
+  mutate(episode = row_number() + 1) %>%
+  ungroup()
+
+data_episodes <- data_episodes0 %>%
+  left_join(data_episodes_2plus) %>%
+  arrange(patient_id, value) %>%
+  group_by(patient_id) %>%
+  # assign episode number 1 to all events not in data_episodes_2plus
+  # then calculate the cumultive maximum by patient_id
+  mutate(across(episode, ~cummax(if_else(is.na(.x), 1, .x)))) %>%
+  ungroup() %>%
+  select(-diff, -value_lag) %>%
+  # start and end date of each episode
+  group_by(patient_id, episode) %>%
+  mutate(
+    episode_start_date = min(value),
+    episode_end_date = max(value),
+  ) %>%
+  ungroup() %>%
+  # first date of each event type in each episode
+  group_by(patient_id, episode, name) %>%
+  mutate(type_date = min(value)) %>%
+  ungroup() %>%
+  select(-value) %>%
+  distinct() %>%
+  # rehape
+  pivot_wider(
+    names_from = name,
+    values_from = type_date,
+    names_glue = "{name}_date"
+  )
+
+readr::write_rds(
+  data_episodes,
+  here::here("output", "data", "data_episodes.rds"),
+  compress = "gz"
+)
 
 ################################################################################
 data_all <- data_arm %>%
