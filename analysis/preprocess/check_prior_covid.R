@@ -6,6 +6,7 @@ library(tidyverse)
 
 # create output directory
 fs::dir_create(here::here("output", "eda"))
+fs::dir_create(here::here("output", "lib"))
 
 # redaction functions
 source(here::here("analysis", "functions", "redaction_functions.R"))
@@ -13,7 +14,7 @@ source(here::here("analysis", "functions", "redaction_functions.R"))
 data_processed <- readr::read_rds(
   here::here("output", "data", "data_processed.rds")) 
 
-data_processed %>%
+data_plot <- data_processed %>%
   select(patient_id, ends_with("_n")) %>%
   pivot_longer(cols = -patient_id) %>%
   group_by(name, value) %>%
@@ -31,7 +32,10 @@ data_processed %>%
       )
     ) %>%
   mutate(across(thresh_value, max, na.rm = TRUE))  %>%
-  ungroup() %>%
+  ungroup() 
+
+
+data_plot %>%
   mutate(across(n, ~log(ceiling_any(.x, to = 7)))) %>%
   filter(value <=20) %>% # to avoid very large numbers messing up the scales.
   ggplot(aes(x = value, y = n)) +
@@ -45,3 +49,16 @@ ggsave(
   filename = here::here("output", "eda", "prior_covid_outcomes_n.png"),
   width = 14, height = 20, units = "cm"
 )
+
+################################################################################
+# save thresholds for use in study definition
+data_thresholds <- data_plot %>%
+  distinct(name, thresh_value)
+
+prior_covid_n <- as.list(data_thresholds$thresh_value)
+names(prior_covid_n) <- data_thresholds$name
+
+jsonlite::write_json(
+  prior_covid_n, 
+  path = here::here("output", "lib", "prior_covid_n.json"), 
+  auto_unbox = TRUE, pretty=TRUE)
