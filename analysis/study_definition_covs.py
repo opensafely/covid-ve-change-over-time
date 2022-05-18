@@ -19,6 +19,7 @@ pandemic_start_date=study_parameters["pandemic_start"]
 start_date=study_parameters["start_date"] # start of phase 1
 end_date=study_parameters["end_date"] # latest date of data
 
+# REVIEW
 # prior_covid_n
 # number of times each prior covid event should recur
 # **note that you need to manually check if and of the values are zero**
@@ -64,6 +65,7 @@ def anytest_X_date(n):
     variables.update(var_signature(name=f"anytest_{i}_date", k=i))
   return variables
 
+### REVIEW UP TO LINE 120
 # all outcomes before end_date, latest first
 # positive tests
 def postest_X_date(n):
@@ -404,6 +406,7 @@ study=StudyDefinition(
     # first occurence of any covid test in each comparison period
     **anytest_X_date(K),
 
+    ### REVIEW UP TO LINE 419
     # all events, going backwards from end date
     # n selected to get all events from >=99.9% of patients
     # i.e., for <0.1% of patients, we might miss some early events

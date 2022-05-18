@@ -2,6 +2,9 @@
 # check distribution of number of positive tests, probably covid recordings and hospitalisations
 # this will be used to determine how many recurring variables to define in study_definition_covs
 
+### REVIEW WHOLE FILE
+
+# load library
 library(tidyverse)
 
 # create output directory
@@ -14,6 +17,7 @@ source(here::here("analysis", "functions", "redaction_functions.R"))
 data_processed <- readr::read_rds(
   here::here("output", "data", "data_processed.rds")) 
 
+# investigate distribution of number of covid events per individual
 data_plot <- data_processed %>%
   select(patient_id, ends_with("_n")) %>%
   pivot_longer(cols = -patient_id) %>%
@@ -34,7 +38,7 @@ data_plot <- data_processed %>%
   mutate(across(thresh_value, max, na.rm = TRUE))  %>%
   ungroup() 
 
-
+# plot distribution
 data_plot %>%
   mutate(across(n, ~log(ceiling_any(.x, to = 7)))) %>%
   filter(value <=20) %>% # to avoid very large numbers messing up the scales.
@@ -51,7 +55,7 @@ ggsave(
 )
 
 ################################################################################
-# save thresholds for use in study definition
+# save thresholds for use in study definition 
 data_thresholds <- data_plot %>%
   distinct(name, thresh_value)
 
