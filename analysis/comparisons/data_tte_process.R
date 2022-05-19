@@ -47,9 +47,13 @@ data_all <- readr::read_rds(
   here::here("output", "data", "data_all.rds")) %>%
   filter(arm %in% c(arm1, arm2))
 
+data_episodes <- readr::read_rds(
+  here::here("output", "data", "data_episodes.rds"))
+
 ################################################################################
 # redaction functions
 source(here::here("analysis", "functions", "redaction_functions.R"))
+source(here::here("analysis", "functions", "data_process_functions.R"))
 
 ################################################################################
 # output directories
@@ -58,7 +62,7 @@ fs::dir_create(here::here("output", "tte", "tables"))
 
 ################################################################################
 
-data <- data_all %>%
+data_comparisons <- data_all %>%
   # filter subgroups
   filter(subgroup %in% select_subgroups) %>%
   pivot_longer(
@@ -74,7 +78,62 @@ data <- data_all %>%
       ((k %% 2) == 0 & split == "even") |
       ((k %% 2) != 0 & split == "odd")
   ) %>%
-  select(patient_id, k, arm, subgroup, sex, ends_with("date"))
+  select(patient_id, k, arm, subgroup, sex, ends_with("date")) 
+
+# derive time since start of most recent covid episode
+data_prior_covid <- data_comparisons %>%
+  left_join(
+    data_episodes %>% select(patient_id, episode_start_date, episode_end_date), 
+    by = "patient_id") %>%
+  # only keep individuals with prior covid, and only keep comparison periods that start on or after episode_end_date
+  # we are allowing the episode to have ended on start date (we don't count events that occur on start date)
+  # if we didn't, then the event occuring on end date (which could be a covid hospitalisation) wouldn't
+  # be counted as prior covid or an outcome.
+  filter(!is.na(episode_end_date) & episode_end_date <= start_date) %>%
+  # arrange so that most recent episodes first
+  arrange(patient_id, desc(episode_start_date)) %>%
+  # keep only the most recent for each individual
+  distinct(.keep_all = TRUE) %>%
+  # time in days between start of most recent covid episode and start date + 1 
+  # (start date + 1 because this is the first date on which they can experience an outcome)
+  mutate(prior_covid = as.numeric(start_date - episode_start_date) + 1) %>%
+  select(patient_id, k, prior_covid)
+  
+# clean data to only keep:
+# 1. all comparison periods for patients with no episodes
+# 2. episodes that start before and end after comparison period start_date
+# 3. episodes that start during a comparison period
+data_in <- data_comparisons %>%
+  left_join(
+    data_episodes, 
+    by = "patient_id") %>%
+  filter(
+      # 1.
+      (is.na(episode_start_date)) |
+      # 2.
+      (episode_start_date <= start_date & start_date <= episode_end_date) |
+      # 3.
+      (start_date < episode_start_date & episode_start_date <= episode_end_date)
+  ) %>%
+  select(-episode_start_date, -episode_end_date) %>%
+  left_join(data_prior_covid, 
+            by = c("patient_id", "k")) %>%
+  mutate(across(prior_covid,
+                ~ fct_case_when(
+                  is.na(.x) ~ "no prior covid", 
+                  # .x <= 90 ~ "1-90 days", # there will be very few events here, as events within 90 days would be grouped with the previous episode
+                  .x <= 180 ~ "1-180 days",
+                  TRUE ~ "181+ days"
+                ))) 
+
+# 1. update prior covid at the start of each comparison period
+# 2. define time since prior covid at start of svp + 2 weeks 
+# go with option 1, as option 2 doesn't account for the fact that
+# a patient could have an event in the first comparison period and the last comparison period 
+# (this will become more of a concern if we extend follow-up to >6 comparison periods)
+
+# NOTE: maybe I should edit data_episodes in data_covariates_process.R so that 
+# postest_date for every covid episode is  episode_start_date??
 
 ################################################################################
 # generates and saves data_tte and tabulates event counts 
@@ -105,7 +164,7 @@ derive_data_tte <- function(
       vars(str_c(unique(c("subsequent_vax", "dereg", "coviddeath", "noncoviddeath", outcome_exclude)), "_date")),
       all_vars(occurs_after_start_date(cov_date = ., index_date = start_date))
     ) %>%
-    # only keep periods for which start_date < end_date
+    # only keep periods for which start_date < end_date 
     filter(
       start_date < as.Date(study_parameters$end_date) 
     ) %>%
