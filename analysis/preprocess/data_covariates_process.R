@@ -37,8 +37,7 @@ data_processed <- readr::read_rds(
   here::here("output", "data", "data_processed.rds")) %>%
   select(patient_id, subgroup,
          jcvi_group, elig_date, region, 
-         dereg_date, death_date,
-         starts_with(unname(outcomes)),
+         dereg_date, death_date, coviddeath_date, noncoviddeath_date,
          any_of(unname(model_varlist$demographic)))
 
 # vax data
@@ -85,7 +84,7 @@ data_episodes0 <- data_covariates %>%
   mutate(diff = as.integer(value - value_lag))
 
 data_episodes_2plus <- data_episodes0 %>%
-  # only keep events that occured > episode_length days after previous event
+  # only keep events that occurred > episode_length days after previous event
   filter(diff > episode_length) %>%
   select(patient_id, name, value) %>%
   arrange(patient_id, value) %>%
@@ -211,7 +210,7 @@ data_min_max_fu <- data_all %>%
     min_fu_date = min(start_1_date),
     max_fu_date = max(end_6_date),
     # round total to nereast 7 for disclosure control
-    n = ceiling_any(n(), to=7),
+    # n = ceiling_any(n(), to=7),
     .groups = "keep"
   ) %>% 
   ungroup() %>%
