@@ -19,7 +19,6 @@ pandemic_start_date=study_parameters["pandemic_start"]
 start_date=study_parameters["start_date"] # start of phase 1
 end_date=study_parameters["end_date"] # latest date of data
 
-# REVIEW
 # prior_covid_n
 # number of times each prior covid event should recur
 # **note that you need to manually check if and of the values are zero**
@@ -65,66 +64,77 @@ def anytest_X_date(n):
     variables.update(var_signature(name=f"anytest_{i}_date", k=i))
   return variables
 
-### REVIEW UP TO LINE 120
 # all outcomes before end_date, latest first
 # positive tests
 def postest_X_date(n):
-  def var_signature(index_date, k):
-    return {
+  def var_signature(k):
+      return{
       f"postest_{k}_date": patients.with_test_result_in_sgss(
         pathogen="SARS-CoV-2",
         test_result="positive",
-        on_or_before=index_date,
+        on_or_before=on_or_before,
         restrict_to_earliest_specimen_date=False,
         find_last_match_in_period=True,
         returning="date",
         date_format = "YYYY-MM-DD",
-	    ),
-    }
-  variables=var_signature(index_date=end_date, k=1)
-  for i in range(2, n+1):
-    variables.update(var_signature(index_date=f"postest_{i-1}_date", k=i))
+	    ), 
+      }
+  variables=dict()
+  for i in range(1, n+1):
+    if i==1:
+      on_or_before=end_date
+    else:
+      on_or_before=f"postest_{i-1}_date"
+    variables.update(var_signature(i))
   return variables
 
 # primary care covid code
 def primary_care_covid_X_date(n, primary_care_codelist, name):
-  def var_signature(index_date, k):
-    return {
+  def var_signature(k):
+    return{
       f"{name}_{k}_date": patients.with_these_clinical_events(
         primary_care_codelist,
-        on_or_before=index_date,
+        on_or_before=on_or_before,
         find_last_match_in_period=True,
         returning="date",
         date_format = "YYYY-MM-DD",
 	    ),
     }
-  variables=var_signature(index_date=end_date, k=1)
-  for i in range(2, n+1):
-    variables.update(var_signature(index_date=f"{name}_{i-1}_date", k=i))
+  variables=dict()
+  for i in range(1, n+1):
+    if i==1:
+      on_or_before=end_date
+    else:
+      on_or_before=f"{name}_{i-1}_date"
+    variables.update(var_signature(i))
   return variables
 
 # hospital admission
 def covidadmitted_X_date(n):
-  def var_signature(index_date, k):
-    return {
+  def var_signature(k):
+    return{
       f"covidadmitted_{k}_date": patients.admitted_to_hospital(
         with_these_diagnoses=covid_codes,
-        on_or_before=index_date,
+        on_or_before=on_or_before,
         find_last_match_in_period=True,
         returning="date_admitted",
         date_format = "YYYY-MM-DD",
-	    ),
+      ),
     }
-  variables=var_signature(index_date=end_date, k=1)
-  for i in range(2, n+1):
-    variables.update(var_signature(index_date=f"covidadmitted_{i-1}_date", k=i))
+  variables = dict()
+  for i in range(1, n+1):
+    if i==1:
+      on_or_before=end_date
+    else:
+      on_or_before=f"covidadmitted_{i-1}_date"
+    variables.update(var_signature(i))
   return variables
 
 ###
 study=StudyDefinition(
 
     default_expectations={
-        "date": {"earliest": start_date, "latest": end_date},
+        "date": {"earliest": pandemic_start_date, "latest": end_date},
         "rate": "uniform",
         "incidence": 0.8,
     },  
@@ -406,16 +416,17 @@ study=StudyDefinition(
     # first occurence of any covid test in each comparison period
     **anytest_X_date(K),
 
-    ### REVIEW UP TO LINE 419
     # all events, going backwards from end date
     # n selected to get all events from >=99.9% of patients
     # i.e., for <0.1% of patients, we might miss some early events
     ## positive test in SGSS
     **postest_X_date(prior_covid_n["postest_n"]),
-    ## primary care covid code 
+    # primary care covid code 
     **primary_care_covid_X_date(prior_covid_n["covid_primary_care_code_n"], covid_primary_care_code, "covid_primary_care_code"),
     ## primary care covid test
     **primary_care_covid_X_date(prior_covid_n["covid_primary_care_positive_test_n"], covid_primary_care_positive_test, "covid_primary_care_positive_test"),
+    # primary care covid sequalae 
+    **primary_care_covid_X_date(prior_covid_n["covid_primary_care_sequalae_n"], covid_primary_care_sequalae, "covid_primary_care_sequalae"),
     ## hospital admission
     **covidadmitted_X_date(prior_covid_n["covidadmitted_n"]),
 
