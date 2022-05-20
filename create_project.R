@@ -419,16 +419,16 @@ actions_list <- splice(
     )
   ),
   
-  comment("plot second vaccination time periods"),
-  action(
-    name = "plot_2nd_vax_dates",
-    run = "r:latest analysis/second_vax_period/plot_2nd_vax_dates.R",
-    needs = list("data_eligible_ab", "data_2nd_vax_dates"),
-    moderately_sensitive = list(
-      plots_by_region = "output/second_vax_period/images/plot_by_region_*.png",
-      plots_by_region_data = "output/second_vax_period/images/plot_by_region_*.txt"
-    )
-  ),
+  # comment("plot second vaccination time periods"),
+  # action(
+  #   name = "plot_2nd_vax_dates",
+  #   run = "r:latest analysis/second_vax_period/plot_2nd_vax_dates.R",
+  #   needs = list("data_eligible_ab", "data_2nd_vax_dates"),
+  #   moderately_sensitive = list(
+  #     plots_by_region = "output/second_vax_period/images/plot_by_region_*.png",
+  #     plots_by_region_data = "output/second_vax_period/images/plot_by_region_*.txt"
+  #   )
+  # ),
   
   comment("apply eligiblity criteria from boxes c, d and e"),
   action(
@@ -476,6 +476,16 @@ actions_list <- splice(
     ),
     highly_sensitive = list(
       data_covariates = "output/data/data_all.rds"
+    )
+  ),
+  
+  comment("check covid episodes"),
+  action(
+    name = "check_episodes",
+    run = "r:latest analysis/preprocess/check_episodes.R",
+    needs = list("data_covariates_process"),
+    moderately_sensitive = list(
+      episode_triggers = "output/eda/episode_triggers.png"
     )
   ),
   

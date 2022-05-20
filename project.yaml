@@ -95,18 +95,6 @@ actions:
       moderately_sensitive:
         second_vax_period_dates_txt: output/second_vax_period/tables/second_vax_period_dates.txt
 
-  ## plot second vaccination time periods 
-
-  plot_2nd_vax_dates:
-    run: r:latest analysis/second_vax_period/plot_2nd_vax_dates.R
-    needs:
-    - data_eligible_ab
-    - data_2nd_vax_dates
-    outputs:
-      moderately_sensitive:
-        plots_by_region: output/second_vax_period/images/plot_by_region_*.png
-        plots_by_region_data: output/second_vax_period/images/plot_by_region_*.txt
-
   ## apply eligiblity criteria from boxes c, d and e 
 
   data_eligible_cde:
@@ -154,4 +142,14 @@ actions:
       moderately_sensitive:
         data_min_max_fu_csv: output/lib/data_min_max_fu.csv
 
- 
+  ## check covid episodes 
+
+  check_episodes:
+    run: r:latest analysis/preprocess/check_episodes.R
+    needs:
+    - data_covariates_process
+    outputs:
+      moderately_sensitive:
+        episode_triggers: output/eda/episode_triggers.png
+
+  
