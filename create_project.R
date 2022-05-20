@@ -475,7 +475,8 @@ actions_list <- splice(
       data_min_max_fu_csv = "output/lib/data_min_max_fu.csv"
     ),
     highly_sensitive = list(
-      data_covariates = "output/data/data_all.rds"
+      data_covariates = "output/data/data_all.rds",
+      data_episodes = "output/data/data_episodes.rds"
     )
   ),
   
