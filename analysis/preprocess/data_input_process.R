@@ -37,10 +37,13 @@ cat("#### extract data ####\n")
 data_extract <- 
   arrow::read_feather(file = here::here("output", "input_vax.feather")) %>%
   # because date types are not returned consistently by cohort extractor
-  mutate(across(c(contains("_date")), 
+  mutate(across(contains("_date"), 
                 ~ floor_date(
                   as.Date(., format="%Y-%m-%d"),
                   unit = "days"))) %>%
+  mutate(across(contains("_date"), 
+                ~if_else(.x <= as.Date(study_parameters$end_date),
+                         .x, as.Date(NA_character_)))) %>%
   mutate(across(imd, ~as.integer(as.character(.x))))
 
 cat("#### process extracted data ####\n")
