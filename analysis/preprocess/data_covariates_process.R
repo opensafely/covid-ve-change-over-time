@@ -47,7 +47,14 @@ data_wide_vax_dates <- readRDS(
 
 # read data for ever covariates
 data_covariates <- arrow::read_feather(
-  file = here::here("output", "input_covs.feather")) 
+  file = here::here("output", "input_covs.feather"))  %>%
+  mutate(across(contains("_date"), 
+                ~ floor_date(
+                  as.Date(.x, format="%Y-%m-%d"),
+                  unit = "days"))) %>%
+  mutate(across(contains("_date"), 
+                ~if_else(.x <= as.Date(study_parameters$end_date),
+                         .x, as.Date(NA_character_)))) 
 
 ################################################################################
 # covid infection episodes
@@ -63,11 +70,6 @@ data_episodes0 <- data_covariates %>%
     # select recurring events
     starts_with(c("postest", "covidadmitted", "covid_primary_care"))
     ) %>%
-  # clean dates variables
-  mutate(across(contains("_date"), 
-                ~ floor_date(
-                  as.Date(.x, format="%Y-%m-%d"),
-                  unit = "days"))) %>%
   # join coviddeath data
   left_join(data_processed %>% 
               select(patient_id, coviddeath_1_date = coviddeath_date),
@@ -139,11 +141,7 @@ data_all <- data_arm %>%
       select(patient_id, 
              matches(c("start_\\d_date", "end_\\d_date")),
              starts_with("anytest"), asplenia,
-             any_of(unname(unlist(model_varlist)))) %>%
-      mutate(across(contains("_date"), 
-                    ~ floor_date(
-                      as.Date(.x, format="%Y-%m-%d"),
-                      unit = "days"))),
+             any_of(unname(unlist(model_varlist)))),
     by = "patient_id") %>%
   # join to data_processed
   left_join(
