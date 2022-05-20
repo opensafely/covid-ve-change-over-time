@@ -57,7 +57,6 @@ data_covariates <- arrow::read_feather(
 # that the below code works as desired
 episode_length <- 90
 
-### REVIEW UP TO LINE 130
 data_episodes0 <- data_covariates %>%
   select(
     patient_id, 
@@ -69,7 +68,7 @@ data_episodes0 <- data_covariates %>%
                 ~ floor_date(
                   as.Date(.x, format="%Y-%m-%d"),
                   unit = "days"))) %>%
-  # join covid death data
+  # join coviddeath data
   left_join(data_processed %>% 
               select(patient_id, coviddeath_1_date = coviddeath_date),
             by = "patient_id") %>%
