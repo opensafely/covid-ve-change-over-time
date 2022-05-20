@@ -52,7 +52,7 @@ data_covariates <- arrow::read_feather(
 ################################################################################
 # covid infection episodes
 
-# covid events within 90 days of each other grouped into one covid epidose
+# covid events within 90 days of each other grouped into one covid episode
 # BTW it may be useful to reduce this threshold (e.g. to 30)  when verifying
 # that the below code works as desired
 episode_length <- 90
@@ -69,6 +69,10 @@ data_episodes0 <- data_covariates %>%
                 ~ floor_date(
                   as.Date(.x, format="%Y-%m-%d"),
                   unit = "days"))) %>%
+  # join covid death data
+  left_join(data_processed %>% 
+              select(patient_id, coviddeath_1_date = coviddeath_date),
+            by = "patient_id") %>%
   # reshape
   pivot_longer(
     cols = -patient_id, 
