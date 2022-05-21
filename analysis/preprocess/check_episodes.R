@@ -84,7 +84,7 @@ data_bar %>%
   mutate(across(total, ~str_pad(.x, width = max_width, side = "left", pad = " "))) %>%
   ggplot(aes(y = episode_start_date)) +
   geom_bar(aes(x = prop, fill = name), stat = "identity", width = 1) +
-  geom_text(aes(x = x_upper + 0.05, label = total), size = 2.5) +
+  geom_text(aes(x = 0.48, label = total), size = 2.5) +
   scale_y_discrete(
     name = "Episode start date"
   ) +
@@ -92,7 +92,7 @@ data_bar %>%
     name = NULL,
     labels = scales::percent_format()
     ) +
-  coord_cartesian(xlim = c(0, x_upper + 0.1)) +
+  coord_cartesian(xlim = c(0, 0.5)) +
   guides(
     fill = guide_legend(
       title = "Episode trigger",
@@ -107,7 +107,7 @@ data_bar %>%
 
 ggsave(
   filename = here::here("output", "eda", "episode_triggers.png"),
-                        width = 16, height = 26, units = "cm")
+                        width = 18, height = 26, units = "cm")
 
 ################################################################################
 # scatter plot of episode length vs episode start date 
