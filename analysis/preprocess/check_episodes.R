@@ -26,7 +26,7 @@ fs::dir_create(here::here("output", "eda"))
 
 # define time periods for bar plot
 weeks <- seq(
-  as.Date("2020-01-01"), 
+  as.Date("2020-03-01"), 
   as.Date(study_parameters$end_date) + weeks(2), 
   by = 14
   )
@@ -51,30 +51,48 @@ data_bar <- data_episodes %>%
   # if there are multiple events on the episode start date, keep in the order of the levels of the name factor, defined above
   arrange(patient_id, episode_start_date, name) %>%
   distinct(patient_id, episode_start_date, .keep_all = TRUE) %>%
+  filter(
+    as.Date("2020-03-01") <= episode_start_date,
+    episode_start_date <= as.Date(study_parameters$end_date)
+    ) %>%
   mutate(across(episode_start_date, ~cut(.x, breaks = weeks, right = FALSE))) %>%
   droplevels() %>%
   group_by(episode_start_date, name) %>%
   count() %>%
   ungroup(name) %>%
   mutate(across(n, ~ceiling_any(.x, to=7))) %>%
-  mutate(prop = n/sum(n)) %>%
-  ungroup()
+  mutate(
+    id = row_number(),
+    total = sum(n),
+    prop = n/total
+    ) %>%
+  ungroup() %>%
+  mutate(across(total, 
+                ~if_else(
+                  id==1,
+                  scales::comma(.x, accuracy = 1),
+                  NA_character_
+                  )))
 
 # cutoff the plot to make the less common events more visable
-y_upper <- 1-min(data_bar$prop[data_bar$name == "Positive test (SGSS)"])
+x_upper <- 1-min(data_bar$prop[data_bar$name == "Positive test (SGSS)"])
+
+max_width <- max(nchar(data_bar$total), na.rm = TRUE)
 
 # create bar plot
 data_bar %>%
-  ggplot(aes(x = episode_start_date, y = prop, fill = name)) +
-  geom_bar(stat = "identity", width = 1) +
-  scale_x_discrete(
+  mutate(across(total, ~str_pad(.x, width = max_width, side = "left", pad = " "))) %>%
+  ggplot(aes(y = episode_start_date)) +
+  geom_bar(aes(x = prop, fill = name), stat = "identity", width = 1) +
+  geom_text(aes(x = x_upper + 0.05, label = total), size = 2.5) +
+  scale_y_discrete(
     name = "Episode start date"
   ) +
-  scale_y_continuous(
+  scale_x_continuous(
     name = NULL,
     labels = scales::percent_format()
     ) +
-  coord_cartesian(ylim = c(0, y_upper)) +
+  coord_cartesian(xlim = c(0, x_upper + 0.1)) +
   guides(
     fill = guide_legend(
       title = "Episode trigger",
@@ -82,14 +100,14 @@ data_bar %>%
       )) +
   theme_bw() +
   theme(
-    axis.text.x = element_text(angle = 90),
+    # axis.text.x = element_text(angle = 90),
     axis.title.x = element_text(margin = margin(c(t=10,r=0,b=0,l=0))),
     legend.position = "bottom"
   )
 
 ggsave(
   filename = here::here("output", "eda", "episode_triggers.png"),
-                        width = 26, height = 16, units = "cm")
+                        width = 16, height = 26, units = "cm")
 
 ################################################################################
 # scatter plot of episode length vs episode start date 
