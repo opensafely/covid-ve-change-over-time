@@ -26,6 +26,9 @@ fs::dir_create(here::here("output", "eda"))
 ################################################################################
 # bar plot of episode triggers
 
+triggers <- str_c(c("postest", "covidadmitted", "covid_primary_care_positive_test", "covid_primary_care_code", "covid_primary_care_sequalae", "coviddeath"), "_date")
+trigger_labels <- c("Positive test (SGSS)", "COVID-19 hospitalisation", "Positive test (primary care)", "Diagnosis (primary care)", "Sequalae (primary care)", "COVID-19 death")
+
 # define time periods for bar plot
 weeks <- seq(
   as.Date("2020-03-01"), 
@@ -47,8 +50,8 @@ data_bar <- data_episodes %>%
     name,
     ~ factor(
       .x, 
-      levels = str_c(c("postest", "covidadmitted", "covid_primary_care_positive_test", "covid_primary_care_code", "covid_primary_care_sequalae", "coviddeath"), "_date"),
-      labels = c("Positive test (SGSS)", "COVID-19 hospitalisation", "Positive test (primary care)", "Diagnosis (primary care)", "Sequalae (primary care)", "COVID-19 death")
+      levels = triggers,
+      labels = trigger_labels
     ))) %>%
   # if there are multiple events on the episode start date, keep in the order of the levels of the name factor, defined above
   arrange(patient_id, episode_start_date, name) %>%
@@ -115,7 +118,7 @@ ggsave(
 ################################################################################
 # scatter plot of episode length vs episode start date 
 
-episode_length_plot <- function(trigger = NULL) {
+episode_length_plot <- function(trigger = FALSE) {
   
   data_tile <- data_episodes %>%
     filter(
@@ -123,14 +126,17 @@ episode_length_plot <- function(trigger = NULL) {
       episode_start_date <= as.Date(study_parameters$end_date)
     )  
   
-  if (!is.null(trigger)) {
-    
+  if (trigger) {
     data_tile <- data_tile %>%
-      filter(episode_start_date == !! sym(trigger))
-    
+      select(patient_id, episode_start_date, episode_end_date, covid_primary_care_code_date, covid_primary_care_positive_test_date, covidadmitted_date, postest_date) %>%
+      pivot_longer(
+        cols = -c(patient_id, episode_start_date, episode_end_date),
+        values_drop_na = TRUE
+        ) %>%
+      filter(episode_start_date == value) %>%
+      mutate(across(name, factor, levels = triggers, labels = trigger_labels))
   } else {
-    
-    trigger <- "any"
+    data_tile <- data_tile %>% mutate(name = "Any trigger")
   }
   
   x_tilewidth <- 7
@@ -139,30 +145,25 @@ episode_length_plot <- function(trigger = NULL) {
   data_tile <- data_tile %>%
     mutate(episode_length = as.numeric(episode_end_date - episode_start_date)) %>%
     mutate(across(episode_start_date, ~ cut(.x, breaks = seq(min(.x), max(.x) + days(x_tilewidth), by = x_tilewidth), include.lowest = TRUE))) %>%
-    mutate(across(episode_length, ~ cut(.x, breaks = seq(0, max(.x) + y_tilewidth, by = y_tilewidth), include.lowest = TRUE))) 
+    mutate(across(episode_length, ~ceiling_any(.x, to = 10))) 
   
   x_breaks <- levels(data_tile$episode_start_date)
   x_breaks <- x_breaks[seq(10,length(x_breaks),10)]
-  y_breaks <- levels(data_tile$episode_length)
-  y_breaks <- y_breaks[seq(11,length(y_breaks),10)]
-  y_breaks_labs <- str_extract(y_breaks, "\\d+")
-  
   
   data_tile %>%
-    group_by(episode_start_date, episode_length) %>%
+    group_by(name, episode_start_date, episode_length) %>%
     count() %>%
     ungroup() %>%
     mutate(across(n, ~ceiling_any(.x, to = 7))) %>%
     ggplot(aes(x = episode_start_date, y = episode_length, fill = n)) +
     geom_tile() +
+    facet_wrap(~ name) +
     scale_x_discrete(
       name = "Episode start date",
       breaks = x_breaks
     ) +
-    scale_y_discrete(
-      name = "Episode length (days)",
-      breaks = y_breaks, 
-      labels = y_breaks_labs
+    scale_y_continuous(
+      name = "Episode length (days)"
     ) +
     scale_fill_distiller(
       name = "n patients\n(log10 scale)",
@@ -175,16 +176,13 @@ episode_length_plot <- function(trigger = NULL) {
         label =
       )
     ) +
-    labs(
-      subtitle = glue("Episode trigger event: {trigger}")
-    ) +
     theme_bw() +
     theme(
       panel.grid = element_blank(),
       axis.text.x = element_text(angle = 90),
       axis.title.x = element_text(margin = margin(t=10)),
       axis.title.y = element_text(margin = margin(r=10)),
-      legend.position = c(0.75,0.75)
+      legend.position = "bottom"#c(0.75,0.75)
     )
   
   ggsave(
@@ -193,9 +191,6 @@ episode_length_plot <- function(trigger = NULL) {
   
 }
 
-episode_length_plot()
-for (i in c("covid_primary_care_code_date", "covid_primary_care_positive_test_date", "covidadmitted_date", "postest_date")) {
-  episode_length_plot(i)
-}
-
+episode_length_plot(TRUE)
+episode_length_plot(FALSE)
 
