@@ -486,7 +486,8 @@ actions_list <- splice(
     run = "r:latest analysis/preprocess/check_episodes.R",
     needs = list("data_covariates_process"),
     moderately_sensitive = list(
-      episode_triggers = "output/eda/episode_triggers.png"
+      episode_triggers = "output/eda/episode_triggers.png",
+      episode_lengths = "output/eda/episode_lengths_*.png"
     )
   ),
   
