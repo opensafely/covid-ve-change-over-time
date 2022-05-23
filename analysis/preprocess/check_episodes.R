@@ -109,7 +109,8 @@ data_bar %>%
   theme(
     # axis.text.x = element_text(angle = 90),
     axis.title.x = element_text(margin = margin(c(t=10,r=0,b=0,l=0))),
-    legend.position = "bottom"
+    legend.position = "bottom",
+    plot.margin = margin(l=20, r=20)
   )
 
 ggsave(
