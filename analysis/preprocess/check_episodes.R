@@ -155,8 +155,11 @@ episode_length_plot <- function(trigger = FALSE) {
     group_by(name, episode_start_date, episode_length) %>%
     count() %>%
     ungroup() %>%
+    group_by(name) %>%
     mutate(across(n, ~ceiling_any(.x, to = 7))) %>%
-    ggplot(aes(x = episode_start_date, y = episode_length, fill = n)) +
+    mutate(percent = 100*n/sum(n)) %>%
+    ungroup() %>%
+    ggplot(aes(x = episode_start_date, y = episode_length, fill = percent)) +
     geom_tile() +
     facet_wrap(~ name) +
     scale_x_discrete(
@@ -169,7 +172,7 @@ episode_length_plot <- function(trigger = FALSE) {
       expand = c(0,0)
     ) +
     scale_fill_distiller(
-      name = "n patients\n(log10 scale)",
+      name = "% patients\n(log10 scale)",
       trans = "log10",
       palette = "Blues",
       direction = 1
@@ -185,7 +188,7 @@ episode_length_plot <- function(trigger = FALSE) {
       axis.text.x = element_text(angle = 90),
       axis.title.x = element_text(margin = margin(t=10)),
       axis.title.y = element_text(margin = margin(r=10)),
-      legend.position = "bottom"#c(0.75,0.75)
+      legend.position = "bottom"
     )
   
   ggsave(
