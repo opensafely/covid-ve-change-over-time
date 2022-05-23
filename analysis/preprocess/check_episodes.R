@@ -96,7 +96,8 @@ data_bar %>%
   ) +
   scale_x_continuous(
     name = NULL,
-    labels = scales::percent_format()
+    labels = scales::percent_format(),
+    expand = c(0,0)
     ) +
   coord_cartesian(xlim = c(0, x_upper)) +
   guides(
@@ -160,10 +161,12 @@ episode_length_plot <- function(trigger = FALSE) {
     facet_wrap(~ name) +
     scale_x_discrete(
       name = "Episode start date",
-      breaks = x_breaks
+      breaks = x_breaks,
+      expand = c(0,0)
     ) +
     scale_y_continuous(
-      name = "Episode length (days)"
+      name = "Episode length (days)",
+      expand = c(0,0)
     ) +
     scale_fill_distiller(
       name = "n patients\n(log10 scale)",
@@ -173,7 +176,7 @@ episode_length_plot <- function(trigger = FALSE) {
     ) +
     guides(
       fill = guide_colorbar(
-        label =
+        barwidth = unit(12, units = "cm")
       )
     ) +
     theme_bw() +
@@ -189,7 +192,7 @@ episode_length_plot <- function(trigger = FALSE) {
     filename = here::here("output", "eda", glue("episode_lengths_{trigger}.png")),
     width = 18, height = 16, units = "cm")
   
-}
+ }
 
 episode_length_plot(TRUE)
 episode_length_plot(FALSE)
