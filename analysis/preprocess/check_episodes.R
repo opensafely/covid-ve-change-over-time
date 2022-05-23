@@ -117,13 +117,19 @@ ggsave(
 
 episode_length_plot <- function(trigger = NULL) {
   
+  data_tile <- data_episodes %>%
+    filter(
+      as.Date("2020-03-01") <= episode_start_date,
+      episode_start_date <= as.Date(study_parameters$end_date)
+    )  
+  
   if (!is.null(trigger)) {
     
-    data_tile <- data_episodes %>%
+    data_tile <- data_tile %>%
       filter(episode_start_date == !! sym(trigger))
     
   } else {
-    data_tile <- data_episodes
+    
     trigger <- "any"
   }
   
