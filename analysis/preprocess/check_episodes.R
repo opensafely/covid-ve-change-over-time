@@ -75,16 +75,17 @@ data_bar <- data_episodes %>%
                   )))
 
 # cutoff the plot to make the less common events more visable
-x_upper <- 1-min(data_bar$prop[data_bar$name == "Positive test (SGSS)"])
+# x_upper <- 1-min(data_bar$prop[data_bar$name == "Positive test (SGSS)"])
+x_upper <- 0.4
 
 max_width <- max(nchar(data_bar$total), na.rm = TRUE)
 
 # create bar plot
 data_bar %>%
   mutate(across(total, ~str_pad(.x, width = max_width, side = "left", pad = " "))) %>%
-  ggplot(aes(y = episode_start_date)) +
+  ggplot(aes(y = reorder(episode_start_date, -as.integer(episode_start_date)))) +
   geom_bar(aes(x = prop, fill = name), stat = "identity", width = 1) +
-  geom_text(aes(x = 0.48, label = total), size = 2.5) +
+  geom_text(aes(x = x_upper-0.02, label = total), size = 2.5) +
   scale_y_discrete(
     name = "Episode start date"
   ) +
@@ -92,7 +93,7 @@ data_bar %>%
     name = NULL,
     labels = scales::percent_format()
     ) +
-  coord_cartesian(xlim = c(0, 0.5)) +
+  coord_cartesian(xlim = c(0, x_upper)) +
   guides(
     fill = guide_legend(
       title = "Episode trigger",
