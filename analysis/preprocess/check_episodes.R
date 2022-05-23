@@ -2,6 +2,8 @@
 # load libraries
 library(tidyverse)
 library(lubridate)
+library(RColorBrewer)
+library(glue)
 
 ################################################################################
 # read metadata
@@ -113,18 +115,81 @@ ggsave(
 ################################################################################
 # scatter plot of episode length vs episode start date 
 
-# x_binwidth <- 7
-# y_binwidth <- 10
-# 
-# data_episodes %>%
-#   mutate(episode_length = as.numeric(episode_end_date - episode_start_date)) %>%
-#   mutate(across(episode_start_date, ~ cut(.x, breaks = seq(min(.x), max(.x), by = x_binwidth)))) %>%
-#   mutate(across(episode_length, ~ cut(.x, breaks = seq(0, max(.x), by = y_binwidth)))) %>%
-#   group_by(episode_start_date, episode_length) %>%
-#   count() %>%
-#   ungroup() %>%
-#   ggplot(aes(x = episode_start_date, y = episode_length, fill = n)) +
-#   stat_bin_hex(binwidth = c(7,10)) # x,y
-#   geom_hex()
-#   geom_tile()
-#   geom_point(alpha = 0.1)
+episode_length_plot <- function(trigger = NULL) {
+  
+  if (!is.null(trigger)) {
+    
+    data_tile <- data_episodes %>%
+      filter(episode_start_date == !! sym(trigger))
+    
+  } else {
+    data_tile <- data_episodes
+    trigger <- "any"
+  }
+  
+  x_tilewidth <- 7
+  y_tilewidth <- 10
+  
+  data_tile <- data_tile %>%
+    mutate(episode_length = as.numeric(episode_end_date - episode_start_date)) %>%
+    mutate(across(episode_start_date, ~ cut(.x, breaks = seq(min(.x), max(.x) + days(x_tilewidth), by = x_tilewidth), include.lowest = TRUE))) %>%
+    mutate(across(episode_length, ~ cut(.x, breaks = seq(0, max(.x) + y_tilewidth, by = y_tilewidth), include.lowest = TRUE))) 
+  
+  x_breaks <- levels(data_tile$episode_start_date)
+  x_breaks <- x_breaks[seq(10,length(x_breaks),10)]
+  y_breaks <- levels(data_tile$episode_length)
+  y_breaks <- y_breaks[seq(11,length(y_breaks),10)]
+  y_breaks_labs <- str_extract(y_breaks, "\\d+")
+  
+  
+  data_tile %>%
+    group_by(episode_start_date, episode_length) %>%
+    count() %>%
+    ungroup() %>%
+    mutate(across(n, ~ceiling_any(.x, to = 7))) %>%
+    ggplot(aes(x = episode_start_date, y = episode_length, fill = n)) +
+    geom_tile() +
+    scale_x_discrete(
+      name = "Episode start date",
+      breaks = x_breaks
+    ) +
+    scale_y_discrete(
+      name = "Episode length (days)",
+      breaks = y_breaks, 
+      labels = y_breaks_labs
+    ) +
+    scale_fill_distiller(
+      name = "n patients\n(log10 scale)",
+      trans = "log10",
+      palette = "Blues",
+      direction = 1
+    ) +
+    guides(
+      fill = guide_colorbar(
+        label =
+      )
+    ) +
+    labs(
+      subtitle = glue("Episode trigger event: {trigger}")
+    ) +
+    theme_bw() +
+    theme(
+      panel.grid = element_blank(),
+      axis.text.x = element_text(angle = 90),
+      axis.title.x = element_text(margin = margin(t=10)),
+      axis.title.y = element_text(margin = margin(r=10)),
+      legend.position = c(0.75,0.75)
+    )
+  
+  ggsave(
+    filename = here::here("output", "eda", glue("episode_lengths_{trigger}.png")),
+    width = 18, height = 16, units = "cm")
+  
+}
+
+episode_length_plot()
+for (i in c("covid_primary_care_code_date", "covid_primary_care_positive_test_date", "covidadmitted_date", "postest_date")) {
+  episode_length_plot(i)
+}
+
+
