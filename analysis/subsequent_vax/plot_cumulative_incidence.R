@@ -4,11 +4,6 @@ library(survival)
 library(lubridate)
 
 ################################################################################
-# create output directories
-fs::dir_create(here::here("output", "subsequent_vax", "images"))
-fs::dir_create(here::here("output", "subsequent_vax", "tables"))
-
-################################################################################
 ## import study_parameters
 study_parameters <- readr::read_rds(
   here::here("analysis", "lib", "study_parameters.rds"))
@@ -18,21 +13,11 @@ subgroups <- readr::read_rds(
   here::here("analysis", "lib", "subgroups.rds"))
 subgroup_labels <- seq_along(subgroups)
 subgroups_long <- if_else(
-  subgroups %in% subgroups[c(2,3)],
+  subgroups %in% subgroups[c(3,4)],
   as.character(glue("{subgroups}*")),
   subgroups
 )
 subgroups_long_wrap <- str_wrap(subgroups_long, width = 25)
-
-################################################################################
-# read data
-data_all <- readr::read_rds(
-  here::here("output", "data", "data_all.rds")) %>%
-  select(patient_id, subgroup, arm, start_1_date, end_6_date, subsequent_vax_date, dereg_date, death_date)
-
-################################################################################
-# redaction function for KM curves
-source(here::here("analysis", "functions", "round_km.R"))
 
 ################################################################################
 
@@ -58,6 +43,19 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
                   labels = subgroups_long_wrap))
 
 } else { # else derive the data
+  
+  # create output directories
+  fs::dir_create(here::here("output", "subsequent_vax", "images"))
+  fs::dir_create(here::here("output", "subsequent_vax", "tables"))
+  
+  # redaction function for KM curves
+  source(here::here("analysis", "functions", "round_km.R"))
+  
+  # read data
+  data_all <- readr::read_rds(
+    here::here("output", "data", "data_all.rds")) %>%
+    select(patient_id, subgroup, arm, start_1_date, end_6_date, subsequent_vax_date, dereg_date, death_date)
+  
   
   image_path <- here::here("output", "subsequent_vax", "images")
   
