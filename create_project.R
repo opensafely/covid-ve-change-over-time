@@ -7,7 +7,7 @@ library(glue)
 fs::dir_create(here::here("analysis", "lib"))
 
 ################################################################################
-K <- 6L # the number of comparison periods
+K <- 12L # the number of comparison periods
 
 study_parameters <-
   list(
@@ -23,7 +23,8 @@ study_parameters <-
     # start_date_pfizer = "2020-12-08",
     # start_date_az = "2021-01-04",
     # start_date_moderna = "2021-03-04",
-    end_date = "2021-12-15" # last date of available data
+    end_date = lubridate::today(), # for study definition
+    end_date_model = "2022-03-01" # TBC based on availability of hospital data
   ) 
 
 readr::write_rds(study_parameters, here::here("analysis", "lib", "study_parameters.rds"))
