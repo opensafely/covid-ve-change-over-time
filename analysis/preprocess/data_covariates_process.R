@@ -56,7 +56,7 @@ data_all <- data_arm %>%
   left_join(
     data_covariates %>%
       select(patient_id, 
-             matches(c("start_\\d_date", "end_\\d_date")),
+             matches(c("start_\\d+_date", "end_\\d+_date")),
              starts_with("anytest"), asplenia,
              any_of(unname(unlist(model_varlist)))) %>%
       mutate(across(contains("_date"), 
