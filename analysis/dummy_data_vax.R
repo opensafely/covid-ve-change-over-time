@@ -152,8 +152,8 @@ dummy_data_covs <- dummy_data_vax %>%
           .data = ., 
           name = !! a,
           incidence = b,
-          earliest="2020-11-01",
-          latest="2021-12-31",
+          earliest=study_parameters$pandemic_start,
+          latest=study_parameters$end_date,
           keep_vars = FALSE
         ))) %>%
   # add death_date if coviddeath_date
