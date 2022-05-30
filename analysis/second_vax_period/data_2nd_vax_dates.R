@@ -144,14 +144,7 @@ second_vax_period_dates <- data_vax_plot %>%
   summarise(across(c(cumulative_sum, end_of_period, start_of_period), 
                    min, na.rm = TRUE),
             .groups = "keep") %>%
-  ungroup() %>%
-  mutate(
-    # time between start of first comparison and last date of available data
-    days_of_data = as.integer(as.Date(study_parameters$end_date) - start_of_period) + 14,
-    # set n_comparisons based on days of available data
-    n_comparisons = pmin(ceiling(days_of_data/28), study_parameters$K)
-    ) %>%
-  select(-days_of_data)
+  ungroup() 
 
 brand_counts <- second_vax_period_dates %>%
   left_join(data_vax_plot,
@@ -171,7 +164,7 @@ second_vax_period_dates <- second_vax_period_dates %>%
   left_join(brand_counts,
             by = c("jcvi_group", "elig_date", "region"))  %>%
   select(jcvi_group, elig_date, region, n_ChAdOx1, n_BNT162b2, cumulative_sum,
-         start_of_period, end_of_period, n_comparisons)
+         start_of_period, end_of_period)
 
 # save for plotting
 readr::write_rds(
