@@ -7,6 +7,7 @@ library(lubridate)
 ## import study_parameters
 study_parameters <- readr::read_rds(
   here::here("analysis", "lib", "study_parameters.rds"))
+K <- study_parameters$K
 
 # read subgroups
 subgroups <- readr::read_rds(
@@ -51,10 +52,14 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
   # redaction function for KM curves
   source(here::here("analysis", "functions", "round_km.R"))
   
+  end_K_date <- glue("end_{K}_date")
+  
   # read data
   data_all <- readr::read_rds(
     here::here("output", "data", "data_all.rds")) %>%
-    select(patient_id, subgroup, arm, start_1_date, end_6_date, subsequent_vax_date, dereg_date, death_date)
+    rename("end_K_date" = end_K_date)
+    select(patient_id, subgroup, arm, start_1_date, end_6_date, 
+           subsequent_vax_date, dereg_date, death_date)
   
   
   image_path <- here::here("output", "subsequent_vax", "images")
