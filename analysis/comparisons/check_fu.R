@@ -10,6 +10,7 @@ fs::dir_create(here::here("output", "tte", "images"))
 ################################################################################
 study_parameters <- readr::read_rds(
   here::here("analysis", "lib", "study_parameters.rds"))
+K <- study_parameters$K
 
 ################################################################################
 # redaction functions
@@ -29,7 +30,7 @@ data_tte <- readr::read_rds(
   pivot_longer(
     cols = c(starts_with(c("start","end"))),
     names_to = c(".value", "k"),
-    names_pattern = "(.*)_(.)_date"
+    names_pattern = "(.*)_(.*)_date"
     ) %>%
   mutate(across(k, as.integer)) %>%
   filter(
@@ -45,7 +46,8 @@ data_tte <- readr::read_rds(
   filter(start <=  as.Date(study_parameters$end_date)) %>%
   mutate(across(ends_with("date"), ~if_else(start <= .x & .x <= end, .x, as.Date(NA_character_)))) %>%
   mutate(across(end, ~pmin(end, death_date, dereg_date, subsequent_vax_date, as.Date(study_parameters$end_date), na.rm = TRUE))) %>%
-  select(patient_id, subgroup, arm, k, start, end) 
+  select(patient_id, subgroup, arm, k, start, end) %>%
+  mutate(across(k, factor, levels = 1:K))
 
 min_max <- data_tte %>%
   group_by(subgroup) %>%
@@ -131,7 +133,7 @@ for (s in levels(min_max$subgroup)) {
   ann_text <- tibble(
     date = xintercepts,
     n = n_mult*max(data_tte_long$n),
-    k = factor(k_print, levels = 1:6),
+    k = factor(k_print, levels = 1:K),
     lab = names(xintercepts),
     lab_col = col_palette[1:length(xintercepts)]
   )
@@ -140,7 +142,14 @@ for (s in levels(min_max$subgroup)) {
     ggplot(aes(x = date, y = n)) +
     geom_bar(stat = "identity", alpha = 0.5, width=1) +
     geom_vline(
-      data = bind_rows(lapply(1:max(data_tte_long$k), function(x) ann_text %>% mutate(k=x))) %>% mutate(across(k, factor)), 
+      data = bind_rows(
+        lapply(
+          1:max(as.integer(as.character(data_tte_long$k))),
+          function(x) 
+            ann_text %>% mutate(k=x)
+          )
+        ) %>%
+        mutate(across(k, factor)), 
       aes(xintercept = date, colour = lab_col),
       linetype = "dashed") +
     labs(
@@ -174,7 +183,7 @@ for (s in levels(min_max$subgroup)) {
   
   ggsave(p,
          filename = here::here("output", "tte", "images", glue("check_fu_{s}.png")),
-         width=15, height=14, units="cm")
+         width=15, height=20, units="cm")
   
 }
 

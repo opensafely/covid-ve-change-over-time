@@ -126,11 +126,14 @@ fs::dir_create(here::here("output", "lib"))
 # redaction functions
 source(here::here("analysis", "functions", "redaction_functions.R"))
 
+end_K_date <- glue("end_{K}_date")
+
 data_min_max_fu <- data_all %>%
+  rename("end_K_date" = end_K_date) %>%
   group_by(subgroup) %>%
   summarise(
     min_fu_date = min(start_1_date),
-    max_fu_date = max(end_6_date),
+    max_fu_date = max(end_K_date),
     # round total to nereast 7 for disclosure control
     n = ceiling_any(n(), to=7),
     .groups = "keep"

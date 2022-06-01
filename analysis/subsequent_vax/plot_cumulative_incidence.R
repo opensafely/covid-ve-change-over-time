@@ -52,15 +52,12 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
   # redaction function for KM curves
   source(here::here("analysis", "functions", "round_km.R"))
   
-  end_K_date <- glue("end_{K}_date")
-  
   # read data
   data_all <- readr::read_rds(
     here::here("output", "data", "data_all.rds")) %>%
-    rename("end_K_date" = end_K_date)
-    select(patient_id, subgroup, arm, start_1_date, end_6_date, 
+    rename("end_K_date" = glue("end_{K}_date")) %>%
+    select(patient_id, subgroup, arm, start_1_date, end_K_date, 
            subsequent_vax_date, dereg_date, death_date)
-  
   
   image_path <- here::here("output", "subsequent_vax", "images")
   
@@ -78,9 +75,9 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
       # start date of comparison 1 
       start_fu_date = start_1_date,
       # end date of final comparison or end of data availability
-      end_fu_date = pmin(end_6_date, study_parameters$end_date)
+      end_fu_date = pmin(end_K_date, study_parameters$end_date)
     ) %>%
-    select(-start_1_date, -end_6_date) %>%
+    select(-start_1_date, -end_K_date) %>%
     # remove if subsequent vaccine, death or dereg on or before start_of_period
     filter_at(
       all_of(c("subsequent_vax_date", "death_date", "dereg_date")),
@@ -133,7 +130,6 @@ if(Sys.getenv("OPENSAFELY_BACKEND") %in% "") {
 
 ################################################################################
 # scale for x-axis
-K <- study_parameters$K
 x_breaks <- seq(0,K*4,4)
 x_labels <- x_breaks + 2
 

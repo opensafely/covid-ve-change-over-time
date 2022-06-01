@@ -220,7 +220,6 @@ data_eligible_e <- bind_rows(
               end_1_date = start_1_date + days(56),
               arm = "unvax") 
 ) %>%
-  mutate(across(ends_with("_date"), as.POSIXct)) %>%
   left_join(data_processed %>% select(patient_id, subgroup),
             by = "patient_id") %>%
   group_by(subgroup) %>%
@@ -237,6 +236,9 @@ for (k in 2:study_parameters$K) {
     )
   
 }
+
+data_eligible_e <- data_eligible_e %>%
+  mutate(across(ends_with("_date"), as.POSIXct)) 
 
 readr::write_csv(
   data_eligible_e,

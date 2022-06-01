@@ -62,9 +62,9 @@ data <- data_all %>%
   # filter subgroups
   filter(subgroup %in% select_subgroups) %>%
   pivot_longer(
-    cols = matches("\\w+_\\d_date"),
+    cols = matches("\\w+_\\d+_date"),
     names_to = c(".value", "k"),
-    names_pattern = "(.*)_(.)_date"
+    names_pattern = "(.*)_(.*)_date"
   ) %>%
   rename_with(~str_c(.x, "_date"), .cols = all_of(c("start", "end", "anytest"))) %>%
   mutate(across(k, as.integer)) %>%

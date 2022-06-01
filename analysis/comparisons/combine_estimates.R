@@ -55,7 +55,7 @@ readr::write_csv(
 ################################################################################
 # model estimates
 all_files <- list.files(path = here::here("output", "models_cox", "data"), 
-           pattern = "modelcox_tidy_\\w+_.+_\\w+_\\d.rds",
+           pattern = "modelcox_tidy_\\w+_.+_\\w+_\\d+.rds",
            all.files = FALSE,
            full.names = FALSE, recursive = FALSE,
            ignore.case = FALSE, include.dirs = FALSE)
