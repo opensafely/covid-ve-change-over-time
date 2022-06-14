@@ -4,6 +4,8 @@ The aim of this study was to comapre rates of COVID-19 hospitalisation, COVID-19
 
 ## Repository navigation
 
+🚨 **The code corresponding to this publication is in the [define-covs-at-svp](https://github.com/opensafely/covid-ve-change-over-time/tree/define-covs-at-svp) branch.** 🚨
+
 You can run this project via [Gitpod](https://gitpod.io) in a web browser by clicking on this badge: [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/opensafely/covid-ve-change-over-time)
 
 * The [protocol is in the OpenSAFELY Google drive](https://docs.google.com/document/d/10EX8i_IfikInKRD1nkbTkLfHBJ6GdJU7PgQW_p12ibg/edit#)
