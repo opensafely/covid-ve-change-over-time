@@ -1015,3 +1015,111 @@ for (i in c("BNT162b2", "ChAdOx1", "both")) {
   plot_strata(i, strata = "ageband")
 }
 
+
+################################################################################
+# summary plot for bmj print
+
+
+# vaccine vs unvaccinated
+plot_vax <- plot_data %>%
+  filter(
+    sex == "Both",
+    comparison != "both",
+    ageband == "all",
+    outcome_unlabelled != "anytest",
+    as.integer(model) == 2,
+    # select positive test and hospitalisation
+    outcome_unlabelled %in% c("postest", "covidadmitted")
+  ) %>%
+  mutate(
+    outcome = factor(outcome_unlabelled, levels = unname(outcomes)[outcomes_order], labels = names(outcomes)[outcomes_order])
+  ) %>%
+  droplevels() %>%
+  ggplot(aes(
+    x = reorder(k_labelled, order), 
+    colour = comparison, 
+    shape = comparison,
+    fill = comparison
+  )) +
+  geom_hline(aes(yintercept=1), colour='grey') +
+  geom_line(
+    aes(y = line, 
+        colour = comparison, 
+        linetype = comparison,
+        group = line_group), 
+    alpha = 0.6
+  ) +
+  geom_linerange(
+    aes(ymin = conf.low, ymax = conf.high),
+    position = position_dodge(width = position_dodge_val)
+  ) +
+  geom_point(
+    aes(y = estimate),
+    position = position_dodge(width = position_dodge_val)
+  ) +
+  facet_grid(outcome ~ subgroup, switch = "y", scales = "free", space = "free_x") +
+  scale_y_log10(
+    name = y_lab_adj,
+    breaks = primary_vax_y1[["breaks"]],
+    limits = primary_vax_y1[["limits"]],
+    oob = scales::oob_keep,
+    sec.axis = sec_axis(
+      ~(1-.),
+      name=y_lab_adj_2,
+      breaks = primary_vax_y2[["breaks"]],
+      labels = function(x){formatpercent100(x, 1)}
+    )
+  ) +
+  labs(
+    x = "Weeks since second dose",
+    caption = "* and not clinically vulnerable"
+  ) +
+  scale_fill_discrete(guide = "none") +
+  scale_shape_manual(values = comparison_shapes[1:2], name = NULL) +
+  scale_color_manual(values = palette_adj[1:2], name = NULL) +
+  scale_linetype_manual(values = comparison_linetypes[1:2], name = NULL) +
+  guides(shape = guide_legend(
+    title = NULL, 
+    override.aes = list(colour = palette_adj[1:2], fill = comparison_shapes[1:2])
+  )) +
+  theme_bw() +
+  theme(
+    panel.border = element_blank(),
+    axis.line.y = element_line(colour = "black"),
+    
+    axis.text = element_text(size=10),
+    
+    axis.title.x = element_text(size=10, margin = margin(t = 10, r = 0, b = 0, l = 0)),
+    axis.title.y = element_text(size=10, margin = margin(t = 0, r = 10, b = 0, l = 0)),
+    axis.text.x = element_text(size=8, angle = 45, hjust = 1),
+    axis.text.y = element_text(size=8),
+    
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    strip.background = element_blank(),
+    strip.placement = "outside",
+    strip.text.y.left = element_text(angle = 90),
+    strip.text = element_text(size=8),
+    
+    panel.spacing = unit(0.8, "lines"),
+    
+    plot.title = element_text(hjust = 0),
+    plot.title.position = "plot",
+    plot.caption.position = "plot",
+    # plot.caption = element_text(hjust = 0, face= "italic"),
+    plot.caption = element_text(face= "italic", size=8),
+    
+    legend.position = c(0.5, 0.125),
+    legend.box.background = element_rect(colour = "black"),
+    legend.direction = "horizontal",
+    # big margins to cover up grid lines
+    # legend.margin = margin(t = 30, r = 20, b = 30, l = 10),
+    legend.key.width = unit(2, 'cm'),
+    # legend.position = "bottom",
+    legend.text = element_text(size=10)
+  ) 
+
+# save the plot
+ggsave(plot_vax,# + theme(plot.margin = margin(2, 2, 2, 2, "cm")),
+       filename = here::here(release_folder, glue("bmj_print_plot.pdf")),
+       width=18, height=11, units="cm")
