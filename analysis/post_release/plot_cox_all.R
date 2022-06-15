@@ -781,7 +781,8 @@ plot_strata <- function(plot_comparison, strata) {
       filter(
         ageband != "all"
       ) %>%
-      rename(strata_var = !! strata)
+      rename(strata_var = !! strata) %>%
+      mutate(subgroup = "")
     leg_rows <- 2
     strata_page_height <- 16
     strata_page_width <- 14
