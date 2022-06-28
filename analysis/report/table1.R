@@ -281,12 +281,12 @@ for (i in c(seq_along(data_tables))) {
     group_by(arm) %>%
     summarise(
       median = median(age, na.rm=TRUE),
-      q1 = quantile(x, 1/4, na.rm = TRUE),
-      q3 = quantile(x, 3/4, na.rm = TRUE),
+      q1 = quantile(age, 1/4, na.rm = TRUE),
+      q3 = quantile(age, 3/4, na.rm = TRUE),
       # iqr = IQR(age, na.rm = TRUE),
       .groups = "keep") %>% 
     ungroup() %>%
-    transmute(arm, value = as.character(glue("{median} ({q1} to {q2})"))) %>%
+    transmute(arm, value = as.character(glue("{median} ({q1} to {q3})"))) %>%
     pivot_wider(names_from = "arm", values_from = "value") %>%
     mutate(Variable = "Age", Characteristic = "Median (IQR)") 
   
