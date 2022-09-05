@@ -27,3 +27,6 @@ manuscript/appendix.log
 hospitalisations_report/*.png
 
 analysis/vax_ci/opensafely*
+
+output-1/*
+output-2/*
