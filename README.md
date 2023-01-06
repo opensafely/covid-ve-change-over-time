@@ -1,4 +1,4 @@
-# Waning effectiveness of BNT162b2 and ChAdOx1 COVID-19 vaccines over six months since second dose: a cohort study using linked electronic health records
+# Waning effectiveness of BNT162b2 and ChAdOx1 covid-19 vaccines over six months since second dose: OpenSAFELY cohort study using linked electronic health records
 
 The aim of this study was to comapre rates of COVID-19 hospitalisation, COVID-19 and non-COVID-19 mortality, and infection with SARS-CoV-2, between adults fully vaccinated with the Pfizer-BioNTech BNT162b2 mRNA vaccine (BNT162b2) and the Oxford-AstraZeneca ChAdOx1 nCoV-19 AZD1222 (ChAdOx1), and those who were unvaccinated.
 
@@ -9,7 +9,7 @@ The aim of this study was to comapre rates of COVID-19 hospitalisation, COVID-19
 You can run this project via [Gitpod](https://gitpod.io) in a web browser by clicking on this badge: [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/opensafely/covid-ve-change-over-time)
 
 * The [protocol is in the OpenSAFELY Google drive](https://docs.google.com/document/d/10EX8i_IfikInKRD1nkbTkLfHBJ6GdJU7PgQW_p12ibg/edit#)
-* The pre-print is [here](https://doi.org/10.1101/2022.03.23.22272804)
+* This paper has been published in the BMJ and is available [here](https://www.bmj.com/content/378/bmj-2022-071249)
 * Analysis scripts are in the [`analysis/`](./analysis) directory (see below for details)
 * If you are interested in how we defined our code lists, look in the [codelists folder](./codelists/)
 
