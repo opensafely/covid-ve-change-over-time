@@ -1,6 +1,6 @@
 # Waning effectiveness of BNT162b2 and ChAdOx1 covid-19 vaccines over six months since second dose: OpenSAFELY cohort study using linked electronic health records
 
-The aim of this study was to comapre rates of COVID-19 hospitalisation, COVID-19 and non-COVID-19 mortality, and infection with SARS-CoV-2, between adults fully vaccinated with the Pfizer-BioNTech BNT162b2 mRNA vaccine (BNT162b2) and the Oxford-AstraZeneca ChAdOx1 nCoV-19 AZD1222 (ChAdOx1), and those who were unvaccinated.
+The aim of this study was to compare rates of COVID-19 hospitalisation, COVID-19 and non-COVID-19 mortality, and infection with SARS-CoV-2, between adults fully vaccinated with the Pfizer-BioNTech BNT162b2 mRNA vaccine (BNT162b2) and the Oxford-AstraZeneca ChAdOx1 nCoV-19 AZD1222 (ChAdOx1), and those who were unvaccinated.
 
 ## Repository navigation
 
